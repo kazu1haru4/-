@@ -4,9 +4,62 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>フレンドチャット</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f5f3ff;
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .box {
+      max-width: 400px;
+      margin: auto;
+      background: white;
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 4px 15px #ddd;
+    }
+
+    h1 {
+      margin-bottom: 25px;
+    }
+
+    input {
+      width: 90%;
+      padding: 12px;
+      margin: 8px 0;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      width: 95%;
+      padding: 13px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 10px;
+      background: #7c5cff;
+      color: white;
+      font-size: 16px;
+    }
+
+    .register {
+      background: #ff8fb3;
+    }
+  </style>
 </head>
+
 <body>
-  <h1>💬 フレンドチャット</h1>
-  <p>友達と楽しくチャットしよう！</p>
+  <div class="box">
+    <h1>💬 フレンドチャット</h1>
+
+    <input type="text" placeholder="ユーザーID">
+    <input type="password" placeholder="パスワード">
+
+    <button>ログイン</button>
+    <button class="register">新規登録</button>
+  </div>
 </body>
 </html>
