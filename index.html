@@ -4,62 +4,125 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>フレンドチャット</title>
+
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
+      margin: 0;
+      min-height: 100vh;
       font-family: sans-serif;
       background: #f5f3ff;
-      text-align: center;
-      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
     }
 
     .box {
-      max-width: 400px;
-      margin: auto;
+      width: 100%;
+      max-width: 420px;
       background: white;
-      padding: 25px;
-      border-radius: 20px;
-      box-shadow: 0 4px 15px #ddd;
+      padding: 30px 22px;
+      border-radius: 24px;
+      box-shadow: 0 5px 20px #ddd;
+      text-align: center;
     }
 
     h1 {
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #777;
       margin-bottom: 25px;
     }
 
     input {
-      width: 90%;
-      padding: 12px;
-      margin: 8px 0;
+      width: 100%;
+      padding: 14px;
+      margin: 7px 0;
       border: 1px solid #ddd;
-      border-radius: 10px;
+      border-radius: 12px;
       font-size: 16px;
     }
 
     button {
-      width: 95%;
-      padding: 13px;
+      width: 100%;
+      padding: 14px;
       margin-top: 10px;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       background: #7c5cff;
       color: white;
       font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
     }
 
     .register {
       background: #ff8fb3;
     }
+
+    #message {
+      margin-top: 18px;
+      color: #666;
+      min-height: 24px;
+    }
   </style>
 </head>
 
 <body>
+
   <div class="box">
     <h1>💬 フレンドチャット</h1>
 
-    <input type="text" placeholder="ユーザーID">
-    <input type="password" placeholder="パスワード">
+    <p class="subtitle">友達と楽しくチャットしよう！</p>
 
-    <button>ログイン</button>
-    <button class="register">新規登録</button>
+    <input id="userId" type="text" placeholder="ユーザーID">
+
+    <input id="password" type="password" placeholder="パスワード">
+
+    <button onclick="login()">ログイン</button>
+
+    <button class="register" onclick="register()">
+      新規登録
+    </button>
+
+    <div id="message"></div>
   </div>
+
+  <script>
+    function login() {
+      const id = document.getElementById("userId").value;
+      const password = document.getElementById("password").value;
+
+      if (!id || !password) {
+        document.getElementById("message").textContent =
+          "ユーザーIDとパスワードを入力してね！";
+        return;
+      }
+
+      document.getElementById("message").textContent =
+        "ログイン機能はデータベース接続後に使えるようになります。";
+    }
+
+    function register() {
+      const id = document.getElementById("userId").value;
+      const password = document.getElementById("password").value;
+
+      if (!id || !password) {
+        document.getElementById("message").textContent =
+          "ユーザーIDとパスワードを入力してね！";
+        return;
+      }
+
+      document.getElementById("message").textContent =
+        "新規登録機能はデータベース接続後に使えるようになります。";
+    }
+  </script>
+
 </body>
 </html>
