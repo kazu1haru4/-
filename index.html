@@ -123,6 +123,19 @@
         "新規登録機能はデータベース接続後に使えるようになります。";
     }
   </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<script>
+  const SUPABASE_URL = "ここにコピーしたAPI URL";
+  const SUPABASE_KEY = "ここにコピーしたPublishable key";
+
+  const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+  console.log("Supabase接続準備OK");
+</script>
 </body>
 </html>
+sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ
