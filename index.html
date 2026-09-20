@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>フレンドチャット</title>
+  <title>プロフィール</title>
 
   <style>
     * {
@@ -35,81 +35,97 @@
 
     h1 {
       text-align: center;
-      margin: 0 0 8px;
+      margin: 0 0 25px;
       font-size: 28px;
     }
 
-    .subtitle {
+    .avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: #ffe2f1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 15px;
+      font-size: 55px;
+      overflow: hidden;
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .image-button {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      background: #eeeaff;
+      color: #6556d8;
       text-align: center;
-      color: #888;
-      margin-bottom: 25px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+
+    #avatarFile {
+      display: none;
     }
 
     label {
       display: block;
-      margin: 14px 0 7px;
+      margin: 15px 0 7px;
       font-weight: bold;
     }
 
-    input {
+    input,
+    textarea {
       width: 100%;
       padding: 14px;
       border: 1px solid #ddd;
       border-radius: 12px;
       font-size: 16px;
       outline: none;
+      font-family: inherit;
     }
 
-    input:focus {
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    input:focus,
+    textarea:focus {
       border-color: #9b8cff;
-    }
-
-    .buttons {
-      display: grid;
-      gap: 10px;
-      margin-top: 20px;
     }
 
     button {
       width: 100%;
       padding: 14px;
+      margin-top: 20px;
       border: none;
       border-radius: 12px;
+      background: #8f7cff;
+      color: white;
       font-size: 16px;
       font-weight: bold;
       cursor: pointer;
     }
 
-    .login {
-      background: #8f7cff;
-      color: white;
-    }
-
-    .register {
-      background: #ffe2f1;
-      color: #7a4660;
-    }
-
-    button:active {
-      transform: scale(0.98);
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     #message {
       min-height: 24px;
       text-align: center;
-      margin-top: 18px;
+      margin-top: 15px;
       font-weight: bold;
       color: #666;
-    }
-
-    .note {
-      margin-top: 20px;
-      padding: 12px;
-      border-radius: 12px;
-      background: #f7f7f7;
-      font-size: 13px;
-      color: #777;
-      line-height: 1.6;
     }
   </style>
 </head>
@@ -118,62 +134,51 @@
 
   <div class="container">
 
-    <h1>💬 フレンドチャット</h1>
+    <h1>👤 プロフィール</h1>
 
-    <div class="subtitle">
-      友だちと楽しくチャットしよう！
+    <div class="avatar" id="avatarPreview">
+      😊
     </div>
 
-    <label for="userId">ユーザーID</label>
+    <label for="avatarFile" class="image-button">
+      📷 アイコン画像を選ぶ
+    </label>
 
     <input
-      id="userId"
+      id="avatarFile"
+      type="file"
+      accept="image/*"
+    >
+
+    <label for="name">名前</label>
+
+    <input
+      id="name"
       type="text"
-      placeholder="ユーザーID"
-      autocomplete="username"
-      maxlength="20"
+      placeholder="表示する名前"
+      maxlength="30"
     >
 
-    <label for="password">パスワード</label>
+    <label for="bio">自己紹介</label>
 
-    <input
-      id="password"
-      type="password"
-      placeholder="パスワード"
-      autocomplete="current-password"
+    <textarea
+      id="bio"
+      placeholder="自己紹介を書こう！"
+      maxlength="200"
+    ></textarea>
+
+    <button
+      id="saveButton"
+      type="button"
+      onclick="saveProfile()"
     >
-
-    <div class="buttons">
-
-      <button
-        class="login"
-        type="button"
-        onclick="login()"
-      >
-        ログイン
-      </button>
-
-      <button
-        class="register"
-        type="button"
-        onclick="register()"
-      >
-        新規登録
-      </button>
-
-    </div>
+      プロフィールを保存
+    </button>
 
     <div id="message"></div>
 
-    <div class="note">
-      ユーザーIDは3〜20文字の英数字と「_」が使えます。<br>
-      パスワードは6文字以上にしてね。
-    </div>
-
   </div>
 
-
-  <!-- Supabase -->
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -186,200 +191,373 @@
       "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 
 
-    const supabaseClient = supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_KEY
-    );
+    const supabaseClient =
+      supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
 
 
-    async function register() {
+    let selectedFile = null;
 
-      const id =
-        document.getElementById("userId").value.trim();
 
-      const password =
-        document.getElementById("password").value;
+    // =========================
+    // ログイン状態を確認
+    // =========================
+
+    async function checkLogin() {
+
+      const {
+        data: { user },
+        error
+      } = await supabaseClient.auth.getUser();
+
+
+      console.log("LOGIN USER:", user);
+      console.log("GET USER ERROR:", error);
+
+
+      if (!user) {
+
+        document.getElementById("message").textContent =
+          "ログインしてください。";
+
+        return null;
+      }
+
+
+      return user;
+    }
+
+
+    // =========================
+    // 画像を選択
+    // =========================
+
+    document
+      .getElementById("avatarFile")
+      .addEventListener("change", function(event) {
+
+        const file =
+          event.target.files[0];
+
+
+        if (!file) {
+          return;
+        }
+
+
+        // 画像か確認
+        if (!file.type.startsWith("image/")) {
+
+          document.getElementById("message").textContent =
+            "画像ファイルを選んでね！";
+
+          return;
+        }
+
+
+        // 5MB制限
+        if (file.size > 5 * 1024 * 1024) {
+
+          document.getElementById("message").textContent =
+            "画像は5MB以下にしてね！";
+
+          return;
+        }
+
+
+        selectedFile = file;
+
+
+        const imageUrl =
+          URL.createObjectURL(file);
+
+
+        document
+          .getElementById("avatarPreview")
+          .innerHTML =
+            `<img src="${imageUrl}" alt="アイコン">`;
+
+
+        document.getElementById("message").textContent =
+          "画像を選択したよ！";
+
+
+        console.log("SELECTED FILE:", file);
+
+      });
+
+
+    // =========================
+    // プロフィール保存
+    // =========================
+
+    async function saveProfile() {
+
+      const name =
+        document
+          .getElementById("name")
+          .value
+          .trim();
+
+
+      const bio =
+        document
+          .getElementById("bio")
+          .value
+          .trim();
+
 
       const message =
         document.getElementById("message");
 
 
-      if (!id || !password) {
+      const saveButton =
+        document.getElementById("saveButton");
+
+
+      if (!name) {
 
         message.textContent =
-          "ユーザーIDとパスワードを入力してね！";
+          "名前を入力してね！";
 
         return;
       }
 
 
-      if (!/^[A-Za-z0-9_]{3,20}$/.test(id)) {
+      // -------------------------
+      // ログイン確認
+      // -------------------------
+
+      const {
+        data: { user },
+        error: userError
+      } = await supabaseClient.auth.getUser();
+
+
+      console.log("LOGIN USER:", user);
+      console.log("USER ERROR:", userError);
+
+
+      // セッションも確認
+      const {
+        data: sessionData,
+        error: sessionError
+      } = await supabaseClient.auth.getSession();
+
+
+      console.log(
+        "SESSION EXISTS:",
+        !!sessionData.session
+      );
+
+      console.log(
+        "SESSION ERROR:",
+        sessionError
+      );
+
+
+      if (!user) {
 
         message.textContent =
-          "ユーザーIDは3〜20文字の英数字と_で入力してね。";
+          "ログインしてください。";
 
         return;
       }
 
 
-      if (password.length < 6) {
+      saveButton.disabled = true;
 
-        message.textContent =
-          "パスワードは6文字以上にしてね。";
-
-        return;
-      }
+      message.textContent =
+        "保存中…";
 
 
-      message.textContent = "登録中…";
+      let avatarUrl = "";
 
 
-      try {
+      // =========================
+      // アイコン画像アップロード
+      // =========================
 
-        const { data, error } =
-          await supabaseClient.functions.invoke("auth", {
+      if (selectedFile) {
 
-            body: {
-              action: "register",
-              username: id,
-              password: password
-            }
-
-          });
+        console.log(
+          "画像アップロード開始"
+        );
 
 
-        if (error) {
+        const fileExt =
+          selectedFile.name
+            .split(".")
+            .pop()
+            .toLowerCase();
 
-          console.error(error);
+
+        const fileName =
+          `${user.id}/${Date.now()}.${fileExt}`;
+
+
+        console.log(
+          "UPLOAD FILE:",
+          fileName
+        );
+
+
+        const {
+          data: uploadData,
+          error: uploadError
+        } =
+          await supabaseClient.storage
+            .from("avatars")
+            .upload(
+              fileName,
+              selectedFile,
+              {
+                upsert: true,
+                contentType: selectedFile.type
+              }
+            );
+
+
+        console.log(
+          "UPLOAD DATA:",
+          uploadData
+        );
+
+        console.log(
+          "UPLOAD ERROR:",
+          uploadError
+        );
+
+
+        if (uploadError) {
+
+          console.error(
+            "UPLOAD ERROR:",
+            uploadError
+          );
+
 
           message.textContent =
-            "登録できませんでした。";
+            "画像エラー: " +
+            uploadError.message;
+
+
+          saveButton.disabled = false;
 
           return;
         }
 
 
-        if (!data || !data.ok) {
+        // =========================
+        // 公開URL取得
+        // =========================
 
-          message.textContent =
-            data?.error || "登録できませんでした。";
+        const {
+          data: publicData
+        } =
+          supabaseClient.storage
+            .from("avatars")
+            .getPublicUrl(fileName);
 
-          return;
-        }
+
+        avatarUrl =
+          publicData.publicUrl;
 
 
-        message.textContent =
-          "登録成功！🎉 ログインしてね。";
+        console.log(
+          "AVATAR URL:",
+          avatarUrl
+        );
 
       }
 
-      catch (error) {
 
-        console.error(error);
+      // =========================
+      // profilesを更新
+      // =========================
 
-        message.textContent =
-          "通信エラーが発生しました。";
+      const updateData = {
+
+        name: name,
+
+        bio: bio
+
+      };
+
+
+      if (avatarUrl) {
+
+        updateData.avatar_url =
+          avatarUrl;
 
       }
+
+
+      console.log(
+        "PROFILE UPDATE:",
+        updateData
+      );
+
+
+      const {
+        data: profileData,
+        error: profileError
+      } =
+        await supabaseClient
+          .from("profiles")
+          .update(updateData)
+          .eq(
+            "user_id",
+            user.user_metadata.username
+          );
+
+
+      console.log(
+        "PROFILE DATA:",
+        profileData
+      );
+
+      console.log(
+        "PROFILE ERROR:",
+        profileError
+      );
+
+
+      if (profileError) {
+
+        console.error(
+          "PROFILE ERROR:",
+          profileError
+        );
+
+
+        message.textContent =
+          "プロフィールを保存できませんでした: " +
+          profileError.message;
+
+
+        saveButton.disabled = false;
+
+        return;
+      }
+
+
+      message.textContent =
+        "プロフィールを保存したよ！🎉";
+
+
+      saveButton.disabled = false;
 
     }
 
 
-    async function login() {
+    // =========================
+    // ページを開いたとき
+    // =========================
 
-      const id =
-        document.getElementById("userId").value.trim();
-
-      const password =
-        document.getElementById("password").value;
-
-      const message =
-        document.getElementById("message");
-
-
-      if (!id || !password) {
-
-        message.textContent =
-          "ユーザーIDとパスワードを入力してね！";
-
-        return;
-      }
-
-
-      message.textContent = "ログイン中…";
-
-
-      try {
-
-        const { data, error } =
-          await supabaseClient.functions.invoke("auth", {
-
-            body: {
-              action: "login",
-              username: id,
-              password: password
-            }
-
-          });
-
-
-        if (error) {
-
-          console.error(error);
-
-          message.textContent =
-            "ログインできませんでした。";
-
-          return;
-        }
-
-
-        if (!data || !data.session) {
-
-          message.textContent =
-            data?.error || "ログインできませんでした。";
-
-          return;
-        }
-
-
-        const { error: sessionError } =
-          await supabaseClient.auth.setSession({
-
-            access_token:
-              data.session.access_token,
-
-            refresh_token:
-              data.session.refresh_token
-
-          });
-
-
-        if (sessionError) {
-
-          console.error(sessionError);
-
-          message.textContent =
-            "ログイン情報の保存に失敗しました。";
-
-          return;
-        }
-
-
-        window.location.href = "home.html";
-
-      }
-
-      catch (error) {
-
-        console.error(error);
-
-        message.textContent =
-          "通信エラーが発生しました。";
-
-      }
-
-    }
+    checkLogin();
 
   </script>
 
