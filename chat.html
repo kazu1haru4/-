@@ -187,9 +187,10 @@
 
     let currentUsername = "";
     let friendId = "";
+    let realtimeChannel = null;
 
 
-    // URLからフレンドのユーザーIDを取得
+    // URLからフレンドのIDを取得
     const params =
       new URLSearchParams(
         window.location.search
@@ -234,7 +235,6 @@
       }
 
 
-      // ★ ユーザーIDを取得
       currentUsername =
         data.session.user.user_metadata?.username || "";
 
@@ -249,7 +249,6 @@
       }
 
 
-      // フレンドの名前を取得
       const {
         data: profile
       } =
@@ -266,6 +265,8 @@
 
 
       await loadMessages();
+
+      startRealtime();
 
     }
 
@@ -334,7 +335,6 @@
         "message";
 
 
-      // ★ ユーザーIDで自分のメッセージを判定
       if (
         message.sender_id ===
         currentUsername
@@ -396,6 +396,78 @@
     }
 
 
+    // ★ リアルタイム受信
+    function startRealtime() {
+
+      if (realtimeChannel) {
+        return;
+      }
+
+
+      realtimeChannel =
+        supabaseClient
+          .channel(
+            "chat-" +
+            currentUsername +
+            "-" +
+            friendId
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "messages"
+            },
+            (payload) => {
+
+              const message =
+                payload.new;
+
+
+              // この2人のチャットだけ表示
+              const isThisChat =
+                (
+                  message.sender_id ===
+                    currentUsername &&
+                  message.receiver_id ===
+                    friendId
+                ) ||
+                (
+                  message.sender_id ===
+                    friendId &&
+                  message.receiver_id ===
+                    currentUsername
+                );
+
+
+              if (!isThisChat) {
+                return;
+              }
+
+
+              // 自分の送信分は、
+              // すでに画面に表示しているので重複させない
+              if (
+                message.sender_id ===
+                currentUsername
+              ) {
+                return;
+              }
+
+
+              addMessageToScreen(message);
+
+              scrollToBottom();
+
+            }
+          )
+          .subscribe();
+
+    }
+
+
+    // メッセージ送信
     messageForm.addEventListener(
       "submit",
       async function(event) {
@@ -425,8 +497,6 @@
         sendButton.disabled = true;
 
 
-        // ★ sender_id / receiver_id を
-        // ★ ユーザーIDで統一
         const {
           data,
           error
