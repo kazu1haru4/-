@@ -162,7 +162,6 @@
 
   </main>
 
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
@@ -173,13 +172,11 @@
     const SUPABASE_KEY =
       "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 
-
     const supabaseClient =
       window.supabase.createClient(
         SUPABASE_URL,
         SUPABASE_KEY
       );
-
 
     const userIdInput =
       document.getElementById("userIdInput");
@@ -193,7 +190,6 @@
     const message =
       document.getElementById("message");
 
-
     let currentUser = null;
     let currentUsername = "";
 
@@ -203,72 +199,30 @@
     // ==============================
 
     async function start() {
-const { data, error } = await supabaseClient.auth.getSession();
 
-console.log("SESSION:", data.session);
-console.log("ERROR:", error);
-
-if (error || !data.session) {
-  alert("ログインしてください。");
-  return;
-}
-
-currentUser = data.session.user;
-currentUsername =
-  data.session.user.user_metadata?.username || "";
-
-if (!currentUsername) {
-  alert("ユーザーIDを取得できませんでした。");
-  return;
-}
-
-await loadFriends();
       const {
         data,
         error
-      } =
-        await supabaseClient.auth.getUser();
+      } = await supabaseClient.auth.getSession();
 
+      console.log("SESSION:", data.session);
+      console.log("ERROR:", error);
 
-      const { data, error } = await supabaseClient.auth.getSession();
-
-console.log("SESSION:", data.session);
-console.log("ERROR:", error);
-
-if (error || !data.session) {
-  alert("ログインしてください。");
-  return;
-}
-
-currentUser = data.session.user;
-currentUsername =
-  data.session.user.user_metadata?.username || "";
-
-if (!currentUsername) {
-  alert("ユーザーIDを取得できませんでした。");
-  return;
-}
-
-await loadFriends();
-
-
-      currentUser =
-        data.user;
-
-
-      // 登録時に保存したユーザーID
-      currentUsername =
-        data.user.user_metadata?.username || "";
-
-
-      if (!currentUsername) {
-
-        alert("ユーザーIDを取得できませんでした。");
-
+      if (error || !data.session) {
+        alert("ログインしてください。");
         return;
-
       }
 
+      currentUser =
+        data.session.user;
+
+      currentUsername =
+        data.session.user.user_metadata?.username || "";
+
+      if (!currentUsername) {
+        alert("ユーザーIDを取得できませんでした。");
+        return;
+      }
 
       await loadFriends();
 
@@ -290,7 +244,6 @@ await loadFriends();
           .select("*")
           .eq("user_id", currentUsername);
 
-
       if (error) {
 
         console.error(error);
@@ -299,9 +252,7 @@ await loadFriends();
           '<div class="empty">フレンドを読み込めませんでした</div>';
 
         return;
-
       }
-
 
       if (!data || data.length === 0) {
 
@@ -309,12 +260,9 @@ await loadFriends();
           '<div class="empty">まだフレンドがいません</div>';
 
         return;
-
       }
 
-
       friendList.innerHTML = "";
-
 
       for (const friend of data) {
 
@@ -327,13 +275,11 @@ await loadFriends();
             .eq("user_id", friend.friend_id)
             .maybeSingle();
 
-
         const div =
           document.createElement("div");
 
         div.className =
           "friend";
-
 
         const avatar =
           document.createElement("div");
@@ -344,10 +290,8 @@ await loadFriends();
         avatar.textContent =
           "👤";
 
-
         const info =
           document.createElement("div");
-
 
         const name =
           document.createElement("div");
@@ -358,7 +302,6 @@ await loadFriends();
         name.textContent =
           profile?.name || friend.friend_id;
 
-
         const userId =
           document.createElement("div");
 
@@ -368,14 +311,11 @@ await loadFriends();
         userId.textContent =
           "@" + friend.friend_id;
 
-
         info.appendChild(name);
         info.appendChild(userId);
 
-
         div.appendChild(avatar);
         div.appendChild(info);
-
 
         friendList.appendChild(div);
 
@@ -399,9 +339,7 @@ await loadFriends();
       const friendId =
         userIdInput.value.trim();
 
-
       message.textContent = "";
-
 
       if (!friendId) {
 
@@ -409,9 +347,7 @@ await loadFriends();
           "ユーザーIDを入力してね。";
 
         return;
-
       }
-
 
       if (friendId === currentUsername) {
 
@@ -419,7 +355,6 @@ await loadFriends();
           "自分は追加できません。";
 
         return;
-
       }
 
 
@@ -435,7 +370,6 @@ await loadFriends();
           .eq("user_id", friendId)
           .maybeSingle();
 
-
       if (
         profileError ||
         !profile
@@ -447,7 +381,6 @@ await loadFriends();
           "そのユーザーは見つかりません。";
 
         return;
-
       }
 
 
@@ -463,14 +396,12 @@ await loadFriends();
           .eq("friend_id", friendId)
           .maybeSingle();
 
-
       if (existing) {
 
         message.textContent =
           "すでにフレンドです。";
 
         return;
-
       }
 
 
@@ -491,7 +422,6 @@ await loadFriends();
 
           });
 
-
       if (error) {
 
         console.error(error);
@@ -500,16 +430,13 @@ await loadFriends();
           "追加できませんでした。";
 
         return;
-
       }
 
-
       message.textContent =
-        profile.name + " さんをフレンドに追加しました！";
-
+        profile.name +
+        " さんをフレンドに追加しました！";
 
       userIdInput.value = "";
-
 
       await loadFriends();
 
