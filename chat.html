@@ -185,11 +185,11 @@
       document.getElementById("chatTitle");
 
 
-    let currentUser = null;
+    let currentUsername = "";
     let friendId = "";
 
 
-    // URLから相手のIDを取得
+    // URLからフレンドのユーザーIDを取得
     const params =
       new URLSearchParams(
         window.location.search
@@ -234,10 +234,22 @@
       }
 
 
-      currentUser =
-        data.session.user;
+      // ★ ユーザーIDを取得
+      currentUsername =
+        data.session.user.user_metadata?.username || "";
 
 
+      if (!currentUsername) {
+
+        alert(
+          "ログイン中のユーザーIDを取得できませんでした。"
+        );
+
+        return;
+      }
+
+
+      // フレンドの名前を取得
       const {
         data: profile
       } =
@@ -268,7 +280,7 @@
           .from("messages")
           .select("*")
           .or(
-            `and(sender_id.eq.${currentUser.id},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${currentUser.id})`
+            `and(sender_id.eq.${currentUsername},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${currentUsername})`
           )
           .order(
             "created_at",
@@ -280,7 +292,10 @@
 
       if (error) {
 
-        console.error(error);
+        console.error(
+          "読み込みエラー:",
+          error
+        );
 
         messagesElement.innerHTML =
           '<div class="empty">メッセージを読み込めませんでした</div>';
@@ -319,9 +334,10 @@
         "message";
 
 
+      // ★ ユーザーIDで自分のメッセージを判定
       if (
         message.sender_id ===
-        currentUser.id
+        currentUsername
       ) {
 
         wrapper.classList.add("mine");
@@ -396,7 +412,12 @@
         }
 
 
-        if (!currentUser || !friendId) {
+        if (!currentUsername || !friendId) {
+
+          alert(
+            "ログイン情報または相手の情報を取得できません。"
+          );
+
           return;
         }
 
@@ -404,6 +425,8 @@
         sendButton.disabled = true;
 
 
+        // ★ sender_id / receiver_id を
+        // ★ ユーザーIDで統一
         const {
           data,
           error
@@ -413,7 +436,7 @@
             .insert({
 
               sender_id:
-                currentUser.id,
+                currentUsername,
 
               receiver_id:
                 friendId,
@@ -440,7 +463,8 @@
           );
 
           alert(
-            "メッセージを送信できませんでした。"
+            "メッセージを送信できませんでした。\n\n" +
+            error.message
           );
 
           return;
@@ -448,6 +472,7 @@
 
 
         messageInput.value = "";
+
 
         addMessageToScreen(data);
 
