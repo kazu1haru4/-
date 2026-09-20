@@ -137,7 +137,8 @@
       padding: 20px;
     }
 
-    /* メンバー追加画面 */
+    /* モーダル共通 */
+
     .modal {
       display: none;
       position: fixed;
@@ -156,6 +157,8 @@
       border-radius: 20px;
       padding: 22px;
       box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+      max-height: 80vh;
+      overflow-y: auto;
     }
 
     .modal-title {
@@ -165,6 +168,61 @@
       text-align: center;
       margin-bottom: 15px;
     }
+
+    /* メンバー一覧 */
+
+    .member-list {
+      margin-bottom: 15px;
+    }
+
+    .member-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f5f8ff;
+      border-radius: 12px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+
+    .member-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #dceaff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .member-info {
+      min-width: 0;
+    }
+
+    .member-name {
+      font-size: 14px;
+      font-weight: bold;
+      color: #444;
+      word-break: break-word;
+    }
+
+    .member-id {
+      font-size: 12px;
+      color: #888;
+      word-break: break-word;
+    }
+
+    .member-loading,
+    .member-empty {
+      text-align: center;
+      color: #888;
+      padding: 15px 5px;
+      font-size: 14px;
+    }
+
+    /* メンバー追加 */
 
     #memberInput {
       width: 100%;
@@ -198,6 +256,19 @@
       background: #eee;
       color: #555;
     }
+
+    .add-section {
+      border-top: 1px solid #eee;
+      margin-top: 15px;
+      padding-top: 15px;
+    }
+
+    .add-section-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #555;
+      margin-bottom: 8px;
+    }
   </style>
 </head>
 
@@ -214,7 +285,7 @@
       class="member-button"
       type="button"
     >
-      👤 メンバー追加
+      👥 メンバー
     </button>
 
     <div class="title">
@@ -253,7 +324,9 @@
 
   </div>
 
-  <!-- メンバー追加 -->
+
+  <!-- メンバー画面 -->
+
   <div
     id="memberModal"
     class="modal"
@@ -262,37 +335,56 @@
     <div class="modal-box">
 
       <div class="modal-title">
-        👤 メンバーを追加
+        👥 グループメンバー
       </div>
 
-      <input
-        id="memberInput"
-        type="text"
-        placeholder="追加するユーザーID"
-        autocomplete="off"
+      <div
+        id="memberList"
+        class="member-list"
       >
+        <div class="member-loading">
+          読み込み中...
+        </div>
+      </div>
 
-      <div class="modal-buttons">
 
-        <button
-          id="closeModalButton"
-          type="button"
+      <div class="add-section">
+
+        <div class="add-section-title">
+          ➕ メンバーを追加
+        </div>
+
+        <input
+          id="memberInput"
+          type="text"
+          placeholder="追加するユーザーID"
+          autocomplete="off"
         >
-          キャンセル
-        </button>
 
-        <button
-          id="addMemberButton"
-          type="button"
-        >
-          追加
-        </button>
+        <div class="modal-buttons">
+
+          <button
+            id="closeModalButton"
+            type="button"
+          >
+            閉じる
+          </button>
+
+          <button
+            id="addMemberButton"
+            type="button"
+          >
+            追加
+          </button>
+
+        </div>
 
       </div>
 
     </div>
 
   </div>
+
 
   <script>
 
@@ -346,6 +438,11 @@
     const memberModal =
       document.getElementById(
         "memberModal"
+      );
+
+    const memberList =
+      document.getElementById(
+        "memberList"
       );
 
     const memberInput =
@@ -636,6 +733,194 @@
 
 
     /* =========================
+       メンバー一覧読み込み
+    ========================= */
+
+    async function loadMembers() {
+
+      memberList.innerHTML =
+        '<div class="member-loading">読み込み中...</div>';
+
+
+      const {
+        data: members,
+        error: membersError
+      } =
+        await supabaseClient
+          .from("group_members")
+          .select("user_id")
+          .eq(
+            "group_id",
+            Number(groupId)
+          );
+
+
+      if (membersError) {
+
+        console.error(
+          membersError
+        );
+
+        memberList.innerHTML =
+          '<div class="member-empty">メンバーを読み込めませんでした。</div>';
+
+        return;
+      }
+
+
+      if (
+        !members ||
+        members.length === 0
+      ) {
+
+        memberList.innerHTML =
+          '<div class="member-empty">まだメンバーがいません。</div>';
+
+        return;
+      }
+
+
+      memberList.innerHTML = "";
+
+
+      for (
+        const member
+        of members
+      ) {
+
+        const {
+          data: profile
+        } =
+          await supabaseClient
+            .from("profiles")
+            .select(
+              "user_id, name, avatar_url"
+            )
+            .eq(
+              "user_id",
+              member.user_id
+            )
+            .maybeSingle();
+
+
+        const item =
+          document.createElement(
+            "div"
+          );
+
+        item.className =
+          "member-item";
+
+
+        const icon =
+          document.createElement(
+            "div"
+          );
+
+        icon.className =
+          "member-icon";
+
+
+        if (
+          profile &&
+          profile.avatar_url
+        ) {
+
+          const img =
+            document.createElement(
+              "img"
+            );
+
+          img.src =
+            profile.avatar_url;
+
+          img.alt =
+            "アイコン";
+
+          img.style.width =
+            "100%";
+
+          img.style.height =
+            "100%";
+
+          img.style.objectFit =
+            "cover";
+
+          img.style.borderRadius =
+            "50%";
+
+          icon.appendChild(
+            img
+          );
+
+        } else {
+
+          icon.textContent =
+            "👤";
+        }
+
+
+        const info =
+          document.createElement(
+            "div"
+          );
+
+        info.className =
+          "member-info";
+
+
+        const name =
+          document.createElement(
+            "div"
+          );
+
+        name.className =
+          "member-name";
+
+        name.textContent =
+          profile?.name ||
+          member.user_id;
+
+
+        const id =
+          document.createElement(
+            "div"
+          );
+
+        id.className =
+          "member-id";
+
+        id.textContent =
+          "@" +
+          member.user_id;
+
+
+        info.appendChild(
+          name
+        );
+
+        info.appendChild(
+          id
+        );
+
+
+        item.appendChild(
+          icon
+        );
+
+        item.appendChild(
+          info
+        );
+
+
+        memberList.appendChild(
+          item
+        );
+      }
+    }
+
+
+    /* =========================
        メンバー追加
     ========================= */
 
@@ -671,8 +956,6 @@
       addMemberButton.disabled =
         true;
 
-
-      /* ユーザー確認 */
 
       const {
         data: profile,
@@ -720,8 +1003,6 @@
         return;
       }
 
-
-      /* すでにメンバーか確認 */
 
       const {
         data: existing,
@@ -772,8 +1053,6 @@
       }
 
 
-      /* メンバー追加 */
-
       const {
         error: insertError
       } =
@@ -818,25 +1097,27 @@
       memberInput.value =
         "";
 
-      memberModal.style.display =
-        "none";
-
 
       addMemberButton.disabled =
         false;
+
+
+      await loadMembers();
     }
 
 
     /* =========================
-       メンバー追加ボタン
+       メンバーボタン
     ========================= */
 
     memberButton.addEventListener(
       "click",
-      function() {
+      async function() {
 
         memberModal.style.display =
           "flex";
+
+        await loadMembers();
 
         memberInput.focus();
 
@@ -845,7 +1126,7 @@
 
 
     /* =========================
-       キャンセル
+       閉じる
     ========================= */
 
     closeModalButton.addEventListener(
@@ -878,7 +1159,7 @@
     );
 
 
-    /* 追加 */
+    /* メンバー追加 */
 
     addMemberButton.addEventListener(
       "click",
