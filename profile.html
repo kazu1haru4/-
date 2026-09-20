@@ -233,8 +233,9 @@
       }
 
 
-    console.log("USER:", user);
-console.log("SESSION:", await supabaseClient.auth.getSession());
+      const {
+        data: { user }
+      } = await supabaseClient.auth.getUser();
 
 
       if (!user) {
@@ -279,7 +280,7 @@ console.log("SESSION:", await supabaseClient.auth.getSession());
           console.error(uploadError);
 
           message.textContent =
-  "画像エラー: " + uploadError.message;
+            "画像エラー: " + uploadError.message;
 
           return;
         }
