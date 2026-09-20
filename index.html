@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>フレンドチャット</title>
 
   <style>
@@ -13,129 +14,391 @@
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: sans-serif;
-      background: #f5f3ff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      background: linear-gradient(135deg, #fff4fb, #eef7ff);
       display: flex;
       justify-content: center;
       align-items: center;
       padding: 20px;
+      color: #333;
     }
 
-    .box {
+    .container {
       width: 100%;
       max-width: 420px;
       background: white;
-      padding: 30px 22px;
       border-radius: 24px;
-      box-shadow: 0 5px 20px #ddd;
-      text-align: center;
+      padding: 30px 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
     }
 
     h1 {
-      margin-bottom: 8px;
+      text-align: center;
+      margin: 0 0 8px;
+      font-size: 28px;
     }
 
     .subtitle {
-      color: #777;
+      text-align: center;
+      color: #888;
       margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      margin: 14px 0 7px;
+      font-weight: bold;
     }
 
     input {
       width: 100%;
       padding: 14px;
-      margin: 7px 0;
       border: 1px solid #ddd;
       border-radius: 12px;
       font-size: 16px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #9b8cff;
+    }
+
+    .buttons {
+      display: grid;
+      gap: 10px;
+      margin-top: 20px;
     }
 
     button {
       width: 100%;
       padding: 14px;
-      margin-top: 10px;
       border: none;
       border-radius: 12px;
-      background: #7c5cff;
-      color: white;
       font-size: 16px;
       font-weight: bold;
       cursor: pointer;
     }
 
+    .login {
+      background: #8f7cff;
+      color: white;
+    }
+
     .register {
-      background: #ff8fb3;
+      background: #ffe2f1;
+      color: #7a4660;
+    }
+
+    button:active {
+      transform: scale(0.98);
     }
 
     #message {
-      margin-top: 18px;
-      color: #666;
       min-height: 24px;
+      text-align: center;
+      margin-top: 18px;
+      font-weight: bold;
+      color: #666;
+    }
+
+    .note {
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 12px;
+      background: #f7f7f7;
+      font-size: 13px;
+      color: #777;
+      line-height: 1.6;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="box">
+  <div class="container">
+
     <h1>💬 フレンドチャット</h1>
 
-    <p class="subtitle">友達と楽しくチャットしよう！</p>
+    <div class="subtitle">
+      友だちと楽しくチャットしよう！
+    </div>
 
-    <input id="userId" type="text" placeholder="ユーザーID">
+    <label for="userId">ユーザーID</label>
 
-    <input id="password" type="password" placeholder="パスワード">
+    <input
+      id="userId"
+      type="text"
+      placeholder="ユーザーID"
+      autocomplete="username"
+      maxlength="20"
+    >
 
-    <button onclick="login()">ログイン</button>
+    <label for="password">パスワード</label>
 
-    <button class="register" onclick="register()">
-      新規登録
-    </button>
+    <input
+      id="password"
+      type="password"
+      placeholder="パスワード"
+      autocomplete="current-password"
+    >
+
+    <div class="buttons">
+
+      <button
+        class="login"
+        type="button"
+        onclick="login()"
+      >
+        ログイン
+      </button>
+
+      <button
+        class="register"
+        type="button"
+        onclick="register()"
+      >
+        新規登録
+      </button>
+
+    </div>
 
     <div id="message"></div>
+
+    <div class="note">
+      ユーザーIDは3〜20文字の英数字と「_」が使えます。<br>
+      パスワードは6文字以上にしてね。
+    </div>
+
   </div>
 
+
+  <!-- Supabase -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
-    function login() {
-      const id = document.getElementById("userId").value;
-      const password = document.getElementById("password").value;
+
+    /*
+      ========================================
+      ここだけ自分のSupabase情報に変更
+      ========================================
+    */
+
+    const SUPABASE_URL =　https://yxonmqdyekwenyzekjwj.supabase.co
+
+    const SUPABASE_KEY = sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ
+
+
+    const supabaseClient = supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
+
+
+    /*
+      ========================================
+      新規登録
+      ========================================
+    */
+
+    async function register() {
+
+      const id =
+        document.getElementById("userId").value.trim();
+
+      const password =
+        document.getElementById("password").value;
+
+      const message =
+        document.getElementById("message");
+
 
       if (!id || !password) {
-        document.getElementById("message").textContent =
+
+        message.textContent =
           "ユーザーIDとパスワードを入力してね！";
+
         return;
       }
 
-      document.getElementById("message").textContent =
-        "ログイン機能はデータベース接続後に使えるようになります。";
-    }
 
-    function register() {
-      const id = document.getElementById("userId").value;
-      const password = document.getElementById("password").value;
+      if (!/^[A-Za-z0-9_]{3,20}$/.test(id)) {
 
-      if (!id || !password) {
-        document.getElementById("message").textContent =
-          "ユーザーIDとパスワードを入力してね！";
+        message.textContent =
+          "ユーザーIDは3〜20文字の英数字と_で入力してね。";
+
         return;
       }
 
-      document.getElementById("message").textContent =
-        "新規登録機能はデータベース接続後に使えるようになります。";
+
+      if (password.length < 6) {
+
+        message.textContent =
+          "パスワードは6文字以上にしてね。";
+
+        return;
+      }
+
+
+      message.textContent = "登録中…";
+
+
+      try {
+
+        const { data, error } =
+          await supabaseClient.functions.invoke("auth", {
+
+            body: {
+              action: "register",
+              username: id,
+              password: password
+            }
+
+          });
+
+
+        if (error) {
+
+          console.error(error);
+
+          message.textContent =
+            "登録できませんでした。";
+
+          return;
+        }
+
+
+        if (!data || !data.ok) {
+
+          message.textContent =
+            data?.error || "登録できませんでした。";
+
+          return;
+        }
+
+
+        message.textContent =
+          "登録成功！🎉 ログインしてね。";
+
+      }
+
+      catch (error) {
+
+        console.error(error);
+
+        message.textContent =
+          "通信エラーが発生しました。";
+
+      }
+
     }
+
+
+    /*
+      ========================================
+      ログイン
+      ========================================
+    */
+
+    async function login() {
+
+      const id =
+        document.getElementById("userId").value.trim();
+
+      const password =
+        document.getElementById("password").value;
+
+      const message =
+        document.getElementById("message");
+
+
+      if (!id || !password) {
+
+        message.textContent =
+          "ユーザーIDとパスワードを入力してね！";
+
+        return;
+      }
+
+
+      message.textContent = "ログイン中…";
+
+
+      try {
+
+        const { data, error } =
+          await supabaseClient.functions.invoke("auth", {
+
+            body: {
+              action: "login",
+              username: id,
+              password: password
+            }
+
+          });
+
+
+        if (error) {
+
+          console.error(error);
+
+          message.textContent =
+            "ログインできませんでした。";
+
+          return;
+        }
+
+
+        if (!data || !data.session) {
+
+          message.textContent =
+            data?.error || "ログインできませんでした。";
+
+          return;
+        }
+
+
+        const { error: sessionError } =
+          await supabaseClient.auth.setSession({
+
+            access_token:
+              data.session.access_token,
+
+            refresh_token:
+              data.session.refresh_token
+
+          });
+
+
+        if (sessionError) {
+
+          console.error(sessionError);
+
+          message.textContent =
+            "ログイン情報の保存に失敗しました。";
+
+          return;
+        }
+
+
+        message.textContent =
+          "ログイン成功！🎉";
+
+      }
+
+      catch (error) {
+
+        console.error(error);
+
+        message.textContent =
+          "通信エラーが発生しました。";
+
+      }
+
+    }
+
   </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<script>
-  const SUPABASE_URL = "ここにコピーしたAPI URL";
-  const SUPABASE_KEY = "ここにコピーしたPublishable key";
-
-  const supabaseClient = supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-  );
-
-  console.log("Supabase接続準備OK");
-</script>
 </body>
-</html>
-sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ
+  </html>
