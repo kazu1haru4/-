@@ -24,6 +24,22 @@
       color: #333;
     }
 
+    .home-button {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      width: auto;
+      margin: 0;
+      padding: 10px 15px;
+      border-radius: 14px;
+      background: white;
+      color: #6556d8;
+      text-decoration: none;
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      z-index: 10;
+    }
+
     .container {
       width: 100%;
       max-width: 420px;
@@ -102,7 +118,7 @@
       border-color: #9b8cff;
     }
 
-    button {
+    button.save-button {
       width: 100%;
       padding: 14px;
       margin-top: 20px;
@@ -113,6 +129,11 @@
       font-size: 16px;
       font-weight: bold;
       cursor: pointer;
+    }
+
+    button.save-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     #message {
@@ -127,6 +148,10 @@
 </head>
 
 <body>
+
+  <a href="home.html" class="home-button">
+    🏠 ホーム
+  </a>
 
   <div class="container">
 
@@ -163,7 +188,12 @@
       maxlength="200"
     ></textarea>
 
-    <button type="button" onclick="saveProfile()">
+    <button
+      type="button"
+      class="save-button"
+      id="saveButton"
+      onclick="saveProfile()"
+    >
       プロフィールを保存
     </button>
 
@@ -192,36 +222,191 @@
 
 
     // =========================
-    // アイコン画像を選択
+    // メッセージ表示
+    // =========================
+
+    function showMessage(text) {
+
+      document
+        .getElementById("message")
+        .textContent = text;
+
+    }
+
+
+    // =========================
+    // 画像選択
     // =========================
 
     document
       .getElementById("avatarFile")
-      .addEventListener("change", function(event) {
+      .addEventListener(
+        "change",
+        function(event) {
 
-        const file =
-          event.target.files[0];
+          const file =
+            event.target.files[0];
 
-        if (!file) {
-          return;
+          if (!file) {
+            return;
+          }
+
+
+          // 画像かチェック
+
+          if (!file.type.startsWith("image/")) {
+
+            showMessage(
+              "画像ファイルを選んでね！"
+            );
+
+            return;
+          }
+
+
+          // サイズチェック
+          // 5MBまで
+
+          if (file.size > 5 * 1024 * 1024) {
+
+            showMessage(
+              "画像は5MB以下にしてね！"
+            );
+
+            return;
+          }
+
+
+          selectedFile = file;
+
+
+          // プレビュー表示
+
+          const imageUrl =
+            URL.createObjectURL(file);
+
+          document
+            .getElementById("avatarPreview")
+            .innerHTML =
+              `<img src="${imageUrl}" alt="アイコン">`;
+
+
+          showMessage(
+            "画像を選択したよ！"
+          );
+
         }
+      );
 
-        selectedFile = file;
 
-        const imageUrl =
-          URL.createObjectURL(file);
+    // =========================
+    // プロフィール読み込み
+    // =========================
+
+    async function loadProfile() {
+
+      showMessage("読み込み中…");
+
+
+      // ログインユーザー取得
+
+      const {
+        data: { user },
+        error: userError
+      } =
+        await supabaseClient.auth.getUser();
+
+
+      if (userError || !user) {
+
+        showMessage(
+          "ログインしてください。"
+        );
+
+        return;
+      }
+
+
+      const username =
+        user.user_metadata?.username;
+
+
+      if (!username) {
+
+        showMessage(
+          "ユーザー情報を取得できませんでした。"
+        );
+
+        return;
+      }
+
+
+      // profiles取得
+
+      const {
+        data: profile,
+        error
+      } =
+        await supabaseClient
+          .from("profiles")
+          .select("*")
+          .eq("user_id", username)
+          .maybeSingle();
+
+
+      if (error) {
+
+        console.error(error);
+
+        showMessage(
+          "プロフィールを読み込めませんでした。"
+        );
+
+        return;
+      }
+
+
+      if (!profile) {
+
+        showMessage(
+          "プロフィールがまだありません。"
+        );
+
+        return;
+      }
+
+
+      // 名前
+
+      document
+        .getElementById("name")
+        .value =
+          profile.name || username;
+
+
+      // 自己紹介
+
+      document
+        .getElementById("bio")
+        .value =
+          profile.bio || "";
+
+
+      // プロフィール画像
+
+      if (profile.avatar_url) {
 
         document
           .getElementById("avatarPreview")
           .innerHTML =
-            `<img src="${imageUrl}" alt="アイコン">`;
+            `<img src="${profile.avatar_url}" alt="プロフィール画像">`;
 
-        document
-          .getElementById("message")
-          .textContent =
-            "画像を選択したよ！";
+      }
 
-      });
+
+      showMessage("");
+
+    }
 
 
     // =========================
@@ -245,8 +430,12 @@
       const message =
         document.getElementById("message");
 
+      const saveButton =
+        document.getElementById("saveButton");
+
 
       // 名前チェック
+
       if (!name) {
 
         message.textContent =
@@ -256,9 +445,7 @@
       }
 
 
-      // =========================
       // ログインユーザー取得
-      // =========================
 
       const {
         data: { user },
@@ -267,11 +454,7 @@
         await supabaseClient.auth.getUser();
 
 
-      console.log("USER:", user);
-      console.log("USER ERROR:", userError);
-
-
-      if (userError) {
+      if (userError || !user) {
 
         message.textContent =
           "ログイン情報を取得できませんでした。";
@@ -280,24 +463,30 @@
       }
 
 
-      if (!user) {
+      const username =
+        user.user_metadata?.username;
+
+
+      if (!username) {
 
         message.textContent =
-          "ログインしてください。";
+          "ユーザーIDを取得できませんでした。";
 
         return;
       }
 
 
+      saveButton.disabled = true;
+
       message.textContent =
         "保存中…";
 
 
-      let avatarUrl = "";
+      let avatarUrl = null;
 
 
       // =========================
-      // アイコン画像アップロード
+      // 画像アップロード
       // =========================
 
       if (selectedFile) {
@@ -313,14 +502,7 @@
           `${user.id}/${Date.now()}.${fileExt}`;
 
 
-        console.log(
-          "アップロード先:",
-          fileName
-        );
-
-
         const {
-          data: uploadData,
           error: uploadError
         } =
           await supabaseClient.storage
@@ -329,36 +511,29 @@
               fileName,
               selectedFile,
               {
-                upsert: true
+                upsert: true,
+                contentType: selectedFile.type
               }
             );
 
 
-        console.log(
-          "UPLOAD DATA:",
-          uploadData
-        );
-
-        console.log(
-          "UPLOAD ERROR:",
-          uploadError
-        );
-
-
-        // ★画像アップロードのエラー
         if (uploadError) {
 
+          console.error(
+            "UPLOAD ERROR:",
+            uploadError
+          );
+
           message.textContent =
-            "【画像アップロード】" +
-            uploadError.message;
+            "画像アップロードに失敗しました。";
+
+          saveButton.disabled = false;
 
           return;
         }
 
 
-        // =========================
         // 公開URL取得
-        // =========================
 
         const {
           data: publicData
@@ -371,17 +546,11 @@
         avatarUrl =
           publicData.publicUrl;
 
-
-        console.log(
-          "AVATAR URL:",
-          avatarUrl
-        );
-
       }
 
 
       // =========================
-      // プロフィールデータ
+      // 更新データ
       // =========================
 
       const updateData = {
@@ -401,53 +570,58 @@
       }
 
 
-      console.log(
-        "PROFILE UPDATE:",
-        updateData
-      );
-
-
       // =========================
-      // profilesを更新
+      // profiles更新
       // =========================
 
       const {
-        error
+        error: profileError
       } =
         await supabaseClient
           .from("profiles")
           .update(updateData)
           .eq(
             "user_id",
-            user.user_metadata.username
+            username
           );
 
 
-      console.log(
-        "PROFILE ERROR:",
-        error
-      );
+      if (profileError) {
 
-
-      // ★プロフィール保存のエラー
-      if (error) {
+        console.error(
+          "PROFILE ERROR:",
+          profileError
+        );
 
         message.textContent =
-          "【プロフィール保存】" +
-          error.message;
+          "プロフィールの保存に失敗しました。";
+
+        saveButton.disabled = false;
 
         return;
       }
 
 
       // =========================
-      // 成功
+      // 完了
       // =========================
+
+      selectedFile = null;
 
       message.textContent =
         "プロフィールを保存したよ！🎉";
 
+
+      saveButton.disabled = false;
+
     }
+
+
+    // =========================
+    // ページ開始
+    // =========================
+
+    loadProfile();
 
   </script>
 
