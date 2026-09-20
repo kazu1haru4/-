@@ -69,7 +69,7 @@
 
     .messages {
       padding: 15px;
-      padding-bottom: 90px;
+      padding-bottom: 100px;
       max-width: 700px;
       margin: auto;
     }
@@ -101,12 +101,21 @@
       word-break: break-word;
     }
 
+    .chat-image {
+      display: block;
+      max-width: 250px;
+      max-height: 320px;
+      border-radius: 14px;
+      margin-top: 5px;
+      object-fit: contain;
+    }
+
     .reply-preview {
       background: #f0f5ff;
       border-left: 4px solid #6aa9ff;
       border-radius: 8px;
       padding: 7px 9px;
-      margin-bottom: 8px;
+      margin-top: 8px;
       font-size: 12px;
       color: #666;
     }
@@ -203,6 +212,16 @@
       min-width: 0;
     }
 
+    #imageButton {
+      width: 48px;
+      border: none;
+      background: #f0f5ff;
+      color: #5588cc;
+      border-radius: 12px;
+      font-size: 21px;
+      cursor: pointer;
+    }
+
     #sendButton {
       border: none;
       background: #6aa9ff;
@@ -214,8 +233,13 @@
       font-size: 15px;
     }
 
-    #sendButton:disabled {
+    #sendButton:disabled,
+    #imageButton:disabled {
       background: #bbb;
+    }
+
+    #imageInput {
+      display: none;
     }
 
     .error {
@@ -255,8 +279,6 @@
       text-align: center;
       margin-bottom: 15px;
     }
-
-    /* メンバー一覧 */
 
     .member-list {
       margin-bottom: 15px;
@@ -309,8 +331,6 @@
       padding: 15px 5px;
       font-size: 14px;
     }
-
-    /* メンバー追加 */
 
     #memberInput {
       width: 100%;
@@ -478,6 +498,14 @@
     >
 
     <button
+      id="imageButton"
+      type="button"
+      title="画像を送る"
+    >
+      🖼️
+    </button>
+
+    <button
       id="sendButton"
       type="button"
     >
@@ -485,6 +513,12 @@
     </button>
 
   </div>
+
+  <input
+    id="imageInput"
+    type="file"
+    accept="image/*"
+  >
 
 
   <!-- メンバー画面 -->
@@ -591,6 +625,16 @@
         "sendButton"
       );
 
+    const imageButton =
+      document.getElementById(
+        "imageButton"
+      );
+
+    const imageInput =
+      document.getElementById(
+        "imageInput"
+      );
+
     const memberButton =
       document.getElementById(
         "memberButton"
@@ -638,7 +682,6 @@
 
 
     let currentUsername = "";
-
     let replyingToMessage = null;
 
 
@@ -804,26 +847,79 @@
             message.sender_id;
 
 
-      const content =
-        document.createElement(
-          "div"
-        );
-
-      content.className =
-        "content";
-
-
-      content.textContent =
-        message.content || "";
-
-
       box.appendChild(
         sender
       );
 
-      box.appendChild(
-        content
-      );
+
+      /* 画像 */
+
+      if (message.image_url) {
+
+        const {
+          data: signedData,
+          error: signedError
+        } =
+          await supabaseClient.storage
+            .from("chat-images")
+            .createSignedUrl(
+              message.image_url,
+              3600
+            );
+
+
+        if (
+          !signedError &&
+          signedData?.signedUrl
+        ) {
+
+          const image =
+            document.createElement(
+              "img"
+            );
+
+          image.className =
+            "chat-image";
+
+          image.src =
+            signedData.signedUrl;
+
+          image.alt =
+            "送信された画像";
+
+          image.addEventListener(
+            "click",
+            function(event) {
+              event.stopPropagation();
+            }
+          );
+
+          box.appendChild(
+            image
+          );
+        }
+      }
+
+
+      /* テキスト */
+
+      if (message.content) {
+
+        const content =
+          document.createElement(
+            "div"
+          );
+
+        content.className =
+          "content";
+
+        content.textContent =
+          message.content;
+
+        box.appendChild(
+          content
+        );
+      }
 
 
       /* 返信表示 */
@@ -1077,7 +1173,7 @@
       }
 
 
-      /* メニュー表示 */
+      /* リアクションボタン */
 
       reactionButton.addEventListener(
         "click",
@@ -1296,7 +1392,10 @@
       replyText.appendChild(
         document.createTextNode(
           " に返信： " +
-          (message.content || "")
+          (
+            message.content ||
+            "画像"
+          )
         )
       );
 
@@ -1336,7 +1435,7 @@
 
 
     /* =========================
-       メッセージ送信
+       テキスト送信
     ========================= */
 
     async function sendMessage() {
@@ -1475,6 +1574,183 @@
 
 
     /* =========================
+       🖼️ 画像送信
+    ========================= */
+
+    imageButton.addEventListener(
+      "click",
+      function() {
+
+        imageInput.click();
+
+      }
+    );
+
+
+    imageInput.addEventListener(
+      "change",
+      async function() {
+
+        const file =
+          imageInput.files?.[0];
+
+
+        if (!file) {
+          return;
+        }
+
+
+        if (!file.type.startsWith("image/")) {
+
+          alert(
+            "画像ファイルを選んでください。"
+          );
+
+          imageInput.value =
+            "";
+
+          return;
+        }
+
+
+        if (!currentUsername || !groupId) {
+
+          alert(
+            "ログイン情報またはグループ情報を取得できません。"
+          );
+
+          imageInput.value =
+            "";
+
+          return;
+        }
+
+
+        imageButton.disabled =
+          true;
+
+        sendButton.disabled =
+          true;
+
+
+        try {
+
+          const extension =
+            file.name.split(".").pop() ||
+            "jpg";
+
+
+          const filePath =
+            "groups/" +
+            groupId +
+            "/" +
+            currentUsername +
+            "/" +
+            Date.now() +
+            "_" +
+            Math.random()
+              .toString(36)
+              .slice(2) +
+            "." +
+            extension;
+
+
+          /* Storageへアップロード */
+
+          const {
+            error: uploadError
+          } =
+            await supabaseClient.storage
+              .from("chat-images")
+              .upload(
+                filePath,
+                file,
+                {
+                  contentType:
+                    file.type,
+
+                  upsert:
+                    false
+                }
+              );
+
+
+          if (uploadError) {
+
+            console.error(
+              "画像アップロードエラー:",
+              uploadError
+            );
+
+            alert(
+              "画像をアップロードできませんでした。\n\n" +
+              uploadError.message
+            );
+
+            return;
+          }
+
+
+          /* group_messagesに画像を保存 */
+
+          const {
+            error
+          } =
+            await supabaseClient
+              .from("group_messages")
+              .insert({
+
+                group_id:
+                  Number(groupId),
+
+                sender_id:
+                  currentUsername,
+
+                content:
+                  "",
+
+                image_url:
+                  filePath
+
+              });
+
+
+          if (error) {
+
+            console.error(
+              "画像メッセージ保存エラー:",
+              error
+            );
+
+            alert(
+              "画像メッセージを保存できませんでした。\n\n" +
+              error.message
+            );
+
+            return;
+          }
+
+
+          await loadMessages();
+
+        } finally {
+
+          imageButton.disabled =
+            false;
+
+          sendButton.disabled =
+            false;
+
+          imageInput.value =
+            "";
+
+        }
+
+      }
+    );
+
+
+    /* =========================
        メンバー一覧
     ========================= */
 
@@ -1522,7 +1798,8 @@
       }
 
 
-      memberList.innerHTML = "";
+      memberList.innerHTML =
+        "";
 
 
       for (
@@ -1836,10 +2113,8 @@
       memberInput.value =
         "";
 
-
       addMemberButton.disabled =
         false;
-
 
       await loadMembers();
     }
@@ -1863,10 +2138,6 @@
       }
     );
 
-
-    /* =========================
-       閉じる
-    ========================= */
 
     closeModalButton.addEventListener(
       "click",
@@ -1896,8 +2167,6 @@
     );
 
 
-    /* メンバー追加 */
-
     addMemberButton.addEventListener(
       "click",
       addMember
@@ -1922,8 +2191,6 @@
     );
 
 
-    /* メッセージ送信 */
-
     sendButton.addEventListener(
       "click",
       sendMessage
@@ -1947,8 +2214,6 @@
       }
     );
 
-
-    /* 画面の空いているところをタップ */
 
     document.addEventListener(
       "click",
