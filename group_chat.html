@@ -204,7 +204,10 @@
 <body>
 
   <div class="header">
-    <a href="home.html" class="home-button">🏠 ホーム</a>
+
+    <a href="home.html" class="home-button">
+      🏠 ホーム
+    </a>
 
     <button
       id="memberButton"
@@ -214,13 +217,26 @@
       👤 メンバー追加
     </button>
 
-    <div class="title">👥 グループチャット</div>
-    <div class="group-name" id="groupName">読み込み中...</div>
+    <div class="title">
+      👥 グループチャット
+    </div>
+
+    <div
+      class="group-name"
+      id="groupName"
+    >
+      読み込み中...
+    </div>
+
   </div>
 
-  <div id="messages" class="messages"></div>
+  <div
+    id="messages"
+    class="messages"
+  ></div>
 
   <div class="input-area">
+
     <input
       id="messageInput"
       type="text"
@@ -234,10 +250,14 @@
     >
       送信
     </button>
+
   </div>
 
   <!-- メンバー追加 -->
-  <div id="memberModal" class="modal">
+  <div
+    id="memberModal"
+    class="modal"
+  >
 
     <div class="modal-box">
 
@@ -275,6 +295,7 @@
   </div>
 
   <script>
+
     const SUPABASE_URL =
       "https://yxonmqdyekwenyzekjwj.supabase.co";
 
@@ -287,48 +308,79 @@
         SUPABASE_KEY
       );
 
+
     const params =
-      new URLSearchParams(window.location.search);
+      new URLSearchParams(
+        window.location.search
+      );
 
     const groupId =
       params.get("id");
 
+
     const groupName =
-      document.getElementById("groupName");
+      document.getElementById(
+        "groupName"
+      );
 
     const messages =
-      document.getElementById("messages");
+      document.getElementById(
+        "messages"
+      );
 
     const messageInput =
-      document.getElementById("messageInput");
+      document.getElementById(
+        "messageInput"
+      );
 
     const sendButton =
-      document.getElementById("sendButton");
+      document.getElementById(
+        "sendButton"
+      );
 
     const memberButton =
-      document.getElementById("memberButton");
+      document.getElementById(
+        "memberButton"
+      );
 
     const memberModal =
-      document.getElementById("memberModal");
+      document.getElementById(
+        "memberModal"
+      );
 
     const memberInput =
-      document.getElementById("memberInput");
+      document.getElementById(
+        "memberInput"
+      );
 
     const addMemberButton =
-      document.getElementById("addMemberButton");
+      document.getElementById(
+        "addMemberButton"
+      );
 
     const closeModalButton =
-      document.getElementById("closeModalButton");
+      document.getElementById(
+        "closeModalButton"
+      );
+
 
     let currentUsername = "";
+
+
+    /* =========================
+       開始
+    ========================= */
 
     async function start() {
 
       if (!groupId) {
+
         groupName.textContent =
           "グループが見つかりません";
+
         return;
       }
+
 
       const {
         data,
@@ -336,18 +388,33 @@
       } =
         await supabaseClient.auth.getSession();
 
-      if (error || !data.session) {
+
+      if (
+        error ||
+        !data.session
+      ) {
+
         window.location.href =
           "index.html";
+
         return;
       }
 
+
       currentUsername =
-        data.session.user.user_metadata?.username || "";
+        data.session.user
+          .user_metadata?.username || "";
+
 
       await loadGroup();
+
       await loadMessages();
     }
+
+
+    /* =========================
+       グループ名
+    ========================= */
 
     async function loadGroup() {
 
@@ -361,15 +428,29 @@
           .eq("id", groupId)
           .single();
 
-      if (error || !data) {
+
+      if (
+        error ||
+        !data
+      ) {
+
+        console.error(error);
+
         groupName.textContent =
           "グループが見つかりません";
+
         return;
       }
+
 
       groupName.textContent =
         data.name;
     }
+
+
+    /* =========================
+       メッセージ読み込み
+    ========================= */
 
     async function loadMessages() {
 
@@ -380,12 +461,20 @@
         await supabaseClient
           .from("group_messages")
           .select("*")
-          .eq("group_id", groupId)
-          .order("created_at", {
-            ascending: true
-          });
+          .eq(
+            "group_id",
+            Number(groupId)
+          )
+          .order(
+            "created_at",
+            {
+              ascending: true
+            }
+          );
+
 
       if (error) {
+
         console.error(error);
 
         messages.innerHTML =
@@ -394,62 +483,110 @@
         return;
       }
 
+
       messages.innerHTML = "";
 
-      for (const message of data || []) {
+
+      for (
+        const message
+        of data || []
+      ) {
+
         addMessage(message);
       }
     }
 
-    function addMessage(message) {
+
+    /* =========================
+       メッセージ表示
+    ========================= */
+
+    function addMessage(
+      message
+    ) {
 
       const box =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       box.className =
         "message";
 
+
       const sender =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       sender.className =
         "sender";
 
+
       sender.textContent =
-        message.sender_id === currentUsername
+        message.sender_id ===
+        currentUsername
           ? "あなた"
-          : "@" + message.sender_id;
+          : "@" +
+            message.sender_id;
+
 
       const content =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       content.className =
         "content";
 
+
       content.textContent =
         message.content || "";
 
-      box.appendChild(sender);
-      box.appendChild(content);
 
-      messages.appendChild(box);
+      box.appendChild(
+        sender
+      );
+
+      box.appendChild(
+        content
+      );
+
+
+      messages.appendChild(
+        box
+      );
     }
+
+
+    /* =========================
+       メッセージ送信
+    ========================= */
 
     async function sendMessage() {
 
       const text =
         messageInput.value.trim();
 
+
       if (!text) {
         return;
       }
 
+
       if (!currentUsername) {
-        alert("ユーザー情報を取得できていません。");
+
+        alert(
+          "ユーザー情報を取得できていません。"
+        );
+
         return;
       }
 
-      sendButton.disabled = true;
+
+      sendButton.disabled =
+        true;
+
 
       const {
         error
@@ -457,11 +594,21 @@
         await supabaseClient
           .from("group_messages")
           .insert({
-            group_id: Number(groupId),
-            sender_id: currentUsername,
-            content: text,
-            image_url: ""
+
+            group_id:
+              Number(groupId),
+
+            sender_id:
+              currentUsername,
+
+            content:
+              text,
+
+            image_url:
+              ""
+
           });
+
 
       if (error) {
 
@@ -474,65 +621,325 @@
 
       } else {
 
-        messageInput.value = "";
+        messageInput.value =
+          "";
 
         await loadMessages();
       }
 
-      sendButton.disabled = false;
+
+      sendButton.disabled =
+        false;
+
       messageInput.focus();
     }
+
+
+    /* =========================
+       メンバー追加
+    ========================= */
 
     async function addMember() {
 
       const friendId =
         memberInput.value.trim();
 
+
       if (!friendId) {
-        alert("追加するユーザーIDを入力してね。");
+
+        alert(
+          "追加するユーザーIDを入力してね。"
+        );
+
         return;
       }
 
-      if (friendId === currentUsername) {
-        alert("自分はすでにメンバーだよ。");
+
+      if (
+        friendId ===
+        currentUsername
+      ) {
+
+        alert(
+          "自分はすでにメンバーだよ。"
+        );
+
         return;
       }
 
-      addMemberButton.disabled = true;
 
-      // ユーザーが存在するか確認
+      addMemberButton.disabled =
+        true;
+
+
+      /* ユーザー確認 */
+
       const {
         data: profile,
         error: profileError
       } =
         await supabaseClient
           .from("profiles")
-          .select("user_id, name")
-          .eq("user_id", friendId)
+          .select(
+            "user_id, name"
+          )
+          .eq(
+            "user_id",
+            friendId
+          )
           .maybeSingle();
 
+
       if (profileError) {
-        console.error(profileError);
-        alert("ユーザーを確認できませんでした。");
-        addMemberButton.disabled = false;
+
+        console.error(
+          profileError
+        );
+
+        alert(
+          "ユーザーを確認できませんでした。\n" +
+          profileError.message
+        );
+
+        addMemberButton.disabled =
+          false;
+
         return;
       }
+
 
       if (!profile) {
-        alert("そのユーザーIDは見つかりません。");
-        addMemberButton.disabled = false;
+
+        alert(
+          "そのユーザーIDは見つかりません。"
+        );
+
+        addMemberButton.disabled =
+          false;
+
         return;
       }
 
-      // すでにメンバーか確認
+
+      /* すでにメンバーか確認 */
+
       const {
-        data: existing
+        data: existing,
+        error: existingError
       } =
         await supabaseClient
           .from("group_members")
           .select("id")
-          .eq("group_id", Number(groupId))
+          .eq(
+            "group_id",
+            Number(groupId)
+          )
+          .eq(
+            "user_id",
+            friendId
+          )
+          .maybeSingle();
+
+
+      if (existingError) {
+
+        console.error(
+          existingError
+        );
+
+        alert(
+          "メンバー情報を確認できませんでした。\n" +
+          existingError.message
+        );
+
+        addMemberButton.disabled =
+          false;
+
+        return;
+      }
+
+
+      if (existing) {
+
+        alert(
+          "そのユーザーはすでにメンバーだよ。"
+        );
+
+        addMemberButton.disabled =
+          false;
+
+        return;
+      }
+
+
+      /* メンバー追加 */
+
+      const {
+        error: insertError
+      } =
+        await supabaseClient
+          .from("group_members")
+          .insert({
+
+            group_id:
+              Number(groupId),
+
+            user_id:
+              friendId
+
+          });
+
+
+      if (insertError) {
+
+        console.error(
+          insertError
+        );
+
+        alert(
+          "メンバーを追加できませんでした。\n" +
+          insertError.message
+        );
+
+        addMemberButton.disabled =
+          false;
+
+        return;
+      }
+
+
+      alert(
+        "@" +
+        friendId +
+        " をグループに追加したよ！"
+      );
+
+
+      memberInput.value =
+        "";
+
+      memberModal.style.display =
+        "none";
+
+
+      addMemberButton.disabled =
+        false;
+    }
+
+
+    /* =========================
+       メンバー追加ボタン
+    ========================= */
+
+    memberButton.addEventListener(
+      "click",
+      function() {
+
+        memberModal.style.display =
+          "flex";
+
+        memberInput.focus();
+
+      }
+    );
+
+
+    /* =========================
+       キャンセル
+    ========================= */
+
+    closeModalButton.addEventListener(
+      "click",
+      function() {
+
+        memberModal.style.display =
+          "none";
+
+      }
+    );
+
+
+    /* 背景をタップして閉じる */
+
+    memberModal.addEventListener(
+      "click",
+      function(event) {
+
+        if (
+          event.target ===
+          memberModal
+        ) {
+
+          memberModal.style.display =
+            "none";
+        }
+
+      }
+    );
+
+
+    /* 追加 */
+
+    addMemberButton.addEventListener(
+      "click",
+      addMember
+    );
+
+
+    /* Enterで追加 */
+
+    memberInput.addEventListener(
+      "keydown",
+      function(event) {
+
+        if (
+          event.key ===
+          "Enter"
+        ) {
+
+          event.preventDefault();
+
+          addMember();
+        }
+
+      }
+    );
+
+
+    /* メッセージ送信 */
+
+    sendButton.addEventListener(
+      "click",
+      sendMessage
+    );
+
+
+    /* Enterで送信 */
+
+    messageInput.addEventListener(
+      "keydown",
+      function(event) {
+
+        if (
+          event.key ===
+          "Enter"
+        ) {
+
+          event.preventDefault();
+
+          sendMessage();
+        }
+
+      }
+    );
+
+
+    /* =========================
+       起動
+    ========================= */
+
     start();
+
   </script>
 
 </body>
