@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>フレンドチャット</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      background: linear-gradient(135deg, #fff3fb, #eef5ff);
+      color: #333;
+      padding: 20px;
+    }
+
+    .home {
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      border-radius: 24px;
+      padding: 25px 20px;
+      text-align: center;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
+      margin-bottom: 20px;
+    }
+
+    .logo {
+      font-size: 42px;
+      margin-bottom: 5px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 26px;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: #888;
+      font-size: 14px;
+    }
+
+    .menu {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .menu-button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 140px;
+      background: white;
+      border-radius: 22px;
+      text-decoration: none;
+      color: #333;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+      transition: transform 0.15s;
+    }
+
+    .menu-button:active {
+      transform: scale(0.96);
+    }
+
+    .icon {
+      font-size: 42px;
+      margin-bottom: 10px;
+    }
+
+    .title {
+      font-size: 17px;
+      font-weight: bold;
+    }
+
+    .description {
+      margin-top: 5px;
+      color: #999;
+      font-size: 12px;
+    }
+
+    .chat {
+      background: #f0edff;
+    }
+
+    .profile {
+      background: #fff0f7;
+    }
+
+    .friends {
+      background: #eef9f3;
+    }
+
+    .settings {
+      background: #f3f3f3;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 25px;
+      color: #aaa;
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="home">
+
+    <section class="header">
+      <div class="logo">💬</div>
+      <h1>フレンドチャット</h1>
+      <p class="subtitle">みんなと楽しくチャットしよう！</p>
+    </section>
+
+    <section class="menu">
+
+      <a href="chat.html" class="menu-button chat">
+        <div class="icon">💬</div>
+        <div class="title">チャット</div>
+        <div class="description">メッセージを見る</div>
+      </a>
+
+      <a href="profile.html" class="menu-button profile">
+        <div class="icon">👤</div>
+        <div class="title">プロフィール</div>
+        <div class="description">自分のプロフィール</div>
+      </a>
+
+      <a href="#" class="menu-button friends">
+        <div class="icon">👥</div>
+        <div class="title">フレンド</div>
+        <div class="description">友達を探す</div>
+      </a>
+
+      <a href="#" class="menu-button settings">
+        <div class="icon">⚙️</div>
+        <div class="title">設定</div>
+        <div class="description">アプリの設定</div>
+      </a>
+
+    </section>
+
+    <div class="footer">
+      Friend Chat
+    </div>
+
+  </main>
+
+</body>
+</html>
