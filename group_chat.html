@@ -75,11 +75,17 @@
     }
 
     .message {
+      position: relative;
       background: white;
       border-radius: 15px;
       padding: 10px 13px;
       margin-bottom: 10px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      cursor: pointer;
+    }
+
+    .message:active {
+      transform: scale(0.99);
     }
 
     .sender {
@@ -95,6 +101,86 @@
       word-break: break-word;
     }
 
+    .reply-preview {
+      background: #f0f5ff;
+      border-left: 4px solid #6aa9ff;
+      border-radius: 8px;
+      padding: 7px 9px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .reply-preview strong {
+      color: #5588cc;
+    }
+
+    .reactions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 7px;
+    }
+
+    .reaction-item {
+      background: #f2f5fa;
+      border-radius: 20px;
+      padding: 4px 8px;
+      font-size: 14px;
+    }
+
+    .message-menu {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 10px;
+      z-index: 20;
+      background: white;
+      border-radius: 14px;
+      padding: 7px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+      min-width: 190px;
+    }
+
+    .message-menu button {
+      display: block;
+      width: 100%;
+      border: none;
+      background: white;
+      text-align: left;
+      padding: 11px 12px;
+      border-radius: 9px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .message-menu button:active {
+      background: #f0f5ff;
+    }
+
+    .reaction-picker {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 10px;
+      z-index: 30;
+      background: white;
+      border-radius: 15px;
+      padding: 8px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+      gap: 5px;
+    }
+
+    .reaction-picker button {
+      border: none;
+      background: #f5f7fb;
+      border-radius: 10px;
+      width: 42px;
+      height: 42px;
+      font-size: 21px;
+      cursor: pointer;
+    }
+
     .input-area {
       position: fixed;
       bottom: 0;
@@ -105,6 +191,7 @@
       display: flex;
       gap: 8px;
       box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+      z-index: 50;
     }
 
     #messageInput {
@@ -137,7 +224,7 @@
       padding: 20px;
     }
 
-    /* モーダル共通 */
+    /* モーダル */
 
     .modal {
       display: none;
@@ -195,6 +282,7 @@
       justify-content: center;
       font-size: 20px;
       flex-shrink: 0;
+      overflow: hidden;
     }
 
     .member-info {
@@ -269,6 +357,53 @@
       color: #555;
       margin-bottom: 8px;
     }
+
+    /* 返信 */
+
+    .reply-area {
+      display: none;
+      position: fixed;
+      bottom: 61px;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid #ddd;
+      padding: 8px 10px;
+      z-index: 45;
+    }
+
+    .reply-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: #f0f5ff;
+      border-left: 4px solid #6aa9ff;
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+
+    .reply-text {
+      font-size: 12px;
+      color: #666;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
+
+    .reply-text strong {
+      color: #5588cc;
+    }
+
+    #cancelReplyButton {
+      border: none;
+      background: transparent;
+      color: #777;
+      font-size: 18px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
   </style>
 </head>
 
@@ -305,6 +440,33 @@
     id="messages"
     class="messages"
   ></div>
+
+
+  <!-- 返信中表示 -->
+
+  <div
+    id="replyArea"
+    class="reply-area"
+  >
+
+    <div class="reply-info">
+
+      <div
+        id="replyText"
+        class="reply-text"
+      ></div>
+
+      <button
+        id="cancelReplyButton"
+        type="button"
+      >
+        ✕
+      </button>
+
+    </div>
+
+  </div>
+
 
   <div class="input-area">
 
@@ -346,7 +508,6 @@
           読み込み中...
         </div>
       </div>
-
 
       <div class="add-section">
 
@@ -460,8 +621,25 @@
         "closeModalButton"
       );
 
+    const replyArea =
+      document.getElementById(
+        "replyArea"
+      );
+
+    const replyText =
+      document.getElementById(
+        "replyText"
+      );
+
+    const cancelReplyButton =
+      document.getElementById(
+        "cancelReplyButton"
+      );
+
 
     let currentUsername = "";
+
+    let replyingToMessage = null;
 
 
     /* =========================
@@ -589,7 +767,7 @@
         of data || []
       ) {
 
-        addMessage(message);
+        await addMessage(message);
       }
     }
 
@@ -598,9 +776,7 @@
        メッセージ表示
     ========================= */
 
-    function addMessage(
-      message
-    ) {
+    async function addMessage(message) {
 
       const box =
         document.createElement(
@@ -650,10 +826,513 @@
       );
 
 
+      /* 返信表示 */
+
+      const {
+        data: replies
+      } =
+        await supabaseClient
+          .from("group_replies")
+          .select("*")
+          .eq(
+            "group_message_id",
+            message.id
+          )
+          .order(
+            "created_at",
+            {
+              ascending: true
+            }
+          );
+
+
+      for (
+        const reply
+        of replies || []
+      ) {
+
+        const replyBox =
+          document.createElement(
+            "div"
+          );
+
+        replyBox.className =
+          "reply-preview";
+
+
+        const replySender =
+          document.createElement(
+            "strong"
+          );
+
+        replySender.textContent =
+          "@" +
+          reply.sender_id +
+          "：";
+
+
+        replyBox.appendChild(
+          replySender
+        );
+
+        replyBox.appendChild(
+          document.createTextNode(
+            " " +
+            reply.content
+          )
+        );
+
+
+        box.appendChild(
+          replyBox
+        );
+      }
+
+
+      /* リアクション表示 */
+
+      const {
+        data: reactions
+      } =
+        await supabaseClient
+          .from("group_reactions")
+          .select("*")
+          .eq(
+            "group_message_id",
+            message.id
+          );
+
+
+      if (
+        reactions &&
+        reactions.length > 0
+      ) {
+
+        const reactionArea =
+          document.createElement(
+            "div"
+          );
+
+        reactionArea.className =
+          "reactions";
+
+
+        const counts = {};
+
+
+        for (
+          const reaction
+          of reactions
+        ) {
+
+          counts[
+            reaction.reaction
+          ] =
+            (
+              counts[
+                reaction.reaction
+              ] || 0
+            ) + 1;
+        }
+
+
+        for (
+          const emoji
+          of Object.keys(counts)
+        ) {
+
+          const reactionItem =
+            document.createElement(
+              "div"
+            );
+
+          reactionItem.className =
+            "reaction-item";
+
+
+          reactionItem.textContent =
+            emoji +
+            " " +
+            counts[emoji];
+
+
+          reactionArea.appendChild(
+            reactionItem
+          );
+        }
+
+
+        box.appendChild(
+          reactionArea
+        );
+      }
+
+
+      /* メニュー */
+
+      const menu =
+        document.createElement(
+          "div"
+        );
+
+      menu.className =
+        "message-menu";
+
+
+      const reactionButton =
+        document.createElement(
+          "button"
+        );
+
+      reactionButton.type =
+        "button";
+
+      reactionButton.textContent =
+        "❤️ リアクション";
+
+
+      const replyButton =
+        document.createElement(
+          "button"
+        );
+
+      replyButton.type =
+        "button";
+
+      replyButton.textContent =
+        "↩️ 返信";
+
+
+      menu.appendChild(
+        reactionButton
+      );
+
+      menu.appendChild(
+        replyButton
+      );
+
+
+      /* リアクション選択 */
+
+      const picker =
+        document.createElement(
+          "div"
+        );
+
+      picker.className =
+        "reaction-picker";
+
+
+      const emojis = [
+        "❤️",
+        "😂",
+        "👍",
+        "😮",
+        "😢"
+      ];
+
+
+      for (
+        const emoji
+        of emojis
+      ) {
+
+        const emojiButton =
+          document.createElement(
+            "button"
+          );
+
+        emojiButton.type =
+          "button";
+
+        emojiButton.textContent =
+          emoji;
+
+
+        emojiButton.addEventListener(
+          "click",
+          async function(event) {
+
+            event.stopPropagation();
+
+            await addReaction(
+              message.id,
+              emoji
+            );
+
+            picker.style.display =
+              "none";
+
+            menu.style.display =
+              "none";
+
+            await loadMessages();
+          }
+        );
+
+
+        picker.appendChild(
+          emojiButton
+        );
+      }
+
+
+      /* メニュー表示 */
+
+      reactionButton.addEventListener(
+        "click",
+        function(event) {
+
+          event.stopPropagation();
+
+          menu.style.display =
+            "none";
+
+          picker.style.display =
+            "flex";
+        }
+      );
+
+
+      /* 返信 */
+
+      replyButton.addEventListener(
+        "click",
+        function(event) {
+
+          event.stopPropagation();
+
+          startReply(
+            message
+          );
+
+          menu.style.display =
+            "none";
+
+          picker.style.display =
+            "none";
+        }
+      );
+
+
+      /* メッセージをタップ */
+
+      box.addEventListener(
+        "click",
+        function(event) {
+
+          event.stopPropagation();
+
+          document
+            .querySelectorAll(
+              ".message-menu"
+            )
+            .forEach(
+              function(other) {
+
+                if (
+                  other !== menu
+                ) {
+
+                  other.style.display =
+                    "none";
+                }
+              }
+            );
+
+
+          document
+            .querySelectorAll(
+              ".reaction-picker"
+            )
+            .forEach(
+              function(other) {
+
+                if (
+                  other !== picker
+                ) {
+
+                  other.style.display =
+                    "none";
+                }
+              }
+            );
+
+
+          menu.style.display =
+            menu.style.display ===
+            "block"
+              ? "none"
+              : "block";
+
+          picker.style.display =
+            "none";
+        }
+      );
+
+
+      box.appendChild(
+        menu
+      );
+
+      box.appendChild(
+        picker
+      );
+
+
       messages.appendChild(
         box
       );
     }
+
+
+    /* =========================
+       リアクション追加
+    ========================= */
+
+    async function addReaction(
+      messageId,
+      emoji
+    ) {
+
+      const {
+        data: existing
+      } =
+        await supabaseClient
+          .from("group_reactions")
+          .select("id")
+          .eq(
+            "group_message_id",
+            messageId
+          )
+          .eq(
+            "user_id",
+            currentUsername
+          )
+          .eq(
+            "reaction",
+            emoji
+          )
+          .maybeSingle();
+
+
+      if (existing) {
+
+        await supabaseClient
+          .from("group_reactions")
+          .delete()
+          .eq(
+            "id",
+            existing.id
+          );
+
+        return;
+      }
+
+
+      const {
+        error
+      } =
+        await supabaseClient
+          .from("group_reactions")
+          .insert({
+
+            group_message_id:
+              messageId,
+
+            user_id:
+              currentUsername,
+
+            reaction:
+              emoji
+
+          });
+
+
+      if (error) {
+
+        console.error(error);
+
+        alert(
+          "リアクションを追加できませんでした。\n" +
+          error.message
+        );
+      }
+    }
+
+
+    /* =========================
+       返信開始
+    ========================= */
+
+    function startReply(message) {
+
+      replyingToMessage =
+        message;
+
+
+      replyText.innerHTML =
+        "";
+
+
+      const strong =
+        document.createElement(
+          "strong"
+        );
+
+      strong.textContent =
+        message.sender_id ===
+        currentUsername
+          ? "あなた"
+          : "@" +
+            message.sender_id;
+
+
+      replyText.appendChild(
+        strong
+      );
+
+
+      replyText.appendChild(
+        document.createTextNode(
+          " に返信： " +
+          (message.content || "")
+        )
+      );
+
+
+      replyArea.style.display =
+        "block";
+
+
+      messageInput.placeholder =
+        "返信を入力...";
+
+
+      messageInput.focus();
+    }
+
+
+    /* =========================
+       返信キャンセル
+    ========================= */
+
+    cancelReplyButton.addEventListener(
+      "click",
+      function() {
+
+        replyingToMessage =
+          null;
+
+        replyArea.style.display =
+          "none";
+
+        messageInput.placeholder =
+          "メッセージを入力...";
+
+        messageInput.focus();
+      }
+    );
 
 
     /* =========================
@@ -684,6 +1363,69 @@
       sendButton.disabled =
         true;
 
+
+      /* 返信中 */
+
+      if (
+        replyingToMessage
+      ) {
+
+        const {
+          error
+        } =
+          await supabaseClient
+            .from("group_replies")
+            .insert({
+
+              group_message_id:
+                replyingToMessage.id,
+
+              sender_id:
+                currentUsername,
+
+              content:
+                text
+
+            });
+
+
+        if (error) {
+
+          console.error(error);
+
+          alert(
+            "返信を送信できませんでした。\n" +
+            error.message
+          );
+
+        } else {
+
+          messageInput.value =
+            "";
+
+          replyingToMessage =
+            null;
+
+          replyArea.style.display =
+            "none";
+
+          messageInput.placeholder =
+            "メッセージを入力...";
+
+          await loadMessages();
+        }
+
+
+        sendButton.disabled =
+          false;
+
+        messageInput.focus();
+
+        return;
+      }
+
+
+      /* 通常メッセージ */
 
       const {
         error
@@ -733,7 +1475,7 @@
 
 
     /* =========================
-       メンバー一覧読み込み
+       メンバー一覧
     ========================= */
 
     async function loadMembers() {
@@ -845,9 +1587,6 @@
 
           img.style.objectFit =
             "cover";
-
-          img.style.borderRadius =
-            "50%";
 
           icon.appendChild(
             img
@@ -1140,8 +1879,6 @@
     );
 
 
-    /* 背景をタップして閉じる */
-
     memberModal.addEventListener(
       "click",
       function(event) {
@@ -1166,8 +1903,6 @@
       addMember
     );
 
-
-    /* Enterで追加 */
 
     memberInput.addEventListener(
       "keydown",
@@ -1195,8 +1930,6 @@
     );
 
 
-    /* Enterで送信 */
-
     messageInput.addEventListener(
       "keydown",
       function(event) {
@@ -1210,6 +1943,41 @@
 
           sendMessage();
         }
+
+      }
+    );
+
+
+    /* 画面の空いているところをタップ */
+
+    document.addEventListener(
+      "click",
+      function() {
+
+        document
+          .querySelectorAll(
+            ".message-menu"
+          )
+          .forEach(
+            function(menu) {
+
+              menu.style.display =
+                "none";
+            }
+          );
+
+
+        document
+          .querySelectorAll(
+            ".reaction-picker"
+          )
+          .forEach(
+            function(picker) {
+
+              picker.style.display =
+                "none";
+            }
+          );
 
       }
     );
