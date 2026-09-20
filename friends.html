@@ -203,7 +203,26 @@
     // ==============================
 
     async function start() {
+const { data, error } = await supabaseClient.auth.getSession();
 
+console.log("SESSION:", data.session);
+console.log("ERROR:", error);
+
+if (error || !data.session) {
+  alert("ログインしてください。");
+  return;
+}
+
+currentUser = data.session.user;
+currentUsername =
+  data.session.user.user_metadata?.username || "";
+
+if (!currentUsername) {
+  alert("ユーザーIDを取得できませんでした。");
+  return;
+}
+
+await loadFriends();
       const {
         data,
         error
