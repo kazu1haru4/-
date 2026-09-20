@@ -163,7 +163,6 @@
 
   </main>
 
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
@@ -180,7 +179,6 @@
         SUPABASE_KEY
       );
 
-
     const userIdInput =
       document.getElementById("userIdInput");
 
@@ -193,23 +191,21 @@
     const message =
       document.getElementById("message");
 
-
     let currentUsername = "";
 
-
-    // ==============================
-    // ログイン確認
-    // ==============================
 
     async function start() {
 
       const {
         data,
         error
-      } = await supabaseClient.auth.getSession();
+      } =
+        await supabaseClient.auth.getSession();
 
       if (error || !data.session) {
+
         alert("ログインしてください。");
+
         return;
       }
 
@@ -217,7 +213,9 @@
         data.session.user.user_metadata?.username || "";
 
       if (!currentUsername) {
+
         alert("ユーザーIDを取得できませんでした。");
+
         return;
       }
 
@@ -225,10 +223,6 @@
 
     }
 
-
-    // ==============================
-    // フレンド一覧
-    // ==============================
 
     async function loadFriends() {
 
@@ -251,7 +245,6 @@
         return;
       }
 
-
       if (!data || data.length === 0) {
 
         friendList.innerHTML =
@@ -260,9 +253,7 @@
         return;
       }
 
-
       friendList.innerHTML = "";
-
 
       for (const friend of data) {
 
@@ -275,12 +266,10 @@
             .eq("user_id", friend.friend_id)
             .maybeSingle();
 
-
         const div =
           document.createElement("div");
 
         div.className = "friend";
-
 
         const avatar =
           document.createElement("div");
@@ -288,12 +277,10 @@
         avatar.className = "avatar";
         avatar.textContent = "👤";
 
-
         const info =
           document.createElement("div");
 
         info.className = "info";
-
 
         const name =
           document.createElement("div");
@@ -303,7 +290,6 @@
         name.textContent =
           profile?.name || friend.friend_id;
 
-
         const userId =
           document.createElement("div");
 
@@ -312,13 +298,11 @@
         userId.textContent =
           "@" + friend.friend_id;
 
-
         const arrow =
           document.createElement("div");
 
         arrow.className = "arrow";
         arrow.textContent = "›";
-
 
         info.appendChild(name);
         info.appendChild(userId);
@@ -328,7 +312,7 @@
         div.appendChild(arrow);
 
 
-        // タップしたら1対1チャットへ
+        // フレンドをタップするとチャットへ
         div.addEventListener("click", () => {
 
           window.location.href =
@@ -337,17 +321,12 @@
 
         });
 
-
         friendList.appendChild(div);
 
       }
 
     }
 
-
-    // ==============================
-    // フレンド追加
-    // ==============================
 
     addButton.addEventListener(
       "click",
@@ -453,7 +432,6 @@
       message.textContent =
         profile.name +
         " さんをフレンドに追加しました！";
-
 
       userIdInput.value = "";
 
