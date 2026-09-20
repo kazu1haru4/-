@@ -199,7 +199,7 @@
             name: name,
             bio: bio
           })
-          .eq("id", user.id);
+          .eq("user_id", user.user_metadata.username);
 
 
       if (error) {
