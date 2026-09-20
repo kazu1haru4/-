@@ -46,8 +46,15 @@
       font-size: 26px;
     }
 
+    .welcome {
+      margin: 10px 0 0;
+      color: #8f7cff;
+      font-size: 15px;
+      font-weight: bold;
+    }
+
     .subtitle {
-      margin: 8px 0 0;
+      margin: 6px 0 0;
       color: #888;
       font-size: 14px;
     }
@@ -122,10 +129,24 @@
   <main class="home">
 
     <section class="header">
+
       <div class="logo">💬</div>
+
       <h1>フレンドチャット</h1>
-      <p class="subtitle">みんなと楽しくチャットしよう！</p>
+
+      <div
+        class="welcome"
+        id="welcome"
+      >
+        読み込み中...
+      </div>
+
+      <p class="subtitle">
+        みんなと楽しくチャットしよう！
+      </p>
+
     </section>
+
 
     <section class="menu">
 
@@ -135,17 +156,20 @@
         <div class="description">メッセージを見る</div>
       </a>
 
+
       <a href="profile.html" class="menu-button profile">
         <div class="icon">👤</div>
         <div class="title">プロフィール</div>
         <div class="description">自分のプロフィール</div>
       </a>
 
+
       <a href="friends.html" class="menu-button friends">
         <div class="icon">👥</div>
         <div class="title">フレンド</div>
         <div class="description">友達を探す</div>
       </a>
+
 
       <a href="#" class="menu-button settings">
         <div class="icon">⚙️</div>
@@ -155,11 +179,82 @@
 
     </section>
 
+
     <div class="footer">
       Friend Chat
     </div>
 
   </main>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+
+    const SUPABASE_URL =
+      "https://yxonmqdyekwenyzekjwj.supabase.co";
+
+    const SUPABASE_KEY =
+      "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+
+
+    const supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
+
+    async function start() {
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient.auth.getUser();
+
+
+      if (error || !data.user) {
+
+        document.getElementById("welcome").textContent =
+          "ログイン情報を確認できません";
+
+        return;
+      }
+
+
+      const userId =
+        data.user.id;
+
+
+      const {
+        data: profile
+      } =
+        await supabaseClient
+          .from("profiles")
+          .select("name")
+          .eq("user_id", data.user.user_metadata?.username || "")
+          .maybeSingle();
+
+
+      if (profile && profile.name) {
+
+        document.getElementById("welcome").textContent =
+          profile.name + " さん、こんにちは！";
+
+      } else {
+
+        document.getElementById("welcome").textContent =
+          "ログイン中です！";
+
+      }
+
+    }
+
+
+    start();
+
+  </script>
 
 </body>
 </html>
