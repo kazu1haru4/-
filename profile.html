@@ -121,6 +121,7 @@
       margin-top: 15px;
       font-weight: bold;
       color: #666;
+      word-break: break-word;
     }
   </style>
 </head>
@@ -190,11 +191,16 @@
     let selectedFile = null;
 
 
+    // =========================
+    // アイコン画像を選択
+    // =========================
+
     document
       .getElementById("avatarFile")
       .addEventListener("change", function(event) {
 
-        const file = event.target.files[0];
+        const file =
+          event.target.files[0];
 
         if (!file) {
           return;
@@ -209,21 +215,38 @@
           .getElementById("avatarPreview")
           .innerHTML =
             `<img src="${imageUrl}" alt="アイコン">`;
+
+        document
+          .getElementById("message")
+          .textContent =
+            "画像を選択したよ！";
+
       });
 
+
+    // =========================
+    // プロフィール保存
+    // =========================
 
     async function saveProfile() {
 
       const name =
-        document.getElementById("name").value.trim();
+        document
+          .getElementById("name")
+          .value
+          .trim();
 
       const bio =
-        document.getElementById("bio").value.trim();
+        document
+          .getElementById("bio")
+          .value
+          .trim();
 
       const message =
         document.getElementById("message");
 
 
+      // 名前チェック
       if (!name) {
 
         message.textContent =
@@ -233,9 +256,28 @@
       }
 
 
+      // =========================
+      // ログインユーザー取得
+      // =========================
+
       const {
-        data: { user }
-      } = await supabaseClient.auth.getUser();
+        data: { user },
+        error: userError
+      } =
+        await supabaseClient.auth.getUser();
+
+
+      console.log("USER:", user);
+      console.log("USER ERROR:", userError);
+
+
+      if (userError) {
+
+        message.textContent =
+          "ログイン情報を取得できませんでした。";
+
+        return;
+      }
 
 
       if (!user) {
@@ -254,16 +296,33 @@
       let avatarUrl = "";
 
 
+      // =========================
+      // アイコン画像アップロード
+      // =========================
+
       if (selectedFile) {
 
         const fileExt =
-          selectedFile.name.split(".").pop();
+          selectedFile.name
+            .split(".")
+            .pop()
+            .toLowerCase();
+
 
         const fileName =
           `${user.id}/${Date.now()}.${fileExt}`;
 
 
-        const { error: uploadError } =
+        console.log(
+          "アップロード先:",
+          fileName
+        );
+
+
+        const {
+          data: uploadData,
+          error: uploadError
+        } =
           await supabaseClient.storage
             .from("avatars")
             .upload(
@@ -275,18 +334,35 @@
             );
 
 
+        console.log(
+          "UPLOAD DATA:",
+          uploadData
+        );
+
+        console.log(
+          "UPLOAD ERROR:",
+          uploadError
+        );
+
+
+        // ★画像アップロードのエラー
         if (uploadError) {
 
-          console.error("UPLOAD ERROR:", uploadError);
-
           message.textContent =
-            "画像エラー: " + uploadError.message;
+            "【画像アップロード】" +
+            uploadError.message;
 
           return;
         }
 
 
-        const { data: publicData } =
+        // =========================
+        // 公開URL取得
+        // =========================
+
+        const {
+          data: publicData
+        } =
           supabaseClient.storage
             .from("avatars")
             .getPublicUrl(fileName);
@@ -294,21 +370,50 @@
 
         avatarUrl =
           publicData.publicUrl;
+
+
+        console.log(
+          "AVATAR URL:",
+          avatarUrl
+        );
+
       }
 
 
+      // =========================
+      // プロフィールデータ
+      // =========================
+
       const updateData = {
+
         name: name,
+
         bio: bio
+
       };
 
 
       if (avatarUrl) {
-        updateData.avatar_url = avatarUrl;
+
+        updateData.avatar_url =
+          avatarUrl;
+
       }
 
 
-      const { error } =
+      console.log(
+        "PROFILE UPDATE:",
+        updateData
+      );
+
+
+      // =========================
+      // profilesを更新
+      // =========================
+
+      const {
+        error
+      } =
         await supabaseClient
           .from("profiles")
           .update(updateData)
@@ -318,19 +423,30 @@
           );
 
 
+      console.log(
+        "PROFILE ERROR:",
+        error
+      );
+
+
+      // ★プロフィール保存のエラー
       if (error) {
 
-        console.error("PROFILE ERROR:", error);
-
         message.textContent =
-          "保存できませんでした。";
+          "【プロフィール保存】" +
+          error.message;
 
         return;
       }
 
 
+      // =========================
+      // 成功
+      // =========================
+
       message.textContent =
         "プロフィールを保存したよ！🎉";
+
     }
 
   </script>
