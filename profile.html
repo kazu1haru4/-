@@ -40,15 +40,39 @@
     }
 
     .avatar {
-      width: 110px;
-      height: 110px;
+      width: 120px;
+      height: 120px;
       border-radius: 50%;
       background: #ffe2f1;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 20px;
+      margin: 0 auto 15px;
       font-size: 55px;
+      overflow: hidden;
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .image-button {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      background: #eeeaff;
+      color: #6556d8;
+      text-align: center;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+
+    #avatarFile {
+      display: none;
     }
 
     label {
@@ -107,9 +131,19 @@
 
     <h1>👤 プロフィール</h1>
 
-    <div class="avatar">
+    <div class="avatar" id="avatarPreview">
       😊
     </div>
+
+    <label for="avatarFile" class="image-button">
+      📷 アイコン画像を選ぶ
+    </label>
+
+    <input
+      id="avatarFile"
+      type="file"
+      accept="image/*"
+    >
 
     <label for="name">名前</label>
 
@@ -153,6 +187,31 @@
       );
 
 
+    let selectedFile = null;
+
+
+    document
+      .getElementById("avatarFile")
+      .addEventListener("change", function(event) {
+
+        const file = event.target.files[0];
+
+        if (!file) {
+          return;
+        }
+
+        selectedFile = file;
+
+        const imageUrl =
+          URL.createObjectURL(file);
+
+        document
+          .getElementById("avatarPreview")
+          .innerHTML =
+            `<img src="${imageUrl}" alt="アイコン">`;
+      });
+
+
     async function saveProfile() {
 
       const name =
@@ -192,14 +251,71 @@
         "保存中…";
 
 
+      let avatarUrl = "";
+
+
+      if (selectedFile) {
+
+        const fileExt =
+          selectedFile.name.split(".").pop();
+
+        const fileName =
+          `${user.user_metadata.username}_${Date.now()}.${fileExt}`;
+
+
+        const { error: uploadError } =
+          await supabaseClient.storage
+            .from("avatars")
+            .upload(
+              fileName,
+              selectedFile,
+              {
+                upsert: true
+              }
+            );
+
+
+        if (uploadError) {
+
+          console.error(uploadError);
+
+          message.textContent =
+            "画像のアップロードに失敗しました。";
+
+          return;
+        }
+
+
+        const { data: publicData } =
+          supabaseClient.storage
+            .from("avatars")
+            .getPublicUrl(fileName);
+
+
+        avatarUrl =
+          publicData.publicUrl;
+      }
+
+
+      const updateData = {
+        name: name,
+        bio: bio
+      };
+
+
+      if (avatarUrl) {
+        updateData.avatar_url = avatarUrl;
+      }
+
+
       const { error } =
         await supabaseClient
           .from("profiles")
-          .update({
-            name: name,
-            bio: bio
-          })
-          .eq("user_id", user.user_metadata.username);
+          .update(updateData)
+          .eq(
+            "user_id",
+            user.user_metadata.username
+          );
 
 
       if (error) {
