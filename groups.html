@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>グループ</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      background: linear-gradient(135deg, #fff3fb, #eef5ff);
+      color: #333;
+    }
+
+    .header {
+      background: white;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+    }
+
+    .title {
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .add-button {
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 50%;
+      background: #8f7cff;
+      color: white;
+      font-size: 28px;
+      line-height: 44px;
+    }
+
+    .group-list {
+      padding: 16px;
+    }
+
+    .group {
+      background: white;
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+      cursor: pointer;
+    }
+
+    .group-name {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .group-info {
+      margin-top: 5px;
+      font-size: 13px;
+      color: #999;
+    }
+
+    .empty {
+      text-align: center;
+      color: #999;
+      margin-top: 50px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header class="header">
+
+    <div class="title">
+      👥 グループ
+    </div>
+
+    <button
+      class="add-button"
+      id="addButton"
+      type="button"
+    >
+      ＋
+    </button>
+
+  </header>
+
+
+  <main
+    class="group-list"
+    id="groupList"
+  >
+    <div class="empty">
+      グループを読み込み中...
+    </div>
+  </main>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+
+    const SUPABASE_URL =
+      "https://yxonmqdyekwenyzekjwj.supabase.co";
+
+    const SUPABASE_KEY =
+      "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+
+    const supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
+
+    const groupList =
+      document.getElementById("groupList");
+
+    const addButton =
+      document.getElementById("addButton");
+
+
+    let currentUsername = "";
+
+
+    async function start() {
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient.auth.getSession();
+
+
+      if (error || !data.session) {
+
+        alert("ログインしてください。");
+
+        window.location.href =
+          "index.html";
+
+        return;
+      }
+
+
+      currentUsername =
+        data.session.user.user_metadata?.username || "";
+
+
+      if (!currentUsername) {
+
+        alert(
+          "ユーザーIDを取得できませんでした。"
+        );
+
+        return;
+      }
+
+
+      await loadGroups();
+
+    }
+
+
+    async function loadGroups() {
+
+      const {
+        data: memberships,
+        error
+      } =
+        await supabaseClient
+          .from("group_members")
+          .select("group_id")
+          .eq(
+            "user_id",
+            currentUsername
+          );
+
+
+      if (error) {
+
+        console.error(error);
+
+        groupList.innerHTML =
+          '<div class="empty">グループを読み込めませんでした</div>';
+
+        return;
+      }
+
+
+      if (
+        !memberships ||
+        memberships.length === 0
+      ) {
+
+        groupList.innerHTML =
+          '<div class="empty">まだグループがありません</div>';
+
+        return;
+      }
+
+
+      groupList.innerHTML = "";
+
+
+      for (const member of memberships) {
+
+        const {
+          data: group
+        } =
+          await supabaseClient
+            .from("groups")
+            .select("id, name, owner_id")
+            .eq(
+              "id",
+              member.group_id
+            )
+            .maybeSingle();
+
+
+        if (!group) {
+          continue;
+        }
+
+
+        const div =
+          document.createElement("div");
+
+        div.className =
+          "group";
+
+
+        const name =
+          document.createElement("div");
+
+        name.className =
+          "group-name";
+
+        name.textContent =
+          "👥 " + group.name;
+
+
+        const info =
+          document.createElement("div");
+
+        info.className =
+          "group-info";
+
+        info.textContent =
+          "グループチャット";
+
+
+        div.appendChild(name);
+        div.appendChild(info);
+
+
+        div.addEventListener(
+          "click",
+          () => {
+
+            window.location.href =
+              "group_chat.html?id=" +
+              encodeURIComponent(group.id);
+
+          }
+        );
+
+
+        groupList.appendChild(div);
+
+      }
+
+    }
+
+
+    addButton.addEventListener(
+      "click",
+      () => {
+
+        window.location.href =
+          "create_group.html";
+
+      }
+    );
+
+
+    start();
+
+  </script>
+
+</body>
+</html>
