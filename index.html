@@ -179,15 +179,11 @@
 
   <script>
 
-    /*
-      ========================================
-      ここだけ自分のSupabase情報に変更
-      ========================================
-    */
+    const SUPABASE_URL =
+      "https://yxonmqdyekwenyzekjwj.supabase.co";
 
-    const SUPABASE_URL =　https://yxonmqdyekwenyzekjwj.supabase.co
-
-    const SUPABASE_KEY = "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ"
+    const SUPABASE_KEY =
+      "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 
 
     const supabaseClient = supabase.createClient(
@@ -195,12 +191,6 @@
       SUPABASE_KEY
     );
 
-
-    /*
-      ========================================
-      新規登録
-      ========================================
-    */
 
     async function register() {
 
@@ -294,12 +284,6 @@
 
     }
 
-
-    /*
-      ========================================
-      ログイン
-      ========================================
-    */
 
     async function login() {
 
@@ -401,4 +385,4 @@
   </script>
 
 </body>
-  </html>
+</html>
