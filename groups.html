@@ -50,12 +50,19 @@
     }
 
     .group {
+      display: block;
       background: white;
       border-radius: 18px;
       padding: 16px;
       margin-bottom: 12px;
       box-shadow: 0 5px 15px rgba(0,0,0,0.05);
       cursor: pointer;
+      text-decoration: none;
+      color: #333;
+    }
+
+    .group:active {
+      transform: scale(0.98);
     }
 
     .group-name {
@@ -73,6 +80,21 @@
       text-align: center;
       color: #999;
       margin-top: 50px;
+    }
+
+    .home-button {
+      position: fixed;
+      left: 12px;
+      bottom: 12px;
+      padding: 10px 14px;
+      background: white;
+      color: #555;
+      text-decoration: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: bold;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+      z-index: 10;
     }
   </style>
 </head>
@@ -95,7 +117,6 @@
 
   </header>
 
-
   <main
     class="group-list"
     id="groupList"
@@ -105,6 +126,9 @@
     </div>
   </main>
 
+  <a href="home.html" class="home-button">
+    🏠 ホーム
+  </a>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -122,16 +146,13 @@
         SUPABASE_KEY
       );
 
-
     const groupList =
       document.getElementById("groupList");
 
     const addButton =
       document.getElementById("addButton");
 
-
     let currentUsername = "";
-
 
     async function start() {
 
@@ -140,7 +161,6 @@
         error
       } =
         await supabaseClient.auth.getSession();
-
 
       if (error || !data.session) {
 
@@ -152,25 +172,18 @@
         return;
       }
 
-
       currentUsername =
         data.session.user.user_metadata?.username || "";
 
-
       if (!currentUsername) {
 
-        alert(
-          "ユーザーIDを取得できませんでした。"
-        );
+        alert("ユーザーIDを取得できませんでした。");
 
         return;
       }
 
-
       await loadGroups();
-
     }
-
 
     async function loadGroups() {
 
@@ -186,7 +199,6 @@
             currentUsername
           );
 
-
       if (error) {
 
         console.error(error);
@@ -196,7 +208,6 @@
 
         return;
       }
-
 
       if (
         !memberships ||
@@ -209,9 +220,7 @@
         return;
       }
 
-
       groupList.innerHTML = "";
-
 
       for (const member of memberships) {
 
@@ -227,18 +236,19 @@
             )
             .maybeSingle();
 
-
         if (!group) {
           continue;
         }
 
-
         const div =
-          document.createElement("div");
+          document.createElement("a");
 
         div.className =
           "group";
 
+        div.href =
+          "group_chat.html?id=" +
+          encodeURIComponent(group.id);
 
         const name =
           document.createElement("div");
@@ -249,7 +259,6 @@
         name.textContent =
           "👥 " + group.name;
 
-
         const info =
           document.createElement("div");
 
@@ -259,29 +268,12 @@
         info.textContent =
           "グループチャット";
 
-
         div.appendChild(name);
         div.appendChild(info);
 
-
-        div.addEventListener(
-          "click",
-          () => {
-
-            window.location.href =
-              "group_chat.html?id=" +
-              encodeURIComponent(group.id);
-
-          }
-        );
-
-
         groupList.appendChild(div);
-
       }
-
     }
-
 
     addButton.addEventListener(
       "click",
@@ -292,7 +284,6 @@
 
       }
     );
-
 
     start();
 
