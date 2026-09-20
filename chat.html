@@ -28,6 +28,7 @@
     }
 
     .header {
+      position: relative;
       background: white;
       padding: 18px;
       text-align: center;
@@ -37,6 +38,19 @@
     .header h1 {
       margin: 0;
       font-size: 21px;
+    }
+
+    .home-button {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      padding: 9px 12px;
+      background: #f5f5f5;
+      color: #555;
+      text-decoration: none;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: bold;
     }
 
     .messages {
@@ -74,6 +88,15 @@
       color: white;
     }
 
+    .chat-image {
+      display: block;
+      max-width: 220px;
+      max-height: 300px;
+      border-radius: 14px;
+      margin-bottom: 5px;
+      object-fit: contain;
+    }
+
     .time {
       font-size: 10px;
       color: #999;
@@ -93,13 +116,21 @@
       border-top: 1px solid #eee;
     }
 
-    .input-area input {
+    .input-area input[type="text"] {
       flex: 1;
       min-width: 0;
       padding: 12px;
       border: 1px solid #ddd;
       border-radius: 18px;
       font-size: 16px;
+    }
+
+    .image-button {
+      width: 46px;
+      border: none;
+      border-radius: 18px;
+      background: #f1efff;
+      font-size: 21px;
     }
 
     .send-button {
@@ -111,8 +142,13 @@
       font-weight: bold;
     }
 
-    .send-button:disabled {
+    .send-button:disabled,
+    .image-button:disabled {
       opacity: 0.5;
+    }
+
+    #imageInput {
+      display: none;
     }
   </style>
 </head>
@@ -122,7 +158,13 @@
   <main class="container">
 
     <header class="header">
+
+      <a href="home.html" class="home-button">
+        🏠 ホーム
+      </a>
+
       <h1 id="chatTitle">💬 チャット</h1>
+
     </header>
 
     <section class="messages" id="messages">
@@ -141,6 +183,15 @@
       >
 
       <button
+        class="image-button"
+        id="imageButton"
+        type="button"
+        title="画像を送る"
+      >
+        🖼️
+      </button>
+
+      <button
         class="send-button"
         id="sendButton"
         type="submit"
@@ -149,6 +200,12 @@
       </button>
 
     </form>
+
+    <input
+      id="imageInput"
+      type="file"
+      accept="image/*"
+    >
 
   </main>
 
@@ -181,6 +238,12 @@
     const sendButton =
       document.getElementById("sendButton");
 
+    const imageButton =
+      document.getElementById("imageButton");
+
+    const imageInput =
+      document.getElementById("imageInput");
+
     const chatTitle =
       document.getElementById("chatTitle");
 
@@ -190,7 +253,6 @@
     let realtimeChannel = null;
 
 
-    // URLからフレンドのIDを取得
     const params =
       new URLSearchParams(
         window.location.search
@@ -326,7 +388,7 @@
     }
 
 
-    function addMessageToScreen(message) {
+    async function addMessageToScreen(message) {
 
       const wrapper =
         document.createElement("div");
@@ -352,8 +414,52 @@
         "bubble";
 
 
-      bubble.textContent =
-        message.content || "";
+      if (message.image_url) {
+
+        const image =
+          document.createElement("img");
+
+        image.className =
+          "chat-image";
+
+        image.alt =
+          "送信された画像";
+
+        const {
+          data,
+          error
+        } =
+          await supabaseClient.storage
+            .from("chat-images")
+            .createSignedUrl(
+              message.image_url,
+              3600
+            );
+
+
+        if (!error && data?.signedUrl) {
+
+          image.src =
+            data.signedUrl;
+
+          bubble.appendChild(image);
+
+        }
+
+      }
+
+
+      if (message.content) {
+
+        const text =
+          document.createElement("div");
+
+        text.textContent =
+          message.content;
+
+        bubble.appendChild(text);
+
+      }
 
 
       const time =
@@ -396,7 +502,6 @@
     }
 
 
-    // ★ リアルタイム受信
     function startRealtime() {
 
       if (realtimeChannel) {
@@ -419,13 +524,12 @@
               schema: "public",
               table: "messages"
             },
-            (payload) => {
+            async (payload) => {
 
               const message =
                 payload.new;
 
 
-              // この2人のチャットだけ表示
               const isThisChat =
                 (
                   message.sender_id ===
@@ -446,8 +550,6 @@
               }
 
 
-              // 自分の送信分は、
-              // すでに画面に表示しているので重複させない
               if (
                 message.sender_id ===
                 currentUsername
@@ -456,7 +558,9 @@
               }
 
 
-              addMessageToScreen(message);
+              await addMessageToScreen(
+                message
+              );
 
               scrollToBottom();
 
@@ -467,7 +571,6 @@
     }
 
 
-    // メッセージ送信
     messageForm.addEventListener(
       "submit",
       async function(event) {
@@ -544,9 +647,171 @@
         messageInput.value = "";
 
 
-        addMessageToScreen(data);
+        await addMessageToScreen(data);
 
         scrollToBottom();
+
+      }
+    );
+
+
+    // 🖼️ 画像ボタン
+    imageButton.addEventListener(
+      "click",
+      function() {
+
+        imageInput.click();
+
+      }
+    );
+
+
+    // 🖼️ 画像を選択したとき
+    imageInput.addEventListener(
+      "change",
+      async function() {
+
+        const file =
+          imageInput.files?.[0];
+
+
+        if (!file) {
+          return;
+        }
+
+
+        if (!currentUsername || !friendId) {
+
+          alert(
+            "ログイン情報または相手の情報を取得できません。"
+          );
+
+          imageInput.value = "";
+
+          return;
+        }
+
+
+        if (!file.type.startsWith("image/")) {
+
+          alert(
+            "画像ファイルを選んでください。"
+          );
+
+          imageInput.value = "";
+
+          return;
+        }
+
+
+        imageButton.disabled = true;
+        sendButton.disabled = true;
+
+
+        try {
+
+          const extension =
+            file.name.split(".").pop() || "jpg";
+
+
+          const filePath =
+            currentUsername +
+            "/" +
+            Date.now() +
+            "_" +
+            Math.random()
+              .toString(36)
+              .slice(2) +
+            "." +
+            extension;
+
+
+          // Storageへアップロード
+          const {
+            error: uploadError
+          } =
+            await supabaseClient.storage
+              .from("chat-images")
+              .upload(
+                filePath,
+                file,
+                {
+                  contentType: file.type,
+                  upsert: false
+                }
+              );
+
+
+          if (uploadError) {
+
+            console.error(
+              "画像アップロードエラー:",
+              uploadError
+            );
+
+            alert(
+              "画像をアップロードできませんでした。\n\n" +
+              uploadError.message
+            );
+
+            return;
+          }
+
+
+          // messagesに画像の場所を保存
+          const {
+            data,
+            error
+          } =
+            await supabaseClient
+              .from("messages")
+              .insert({
+
+                sender_id:
+                  currentUsername,
+
+                receiver_id:
+                  friendId,
+
+                content:
+                  "",
+
+                image_url:
+                  filePath
+
+              })
+              .select()
+              .single();
+
+
+          if (error) {
+
+            console.error(
+              "画像メッセージ保存エラー:",
+              error
+            );
+
+            alert(
+              "画像メッセージを保存できませんでした。\n\n" +
+              error.message
+            );
+
+            return;
+          }
+
+
+          await addMessageToScreen(data);
+
+          scrollToBottom();
+
+        } finally {
+
+          imageButton.disabled = false;
+          sendButton.disabled = false;
+
+          imageInput.value = "";
+
+        }
 
       }
     );
