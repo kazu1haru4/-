@@ -1,1 +1,557 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <title>掲示板</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      background: linear-gradient(135deg, #fff3fb, #eef5ff);
+      color: #333;
+      padding: 20px;
+      padding-bottom: 100px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      border-radius: 24px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.07);
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 26px;
+    }
+
+    .header p {
+      margin: 7px 0 0;
+      color: #999;
+      font-size: 14px;
+    }
+
+    .home-button {
+      display: inline-block;
+      margin-bottom: 15px;
+      padding: 10px 14px;
+      background: white;
+      color: #555;
+      text-decoration: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .post {
+      background: white;
+      border-radius: 20px;
+      padding: 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    }
+
+    .post-title {
+      font-size: 19px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .post-content {
+      color: #666;
+      font-size: 14px;
+      white-space: pre-wrap;
+      margin-bottom: 12px;
+    }
+
+    .post-info {
+      color: #aaa;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+
+    .join-button {
+      width: 100%;
+      border: none;
+      border-radius: 14px;
+      padding: 12px;
+      background: #8f7cff;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+    }
+
+    .empty {
+      text-align: center;
+      color: #999;
+      padding: 40px 10px;
+    }
+
+    .add-button {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      width: 64px;
+      height: 64px;
+      border: none;
+      border-radius: 50%;
+      background: #8f7cff;
+      color: white;
+      font-size: 30px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-box {
+      width: 100%;
+      max-width: 500px;
+      background: white;
+      border-radius: 24px;
+      padding: 22px;
+    }
+
+    .modal-box h2 {
+      margin-top: 0;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      padding: 13px;
+      font-size: 16px;
+      margin-bottom: 12px;
+      font-family: inherit;
+    }
+
+    textarea {
+      min-height: 130px;
+      resize: vertical;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modal-buttons button {
+      flex: 1;
+      border: none;
+      border-radius: 14px;
+      padding: 13px;
+      font-size: 15px;
+      font-weight: bold;
+    }
+
+    .cancel-button {
+      background: #eee;
+      color: #555;
+    }
+
+    .submit-button {
+      background: #8f7cff;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="container">
+
+    <a href="home.html" class="home-button">
+      🏠 ホーム
+    </a>
+
+    <section class="header">
+      <h1>📢 掲示板</h1>
+      <p>みんなの投稿を見て参加しよう！</p>
+    </section>
+
+    <section id="posts">
+      <div class="empty">
+        読み込み中...
+      </div>
+    </section>
+
+  </main>
+
+
+  <button class="add-button" id="addButton">
+    ＋
+  </button>
+
+
+  <div class="modal" id="modal">
+
+    <div class="modal-box">
+
+      <h2>📢 新しい投稿</h2>
+
+      <input
+        type="text"
+        id="titleInput"
+        placeholder="題名"
+        maxlength="50"
+      >
+
+      <textarea
+        id="contentInput"
+        placeholder="内容を書いてね"
+        maxlength="1000"
+      ></textarea>
+
+      <div class="modal-buttons">
+
+        <button
+          class="cancel-button"
+          id="cancelButton"
+        >
+          キャンセル
+        </button>
+
+        <button
+          class="submit-button"
+          id="submitButton"
+        >
+          投稿する
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+
+    const SUPABASE_URL =
+      "https://yxonmqdyekwenyzekjwj.supabase.co";
+
+    const SUPABASE_KEY =
+      "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+
+    const supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
+
+    const postsElement =
+      document.getElementById("posts");
+
+    const modal =
+      document.getElementById("modal");
+
+    const addButton =
+      document.getElementById("addButton");
+
+    const cancelButton =
+      document.getElementById("cancelButton");
+
+    const submitButton =
+      document.getElementById("submitButton");
+
+    const titleInput =
+      document.getElementById("titleInput");
+
+    const contentInput =
+      document.getElementById("contentInput");
+
+
+    let currentUsername = "";
+
+
+    async function start() {
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient.auth.getUser();
+
+
+      if (error || !data.user) {
+
+        postsElement.innerHTML =
+          '<div class="empty">ログインしてください。</div>';
+
+        return;
+      }
+
+
+      currentUsername =
+        data.user.user_metadata?.username || "";
+
+
+      await loadPosts();
+
+    }
+
+
+    async function loadPosts() {
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient
+          .from("board_posts")
+          .select("*")
+          .order("created_at", {
+            ascending: false
+          });
+
+
+      if (error) {
+
+        console.error(error);
+
+        postsElement.innerHTML =
+          '<div class="empty">投稿を読み込めませんでした。</div>';
+
+        return;
+      }
+
+
+      if (!data || data.length === 0) {
+
+        postsElement.innerHTML =
+          '<div class="empty">まだ投稿がありません。<br>右下の＋から投稿してみよう！</div>';
+
+        return;
+      }
+
+
+      postsElement.innerHTML = "";
+
+
+      data.forEach(post => {
+
+        const postElement =
+          document.createElement("div");
+
+        postElement.className = "post";
+
+
+        postElement.innerHTML = `
+          <div class="post-title">
+            ${escapeHtml(post.title)}
+          </div>
+
+          <div class="post-content">
+            ${escapeHtml(post.content)}
+          </div>
+
+          <div class="post-info">
+            投稿者：@${escapeHtml(post.owner_id)}
+          </div>
+
+          <button
+            class="join-button"
+            onclick="joinBoard(${post.id})"
+          >
+            👥 参加する
+          </button>
+        `;
+
+
+        postsElement.appendChild(postElement);
+
+      });
+
+    }
+
+
+    async function joinBoard(boardId) {
+
+      if (!currentUsername) {
+        alert("ログインしてください。");
+        return;
+      }
+
+
+      const {
+        data: existing
+      } =
+        await supabaseClient
+          .from("board_members")
+          .select("id")
+          .eq("board_id", boardId)
+          .eq("user_id", currentUsername)
+          .maybeSingle();
+
+
+      if (!existing) {
+
+        const {
+          error
+        } =
+          await supabaseClient
+            .from("board_members")
+            .insert({
+              board_id: boardId,
+              user_id: currentUsername
+            });
+
+
+        if (error) {
+
+          console.error(error);
+
+          alert("参加できませんでした。");
+          return;
+
+        }
+
+      }
+
+
+      window.location.href =
+        "board_chat.html?id=" +
+        encodeURIComponent(boardId);
+
+    }
+
+
+    addButton.addEventListener(
+      "click",
+      () => {
+
+        titleInput.value = "";
+        contentInput.value = "";
+
+        modal.style.display = "flex";
+
+        titleInput.focus();
+
+      }
+    );
+
+
+    cancelButton.addEventListener(
+      "click",
+      () => {
+
+        modal.style.display = "none";
+
+      }
+    );
+
+
+    submitButton.addEventListener(
+      "click",
+      async () => {
+
+        const title =
+          titleInput.value.trim();
+
+        const content =
+          contentInput.value.trim();
+
+
+        if (!title) {
+
+          alert("題名を入力してね。");
+          return;
+
+        }
+
+
+        if (!content) {
+
+          alert("内容を入力してね。");
+          return;
+
+        }
+
+
+        submitButton.disabled = true;
+        submitButton.textContent = "投稿中...";
+
+
+        const {
+          error
+        } =
+          await supabaseClient
+            .from("board_posts")
+            .insert({
+              title: title,
+              content: content,
+              owner_id: currentUsername
+            });
+
+
+        submitButton.disabled = false;
+        submitButton.textContent = "投稿する";
+
+
+        if (error) {
+
+          console.error(error);
+
+          alert("投稿できませんでした。");
+          return;
+
+        }
+
+
+        modal.style.display = "none";
+
+        await loadPosts();
+
+      }
+    );
+
+
+    function escapeHtml(text) {
+
+      const div =
+        document.createElement("div");
+
+      div.textContent =
+        text ?? "";
+
+      return div.innerHTML;
+
+    }
+
+
+    start();
+
+  </script>
+
+</body>
+</html>
