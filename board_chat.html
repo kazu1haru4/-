@@ -1,1 +1,1260 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <title>掲示板チャット</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      background: linear-gradient(135deg, #fff3fb, #eef5ff);
+      color: #333;
+      padding-bottom: 90px;
+    }
+
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: white;
+      padding: 15px 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    }
+
+    .top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .home-button {
+      padding: 9px 12px;
+      background: #f3f3f3;
+      color: #555;
+      text-decoration: none;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .title-area {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .title {
+      font-size: 19px;
+      font-weight: bold;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sub {
+      margin-top: 3px;
+      color: #999;
+      font-size: 12px;
+    }
+
+    #messages {
+      padding: 20px;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .empty {
+      text-align: center;
+      color: #999;
+      padding: 40px 10px;
+    }
+
+    .message {
+      margin-bottom: 18px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .message.mine {
+      align-items: flex-end;
+    }
+
+    .message.other {
+      align-items: flex-start;
+    }
+
+    .sender {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 4px;
+    }
+
+    .bubble {
+      max-width: 80%;
+      padding: 11px 14px;
+      border-radius: 18px;
+      font-size: 15px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .mine .bubble {
+      background: #8f7cff;
+      color: white;
+      border-bottom-right-radius: 5px;
+    }
+
+    .other .bubble {
+      background: white;
+      color: #333;
+      border-bottom-left-radius: 5px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+
+    .message-image {
+      display: block;
+      max-width: 260px;
+      max-height: 300px;
+      border-radius: 15px;
+      object-fit: contain;
+      margin-bottom: 5px;
+    }
+
+    .time {
+      margin-top: 4px;
+      color: #aaa;
+      font-size: 10px;
+    }
+
+    .message-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .action-button {
+      border: none;
+      background: white;
+      border-radius: 12px;
+      padding: 6px 10px;
+      font-size: 12px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+    }
+
+    .reaction-picker {
+      display: none;
+      gap: 5px;
+      background: white;
+      padding: 7px;
+      border-radius: 14px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.12);
+      margin-top: 6px;
+    }
+
+    .reaction-picker button {
+      border: none;
+      background: #f5f5f5;
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      font-size: 20px;
+    }
+
+    .reactions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 5px;
+    }
+
+    .reaction {
+      background: white;
+      border-radius: 12px;
+      padding: 4px 8px;
+      font-size: 13px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.07);
+    }
+
+    .reply-preview {
+      display: none;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 72px;
+      z-index: 19;
+      background: white;
+      padding: 10px 14px;
+      border-top: 1px solid #eee;
+      box-shadow: 0 -3px 12px rgba(0,0,0,0.06);
+    }
+
+    .reply-preview-inner {
+      max-width: 700px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .reply-text {
+      flex: 1;
+      min-width: 0;
+      font-size: 12px;
+      color: #777;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .cancel-reply {
+      border: none;
+      background: #eee;
+      border-radius: 10px;
+      padding: 7px 10px;
+    }
+
+    .input-area {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 20;
+      background: white;
+      padding: 10px;
+      box-shadow: 0 -4px 15px rgba(0,0,0,0.08);
+    }
+
+    .input-inner {
+      max-width: 700px;
+      margin: 0 auto;
+      display: flex;
+      gap: 7px;
+      align-items: center;
+    }
+
+    #imageButton {
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 15px;
+      background: #f0edff;
+      font-size: 21px;
+    }
+
+    #messageInput {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid #ddd;
+      border-radius: 18px;
+      padding: 12px 14px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    #sendButton {
+      border: none;
+      border-radius: 18px;
+      padding: 0 15px;
+      height: 44px;
+      background: #8f7cff;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    #sendButton:disabled {
+      opacity: 0.5;
+    }
+
+    #imageInput {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header class="header">
+
+    <div class="top">
+
+      <a href="board.html" class="home-button">
+        ← 掲示板
+      </a>
+
+      <div class="title-area">
+        <div class="title" id="boardTitle">
+          読み込み中...
+        </div>
+
+        <div class="sub">
+          掲示板チャット
+        </div>
+      </div>
+
+    </div>
+
+  </header>
+
+
+  <main id="messages">
+    <div class="empty">
+      メッセージを読み込み中...
+    </div>
+  </main>
+
+
+  <div class="reply-preview" id="replyPreview">
+
+    <div class="reply-preview-inner">
+
+      <div class="reply-text" id="replyText"></div>
+
+      <button
+        class="cancel-reply"
+        id="cancelReply"
+      >
+        ✕
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <div class="input-area">
+
+    <div class="input-inner">
+
+      <button id="imageButton">
+        🖼️
+      </button>
+
+      <input
+        type="file"
+        id="imageInput"
+        accept="image/*"
+      >
+
+      <input
+        id="messageInput"
+        type="text"
+        placeholder="メッセージを入力"
+        maxlength="1000"
+      >
+
+      <button id="sendButton">
+        送信
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+
+    const SUPABASE_URL =
+      "https://yxonmqdyekwenyzekjwj.supabase.co";
+
+    const SUPABASE_KEY =
+      "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+
+    const supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
+
+    const params =
+      new URLSearchParams(
+        window.location.search
+      );
+
+    const boardId =
+      params.get("id");
+
+
+    let currentUsername = "";
+    let replyMessage = null;
+
+
+    const boardTitle =
+      document.getElementById("boardTitle");
+
+    const messagesElement =
+      document.getElementById("messages");
+
+    const messageInput =
+      document.getElementById("messageInput");
+
+    const sendButton =
+      document.getElementById("sendButton");
+
+    const imageButton =
+      document.getElementById("imageButton");
+
+    const imageInput =
+      document.getElementById("imageInput");
+
+    const replyPreview =
+      document.getElementById("replyPreview");
+
+    const replyText =
+      document.getElementById("replyText");
+
+    const cancelReply =
+      document.getElementById("cancelReply");
+
+
+    async function start() {
+
+      if (!boardId) {
+        boardTitle.textContent =
+          "掲示板が見つかりません";
+        return;
+      }
+
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient.auth.getUser();
+
+
+      if (error || !data.user) {
+
+        boardTitle.textContent =
+          "ログインしてください";
+
+        return;
+      }
+
+
+      currentUsername =
+        data.user.user_metadata?.username || "";
+
+
+      const {
+        data: post,
+        error: postError
+      } =
+        await supabaseClient
+          .from("board_posts")
+          .select("title")
+          .eq("id", boardId)
+          .maybeSingle();
+
+
+      if (postError || !post) {
+
+        boardTitle.textContent =
+          "掲示板が見つかりません";
+
+        return;
+      }
+
+
+      boardTitle.textContent =
+        post.title;
+
+
+      const {
+        data: member
+      } =
+        await supabaseClient
+          .from("board_members")
+          .select("id")
+          .eq("board_id", boardId)
+          .eq("user_id", currentUsername)
+          .maybeSingle();
+
+
+      if (!member) {
+
+        boardTitle.textContent =
+          "参加していません";
+
+        messagesElement.innerHTML =
+          '<div class="empty">この掲示板に参加するとチャットできます。</div>';
+
+        messageInput.disabled = true;
+        sendButton.disabled = true;
+        imageButton.disabled = true;
+
+        return;
+      }
+
+
+      await loadMessages();
+
+      startRealtime();
+
+    }
+
+
+    async function loadMessages() {
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient
+          .from("board_messages")
+          .select("*")
+          .eq("board_id", boardId)
+          .order("created_at", {
+            ascending: true
+          });
+
+
+      if (error) {
+
+        console.error(error);
+
+        messagesElement.innerHTML =
+          '<div class="empty">メッセージを読み込めませんでした。</div>';
+
+        return;
+      }
+
+
+      messagesElement.innerHTML = "";
+
+
+      if (!data || data.length === 0) {
+
+        messagesElement.innerHTML =
+          '<div class="empty">まだメッセージがありません。<br>最初のメッセージを送ってみよう！</div>';
+
+        return;
+      }
+
+
+      for (const message of data) {
+
+        await addMessage(message);
+
+      }
+
+
+      scrollToBottom();
+
+    }
+
+
+    async function addMessage(message) {
+
+      const messageElement =
+        document.createElement("div");
+
+
+      messageElement.className =
+        "message " +
+        (
+          message.sender_id === currentUsername
+            ? "mine"
+            : "other"
+        );
+
+
+      const sender =
+        document.createElement("div");
+
+      sender.className = "sender";
+
+      sender.textContent =
+        "@" + message.sender_id;
+
+
+      const bubble =
+        document.createElement("div");
+
+      bubble.className = "bubble";
+
+
+      if (message.image_url) {
+
+        const {
+          data
+        } =
+          await supabaseClient
+            .storage
+            .from("chat-images")
+            .createSignedUrl(
+              message.image_url,
+              3600
+            );
+
+
+        if (data?.signedUrl) {
+
+          const image =
+            document.createElement("img");
+
+          image.className =
+            "message-image";
+
+          image.src =
+            data.signedUrl;
+
+          image.alt =
+            "送信された画像";
+
+          bubble.appendChild(image);
+
+        }
+
+      }
+
+
+      if (message.content) {
+
+        const text =
+          document.createElement("div");
+
+        text.textContent =
+          message.content;
+
+        bubble.appendChild(text);
+
+      }
+
+
+      const time =
+        document.createElement("div");
+
+      time.className = "time";
+
+      time.textContent =
+        new Date(
+          message.created_at
+        ).toLocaleTimeString(
+          "ja-JP",
+          {
+            hour: "2-digit",
+            minute: "2-digit"
+          }
+        );
+
+
+      const actions =
+        document.createElement("div");
+
+      actions.className =
+        "message-actions";
+
+
+      const reactionButton =
+        document.createElement("button");
+
+      reactionButton.className =
+        "action-button";
+
+      reactionButton.textContent =
+        "❤️ リアクション";
+
+
+      const replyButton =
+        document.createElement("button");
+
+      replyButton.className =
+        "action-button";
+
+      replyButton.textContent =
+        "↩️ 返信";
+
+
+      const picker =
+        document.createElement("div");
+
+      picker.className =
+        "reaction-picker";
+
+
+      ["❤️", "😂", "👍", "😮", "😢"]
+        .forEach(reaction => {
+
+          const button =
+            document.createElement("button");
+
+          button.textContent =
+            reaction;
+
+          button.addEventListener(
+            "click",
+            async () => {
+
+              await toggleReaction(
+                message.id,
+                reaction
+              );
+
+              picker.style.display =
+                "none";
+
+              await loadMessages();
+
+            }
+          );
+
+          picker.appendChild(button);
+
+        });
+
+
+      reactionButton.addEventListener(
+        "click",
+        () => {
+
+          picker.style.display =
+            picker.style.display === "flex"
+              ? "none"
+              : "flex";
+
+        }
+      );
+
+
+      replyButton.addEventListener(
+        "click",
+        () => {
+
+          replyMessage =
+            message;
+
+          replyPreview.style.display =
+            "block";
+
+          replyText.textContent =
+            "@" +
+            message.sender_id +
+            " に返信： " +
+            (
+              message.content ||
+              "画像"
+            );
+
+          messageInput.focus();
+
+        }
+      );
+
+
+      actions.appendChild(
+        reactionButton
+      );
+
+      actions.appendChild(
+        replyButton
+      );
+
+
+      const reactions =
+        document.createElement("div");
+
+      reactions.className =
+        "reactions";
+
+
+      const {
+        data: reactionData
+      } =
+        await supabaseClient
+          .from("board_reactions")
+          .select("reaction")
+          .eq(
+            "board_message_id",
+            message.id
+          );
+
+
+      if (reactionData) {
+
+        const counts = {};
+
+        reactionData.forEach(item => {
+
+          counts[item.reaction] =
+            (counts[item.reaction] || 0) + 1;
+
+        });
+
+
+        Object.entries(counts)
+          .forEach(
+            ([reaction, count]) => {
+
+              const item =
+                document.createElement("div");
+
+              item.className =
+                "reaction";
+
+              item.textContent =
+                reaction + " " + count;
+
+              reactions.appendChild(item);
+
+            }
+          );
+
+      }
+
+
+      messageElement.appendChild(sender);
+      messageElement.appendChild(bubble);
+      messageElement.appendChild(time);
+      messageElement.appendChild(actions);
+      messageElement.appendChild(picker);
+      messageElement.appendChild(reactions);
+
+
+      messagesElement.appendChild(
+        messageElement
+      );
+
+
+      await loadReplies(
+        message.id,
+        messageElement
+      );
+
+    }
+
+
+    async function loadReplies(
+      messageId,
+      messageElement
+    ) {
+
+      const {
+        data
+      } =
+        await supabaseClient
+          .from("board_replies")
+          .select("*")
+          .eq(
+            "board_message_id",
+            messageId
+          )
+          .order("created_at", {
+            ascending: true
+          });
+
+
+      if (!data || data.length === 0) {
+        return;
+      }
+
+
+      data.forEach(reply => {
+
+        const replyElement =
+          document.createElement("div");
+
+        replyElement.style.marginTop =
+          "7px";
+
+        replyElement.style.padding =
+          "8px 12px";
+
+        replyElement.style.background =
+          "#f7f7f7";
+
+        replyElement.style.borderRadius =
+          "12px";
+
+        replyElement.style.fontSize =
+          "12px";
+
+        replyElement.textContent =
+          "↩️ @" +
+          reply.sender_id +
+          "： " +
+          reply.content;
+
+
+        messageElement.appendChild(
+          replyElement
+        );
+
+      });
+
+    }
+
+
+    async function toggleReaction(
+      messageId,
+      reaction
+    ) {
+
+      const {
+        data: existing
+      } =
+        await supabaseClient
+          .from("board_reactions")
+          .select("id")
+          .eq(
+            "board_message_id",
+            messageId
+          )
+          .eq(
+            "user_id",
+            currentUsername
+          )
+          .eq(
+            "reaction",
+            reaction
+          )
+          .maybeSingle();
+
+
+      if (existing) {
+
+        await supabaseClient
+          .from("board_reactions")
+          .delete()
+          .eq("id", existing.id);
+
+      } else {
+
+        await supabaseClient
+          .from("board_reactions")
+          .insert({
+            board_message_id: messageId,
+            user_id: currentUsername,
+            reaction: reaction
+          });
+
+      }
+
+    }
+
+
+    async function sendMessage() {
+
+      const content =
+        messageInput.value.trim();
+
+
+      if (!content) {
+
+        if (replyMessage) {
+          alert("返信内容を入力してね。");
+        }
+
+        return;
+
+      }
+
+
+      sendButton.disabled = true;
+
+
+      if (replyMessage) {
+
+        const {
+          error
+        } =
+          await supabaseClient
+            .from("board_replies")
+            .insert({
+              board_message_id:
+                replyMessage.id,
+              sender_id:
+                currentUsername,
+              content:
+                content
+            });
+
+
+        sendButton.disabled = false;
+
+
+        if (error) {
+
+          console.error(error);
+
+          alert("返信を送信できませんでした。");
+
+          return;
+
+        }
+
+
+        messageInput.value = "";
+
+        cancelReplyMode();
+
+        await loadMessages();
+
+        return;
+
+      }
+
+
+      const {
+        error
+      } =
+        await supabaseClient
+          .from("board_messages")
+          .insert({
+            board_id:
+              Number(boardId),
+            sender_id:
+              currentUsername,
+            content:
+              content,
+            image_url:
+              ""
+          });
+
+
+      sendButton.disabled = false;
+
+
+      if (error) {
+
+        console.error(error);
+
+        alert("メッセージを送信できませんでした.");
+
+        return;
+
+      }
+
+
+      messageInput.value = "";
+
+      messageInput.focus();
+
+    }
+
+
+    async function uploadImage(file) {
+
+      if (!file) {
+        return;
+      }
+
+
+      const extension =
+        file.name
+          .split(".")
+          .pop()
+          .toLowerCase();
+
+
+      const filePath =
+        "boards/" +
+        boardId +
+        "/" +
+        currentUsername +
+        "/" +
+        Date.now() +
+        "_" +
+        Math.random()
+          .toString(36)
+          .slice(2) +
+        "." +
+        extension;
+
+
+      imageButton.disabled = true;
+
+
+      const {
+        error: uploadError
+      } =
+        await supabaseClient
+          .storage
+          .from("chat-images")
+          .upload(
+            filePath,
+            file,
+            {
+              contentType: file.type,
+              upsert: false
+            }
+          );
+
+
+      if (uploadError) {
+
+        console.error(uploadError);
+
+        imageButton.disabled = false;
+
+        alert(
+          "画像をアップロードできませんでした。"
+        );
+
+        return;
+
+      }
+
+
+      const {
+        error
+      } =
+        await supabaseClient
+          .from("board_messages")
+          .insert({
+            board_id:
+              Number(boardId),
+            sender_id:
+              currentUsername,
+            content:
+              "",
+            image_url:
+              filePath
+          });
+
+
+      imageButton.disabled = false;
+
+
+      if (error) {
+
+        console.error(error);
+
+        alert(
+          "画像メッセージを送信できませんでした。"
+        );
+
+        return;
+
+      }
+
+
+      imageInput.value = "";
+
+    }
+
+
+    function cancelReplyMode() {
+
+      replyMessage = null;
+
+      replyPreview.style.display =
+        "none";
+
+      replyText.textContent = "";
+
+      messageInput.focus();
+
+    }
+
+
+    function startRealtime() {
+
+      supabaseClient
+        .channel(
+          "board-chat-" + boardId
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "board_messages",
+            filter:
+              "board_id=eq." + boardId
+          },
+          async payload => {
+
+            await loadMessages();
+
+          }
+        )
+        .subscribe();
+
+    }
+
+
+    imageButton.addEventListener(
+      "click",
+      () => {
+
+        imageInput.click();
+
+      }
+    );
+
+
+    imageInput.addEventListener(
+      "change",
+      async () => {
+
+        const file =
+          imageInput.files?.[0];
+
+        await uploadImage(file);
+
+      }
+    );
+
+
+    sendButton.addEventListener(
+      "click",
+      sendMessage
+    );
+
+
+    messageInput.addEventListener(
+      "keydown",
+      event => {
+
+        if (
+          event.key === "Enter"
+        ) {
+
+          event.preventDefault();
+
+          sendMessage();
+
+        }
+
+      }
+    );
+
+
+    cancelReply.addEventListener(
+      "click",
+      cancelReplyMode
+    );
+
+
+    function scrollToBottom() {
+
+      window.scrollTo({
+        top:
+          document.body.scrollHeight,
+        behavior:
+          "smooth"
+      });
+
+    }
+
+
+    start();
+
+  </script>
+
+</body>
+</html>
