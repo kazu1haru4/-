@@ -211,16 +211,26 @@
         await supabaseClient.auth.getUser();
 
 
-      if (error || !data.user) {
+      const { data, error } = await supabaseClient.auth.getSession();
 
-        alert("ログインしてください。");
+console.log("SESSION:", data.session);
+console.log("ERROR:", error);
 
-        window.location.href =
-          "index.html";
+if (error || !data.session) {
+  alert("ログインしてください。");
+  return;
+}
 
-        return;
+currentUser = data.session.user;
+currentUsername =
+  data.session.user.user_metadata?.username || "";
 
-      }
+if (!currentUsername) {
+  alert("ユーザーIDを取得できませんでした。");
+  return;
+}
+
+await loadFriends();
 
 
       currentUser =
