@@ -22,7 +22,7 @@
     .header {
       position: relative;
       background: white;
-      padding: 18px 60px;
+      padding: 18px 120px 18px 60px;
       text-align: center;
       box-shadow: 0 2px 10px rgba(0,0,0,0.08);
     }
@@ -39,6 +39,20 @@
       font-size: 13px;
       font-weight: bold;
       box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    }
+
+    .member-button {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      border: none;
+      padding: 9px 12px;
+      background: #6aa9ff;
+      color: white;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
     }
 
     .title {
@@ -122,6 +136,68 @@
       color: #d55;
       padding: 20px;
     }
+
+    /* メンバー追加画面 */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 100;
+    }
+
+    .modal-box {
+      width: 100%;
+      max-width: 360px;
+      background: white;
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #444;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    #memberInput {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .modal-buttons button {
+      flex: 1;
+      border: none;
+      border-radius: 12px;
+      padding: 12px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #addMemberButton {
+      background: #6aa9ff;
+      color: white;
+    }
+
+    #closeModalButton {
+      background: #eee;
+      color: #555;
+    }
   </style>
 </head>
 
@@ -129,6 +205,14 @@
 
   <div class="header">
     <a href="home.html" class="home-button">🏠 ホーム</a>
+
+    <button
+      id="memberButton"
+      class="member-button"
+      type="button"
+    >
+      👤 メンバー追加
+    </button>
 
     <div class="title">👥 グループチャット</div>
     <div class="group-name" id="groupName">読み込み中...</div>
@@ -150,6 +234,44 @@
     >
       送信
     </button>
+  </div>
+
+  <!-- メンバー追加 -->
+  <div id="memberModal" class="modal">
+
+    <div class="modal-box">
+
+      <div class="modal-title">
+        👤 メンバーを追加
+      </div>
+
+      <input
+        id="memberInput"
+        type="text"
+        placeholder="追加するユーザーID"
+        autocomplete="off"
+      >
+
+      <div class="modal-buttons">
+
+        <button
+          id="closeModalButton"
+          type="button"
+        >
+          キャンセル
+        </button>
+
+        <button
+          id="addMemberButton"
+          type="button"
+        >
+          追加
+        </button>
+
+      </div>
+
+    </div>
+
   </div>
 
   <script>
@@ -182,6 +304,21 @@
 
     const sendButton =
       document.getElementById("sendButton");
+
+    const memberButton =
+      document.getElementById("memberButton");
+
+    const memberModal =
+      document.getElementById("memberModal");
+
+    const memberInput =
+      document.getElementById("memberInput");
+
+    const addMemberButton =
+      document.getElementById("addMemberButton");
+
+    const closeModalButton =
+      document.getElementById("closeModalButton");
 
     let currentUsername = "";
 
@@ -346,25 +483,52 @@
       messageInput.focus();
     }
 
-    sendButton.addEventListener(
-      "click",
-      sendMessage
-    );
+    async function addMember() {
 
-    messageInput.addEventListener(
-      "keydown",
-      function(event) {
+      const friendId =
+        memberInput.value.trim();
 
-        if (event.key === "Enter") {
-          event.preventDefault();
-          sendMessage();
-        }
-
+      if (!friendId) {
+        alert("追加するユーザーIDを入力してね。");
+        return;
       }
-    );
 
-    start();
-  </script>
+      if (friendId === currentUsername) {
+        alert("自分はすでにメンバーだよ。");
+        return;
+      }
 
-</body>
-</html>
+      addMemberButton.disabled = true;
+
+      // ユーザーが存在するか確認
+      const {
+        data: profile,
+        error: profileError
+      } =
+        await supabaseClient
+          .from("profiles")
+          .select("user_id, name")
+          .eq("user_id", friendId)
+          .maybeSingle();
+
+      if (profileError) {
+        console.error(profileError);
+        alert("ユーザーを確認できませんでした。");
+        addMemberButton.disabled = false;
+        return;
+      }
+
+      if (!profile) {
+        alert("そのユーザーIDは見つかりません。");
+        addMemberButton.disabled = false;
+        return;
+      }
+
+      // すでにメンバーか確認
+      const {
+        data: existing
+      } =
+        await supabaseClient
+          .from("group_members")
+          .select("id")
+          .eq("group_id", Number(groupId))
