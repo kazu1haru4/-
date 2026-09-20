@@ -233,9 +233,8 @@
       }
 
 
-      const {
-        data: { user }
-      } = await supabaseClient.auth.getUser();
+    console.log("USER:", user);
+console.log("SESSION:", await supabaseClient.auth.getSession());
 
 
       if (!user) {
