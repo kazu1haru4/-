@@ -133,6 +133,38 @@
     </div>
 
   </div>
+<script>
+  const input = document.getElementById("messageInput");
+  const sendButton = document.getElementById("sendButton");
+  const messages = document.getElementById("messages");
 
+  sendButton.addEventListener("click", sendMessage);
+
+  input.addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+      sendMessage();
+    }
+  });
+
+  function sendMessage() {
+    const text = input.value.trim();
+
+    if (!text) return;
+
+    const empty = messages.querySelector(".empty");
+    if (empty) {
+      empty.remove();
+    }
+
+    const message = document.createElement("div");
+    message.className = "message me";
+    message.textContent = text;
+
+    messages.appendChild(message);
+
+    input.value = "";
+    messages.scrollTop = messages.scrollHeight;
+  }
+</script>
 </body>
 </html>
