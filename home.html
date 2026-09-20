@@ -106,16 +106,17 @@
     .profile {
       background: #fff0f7;
     }
-    
-　　.groups {
-  background: #f0f7ff;
-  }
+
+    .groups {
+      background: #f0f7ff;
+    }
+
     .friends {
       background: #eef9f3;
     }
 
-    .settings {
-      background: #f3f3f3;
+    .board {
+      background: #fff7e8;
     }
 
     .footer {
@@ -153,12 +154,13 @@
 
     <section class="menu">
 
-<a href="groups.html" class="menu-button groups">
-  <div class="icon">👥</div>
-  <div class="title">グループ</div>
-  <div class="description">グループチャット</div>
-</a>
-      
+      <a href="groups.html" class="menu-button groups">
+        <div class="icon">👥</div>
+        <div class="title">グループ</div>
+        <div class="description">グループチャット</div>
+      </a>
+
+
       <a href="profile.html" class="menu-button profile">
         <div class="icon">👤</div>
         <div class="title">プロフィール</div>
@@ -173,10 +175,10 @@
       </a>
 
 
-      <a href="#" class="menu-button settings">
-        <div class="icon">⚙️</div>
-        <div class="title">設定</div>
-        <div class="description">アプリの設定</div>
+      <a href="board.html" class="menu-button board">
+        <div class="icon">📢</div>
+        <div class="title">掲示板</div>
+        <div class="description">みんなの投稿を見る</div>
       </a>
 
     </section>
@@ -223,10 +225,6 @@
 
         return;
       }
-
-
-      const userId =
-        data.user.id;
 
 
       const {
