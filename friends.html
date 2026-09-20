@@ -102,6 +102,12 @@
       font-weight: bold;
     }
 
+    .user-id {
+      color: #999;
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
     .empty {
       text-align: center;
       color: #999;
@@ -189,7 +195,12 @@
 
 
     let currentUser = null;
+    let currentUsername = "";
 
+
+    // ==============================
+    // ログイン確認
+    // ==============================
 
     async function start() {
 
@@ -212,12 +223,32 @@
       }
 
 
-      currentUser = data.user;
+      currentUser =
+        data.user;
 
-      loadFriends();
+
+      // 登録時に保存したユーザーID
+      currentUsername =
+        data.user.user_metadata?.username || "";
+
+
+      if (!currentUsername) {
+
+        alert("ユーザーIDを取得できませんでした。");
+
+        return;
+
+      }
+
+
+      await loadFriends();
 
     }
 
+
+    // ==============================
+    // フレンド一覧
+    // ==============================
 
     async function loadFriends() {
 
@@ -228,7 +259,7 @@
         await supabaseClient
           .from("friends")
           .select("*")
-          .eq("user_id", currentUser.id);
+          .eq("user_id", currentUsername);
 
 
       if (error) {
@@ -271,29 +302,51 @@
         const div =
           document.createElement("div");
 
-        div.className = "friend";
+        div.className =
+          "friend";
 
 
         const avatar =
           document.createElement("div");
 
-        avatar.className = "avatar";
+        avatar.className =
+          "avatar";
 
-        avatar.textContent = "👤";
+        avatar.textContent =
+          "👤";
+
+
+        const info =
+          document.createElement("div");
 
 
         const name =
           document.createElement("div");
 
-        name.className = "name";
+        name.className =
+          "name";
 
         name.textContent =
           profile?.name || friend.friend_id;
 
 
-        div.appendChild(avatar);
+        const userId =
+          document.createElement("div");
 
-        div.appendChild(name);
+        userId.className =
+          "user-id";
+
+        userId.textContent =
+          "@" + friend.friend_id;
+
+
+        info.appendChild(name);
+        info.appendChild(userId);
+
+
+        div.appendChild(avatar);
+        div.appendChild(info);
+
 
         friendList.appendChild(div);
 
@@ -301,6 +354,10 @@
 
     }
 
+
+    // ==============================
+    // フレンド追加
+    // ==============================
 
     addButton.addEventListener(
       "click",
@@ -327,7 +384,7 @@
       }
 
 
-      if (friendId === currentUser.id) {
+      if (friendId === currentUsername) {
 
         message.textContent =
           "自分は追加できません。";
@@ -336,6 +393,8 @@
 
       }
 
+
+      // ユーザーが存在するか確認
 
       const {
         data: profile,
@@ -353,6 +412,8 @@
         !profile
       ) {
 
+        console.error(profileError);
+
         message.textContent =
           "そのユーザーは見つかりません。";
 
@@ -360,6 +421,31 @@
 
       }
 
+
+      // すでに追加済みか確認
+
+      const {
+        data: existing
+      } =
+        await supabaseClient
+          .from("friends")
+          .select("id")
+          .eq("user_id", currentUsername)
+          .eq("friend_id", friendId)
+          .maybeSingle();
+
+
+      if (existing) {
+
+        message.textContent =
+          "すでにフレンドです。";
+
+        return;
+
+      }
+
+
+      // フレンド登録
 
       const {
         error
@@ -369,7 +455,7 @@
           .insert({
 
             user_id:
-              currentUser.id,
+              currentUsername,
 
             friend_id:
               friendId
@@ -390,15 +476,20 @@
 
 
       message.textContent =
-        "フレンドに追加しました！";
+        profile.name + " さんをフレンドに追加しました！";
 
 
       userIdInput.value = "";
 
-      loadFriends();
+
+      await loadFriends();
 
     }
 
+
+    // ==============================
+    // 開始
+    // ==============================
 
     start();
 
