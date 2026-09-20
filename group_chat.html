@@ -32,7 +32,7 @@
       top: 12px;
       left: 12px;
       padding: 9px 12px;
-      background: #fff;
+      background: white;
       color: #555;
       text-decoration: none;
       border-radius: 12px;
@@ -55,7 +55,7 @@
 
     .messages {
       padding: 15px;
-      padding-bottom: 85px;
+      padding-bottom: 90px;
       max-width: 700px;
       margin: auto;
     }
@@ -110,6 +110,7 @@
       padding: 0 18px;
       font-weight: bold;
       cursor: pointer;
+      font-size: 15px;
     }
 
     #sendButton:disabled {
@@ -142,105 +143,154 @@
       placeholder="メッセージを入力..."
       autocomplete="off"
     >
-    <button id="sendButton">送信</button>
+
+    <button
+      id="sendButton"
+      type="button"
+    >
+      送信
+    </button>
   </div>
 
   <script>
-    const SUPABASE_URL = "https://yxonmqdyekwenyzekjwj.supabase.co";
+    const SUPABASE_URL =
+      "https://yxonmqdyekwenyzekjwj.supabase.co";
 
-    const SUPABASE_PUBLISHABLE_KEY =
+    const SUPABASE_KEY =
       "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 
-    const supabase = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY
-    );
+    const supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
 
-    const params = new URLSearchParams(window.location.search);
-    const groupId = params.get("id");
+    const params =
+      new URLSearchParams(window.location.search);
 
-    const groupName = document.getElementById("groupName");
-    const messages = document.getElementById("messages");
-    const messageInput = document.getElementById("messageInput");
-    const sendButton = document.getElementById("sendButton");
+    const groupId =
+      params.get("id");
+
+    const groupName =
+      document.getElementById("groupName");
+
+    const messages =
+      document.getElementById("messages");
+
+    const messageInput =
+      document.getElementById("messageInput");
+
+    const sendButton =
+      document.getElementById("sendButton");
 
     let currentUsername = "";
 
     async function start() {
+
       if (!groupId) {
-        groupName.textContent = "グループが見つかりません";
+        groupName.textContent =
+          "グループが見つかりません";
         return;
       }
 
       const {
-        data: { session }
-      } = await supabase.auth.getSession();
+        data,
+        error
+      } =
+        await supabaseClient.auth.getSession();
 
-      if (!session) {
-        location.href = "index.html";
+      if (error || !data.session) {
+        window.location.href =
+          "index.html";
         return;
       }
 
       currentUsername =
-        session.user.user_metadata?.username || "";
+        data.session.user.user_metadata?.username || "";
 
       await loadGroup();
       await loadMessages();
-
-      subscribeMessages();
     }
 
     async function loadGroup() {
-      const { data, error } = await supabase
-        .from("groups")
-        .select("*")
-        .eq("id", groupId)
-        .single();
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient
+          .from("groups")
+          .select("name")
+          .eq("id", groupId)
+          .single();
 
       if (error || !data) {
-        groupName.textContent = "グループが見つかりません";
+        groupName.textContent =
+          "グループが見つかりません";
         return;
       }
 
-      groupName.textContent = data.name;
+      groupName.textContent =
+        data.name;
     }
 
     async function loadMessages() {
-      messages.innerHTML = "";
 
-      const { data, error } = await supabase
-        .from("group_messages")
-        .select("*")
-        .eq("group_id", groupId)
-        .order("created_at", { ascending: true });
+      const {
+        data,
+        error
+      } =
+        await supabaseClient
+          .from("group_messages")
+          .select("*")
+          .eq("group_id", groupId)
+          .order("created_at", {
+            ascending: true
+          });
 
       if (error) {
+        console.error(error);
+
         messages.innerHTML =
           '<div class="error">メッセージを読み込めませんでした。</div>';
+
         return;
       }
+
+      messages.innerHTML = "";
 
       for (const message of data || []) {
         addMessage(message);
       }
-
-      window.scrollTo(0, document.body.scrollHeight);
     }
 
     function addMessage(message) {
-      const box = document.createElement("div");
-      box.className = "message";
 
-      const sender = document.createElement("div");
-      sender.className = "sender";
+      const box =
+        document.createElement("div");
+
+      box.className =
+        "message";
+
+      const sender =
+        document.createElement("div");
+
+      sender.className =
+        "sender";
+
       sender.textContent =
         message.sender_id === currentUsername
           ? "あなた"
           : "@" + message.sender_id;
 
-      const content = document.createElement("div");
-      content.className = "content";
-      content.textContent = message.content || "";
+      const content =
+        document.createElement("div");
+
+      content.className =
+        "content";
+
+      content.textContent =
+        message.content || "";
 
       box.appendChild(sender);
       box.appendChild(content);
@@ -248,60 +298,70 @@
       messages.appendChild(box);
     }
 
-    function subscribeMessages() {
-      supabase
-        .channel("group-chat-" + groupId)
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "group_messages",
-            filter: "group_id=eq." + groupId
-          },
-          payload => {
-            addMessage(payload.new);
-            window.scrollTo(0, document.body.scrollHeight);
-          }
-        )
-        .subscribe();
-    }
-
     async function sendMessage() {
-      const text = messageInput.value.trim();
 
-      if (!text || !currentUsername) {
+      const text =
+        messageInput.value.trim();
+
+      if (!text) {
+        return;
+      }
+
+      if (!currentUsername) {
+        alert("ユーザー情報を取得できていません。");
         return;
       }
 
       sendButton.disabled = true;
 
-      const { error } = await supabase
-        .from("group_messages")
-        .insert({
-          group_id: Number(groupId),
-          sender_id: currentUsername,
-          content: text,
-          image_url: ""
-        });
+      const {
+        error
+      } =
+        await supabaseClient
+          .from("group_messages")
+          .insert({
+            group_id: Number(groupId),
+            sender_id: currentUsername,
+            content: text,
+            image_url: ""
+          });
 
       if (error) {
-        alert("メッセージを送信できませんでした。");
+
+        console.error(error);
+
+        alert(
+          "送信できませんでした。\n" +
+          error.message
+        );
+
       } else {
+
         messageInput.value = "";
+
+        await loadMessages();
       }
 
       sendButton.disabled = false;
       messageInput.focus();
     }
 
-    sendButton.addEventListener("click", sendMessage);
+    sendButton.addEventListener(
+      "click",
+      sendMessage
+    );
 
-    messageInput.addEventListener("keydown", event => {
-      if (event.key === "Enter") {
-        sendMessage();
+    messageInput.addEventListener(
+      "keydown",
+      function(event) {
+
+        if (event.key === "Enter") {
+          event.preventDefault();
+          sendMessage();
+        }
+
       }
-    });
+    );
 
     start();
   </script>
