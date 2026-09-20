@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>フレンド</title>
+  <title>チャット</title>
 
   <style>
     * {
@@ -17,108 +17,102 @@
         "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
       background: linear-gradient(135deg, #fff3fb, #eef5ff);
       color: #333;
-      padding: 20px;
     }
 
     .container {
-      width: 100%;
-      max-width: 500px;
+      max-width: 600px;
       margin: 0 auto;
-    }
-
-    .header,
-    .add-box,
-    .friends {
-      background: white;
-      border-radius: 20px;
-      padding: 16px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-      margin-bottom: 16px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
     .header {
+      background: white;
+      padding: 18px;
       text-align: center;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.06);
     }
 
     .header h1 {
       margin: 0;
-      font-size: 24px;
+      font-size: 21px;
     }
 
-    .add-box input {
-      width: 100%;
-      padding: 13px;
-      border: 1px solid #ddd;
-      border-radius: 14px;
-      font-size: 16px;
-      margin-bottom: 10px;
-    }
-
-    .add-button {
-      width: 100%;
-      padding: 13px;
-      border: none;
-      border-radius: 14px;
-      background: #8f7cff;
-      color: white;
-      font-size: 16px;
-      font-weight: bold;
-    }
-
-    .friend {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px 4px;
-      border-bottom: 1px solid #eee;
-      cursor: pointer;
-    }
-
-    .friend:last-child {
-      border-bottom: none;
-    }
-
-    .avatar {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: #eee8ff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      flex-shrink: 0;
-    }
-
-    .info {
+    .messages {
       flex: 1;
-    }
-
-    .name {
-      font-weight: bold;
-    }
-
-    .user-id {
-      color: #999;
-      font-size: 12px;
-      margin-top: 3px;
-    }
-
-    .arrow {
-      color: #aaa;
-      font-size: 22px;
+      padding: 18px;
+      overflow-y: auto;
     }
 
     .empty {
       text-align: center;
       color: #999;
-      padding: 20px;
+      margin-top: 40px;
     }
 
-    #message {
-      text-align: center;
-      margin-top: 10px;
-      font-size: 14px;
+    .message {
+      display: flex;
+      margin-bottom: 12px;
+    }
+
+    .message.mine {
+      justify-content: flex-end;
+    }
+
+    .bubble {
+      max-width: 75%;
+      padding: 10px 14px;
+      border-radius: 18px;
+      background: white;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+      word-break: break-word;
+    }
+
+    .mine .bubble {
+      background: #8f7cff;
+      color: white;
+    }
+
+    .time {
+      font-size: 10px;
+      color: #999;
+      margin-top: 4px;
+      text-align: right;
+    }
+
+    .mine .time {
+      color: #eee;
+    }
+
+    .input-area {
+      background: white;
+      padding: 12px;
+      display: flex;
+      gap: 8px;
+      border-top: 1px solid #eee;
+    }
+
+    .input-area input {
+      flex: 1;
+      min-width: 0;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 18px;
+      font-size: 16px;
+    }
+
+    .send-button {
+      border: none;
+      border-radius: 18px;
+      padding: 0 18px;
+      background: #8f7cff;
+      color: white;
+      font-weight: bold;
+    }
+
+    .send-button:disabled {
+      opacity: 0.5;
     }
   </style>
 </head>
@@ -127,42 +121,36 @@
 
   <main class="container">
 
-    <section class="header">
-      <h1>👥 フレンド</h1>
+    <header class="header">
+      <h1 id="chatTitle">💬 チャット</h1>
+    </header>
+
+    <section class="messages" id="messages">
+      <div class="empty">
+        メッセージを読み込み中...
+      </div>
     </section>
 
-    <section class="add-box">
+    <form class="input-area" id="messageForm">
 
       <input
-        id="userIdInput"
+        id="messageInput"
         type="text"
-        placeholder="追加したいユーザーID"
-        maxlength="20"
+        placeholder="メッセージを入力..."
+        autocomplete="off"
       >
 
       <button
-        class="add-button"
-        id="addButton"
+        class="send-button"
+        id="sendButton"
+        type="submit"
       >
-        フレンド追加
+        送信
       </button>
 
-      <div id="message"></div>
-
-    </section>
-
-    <section class="friends">
-
-      <div id="friendList">
-        <div class="empty">
-          フレンドを読み込み中...
-        </div>
-      </div>
-
-    </section>
+    </form>
 
   </main>
-
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -181,285 +169,292 @@
       );
 
 
-    const userIdInput =
-      document.getElementById("userIdInput");
+    const messagesElement =
+      document.getElementById("messages");
 
-    const addButton =
-      document.getElementById("addButton");
+    const messageInput =
+      document.getElementById("messageInput");
 
-    const friendList =
-      document.getElementById("friendList");
+    const messageForm =
+      document.getElementById("messageForm");
 
-    const message =
-      document.getElementById("message");
+    const sendButton =
+      document.getElementById("sendButton");
+
+    const chatTitle =
+      document.getElementById("chatTitle");
 
 
-    let currentUsername = "";
+    let currentUser = null;
+    let friendId = "";
 
 
-    // ==============================
-    // ログイン確認
-    // ==============================
+    // URLから相手のIDを取得
+    const params =
+      new URLSearchParams(
+        window.location.search
+      );
+
+    friendId =
+      params.get("user") || "";
+
 
     async function start() {
 
-      const {
-        data,
-        error
-      } = await supabaseClient.auth.getSession();
+      if (!friendId) {
 
-      if (error || !data.session) {
-        alert("ログインしてください。");
+        chatTitle.textContent =
+          "💬 相手が選ばれていません";
+
+        messageForm.style.display =
+          "none";
+
+        messagesElement.innerHTML =
+          '<div class="empty">フレンドから相手を選んでね</div>';
+
         return;
       }
 
-      currentUsername =
-        data.session.user.user_metadata?.username || "";
-
-      if (!currentUsername) {
-        alert("ユーザーIDを取得できませんでした。");
-        return;
-      }
-
-      await loadFriends();
-
-    }
-
-
-    // ==============================
-    // フレンド一覧
-    // ==============================
-
-    async function loadFriends() {
 
       const {
         data,
         error
       } =
-        await supabaseClient
-          .from("friends")
-          .select("*")
-          .eq("user_id", currentUsername);
+        await supabaseClient.auth.getSession();
 
-      if (error) {
 
-        console.error(error);
+      if (error || !data.session) {
 
-        friendList.innerHTML =
-          '<div class="empty">フレンドを読み込めませんでした</div>';
+        alert("ログインしてください。");
+
+        window.location.href =
+          "index.html";
 
         return;
       }
 
 
-      if (!data || data.length === 0) {
-
-        friendList.innerHTML =
-          '<div class="empty">まだフレンドがいません</div>';
-
-        return;
-      }
-
-
-      friendList.innerHTML = "";
-
-
-      for (const friend of data) {
-
-        const {
-          data: profile
-        } =
-          await supabaseClient
-            .from("profiles")
-            .select("name, avatar_url")
-            .eq("user_id", friend.friend_id)
-            .maybeSingle();
-
-
-        const div =
-          document.createElement("div");
-
-        div.className = "friend";
-
-
-        const avatar =
-          document.createElement("div");
-
-        avatar.className = "avatar";
-        avatar.textContent = "👤";
-
-
-        const info =
-          document.createElement("div");
-
-        info.className = "info";
-
-
-        const name =
-          document.createElement("div");
-
-        name.className = "name";
-
-        name.textContent =
-          profile?.name || friend.friend_id;
-
-
-        const userId =
-          document.createElement("div");
-
-        userId.className = "user-id";
-
-        userId.textContent =
-          "@" + friend.friend_id;
-
-
-        const arrow =
-          document.createElement("div");
-
-        arrow.className = "arrow";
-        arrow.textContent = "›";
-
-
-        info.appendChild(name);
-        info.appendChild(userId);
-
-        div.appendChild(avatar);
-        div.appendChild(info);
-        div.appendChild(arrow);
-
-
-        // タップしたら1対1チャットへ
-        div.addEventListener("click", () => {
-
-          window.location.href =
-            "chat.html?user=" +
-            encodeURIComponent(friend.friend_id);
-
-        });
-
-
-        friendList.appendChild(div);
-
-      }
-
-    }
-
-
-    // ==============================
-    // フレンド追加
-    // ==============================
-
-    addButton.addEventListener(
-      "click",
-      addFriend
-    );
-
-
-    async function addFriend() {
-
-      const friendId =
-        userIdInput.value.trim();
-
-      message.textContent = "";
-
-
-      if (!friendId) {
-
-        message.textContent =
-          "ユーザーIDを入力してね。";
-
-        return;
-      }
-
-
-      if (friendId === currentUsername) {
-
-        message.textContent =
-          "自分は追加できません。";
-
-        return;
-      }
+      currentUser =
+        data.session.user;
 
 
       const {
-        data: profile,
-        error: profileError
+        data: profile
       } =
         await supabaseClient
           .from("profiles")
-          .select("user_id, name")
+          .select("name")
           .eq("user_id", friendId)
           .maybeSingle();
 
 
-      if (profileError || !profile) {
-
-        console.error(profileError);
-
-        message.textContent =
-          "そのユーザーは見つかりません。";
-
-        return;
-      }
+      chatTitle.textContent =
+        "💬 " +
+        (profile?.name || friendId);
 
 
-      const {
-        data: existing
-      } =
-        await supabaseClient
-          .from("friends")
-          .select("id")
-          .eq("user_id", currentUsername)
-          .eq("friend_id", friendId)
-          .maybeSingle();
+      await loadMessages();
+
+    }
 
 
-      if (existing) {
-
-        message.textContent =
-          "すでにフレンドです。";
-
-        return;
-      }
-
+    async function loadMessages() {
 
       const {
+        data,
         error
       } =
         await supabaseClient
-          .from("friends")
-          .insert({
-
-            user_id:
-              currentUsername,
-
-            friend_id:
-              friendId
-
-          });
+          .from("messages")
+          .select("*")
+          .or(
+            `and(sender_id.eq.${currentUser.id},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${currentUser.id})`
+          )
+          .order(
+            "created_at",
+            {
+              ascending: true
+            }
+          );
 
 
       if (error) {
 
         console.error(error);
 
-        message.textContent =
-          "追加できませんでした。";
+        messagesElement.innerHTML =
+          '<div class="empty">メッセージを読み込めませんでした</div>';
 
         return;
       }
 
 
-      message.textContent =
-        profile.name +
-        " さんをフレンドに追加しました！";
+      messagesElement.innerHTML = "";
 
 
-      userIdInput.value = "";
+      if (!data || data.length === 0) {
 
-      await loadFriends();
+        messagesElement.innerHTML =
+          '<div class="empty">まだメッセージがありません</div>';
+
+        return;
+      }
+
+
+      data.forEach(
+        addMessageToScreen
+      );
+
+      scrollToBottom();
 
     }
+
+
+    function addMessageToScreen(message) {
+
+      const wrapper =
+        document.createElement("div");
+
+      wrapper.className =
+        "message";
+
+
+      if (
+        message.sender_id ===
+        currentUser.id
+      ) {
+
+        wrapper.classList.add("mine");
+
+      }
+
+
+      const bubble =
+        document.createElement("div");
+
+      bubble.className =
+        "bubble";
+
+
+      bubble.textContent =
+        message.content || "";
+
+
+      const time =
+        document.createElement("div");
+
+      time.className =
+        "time";
+
+
+      const date =
+        new Date(
+          message.created_at
+        );
+
+
+      time.textContent =
+        date.toLocaleTimeString(
+          "ja-JP",
+          {
+            hour: "2-digit",
+            minute: "2-digit"
+          }
+        );
+
+
+      bubble.appendChild(time);
+
+      wrapper.appendChild(bubble);
+
+      messagesElement.appendChild(wrapper);
+
+    }
+
+
+    function scrollToBottom() {
+
+      messagesElement.scrollTop =
+        messagesElement.scrollHeight;
+
+    }
+
+
+    messageForm.addEventListener(
+      "submit",
+      async function(event) {
+
+        event.preventDefault();
+
+
+        const text =
+          messageInput.value.trim();
+
+
+        if (!text) {
+          return;
+        }
+
+
+        if (!currentUser || !friendId) {
+          return;
+        }
+
+
+        sendButton.disabled = true;
+
+
+        const {
+          data,
+          error
+        } =
+          await supabaseClient
+            .from("messages")
+            .insert({
+
+              sender_id:
+                currentUser.id,
+
+              receiver_id:
+                friendId,
+
+              content:
+                text,
+
+              image_url:
+                ""
+
+            })
+            .select()
+            .single();
+
+
+        sendButton.disabled = false;
+
+
+        if (error) {
+
+          console.error(
+            "送信エラー:",
+            error
+          );
+
+          alert(
+            "メッセージを送信できませんでした。"
+          );
+
+          return;
+        }
+
+
+        messageInput.value = "";
+
+        addMessageToScreen(data);
+
+        scrollToBottom();
+
+      }
+    );
 
 
     start();
