@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>グループチャット</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: linear-gradient(135deg, #eef7ff, #f7efff);
+      min-height: 100vh;
+    }
+
+    .header {
+      position: relative;
+      background: white;
+      padding: 18px 60px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    .home-button {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      padding: 9px 12px;
+      background: #fff;
+      color: #555;
+      text-decoration: none;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: bold;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    }
+
+    .title {
+      font-size: 22px;
+      font-weight: bold;
+      color: #444;
+    }
+
+    .group-name {
+      font-size: 14px;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    .messages {
+      padding: 15px;
+      padding-bottom: 85px;
+      max-width: 700px;
+      margin: auto;
+    }
+
+    .message {
+      background: white;
+      border-radius: 15px;
+      padding: 10px 13px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .sender {
+      font-size: 12px;
+      color: #777;
+      margin-bottom: 4px;
+      font-weight: bold;
+    }
+
+    .content {
+      font-size: 16px;
+      color: #333;
+      word-break: break-word;
+    }
+
+    .input-area {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      padding: 10px;
+      display: flex;
+      gap: 8px;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+    }
+
+    #messageInput {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      font-size: 16px;
+      min-width: 0;
+    }
+
+    #sendButton {
+      border: none;
+      background: #6aa9ff;
+      color: white;
+      border-radius: 12px;
+      padding: 0 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #sendButton:disabled {
+      background: #bbb;
+    }
+
+    .error {
+      text-align: center;
+      color: #d55;
+      padding: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    <a href="home.html" class="home-button">🏠 ホーム</a>
+
+    <div class="title">👥 グループチャット</div>
+    <div class="group-name" id="groupName">読み込み中...</div>
+  </div>
+
+  <div id="messages" class="messages"></div>
+
+  <div class="input-area">
+    <input
+      id="messageInput"
+      type="text"
+      placeholder="メッセージを入力..."
+      autocomplete="off"
+    >
+    <button id="sendButton">送信</button>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://yxonmqdyekwenyzekjwj.supabase.co";
+
+    const SUPABASE_PUBLISHABLE_KEY =
+      "同じPublishable Keyをここに入れてね";
+
+    const supabase = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY
+    );
+
+    const params = new URLSearchParams(window.location.search);
+    const groupId = params.get("id");
+
+    const groupName = document.getElementById("groupName");
+    const messages = document.getElementById("messages");
+    const messageInput = document.getElementById("messageInput");
+    const sendButton = document.getElementById("sendButton");
+
+    let currentUsername = "";
+
+    async function start() {
+      if (!groupId) {
+        groupName.textContent = "グループが見つかりません";
+        return;
+      }
+
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        location.href = "index.html";
+        return;
+      }
+
+      currentUsername =
+        session.user.user_metadata?.username || "";
+
+      await loadGroup();
+      await loadMessages();
+
+      subscribeMessages();
+    }
+
+    async function loadGroup() {
+      const { data, error } = await supabase
+        .from("groups")
+        .select("*")
+        .eq("id", groupId)
+        .single();
+
+      if (error || !data) {
+        groupName.textContent = "グループが見つかりません";
+        return;
+      }
+
+      groupName.textContent = data.name;
+    }
+
+    async function loadMessages() {
+      messages.innerHTML = "";
+
+      const { data, error } = await supabase
+        .from("group_messages")
+        .select("*")
+        .eq("group_id", groupId)
+        .order("created_at", { ascending: true });
+
+      if (error) {
+        messages.innerHTML =
+          '<div class="error">メッセージを読み込めませんでした。</div>';
+        return;
+      }
+
+      for (const message of data || []) {
+        addMessage(message);
+      }
+
+      window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    function addMessage(message) {
+      const box = document.createElement("div");
+      box.className = "message";
+
+      const sender = document.createElement("div");
+      sender.className = "sender";
+      sender.textContent =
+        message.sender_id === currentUsername
+          ? "あなた"
+          : "@" + message.sender_id;
+
+      const content = document.createElement("div");
+      content.className = "content";
+      content.textContent = message.content || "";
+
+      box.appendChild(sender);
+      box.appendChild(content);
+
+      messages.appendChild(box);
+    }
+
+    function subscribeMessages() {
+      supabase
+        .channel("group-chat-" + groupId)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "group_messages",
+            filter: "group_id=eq." + groupId
+          },
+          payload => {
+            addMessage(payload.new);
+            window.scrollTo(0, document.body.scrollHeight);
+          }
+        )
+        .subscribe();
+    }
+
+    async function sendMessage() {
+      const text = messageInput.value.trim();
+
+      if (!text || !currentUsername) {
+        return;
+      }
+
+      sendButton.disabled = true;
+
+      const { error } = await supabase
+        .from("group_messages")
+        .insert({
+          group_id: Number(groupId),
+          sender_id: currentUsername,
+          content: text,
+          image_url: ""
+        });
+
+      if (error) {
+        alert("メッセージを送信できませんでした。");
+      } else {
+        messageInput.value = "";
+      }
+
+      sendButton.disabled = false;
+      messageInput.focus();
+    }
+
+    sendButton.addEventListener("click", sendMessage);
+
+    messageInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        sendMessage();
+      }
+    });
+
+    start();
+  </script>
+
+</body>
+</html>
