@@ -280,7 +280,7 @@
           console.error(uploadError);
 
           message.textContent =
-            "画像のアップロードに失敗しました。";
+  "画像エラー: " + uploadError.message;
 
           return;
         }
