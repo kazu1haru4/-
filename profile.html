@@ -260,7 +260,7 @@
           selectedFile.name.split(".").pop();
 
         const fileName =
-          `${user.user_metadata.username}_${Date.now()}.${fileExt}`;
+          `${user.id}/${Date.now()}.${fileExt}`;
 
 
         const { error: uploadError } =
@@ -277,7 +277,7 @@
 
         if (uploadError) {
 
-          console.error(uploadError);
+          console.error("UPLOAD ERROR:", uploadError);
 
           message.textContent =
             "画像エラー: " + uploadError.message;
@@ -320,7 +320,7 @@
 
       if (error) {
 
-        console.error(error);
+        console.error("PROFILE ERROR:", error);
 
         message.textContent =
           "保存できませんでした。";
