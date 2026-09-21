@@ -71,7 +71,7 @@
       display: none;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 6px rgba(255,77,103,0.3);
+      box-shadow: 0 2px 6px rgba(255, 77, 103, 0.3);
     }
 
     .logo {
@@ -187,16 +187,13 @@
         </span>
       </a>
 
-
       <div class="logo">
         💬
       </div>
 
-
       <h1>
         フレンドチャット
       </h1>
-
 
       <div
         class="welcome"
@@ -204,7 +201,6 @@
       >
         読み込み中...
       </div>
-
 
       <p class="subtitle">
         みんなと楽しくチャットしよう！
@@ -304,16 +300,22 @@
     const SUPABASE_URL =
       "https://yxonmqdyekwenyzekjwj.supabase.co";
 
-
     const SUPABASE_KEY =
       "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
-
 
     const supabaseClient =
       window.supabase.createClient(
         SUPABASE_URL,
         SUPABASE_KEY
       );
+
+
+    // 現在のユーザー名
+    let currentUsername = "";
+
+
+    // リアルタイム通知チャンネル
+    let notificationChannel = null;
 
 
     // =========================
@@ -344,7 +346,7 @@
       }
 
 
-      const username =
+      currentUsername =
         data.user
           .user_metadata
           ?.username || "";
@@ -354,7 +356,7 @@
       // プロフィール
       // =====================
 
-      if (username) {
+      if (currentUsername) {
 
         const {
           data: profile,
@@ -365,7 +367,7 @@
             .select("name")
             .eq(
               "user_id",
-              username
+              currentUsername
             )
             .maybeSingle();
 
@@ -402,11 +404,20 @@
 
 
       // =====================
-      // 未読通知件数
+      // 最初の未読件数
       // =====================
 
       await loadNotificationCount(
-        username
+        currentUsername
+      );
+
+
+      // =====================
+      // 通知リアルタイム監視
+      // =====================
+
+      setupNotificationRealtime(
+        currentUsername
       );
 
     }
@@ -503,6 +514,78 @@
           "none";
 
       }
+
+    }
+
+
+    // =========================
+    // 通知リアルタイム監視
+    // =========================
+
+    function setupNotificationRealtime(
+      username
+    ) {
+
+      if (!username) {
+        return;
+      }
+
+
+      // すでにチャンネルがある場合は解除
+      if (notificationChannel) {
+
+        supabaseClient
+          .removeChannel(
+            notificationChannel
+          );
+
+        notificationChannel = null;
+
+      }
+
+
+      notificationChannel =
+        supabaseClient
+          .channel(
+            "home-notifications-" +
+            username
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "notifications",
+              filter:
+                "user_id=eq." +
+                username
+            },
+            async function(payload) {
+
+              console.log(
+                "通知リアルタイム更新:",
+                payload
+              );
+
+
+              // 通知が追加・既読・削除されたら
+              // 最新の未読件数を取得
+              await loadNotificationCount(
+                currentUsername
+              );
+
+            }
+          )
+          .subscribe(
+            function(status) {
+
+              console.log(
+                "通知Realtime:",
+                status
+              );
+
+            }
+          );
 
     }
 
