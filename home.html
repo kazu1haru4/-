@@ -11,6 +11,12 @@
       box-sizing: border-box;
     }
 
+    :root {
+      --theme: #8f7cff;
+      --theme-light: #f0edff;
+      --theme-text: #5e50c9;
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
@@ -37,22 +43,32 @@
       margin-bottom: 20px;
     }
 
-    .notification-button {
+    .notification-button,
+    .settings-button {
       position: absolute;
       top: 15px;
-      right: 15px;
       width: 48px;
       height: 48px;
       border-radius: 16px;
-      background: #f3f0ff;
       text-decoration: none;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 25px;
+      font-size: 24px;
     }
 
-    .notification-button:active {
+    .notification-button {
+      right: 15px;
+      background: #f3f0ff;
+    }
+
+    .settings-button {
+      left: 15px;
+      background: var(--theme-light);
+    }
+
+    .notification-button:active,
+    .settings-button:active {
       transform: scale(0.94);
     }
 
@@ -86,7 +102,7 @@
 
     .welcome {
       margin: 10px 0 0;
-      color: #8f7cff;
+      color: var(--theme-text);
       font-size: 15px;
       font-weight: bold;
     }
@@ -137,8 +153,8 @@
       font-size: 12px;
     }
 
-    .chat {
-      background: #f0edff;
+    .direct-chat {
+      background: var(--theme-light);
     }
 
     .profile {
@@ -155,10 +171,6 @@
 
     .board {
       background: #fff7e8;
-    }
-
-    .direct-chat {
-      background: #eeeaff;
     }
 
     .footer {
@@ -186,6 +198,17 @@
 
     <section class="header">
 
+      <!-- 設定 -->
+      <a
+        href="settings.html"
+        class="settings-button"
+        aria-label="設定"
+      >
+        ⚙️
+      </a>
+
+
+      <!-- 通知 -->
       <a
         href="notifications.html"
         class="notification-button"
@@ -200,6 +223,7 @@
           0
         </span>
       </a>
+
 
       <div class="logo">
         💬
@@ -331,8 +355,93 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-
   <script>
+
+    // =========================
+    // テーマカラー
+    // =========================
+
+    const themes = {
+
+      pink: {
+        main: "#ff82b2",
+        light: "#fff0f7",
+        text: "#e34f85"
+      },
+
+      purple: {
+        main: "#8f7cff",
+        light: "#f0edff",
+        text: "#5e50c9"
+      },
+
+      blue: {
+        main: "#5c9eff",
+        light: "#eef5ff",
+        text: "#397bd8"
+      },
+
+      green: {
+        main: "#48c78e",
+        light: "#eef9f3",
+        text: "#279b68"
+      },
+
+      orange: {
+        main: "#ff9b52",
+        light: "#fff4e8",
+        text: "#df7628"
+      },
+
+      cyan: {
+        main: "#36c9d8",
+        light: "#eafcff",
+        text: "#1599a8"
+      }
+
+    };
+
+
+    function applyTheme(themeName) {
+
+      const theme =
+        themes[themeName] ||
+        themes.purple;
+
+
+      document.documentElement.style
+        .setProperty(
+          "--theme",
+          theme.main
+        );
+
+      document.documentElement.style
+        .setProperty(
+          "--theme-light",
+          theme.light
+        );
+
+      document.documentElement.style
+        .setProperty(
+          "--theme-text",
+          theme.text
+        );
+
+    }
+
+
+    const savedTheme =
+      localStorage.getItem(
+        "friendChatTheme"
+      ) || "purple";
+
+
+    applyTheme(savedTheme);
+
+
+    // =========================
+    // Supabase
+    // =========================
 
     const SUPABASE_URL =
       "https://yxonmqdyekwenyzekjwj.supabase.co";
@@ -396,14 +505,14 @@
           data: profile,
           error: profileError
         } =
-        await supabaseClient
-          .from("profiles")
-          .select("name")
-          .eq(
-            "user_id",
-            currentUsername
-          )
-          .maybeSingle();
+          await supabaseClient
+            .from("profiles")
+            .select("name")
+            .eq(
+              "user_id",
+              currentUsername
+            )
+            .maybeSingle();
 
 
         if (
@@ -437,18 +546,10 @@
       }
 
 
-      // =====================
-      // 最初の未読件数
-      // =====================
-
       await loadNotificationCount(
         currentUsername
       );
 
-
-      // =====================
-      // 通知リアルタイム監視
-      // =====================
 
       setupNotificationRealtime(
         currentUsername
@@ -473,173 +574,4 @@
 
       if (!username) {
 
-        badge.style.display =
-          "none";
-
-        return;
-
-      }
-
-
-      const {
-        count,
-        error
-      } =
-        await supabaseClient
-          .from("notifications")
-          .select(
-            "id",
-            {
-              count: "exact",
-              head: true
-            }
-          )
-          .eq(
-            "user_id",
-            username
-          )
-          .eq(
-            "is_read",
-            false
-          );
-
-
-      if (error) {
-
-        console.error(
-          "通知件数取得エラー:",
-          error
-        );
-
-        badge.style.display =
-          "none";
-
-        return;
-
-      }
-
-
-      if (
-        count &&
-        count > 0
-      ) {
-
-        badge.textContent =
-          count > 99
-            ? "99+"
-            : String(count);
-
-        badge.style.display =
-          "flex";
-
-      } else {
-
-        badge.style.display =
-          "none";
-
-      }
-
-    }
-
-
-    // =========================
-    // 通知リアルタイム監視
-    // =========================
-
-    function setupNotificationRealtime(
-      username
-    ) {
-
-      if (!username) {
-        return;
-      }
-
-
-      if (notificationChannel) {
-
-        supabaseClient
-          .removeChannel(
-            notificationChannel
-          );
-
-        notificationChannel = null;
-
-      }
-
-
-      notificationChannel =
-        supabaseClient
-          .channel(
-            "home-notifications-" +
-            username
-          )
-          .on(
-            "postgres_changes",
-            {
-              event: "*",
-              schema: "public",
-              table: "notifications",
-              filter:
-                "user_id=eq." +
-                username
-            },
-            async function(payload) {
-
-              console.log(
-                "通知リアルタイム更新:",
-                payload
-              );
-
-              await loadNotificationCount(
-                currentUsername
-              );
-
-            }
-          )
-          .subscribe(
-            function(status) {
-
-              console.log(
-                "通知Realtime:",
-                status
-              );
-
-            }
-          );
-
-    }
-
-
-    // =========================
-    // ページ終了時
-    // =========================
-
-    window.addEventListener(
-      "pagehide",
-      function() {
-
-        if (notificationChannel) {
-
-          supabaseClient
-            .removeChannel(
-              notificationChannel
-            );
-
-          notificationChannel = null;
-
-        }
-
-      }
-    );
-
-
-    // =========================
-    // 起動
-    // =========================
-
-    start();
-
-  </script>
-
-</body>
-</html>
+        badge
