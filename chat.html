@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>チャット</title>
 
   <style>
@@ -10,33 +10,85 @@
       box-sizing: border-box;
     }
 
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+
+      /*
+        ★重要
+        ページ全体をスクロールさせない
+      */
+      overflow: hidden;
+
+      overscroll-behavior: none;
+    }
+
     html {
       scroll-behavior: auto;
     }
 
     body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
-        "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
-      background: linear-gradient(135deg, #fff3fb, #eef5ff);
+      min-height: 100dvh;
+
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        "Hiragino Kaku Gothic ProN",
+        "Yu Gothic",
+        sans-serif;
+
+      background:
+        linear-gradient(
+          135deg,
+          #fff3fb,
+          #eef5ff
+        );
+
       color: #333;
     }
 
+    /*
+      ★重要
+      画面全体を100dvhに固定
+    */
     .container {
+      width: 100%;
       max-width: 600px;
+
+      height: 100dvh;
+      min-height: 0;
+
       margin: 0 auto;
-      min-height: 100vh;
+
       display: flex;
       flex-direction: column;
+
+      overflow: hidden;
     }
 
     .header {
       position: relative;
+
+      flex-shrink: 0;
+
       background: white;
-      padding: 12px 18px;
+
+      padding:
+        12px 18px;
+
+      padding-top:
+        max(12px, env(safe-area-inset-top));
+
       text-align: center;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+
+      box-shadow:
+        0 3px 10px rgba(0,0,0,0.06);
+
+      z-index: 5;
     }
 
     .header h1 {
@@ -46,63 +98,119 @@
 
     .home-button {
       position: absolute;
-      top: 12px;
+
+      top:
+        max(12px, env(safe-area-inset-top));
+
       left: 12px;
+
       padding: 9px 12px;
+
       background: #f5f5f5;
       color: #555;
+
       text-decoration: none;
+
       border-radius: 12px;
+
       font-size: 13px;
       font-weight: bold;
+
       z-index: 2;
     }
 
     .profile-header {
       margin-top: 8px;
+
       display: flex;
       justify-content: center;
       align-items: center;
+
       gap: 9px;
     }
 
     .header-avatar {
       width: 38px;
       height: 38px;
+
       border-radius: 50%;
+
       background: #eee8ff;
+
       display: flex;
       align-items: center;
       justify-content: center;
+
       overflow: hidden;
+
       font-size: 20px;
+
+      flex-shrink: 0;
     }
 
     .header-avatar img {
       width: 100%;
       height: 100%;
+
       object-fit: cover;
     }
 
+    /*
+      ★ここが唯一のスクロール場所
+    */
     .messages {
-      flex: 1;
+      flex: 1 1 auto;
+
+      /*
+        ★重要
+        flexの中で正しく縮むために必要
+      */
+      min-height: 0;
+
+      width: 100%;
+
       padding: 18px;
+
       overflow-y: auto;
-      overflow-anchor: none;
+      overflow-x: hidden;
+
+      /*
+        iPhoneでのスクロール
+      */
       -webkit-overflow-scrolling: touch;
+
+      overscroll-behavior-y: contain;
+
+      /*
+        ブラウザの自動アンカーをOFF
+      */
+      overflow-anchor: none;
+
+      /*
+        スクロールバー
+      */
+      scrollbar-width: thin;
     }
 
     .empty {
       text-align: center;
       color: #999;
+
       margin-top: 40px;
     }
 
     .message {
       display: flex;
       align-items: flex-end;
+
       gap: 7px;
+
       margin-bottom: 12px;
+
+      /*
+        メッセージが勝手に縮まない
+      */
+      flex-shrink: 0;
     }
 
     .message.mine {
@@ -112,28 +220,42 @@
     .message-avatar {
       width: 34px;
       height: 34px;
+
       border-radius: 50%;
+
       background: #eee8ff;
+
       display: flex;
       align-items: center;
       justify-content: center;
+
       overflow: hidden;
+
       flex-shrink: 0;
+
       font-size: 18px;
     }
 
     .message-avatar img {
       width: 100%;
       height: 100%;
+
       object-fit: cover;
     }
 
     .bubble {
       max-width: 75%;
-      padding: 10px 14px;
+
+      padding:
+        10px 14px;
+
       border-radius: 18px;
+
       background: white;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+
+      box-shadow:
+        0 3px 8px rgba(0,0,0,0.05);
+
       word-break: break-word;
     }
 
@@ -144,17 +266,24 @@
 
     .chat-image {
       display: block;
+
       max-width: 220px;
       max-height: 300px;
+
       border-radius: 14px;
+
       margin-bottom: 5px;
+
       object-fit: contain;
     }
 
     .time {
       font-size: 10px;
+
       color: #999;
+
       margin-top: 4px;
+
       text-align: right;
     }
 
@@ -162,43 +291,90 @@
       color: #eee;
     }
 
+    /*
+      ★入力欄
+      ここも固定
+    */
     .input-area {
+      flex-shrink: 0;
+
+      width: 100%;
+
       background: white;
-      padding: 12px;
+
+      padding:
+        12px;
+
+      padding-bottom:
+        max(12px, env(safe-area-inset-bottom));
+
       display: flex;
+
       gap: 8px;
-      border-top: 1px solid #eee;
+
+      border-top:
+        1px solid #eee;
+
+      z-index: 5;
     }
 
     .input-area input[type="text"] {
       flex: 1;
+
       min-width: 0;
+
       padding: 12px;
-      border: 1px solid #ddd;
+
+      border:
+        1px solid #ddd;
+
       border-radius: 18px;
+
       font-size: 16px;
+
+      outline: none;
+    }
+
+    .input-area input[type="text"]:focus {
+      border-color: #8f7cff;
     }
 
     .image-button {
       width: 46px;
+      min-width: 46px;
+
       border: none;
+
       border-radius: 18px;
+
       background: #f1efff;
+
       font-size: 21px;
+
+      cursor: pointer;
     }
 
     .send-button {
       border: none;
+
       border-radius: 18px;
-      padding: 0 18px;
+
+      padding:
+        0 18px;
+
       background: #8f7cff;
+
       color: white;
+
       font-weight: bold;
+
+      cursor: pointer;
     }
 
     .send-button:disabled,
     .image-button:disabled {
       opacity: 0.5;
+      cursor: default;
     }
 
     #imageInput {
@@ -213,13 +389,19 @@
 
     <header class="header">
 
-      <a href="home.html" class="home-button">
+      <a
+        href="home.html"
+        class="home-button"
+      >
         🏠 ホーム
       </a>
 
       <div class="profile-header">
 
-        <div class="header-avatar" id="headerAvatar">
+        <div
+          class="header-avatar"
+          id="headerAvatar"
+        >
           👤
         </div>
 
@@ -231,7 +413,14 @@
 
     </header>
 
-    <section class="messages" id="messages">
+
+    <!--
+      ★ここだけがスクロールする
+    -->
+    <section
+      class="messages"
+      id="messages"
+    >
 
       <div class="empty">
         メッセージを読み込み中...
@@ -239,7 +428,11 @@
 
     </section>
 
-    <form class="input-area" id="messageForm">
+
+    <form
+      class="input-area"
+      id="messageForm"
+    >
 
       <input
         id="messageInput"
@@ -267,6 +460,7 @@
 
     </form>
 
+
     <input
       id="imageInput"
       type="file"
@@ -274,6 +468,7 @@
     >
 
   </main>
+
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -349,7 +544,7 @@
 
 
     /*
-      相手ごとの保存キー
+      相手ごとにスクロール位置を保存
     */
 
     const chatPositionKey =
@@ -358,7 +553,7 @@
 
 
     /*
-      ブラウザ側の自動スクロール復元をOFF
+      ★ブラウザのページスクロール復元をOFF
     */
 
     if (
@@ -369,6 +564,34 @@
         "manual";
 
     }
+
+
+    /* =========================================
+       ページ全体を上に戻す
+       メッセージ欄には影響しない
+    ========================================= */
+
+    function resetPageScroll() {
+
+      window.scrollTo(
+        0,
+        0
+      );
+
+      document.documentElement.scrollTop =
+        0;
+
+      document.body.scrollTop =
+        0;
+
+    }
+
+
+    /*
+      起動直後にも実行
+    */
+
+    resetPageScroll();
 
 
     /* =========================================
@@ -439,7 +662,9 @@
         !currentUsername ||
         !friendId
       ) {
+
         return;
+
       }
 
 
@@ -488,7 +713,7 @@
 
 
     /* =========================================
-       更新前の位置を保存
+       スクロール位置保存
     ========================================= */
 
     function saveChatPosition() {
@@ -497,7 +722,9 @@
         restoringPosition ||
         !messagesElement
       ) {
+
         return;
+
       }
 
 
@@ -510,7 +737,39 @@
       if (
         !messageElements.length
       ) {
+
+        /*
+          メッセージがない場合でも
+          scrollTopだけ保存
+        */
+
+        try {
+
+          sessionStorage.setItem(
+            chatPositionKey,
+            JSON.stringify({
+
+              messageId: null,
+
+              offset: 0,
+
+              scrollTop:
+                messagesElement.scrollTop
+
+            })
+          );
+
+        } catch (error) {
+
+          console.error(
+            "位置保存エラー:",
+            error
+          );
+
+        }
+
         return;
+
       }
 
 
@@ -518,13 +777,12 @@
         messagesElement.getBoundingClientRect();
 
 
-      /*
-        画面上で一番上に近い
-        「見えているメッセージ」を探す
-      */
-
       let target = null;
 
+
+      /*
+        現在見えている最初のメッセージ
+      */
 
       for (
         const element of messageElements
@@ -563,20 +821,19 @@
         target.getBoundingClientRect();
 
 
-      const position =
-        {
+      const position = {
 
-          messageId:
-            target.dataset.messageId,
+        messageId:
+          target.dataset.messageId,
 
-          offset:
-            rect.top -
-            containerRect.top,
+        offset:
+          rect.top -
+          containerRect.top,
 
-          scrollTop:
-            messagesElement.scrollTop
+        scrollTop:
+          messagesElement.scrollTop
 
-        };
+      };
 
 
       try {
@@ -601,7 +858,7 @@
 
 
     /* =========================================
-       スクロール時
+       スクロール中に保存
     ========================================= */
 
     messagesElement.addEventListener(
@@ -611,7 +868,9 @@
         if (
           restoringPosition
         ) {
+
           return;
+
         }
 
 
@@ -625,7 +884,7 @@
 
 
     /* =========================================
-       ページを離れる直前にも保存
+       ページを離れる前に保存
     ========================================= */
 
     window.addEventListener(
@@ -648,8 +907,25 @@
     );
 
 
+    document.addEventListener(
+      "visibilitychange",
+      function() {
+
+        if (
+          document.visibilityState ===
+          "hidden"
+        ) {
+
+          saveChatPosition();
+
+        }
+
+      }
+    );
+
+
     /* =========================================
-       画像の読み込み完了を待つ
+       画像読み込み待ち
     ========================================= */
 
     async function waitForImages() {
@@ -663,7 +939,9 @@
 
 
       if (!images.length) {
+
         return;
+
       }
 
 
@@ -693,13 +971,14 @@
                   if (
                     finished
                   ) {
+
                     return;
+
                   }
 
 
                   finished =
                     true;
-
 
                   resolve();
 
@@ -724,10 +1003,6 @@
                 );
 
 
-                /*
-                  念のため最大3秒
-                */
-
                 setTimeout(
                   done,
                   3000
@@ -745,7 +1020,7 @@
 
 
     /* =========================================
-       保存したメッセージ位置へ戻す
+       保存位置を復元
     ========================================= */
 
     async function restoreChatPosition() {
@@ -775,11 +1050,48 @@
       */
 
       if (
-        !saved ||
-        !saved.messageId
+        !saved
       ) {
 
         scrollToBottom();
+
+        return;
+
+      }
+
+
+      /*
+        scrollTopだけ保存されている場合
+      */
+
+      if (
+        !saved.messageId
+      ) {
+
+        restoringPosition =
+          true;
+
+
+        messagesElement.scrollTop =
+          Number(
+            saved.scrollTop || 0
+          );
+
+
+        requestAnimationFrame(
+          function() {
+
+            messagesElement.scrollTop =
+              Number(
+                saved.scrollTop || 0
+              );
+
+
+            restoringPosition =
+              false;
+
+          }
+        );
 
         return;
 
@@ -790,24 +1102,10 @@
         true;
 
 
-      /*
-        画像の高さが確定するまで待つ
-      */
-
       await waitForImages();
 
 
-      let target =
-        messagesElement.querySelector(
-          `[data-message-id="${CSS.escape(String(saved.messageId))}"]`
-        );
-
-
-      /*
-        CSS.escapeが使えない場合用
-      */
-
-      if (!target) {
+      function findTarget() {
 
         const all =
           messagesElement.querySelectorAll(
@@ -828,20 +1126,25 @@
             )
           ) {
 
-            target =
-              element;
-
-            break;
+            return element;
 
           }
 
         }
 
+
+        return null;
+
       }
 
 
+      let target =
+        findTarget();
+
+
       /*
-        目印のメッセージが見つからない場合
+        見つからない場合は保存していた
+        scrollTopを使用
       */
 
       if (!target) {
@@ -881,14 +1184,20 @@
 
 
       /*
-        レイアウト確定後にも再調整
+        レイアウト確定後に何度か確認
       */
 
       const correctPosition =
         function() {
 
+          target =
+            findTarget();
+
+
           if (!target) {
+
             return;
+
           }
 
 
@@ -952,6 +1261,12 @@
 
 
               setTimeout(
+                correctPosition,
+                600
+              );
+
+
+              setTimeout(
                 function() {
 
                   correctPosition();
@@ -960,7 +1275,7 @@
                     false;
 
                 },
-                700
+                900
               );
 
             }
@@ -982,26 +1297,52 @@
         true;
 
 
-      messagesElement.scrollTop =
-        messagesElement.scrollHeight;
+      function move() {
+
+        messagesElement.scrollTop =
+          messagesElement.scrollHeight;
+
+      }
+
+
+      move();
 
 
       requestAnimationFrame(
         function() {
 
-          messagesElement.scrollTop =
-            messagesElement.scrollHeight;
+          move();
 
 
           requestAnimationFrame(
             function() {
 
-              messagesElement.scrollTop =
-                messagesElement.scrollHeight;
+              move();
 
 
-              restoringPosition =
-                false;
+              setTimeout(
+                move,
+                100
+              );
+
+
+              setTimeout(
+                move,
+                300
+              );
+
+
+              setTimeout(
+                function() {
+
+                  move();
+
+                  restoringPosition =
+                    false;
+
+                },
+                500
+              );
 
             }
           );
@@ -1017,6 +1358,13 @@
     ========================================= */
 
     async function start() {
+
+      /*
+        ★ページ全体は必ずトップ
+      */
+
+      resetPageScroll();
+
 
       if (!friendId) {
 
@@ -1221,7 +1569,7 @@
 
 
       /*
-        ここで保存位置へ復元
+        保存位置を復元
       */
 
       await restoreChatPosition();
@@ -1248,8 +1596,7 @@
 
 
       /*
-        ★重要
-        メッセージIDをHTMLに保存
+        ★メッセージID
       */
 
       wrapper.dataset.messageId =
@@ -1440,7 +1787,9 @@
     function startRealtime() {
 
       if (realtimeChannel) {
+
         return;
+
       }
 
 
@@ -1486,13 +1835,15 @@
 
 
               if (!isThisChat) {
+
                 return;
+
               }
 
 
               /*
                 自分のメッセージは
-                すでに画面に追加済み
+                すでに追加済み
               */
 
               if (
@@ -1511,7 +1862,7 @@
 
 
               /*
-                相手から新着なら一番下
+                相手から来たら一番下
               */
 
               scrollToBottom();
@@ -1539,7 +1890,9 @@
 
 
         if (!text) {
+
           return;
+
         }
 
 
@@ -1620,7 +1973,7 @@
 
 
         /*
-          送信したら一番下
+          ★送信時は一番下
         */
 
         scrollToBottom();
@@ -1659,7 +2012,9 @@
 
 
         if (!file) {
+
           return;
+
         }
 
 
@@ -1704,7 +2059,6 @@
 
         imageButton.disabled =
           true;
-
 
         sendButton.disabled =
           true;
@@ -1819,6 +2173,10 @@
             data
           );
 
+
+          /*
+            ★画像送信後も一番下
+          */
 
           scrollToBottom();
 
