@@ -28,7 +28,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
     }
 
     .home-button {
@@ -59,10 +58,6 @@
       cursor: pointer;
     }
 
-    .title-area {
-      min-width: 0;
-    }
-
     .title {
       font-size: 22px;
       font-weight: bold;
@@ -77,7 +72,7 @@
 
     .messages {
       padding: 15px;
-      padding-bottom: 100px;
+      padding-bottom: 120px;
       max-width: 700px;
       margin: auto;
     }
@@ -100,7 +95,6 @@
       font-size: 21px;
       flex-shrink: 0;
       overflow: hidden;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
 
     .message-avatar img {
@@ -118,10 +112,6 @@
       cursor: pointer;
       min-width: 0;
       flex: 1;
-    }
-
-    .message:active {
-      transform: scale(0.99);
     }
 
     .sender {
@@ -177,9 +167,9 @@
     .message-menu {
       display: none;
       position: absolute;
-      top: 100%;
+      top: calc(100% + 5px);
       left: 10px;
-      z-index: 20;
+      z-index: 100;
       background: white;
       border-radius: 14px;
       padding: 7px;
@@ -199,6 +189,7 @@
       cursor: pointer;
     }
 
+    .message-menu button:hover,
     .message-menu button:active {
       background: #f0f5ff;
     }
@@ -206,9 +197,9 @@
     .reaction-picker {
       display: none;
       position: absolute;
-      top: 100%;
+      top: calc(100% + 5px);
       left: 10px;
-      z-index: 30;
+      z-index: 110;
       background: white;
       border-radius: 15px;
       padding: 8px;
@@ -284,6 +275,50 @@
       padding: 20px;
     }
 
+    .reply-area {
+      display: none;
+      position: fixed;
+      bottom: 61px;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid #ddd;
+      padding: 8px 10px;
+      z-index: 45;
+    }
+
+    .reply-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: #f0f5ff;
+      border-left: 4px solid #6aa9ff;
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+
+    .reply-text {
+      font-size: 12px;
+      color: #666;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
+
+    .reply-text strong {
+      color: #5588cc;
+    }
+
+    #cancelReplyButton {
+      border: none;
+      background: transparent;
+      color: #777;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
     .modal {
       display: none;
       position: fixed;
@@ -292,7 +327,7 @@
       align-items: center;
       justify-content: center;
       padding: 20px;
-      z-index: 100;
+      z-index: 200;
     }
 
     .modal-box {
@@ -411,117 +446,37 @@
       color: #555;
       margin-bottom: 8px;
     }
-
-    .reply-area {
-      display: none;
-      position: fixed;
-      bottom: 61px;
-      left: 0;
-      right: 0;
-      background: white;
-      border-top: 1px solid #ddd;
-      padding: 8px 10px;
-      z-index: 45;
-    }
-
-    .reply-info {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      background: #f0f5ff;
-      border-left: 4px solid #6aa9ff;
-      border-radius: 8px;
-      padding: 8px 10px;
-    }
-
-    .reply-text {
-      font-size: 12px;
-      color: #666;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      min-width: 0;
-    }
-
-    .reply-text strong {
-      color: #5588cc;
-    }
-
-    #cancelReplyButton {
-      border: none;
-      background: transparent;
-      color: #777;
-      font-size: 18px;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
   </style>
 </head>
 
 <body>
 
   <div class="header">
+    <a href="home.html" class="home-button">🏠 ホーム</a>
 
-    <a href="home.html" class="home-button">
-      🏠 ホーム
-    </a>
-
-    <button
-      id="memberButton"
-      class="member-button"
-      type="button"
-    >
+    <button id="memberButton" class="member-button" type="button">
       👥 メンバー
     </button>
 
-    <div class="title-area">
-
-      <div class="title">
-        👥 グループチャット
-      </div>
-
-      <div
-        class="group-name"
-        id="groupName"
-      >
-        読み込み中...
-      </div>
-
+    <div>
+      <div class="title">👥 グループチャット</div>
+      <div id="groupName" class="group-name">読み込み中...</div>
     </div>
-
   </div>
 
-  <div
-    id="messages"
-    class="messages"
-  ></div>
+  <div id="messages" class="messages"></div>
 
-  <div
-    id="replyArea"
-    class="reply-area"
-  >
-
+  <div id="replyArea" class="reply-area">
     <div class="reply-info">
+      <div id="replyText" class="reply-text"></div>
 
-      <div
-        id="replyText"
-        class="reply-text"
-      ></div>
-
-      <button
-        id="cancelReplyButton"
-        type="button"
-      >
+      <button id="cancelReplyButton" type="button">
         ✕
       </button>
-
     </div>
-
   </div>
 
   <div class="input-area">
-
     <input
       id="messageInput"
       type="text"
@@ -532,7 +487,6 @@
     <button
       id="imageButton"
       type="button"
-      title="画像を送る"
     >
       🖼️
     </button>
@@ -543,7 +497,6 @@
     >
       送信
     </button>
-
   </div>
 
   <input
@@ -552,21 +505,14 @@
     accept="image/*"
   >
 
-  <div
-    id="memberModal"
-    class="modal"
-  >
-
+  <div id="memberModal" class="modal">
     <div class="modal-box">
 
       <div class="modal-title">
         👥 グループメンバー
       </div>
 
-      <div
-        id="memberList"
-        class="member-list"
-      >
+      <div id="memberList" class="member-list">
         <div class="member-loading">
           読み込み中...
         </div>
@@ -604,1218 +550,1231 @@
         </div>
 
       </div>
-
     </div>
-
   </div>
 
-  <script>
+<script>
 
-    const SUPABASE_URL =
-      "https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_URL =
+  "https://yxonmqdyekwenyzekjwj.supabase.co";
 
-    const SUPABASE_KEY =
-      "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+const SUPABASE_KEY =
+  "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 
-    const supabaseClient =
-      window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+const params =
+  new URLSearchParams(
+    window.location.search
+  );
+
+const groupId =
+  params.get("id");
+
+const groupName =
+  document.getElementById("groupName");
+
+const messages =
+  document.getElementById("messages");
+
+const messageInput =
+  document.getElementById("messageInput");
+
+const sendButton =
+  document.getElementById("sendButton");
+
+const imageButton =
+  document.getElementById("imageButton");
+
+const imageInput =
+  document.getElementById("imageInput");
+
+const memberButton =
+  document.getElementById("memberButton");
+
+const memberModal =
+  document.getElementById("memberModal");
+
+const memberList =
+  document.getElementById("memberList");
+
+const memberInput =
+  document.getElementById("memberInput");
+
+const addMemberButton =
+  document.getElementById("addMemberButton");
+
+const closeModalButton =
+  document.getElementById("closeModalButton");
+
+const replyArea =
+  document.getElementById("replyArea");
+
+const replyText =
+  document.getElementById("replyText");
+
+const cancelReplyButton =
+  document.getElementById("cancelReplyButton");
+
+let currentUsername = "";
+let replyingToMessage = null;
+
+const profileCache = {};
+
+
+/* =========================
+   プロフィール
+========================= */
+
+async function getProfile(username) {
+
+  if (!username) {
+    return null;
+  }
+
+  if (
+    Object.prototype.hasOwnProperty.call(
+      profileCache,
+      username
+    )
+  ) {
+    return profileCache[username];
+  }
+
+  const {
+    data
+  } =
+    await supabaseClient
+      .from("profiles")
+      .select("user_id, name, avatar_url")
+      .eq("user_id", username)
+      .maybeSingle();
+
+  profileCache[username] =
+    data || null;
+
+  return data || null;
+}
+
+
+/* =========================
+   アバター
+========================= */
+
+function createAvatar(profile) {
+
+  const avatar =
+    document.createElement("div");
+
+  avatar.className =
+    "message-avatar";
+
+  if (
+    profile &&
+    profile.avatar_url
+  ) {
+
+    const img =
+      document.createElement("img");
+
+    img.src =
+      profile.avatar_url;
+
+    img.alt =
+      "プロフィール画像";
+
+    avatar.appendChild(img);
+
+  } else {
+
+    avatar.textContent =
+      "👤";
+
+  }
+
+  return avatar;
+}
+
+
+/* =========================
+   グループ名
+========================= */
+
+async function loadGroup() {
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("groups")
+      .select("name")
+      .eq("id", Number(groupId))
+      .single();
+
+  if (error || !data) {
+
+    console.error(
+      "グループ取得エラー:",
+      error
+    );
+
+    groupName.textContent =
+      "グループが見つかりません";
+
+    return;
+  }
+
+  groupName.textContent =
+    data.name;
+}
+
+
+/* =========================
+   メッセージ読み込み
+========================= */
+
+async function loadMessages() {
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("group_messages")
+      .select("*")
+      .eq("group_id", Number(groupId))
+      .order(
+        "created_at",
+        {
+          ascending: true
+        }
       );
 
+  if (error) {
 
-    const params =
-      new URLSearchParams(
-        window.location.search
-      );
+    console.error(
+      "メッセージ読み込みエラー:",
+      error
+    );
 
-    const groupId =
-      params.get("id");
+    messages.innerHTML =
+      '<div class="error">メッセージを読み込めませんでした。</div>';
 
+    return;
+  }
 
-    const groupName =
-      document.getElementById("groupName");
+  messages.innerHTML =
+    "";
 
-    const messages =
-      document.getElementById("messages");
+  for (
+    const message of data || []
+  ) {
 
-    const messageInput =
-      document.getElementById("messageInput");
+    await addMessage(message);
 
-    const sendButton =
-      document.getElementById("sendButton");
+  }
+}
 
-    const imageButton =
-      document.getElementById("imageButton");
 
-    const imageInput =
-      document.getElementById("imageInput");
+/* =========================
+   メッセージ表示
+========================= */
 
-    const memberButton =
-      document.getElementById("memberButton");
+async function addMessage(message) {
 
-    const memberModal =
-      document.getElementById("memberModal");
+  const profile =
+    await getProfile(
+      message.sender_id
+    );
 
-    const memberList =
-      document.getElementById("memberList");
+  const row =
+    document.createElement("div");
 
-    const memberInput =
-      document.getElementById("memberInput");
+  row.className =
+    "message-row";
 
-    const addMemberButton =
-      document.getElementById("addMemberButton");
+  row.appendChild(
+    createAvatar(profile)
+  );
 
-    const closeModalButton =
-      document.getElementById("closeModalButton");
+  const box =
+    document.createElement("div");
 
-    const replyArea =
-      document.getElementById("replyArea");
+  box.className =
+    "message";
 
-    const replyText =
-      document.getElementById("replyText");
+  const sender =
+    document.createElement("div");
 
-    const cancelReplyButton =
-      document.getElementById("cancelReplyButton");
+  sender.className =
+    "sender";
 
+  sender.textContent =
+    message.sender_id === currentUsername
+      ? "あなた"
+      : "@" + message.sender_id;
 
-    let currentUsername = "";
-    let replyingToMessage = null;
+  box.appendChild(sender);
 
-    const profileCache = {};
 
+  /* 画像 */
 
-    /* =========================
-       プロフィール取得
-    ========================= */
+  if (message.image_url) {
 
-    async function getProfile(username) {
-
-      if (!username) {
-        return null;
-      }
-
-      if (
-        Object.prototype.hasOwnProperty.call(
-          profileCache,
-          username
-        )
-      ) {
-        return profileCache[username];
-      }
-
-      const {
-        data: profile
-      } =
-        await supabaseClient
-          .from("profiles")
-          .select("user_id, name, avatar_url")
-          .eq("user_id", username)
-          .maybeSingle();
-
-      profileCache[username] =
-        profile || null;
-
-      return profile || null;
-    }
-
-
-    /* =========================
-       アバター
-    ========================= */
-
-    function createAvatar(profile) {
-
-      const avatar =
-        document.createElement("div");
-
-      avatar.className =
-        "message-avatar";
-
-      if (
-        profile &&
-        profile.avatar_url
-      ) {
-
-        const img =
-          document.createElement("img");
-
-        img.src =
-          profile.avatar_url;
-
-        img.alt =
-          "プロフィール画像";
-
-        avatar.appendChild(img);
-
-      } else {
-
-        avatar.textContent =
-          "👤";
-      }
-
-      return avatar;
-    }
-
-
-    /* =========================
-       グループ通知
-    ========================= */
-
-    async function createGroupNotifications() {
-
-      try {
-
-        if (
-          !currentUsername ||
-          !groupId
-        ) {
-          return;
-        }
-
-        const {
-          data: group,
-          error: groupError
-        } =
-          await supabaseClient
-            .from("groups")
-            .select("name")
-            .eq("id", Number(groupId))
-            .maybeSingle();
-
-        if (groupError) {
-          console.error(
-            "グループ取得エラー:",
-            groupError
-          );
-          return;
-        }
-
-        const groupTitle =
-          group?.name || "グループ";
-
-        const {
-          data: members,
-          error: membersError
-        } =
-          await supabaseClient
-            .from("group_members")
-            .select("user_id")
-            .eq("group_id", Number(groupId));
-
-        if (membersError) {
-          console.error(
-            "グループメンバー取得エラー:",
-            membersError
-          );
-          return;
-        }
-
-        if (
-          !members ||
-          members.length === 0
-        ) {
-          return;
-        }
-
-        const notifications =
-          members
-            .filter(function(member) {
-              return (
-                member.user_id !==
-                currentUsername
-              );
-            })
-            .map(function(member) {
-
-              return {
-                user_id:
-                  member.user_id,
-
-                type:
-                  "group",
-
-                title:
-                  "👥 グループに新しいメッセージ",
-
-                message:
-                  currentUsername +
-                  "さんが「" +
-                  groupTitle +
-                  "」にメッセージを送信しました",
-
-                link:
-                  "group_chat.html?id=" +
-                  encodeURIComponent(groupId),
-
-                is_read:
-                  false
-              };
-
-            });
-
-        if (
-          notifications.length === 0
-        ) {
-          return;
-        }
-
-        const {
-          error: insertError
-        } =
-          await supabaseClient
-            .from("notifications")
-            .insert(notifications);
-
-        if (insertError) {
-          console.error(
-            "グループ通知作成エラー:",
-            insertError
-          );
-        }
-
-      } catch (error) {
-
-        console.error(
-          "グループ通知処理エラー:",
-          error
+    const {
+      data: signedData
+    } =
+      await supabaseClient.storage
+        .from("chat-images")
+        .createSignedUrl(
+          message.image_url,
+          3600
         );
 
-      }
+    if (signedData?.signedUrl) {
+
+      const image =
+        document.createElement("img");
+
+      image.className =
+        "chat-image";
+
+      image.src =
+        signedData.signedUrl;
+
+      image.alt =
+        "送信された画像";
+
+      image.addEventListener(
+        "click",
+        function(event) {
+          event.stopPropagation();
+        }
+      );
+
+      box.appendChild(image);
 
     }
+  }
 
 
-    /* =========================
-       返信通知
-    ========================= */
+  /* テキスト */
 
-    async function createGroupReplyNotification(
-      message
+  if (message.content) {
+
+    const content =
+      document.createElement("div");
+
+    content.className =
+      "content";
+
+    content.textContent =
+      message.content;
+
+    box.appendChild(content);
+
+  }
+
+
+  /* 返信 */
+
+  const {
+    data: replies,
+    error: repliesError
+  } =
+    await supabaseClient
+      .from("group_replies")
+      .select("*")
+      .eq(
+        "group_message_id",
+        message.id
+      )
+      .order(
+        "created_at",
+        {
+          ascending: true
+        }
+      );
+
+  if (repliesError) {
+
+    console.error(
+      "返信読み込みエラー:",
+      repliesError
+    );
+
+  }
+
+  for (
+    const reply of replies || []
+  ) {
+
+    const replyBox =
+      document.createElement("div");
+
+    replyBox.className =
+      "reply-preview";
+
+    const strong =
+      document.createElement("strong");
+
+    strong.textContent =
+      "@" +
+      reply.sender_id +
+      "：";
+
+    replyBox.appendChild(strong);
+
+    replyBox.appendChild(
+      document.createTextNode(
+        " " + reply.content
+      )
+    );
+
+    box.appendChild(replyBox);
+
+  }
+
+
+  /* リアクション */
+
+  const {
+    data: reactions
+  } =
+    await supabaseClient
+      .from("group_reactions")
+      .select("*")
+      .eq(
+        "group_message_id",
+        message.id
+      );
+
+  if (
+    reactions &&
+    reactions.length
+  ) {
+
+    const reactionArea =
+      document.createElement("div");
+
+    reactionArea.className =
+      "reactions";
+
+    const counts = {};
+
+    for (
+      const reaction of reactions
     ) {
 
-      try {
-
-        if (
-          !message ||
-          !currentUsername
-        ) {
-          return;
-        }
-
-        // 自分のメッセージに自分で返信した場合は通知しない
-        if (
-          message.sender_id ===
-          currentUsername
-        ) {
-          return;
-        }
-
-        const {
-          error
-        } =
-          await supabaseClient
-            .from("notifications")
-            .insert({
-
-              user_id:
-                message.sender_id,
-
-              type:
-                "group_reply",
-
-              title:
-                "↩️ グループで返信がありました",
-
-              message:
-                currentUsername +
-                "さんがあなたのメッセージに返信しました",
-
-              link:
-                "group_chat.html?id=" +
-                encodeURIComponent(groupId),
-
-              is_read:
-                false
-
-            });
-
-        if (error) {
-
-          console.error(
-            "返信通知エラー:",
-            error
-          );
-
-        }
-
-      } catch (error) {
-
-        console.error(
-          "返信通知処理エラー:",
-          error
-        );
-
-      }
+      counts[reaction.reaction] =
+        (
+          counts[reaction.reaction] || 0
+        ) + 1;
 
     }
 
-
-    /* =========================
-       開始
-    ========================= */
-
-    async function start() {
-
-      if (!groupId) {
-
-        groupName.textContent =
-          "グループが見つかりません";
-
-        return;
-      }
-
-      const {
-        data,
-        error
-      } =
-        await supabaseClient.auth.getSession();
-
-      if (
-        error ||
-        !data.session
-      ) {
-
-        window.location.href =
-          "index.html";
-
-        return;
-      }
-
-      currentUsername =
-        data.session.user
-          .user_metadata?.username || "";
-
-      await getProfile(
-        currentUsername
-      );
-
-      await loadGroup();
-
-      await loadMessages();
-
-    }
-
-
-    /* =========================
-       グループ名
-    ========================= */
-
-    async function loadGroup() {
-
-      const {
-        data,
-        error
-      } =
-        await supabaseClient
-          .from("groups")
-          .select("name")
-          .eq("id", groupId)
-          .single();
-
-      if (
-        error ||
-        !data
-      ) {
-
-        console.error(error);
-
-        groupName.textContent =
-          "グループが見つかりません";
-
-        return;
-      }
-
-      groupName.textContent =
-        data.name;
-
-    }
-
-
-    /* =========================
-       メッセージ読み込み
-    ========================= */
-
-    async function loadMessages() {
-
-      const {
-        data,
-        error
-      } =
-        await supabaseClient
-          .from("group_messages")
-          .select("*")
-          .eq("group_id", Number(groupId))
-          .order(
-            "created_at",
-            {
-              ascending: true
-            }
-          );
-
-      if (error) {
-
-        console.error(error);
-
-        messages.innerHTML =
-          '<div class="error">メッセージを読み込めませんでした。</div>';
-
-        return;
-      }
-
-      messages.innerHTML =
-        "";
-
-      for (
-        const message of data || []
-      ) {
-
-        await addMessage(
-          message
-        );
-
-      }
-
-    }
-
-
-    /* =========================
-       メッセージ表示
-    ========================= */
-
-    async function addMessage(message) {
-
-      const profile =
-        await getProfile(
-          message.sender_id
-        );
-
-      const row =
-        document.createElement("div");
-
-      row.className =
-        "message-row";
-
-      row.appendChild(
-        createAvatar(profile)
-      );
-
-      const box =
-        document.createElement("div");
-
-      box.className =
-        "message";
-
-
-      const sender =
-        document.createElement("div");
-
-      sender.className =
-        "sender";
-
-      sender.textContent =
-        message.sender_id ===
-        currentUsername
-          ? "あなた"
-          : "@" +
-            message.sender_id;
-
-      box.appendChild(
-        sender
-      );
-
-
-      /* 画像 */
-
-      if (message.image_url) {
-
-        const {
-          data: signedData,
-          error: signedError
-        } =
-          await supabaseClient.storage
-            .from("chat-images")
-            .createSignedUrl(
-              message.image_url,
-              3600
-            );
-
-        if (
-          !signedError &&
-          signedData?.signedUrl
-        ) {
-
-          const image =
-            document.createElement("img");
-
-          image.className =
-            "chat-image";
-
-          image.src =
-            signedData.signedUrl;
-
-          image.alt =
-            "送信された画像";
-
-          image.addEventListener(
-            "click",
-            function(event) {
-              event.stopPropagation();
-            }
-          );
-
-          box.appendChild(
-            image
-          );
-
-        }
-
-      }
-
-
-      /* テキスト */
-
-      if (message.content) {
-
-        const content =
-          document.createElement("div");
-
-        content.className =
-          "content";
-
-        content.textContent =
-          message.content;
-
-        box.appendChild(
-          content
-        );
-
-      }
-
-
-      /* 返信一覧 */
-
-      const {
-        data: replies,
-        error: repliesError
-      } =
-        await supabaseClient
-          .from("group_replies")
-          .select("*")
-          .eq(
-            "group_message_id",
-            message.id
-          )
-          .order(
-            "created_at",
-            {
-              ascending: true
-            }
-          );
-
-      if (repliesError) {
-
-        console.error(
-          "返信読み込みエラー:",
-          repliesError
-        );
-
-      }
-
-      for (
-        const reply of replies || []
-      ) {
-
-        const replyBox =
-          document.createElement("div");
-
-        replyBox.className =
-          "reply-preview";
-
-        const replySender =
-          document.createElement("strong");
-
-        replySender.textContent =
-          "@" +
-          reply.sender_id +
-          "：";
-
-        replyBox.appendChild(
-          replySender
-        );
-
-        replyBox.appendChild(
-          document.createTextNode(
-            " " +
-            reply.content
-          )
-        );
-
-        box.appendChild(
-          replyBox
-        );
-
-      }
-
-
-      /* リアクション */
-
-      const {
-        data: reactions
-      } =
-        await supabaseClient
-          .from("group_reactions")
-          .select("*")
-          .eq(
-            "group_message_id",
-            message.id
-          );
-
-      if (
-        reactions &&
-        reactions.length > 0
-      ) {
-
-        const reactionArea =
-          document.createElement("div");
-
-        reactionArea.className =
-          "reactions";
-
-        const counts = {};
-
-        for (
-          const reaction of reactions
-        ) {
-
-          counts[
-            reaction.reaction
-          ] =
-            (
-              counts[
-                reaction.reaction
-              ] || 0
-            ) + 1;
-
-        }
-
-        for (
-          const emoji of Object.keys(counts)
-        ) {
-
-          const reactionItem =
-            document.createElement("div");
-
-          reactionItem.className =
-            "reaction-item";
-
-          reactionItem.textContent =
-            emoji +
-            " " +
-            counts[emoji];
-
-          reactionArea.appendChild(
-            reactionItem
-          );
-
-        }
-
-        box.appendChild(
-          reactionArea
-        );
-
-      }
-
-
-      /* メニュー */
-
-      const menu =
-        document.createElement("div");
-
-      menu.className =
-        "message-menu";
-
-
-      const reactionButton =
-        document.createElement("button");
-
-      reactionButton.type =
-        "button";
-
-      reactionButton.textContent =
-        "❤️ リアクション";
-
-
-      const replyButton =
-        document.createElement("button");
-
-      replyButton.type =
-        "button";
-
-      replyButton.textContent =
-        "↩️ 返信";
-
-
-      menu.appendChild(
-        reactionButton
-      );
-
-      menu.appendChild(
-        replyButton
-      );
-
-
-      /* リアクション選択 */
-
-      const picker =
-        document.createElement("div");
-
-      picker.className =
-        "reaction-picker";
-
-
-      const emojis = [
-        "❤️",
-        "😂",
-        "👍",
-        "😮",
-        "😢"
-      ];
-
-
-      for (
-        const emoji of emojis
-      ) {
-
-        const emojiButton =
-          document.createElement("button");
-
-        emojiButton.type =
-          "button";
-
-        emojiButton.textContent =
-          emoji;
-
-        emojiButton.addEventListener(
-          "click",
-          async function(event) {
-
-            event.stopPropagation();
-
-            await addReaction(
-              message.id,
-              emoji
-            );
-
-            picker.style.display =
-              "none";
-
-            menu.style.display =
-              "none";
-
-            await loadMessages();
-
-          }
-        );
-
-        picker.appendChild(
-          emojiButton
-        );
-
-      }
-
-
-      reactionButton.addEventListener(
-        "click",
-        function(event) {
-
-          event.stopPropagation();
-
-          menu.style.display =
-            "none";
-
-          picker.style.display =
-            "flex";
-
-        }
-      );
-
-
-      replyButton.addEventListener(
-        "click",
-        function(event) {
-
-          event.stopPropagation();
-
-          startReply(
-            message
-          );
-
-          menu.style.display =
-            "none";
-
-          picker.style.display =
-            "none";
-
-        }
-      );
-
-
-      box.addEventListener(
-        "click",
-        function(event) {
-
-          event.stopPropagation();
-
-          document
-            .querySelectorAll(".message-menu")
-            .forEach(
-              function(other) {
-
-                if (
-                  other !== menu
-                ) {
-
-                  other.style.display =
-                    "none";
-
-                }
-
-              }
-            );
-
-          document
-            .querySelectorAll(".reaction-picker")
-            .forEach(
-              function(other) {
-
-                if (
-                  other !== picker
-                ) {
-
-                  other.style.display =
-                    "none";
-
-                }
-
-              }
-            );
-
-          menu.style.display =
-            menu.style.display === "block"
-              ? "none"
-              : "block";
-
-          picker.style.display =
-            "none";
-
-        }
-      );
-
-
-      box.appendChild(
-        menu
-      );
-
-      box.appendChild(
-        picker
-      );
-
-      row.appendChild(
-        box
-      );
-
-      messages.appendChild(
-        row
-      );
-
-    }
-
-
-    /* =========================
-       リアクション
-    ========================= */
-
-    async function addReaction(
-      messageId,
-      emoji
+    for (
+      const emoji of Object.keys(counts)
     ) {
 
-      const {
-        data: existing
-      } =
-        await supabaseClient
-          .from("group_reactions")
-          .select("id")
-          .eq(
-            "group_message_id",
-            messageId
-          )
-          .eq(
-            "user_id",
-            currentUsername
-          )
-          .eq(
-            "reaction",
-            emoji
-          )
-          .maybeSingle();
+      const item =
+        document.createElement("div");
 
-      if (existing) {
+      item.className =
+        "reaction-item";
 
-        await supabaseClient
-          .from("group_reactions")
-          .delete()
-          .eq(
-            "id",
-            existing.id
-          );
+      item.textContent =
+        emoji +
+        " " +
+        counts[emoji];
 
-        return;
-      }
-
-      const {
-        error
-      } =
-        await supabaseClient
-          .from("group_reactions")
-          .insert({
-
-            group_message_id:
-              messageId,
-
-            user_id:
-              currentUsername,
-
-            reaction:
-              emoji
-
-          });
-
-      if (error) {
-
-        console.error(error);
-
-        alert(
-          "リアクションを追加できませんでした。\n" +
-          error.message
-        );
-
-      }
+      reactionArea.appendChild(item);
 
     }
 
+    box.appendChild(
+      reactionArea
+    );
 
-    /* =========================
-       返信開始
-    ========================= */
-
-    function startReply(message) {
-
-      replyingToMessage =
-        message;
-
-      replyText.innerHTML =
-        "";
-
-      const strong =
-        document.createElement("strong");
-
-      strong.textContent =
-        message.sender_id ===
-        currentUsername
-          ? "あなた"
-          : "@" +
-            message.sender_id;
-
-      replyText.appendChild(
-        strong
-      );
-
-      replyText.appendChild(
-        document.createTextNode(
-          " に返信： " +
-          (
-            message.content ||
-            "画像"
-          )
-        )
-      );
-
-      replyArea.style.display =
-        "block";
-
-      messageInput.placeholder =
-        "返信を入力...";
-
-      messageInput.focus();
-
-    }
+  }
 
 
-    /* =========================
-       返信キャンセル
-    ========================= */
+  /* =========================
+     メニュー
+  ========================= */
 
-    cancelReplyButton.addEventListener(
+  const menu =
+    document.createElement("div");
+
+  menu.className =
+    "message-menu";
+
+
+  const reactionButton =
+    document.createElement("button");
+
+  reactionButton.type =
+    "button";
+
+  reactionButton.textContent =
+    "❤️ リアクション";
+
+
+  const replyButton =
+    document.createElement("button");
+
+  replyButton.type =
+    "button";
+
+  replyButton.textContent =
+    "↩️ 返信";
+
+
+  menu.appendChild(
+    reactionButton
+  );
+
+  menu.appendChild(
+    replyButton
+  );
+
+
+  /* リアクション選択 */
+
+  const picker =
+    document.createElement("div");
+
+  picker.className =
+    "reaction-picker";
+
+  const emojis = [
+    "❤️",
+    "😂",
+    "👍",
+    "😮",
+    "😢"
+  ];
+
+  for (
+    const emoji of emojis
+  ) {
+
+    const button =
+      document.createElement("button");
+
+    button.type =
+      "button";
+
+    button.textContent =
+      emoji;
+
+    button.addEventListener(
       "click",
-      function() {
+      async function(event) {
 
-        replyingToMessage =
-          null;
+        event.stopPropagation();
 
-        replyArea.style.display =
+        await addReaction(
+          message.id,
+          emoji
+        );
+
+        picker.style.display =
           "none";
 
-        messageInput.placeholder =
-          "メッセージを入力...";
+        menu.style.display =
+          "none";
 
-        messageInput.focus();
+        await loadMessages();
 
       }
     );
 
+    picker.appendChild(button);
 
-    /* =========================
-       テキスト送信
-    ========================= */
+  }
 
-    async function sendMessage() {
 
-      const text =
-        messageInput.value.trim();
+  /* リアクションボタン */
 
-      if (!text) {
-        return;
-      }
+  reactionButton.addEventListener(
+    "click",
+    function(event) {
 
-      if (!currentUsername) {
+      event.stopPropagation();
+
+      menu.style.display =
+        "none";
+
+      picker.style.display =
+        "flex";
+
+    }
+  );
+
+
+  /* =========================
+     ★ 返信ボタン
+  ========================= */
+
+  replyButton.addEventListener(
+    "click",
+    function(event) {
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      console.log(
+        "返信ボタン:",
+        message
+      );
+
+      startReply(message);
+
+      menu.style.display =
+        "none";
+
+      picker.style.display =
+        "none";
+
+    }
+  );
+
+
+  /* メッセージクリック */
+
+  box.addEventListener(
+    "click",
+    function(event) {
+
+      event.stopPropagation();
+
+      document
+        .querySelectorAll(".message-menu")
+        .forEach(
+          function(other) {
+
+            if (other !== menu) {
+              other.style.display =
+                "none";
+            }
+
+          }
+        );
+
+      document
+        .querySelectorAll(".reaction-picker")
+        .forEach(
+          function(other) {
+
+            if (other !== picker) {
+              other.style.display =
+                "none";
+            }
+
+          }
+        );
+
+      picker.style.display =
+        "none";
+
+      menu.style.display =
+        menu.style.display === "block"
+          ? "none"
+          : "block";
+
+    }
+  );
+
+
+  box.appendChild(menu);
+  box.appendChild(picker);
+
+  row.appendChild(box);
+
+  messages.appendChild(row);
+}
+
+
+/* =========================
+   リアクション
+========================= */
+
+async function addReaction(
+  messageId,
+  emoji
+) {
+
+  const {
+    data: existing
+  } =
+    await supabaseClient
+      .from("group_reactions")
+      .select("id")
+      .eq(
+        "group_message_id",
+        messageId
+      )
+      .eq(
+        "user_id",
+        currentUsername
+      )
+      .eq(
+        "reaction",
+        emoji
+      )
+      .maybeSingle();
+
+  if (existing) {
+
+    await supabaseClient
+      .from("group_reactions")
+      .delete()
+      .eq(
+        "id",
+        existing.id
+      );
+
+    return;
+  }
+
+  const {
+    error
+  } =
+    await supabaseClient
+      .from("group_reactions")
+      .insert({
+        group_message_id:
+          messageId,
+
+        user_id:
+          currentUsername,
+
+        reaction:
+          emoji
+      });
+
+  if (error) {
+
+    alert(
+      "リアクションを追加できませんでした。\n" +
+      error.message
+    );
+
+  }
+}
+
+
+/* =========================
+   ★ 返信開始
+========================= */
+
+function startReply(message) {
+
+  console.log(
+    "startReply:",
+    message
+  );
+
+  replyingToMessage =
+    message;
+
+  replyText.innerHTML =
+    "";
+
+  const strong =
+    document.createElement("strong");
+
+  strong.textContent =
+    message.sender_id === currentUsername
+      ? "あなた"
+      : "@" + message.sender_id;
+
+  replyText.appendChild(strong);
+
+  replyText.appendChild(
+    document.createTextNode(
+      " に返信： " +
+      (
+        message.content ||
+        "画像"
+      )
+    )
+  );
+
+  replyArea.style.display =
+    "block";
+
+  messageInput.placeholder =
+    "返信を入力...";
+
+  messageInput.focus();
+}
+
+
+/* =========================
+   返信キャンセル
+========================= */
+
+cancelReplyButton.addEventListener(
+  "click",
+  function(event) {
+
+    event.preventDefault();
+
+    replyingToMessage =
+      null;
+
+    replyArea.style.display =
+      "none";
+
+    messageInput.placeholder =
+      "メッセージを入力...";
+
+    messageInput.focus();
+
+  }
+);
+
+
+/* =========================
+   返信通知
+========================= */
+
+async function createGroupReplyNotification(
+  message
+) {
+
+  try {
+
+    if (
+      !message ||
+      !currentUsername
+    ) {
+      return;
+    }
+
+    if (
+      message.sender_id ===
+      currentUsername
+    ) {
+      return;
+    }
+
+    const {
+      error
+    } =
+      await supabaseClient
+        .from("notifications")
+        .insert({
+          user_id:
+            message.sender_id,
+
+          type:
+            "group_reply",
+
+          title:
+            "↩️ グループで返信がありました",
+
+          message:
+            currentUsername +
+            "さんがあなたのメッセージに返信しました",
+
+          link:
+            "group_chat.html?id=" +
+            encodeURIComponent(groupId),
+
+          is_read:
+            false
+        });
+
+    if (error) {
+      console.error(
+        "返信通知エラー:",
+        error
+      );
+    }
+
+  } catch (error) {
+
+    console.error(
+      "返信通知処理エラー:",
+      error
+    );
+
+  }
+}
+
+
+/* =========================
+   グループ通知
+========================= */
+
+async function createGroupNotifications() {
+
+  try {
+
+    if (
+      !currentUsername ||
+      !groupId
+    ) {
+      return;
+    }
+
+    const {
+      data: group
+    } =
+      await supabaseClient
+        .from("groups")
+        .select("name")
+        .eq(
+          "id",
+          Number(groupId)
+        )
+        .maybeSingle();
+
+    const {
+      data: members
+    } =
+      await supabaseClient
+        .from("group_members")
+        .select("user_id")
+        .eq(
+          "group_id",
+          Number(groupId)
+        );
+
+    if (!members) {
+      return;
+    }
+
+    const notifications =
+      members
+        .filter(
+          member =>
+            member.user_id !==
+            currentUsername
+        )
+        .map(
+          member => ({
+            user_id:
+              member.user_id,
+
+            type:
+              "group",
+
+            title:
+              "👥 グループに新しいメッセージ",
+
+            message:
+              currentUsername +
+              "さんが「" +
+              (group?.name || "グループ") +
+              "」にメッセージを送信しました",
+
+            link:
+              "group_chat.html?id=" +
+              encodeURIComponent(groupId),
+
+            is_read:
+              false
+          })
+        );
+
+    if (!notifications.length) {
+      return;
+    }
+
+    const {
+      error
+    } =
+      await supabaseClient
+        .from("notifications")
+        .insert(notifications);
+
+    if (error) {
+      console.error(
+        "グループ通知エラー:",
+        error
+      );
+    }
+
+  } catch (error) {
+
+    console.error(
+      "グループ通知処理エラー:",
+      error
+    );
+
+  }
+}
+
+
+/* =========================
+   ★ テキスト送信
+========================= */
+
+async function sendMessage() {
+
+  const text =
+    messageInput.value.trim();
+
+  if (!text) {
+    return;
+  }
+
+  if (!currentUsername) {
+
+    alert(
+      "ユーザー情報を取得できていません。"
+    );
+
+    return;
+  }
+
+  sendButton.disabled =
+    true;
+
+
+  /* =====================
+     返信
+  ===================== */
+
+  if (replyingToMessage) {
+
+    const targetMessage =
+      replyingToMessage;
+
+    console.log(
+      "返信送信:",
+      targetMessage
+    );
+
+    const {
+      error
+    } =
+      await supabaseClient
+        .from("group_replies")
+        .insert({
+          group_message_id:
+            targetMessage.id,
+
+          sender_id:
+            currentUsername,
+
+          content:
+            text
+        });
+
+    if (error) {
+
+      console.error(
+        "返信送信エラー:",
+        error
+      );
+
+      alert(
+        "返信を送信できませんでした。\n\n" +
+        error.message
+      );
+
+      sendButton.disabled =
+        false;
+
+      return;
+    }
+
+    messageInput.value =
+      "";
+
+    replyingToMessage =
+      null;
+
+    replyArea.style.display =
+      "none";
+
+    messageInput.placeholder =
+      "メッセージを入力...";
+
+    await loadMessages();
+
+    createGroupReplyNotification(
+      targetMessage
+    ).catch(
+      error =>
+        console.error(
+          "通知エラー:",
+          error
+        )
+    );
+
+    sendButton.disabled =
+      false;
+
+    messageInput.focus();
+
+    return;
+  }
+
+
+  /* =====================
+     通常メッセージ
+  ===================== */
+
+  const {
+    error
+  } =
+    await supabaseClient
+      .from("group_messages")
+      .insert({
+        group_id:
+          Number(groupId),
+
+        sender_id:
+          currentUsername,
+
+        content:
+          text,
+
+        image_url:
+          ""
+      });
+
+  if (error) {
+
+    console.error(
+      "メッセージ送信エラー:",
+      error
+    );
+
+    alert(
+      "送信できませんでした。\n\n" +
+      error.message
+    );
+
+  } else {
+
+    messageInput.value =
+      "";
+
+    await loadMessages();
+
+    createGroupNotifications()
+      .catch(
+        error =>
+          console.error(
+            "通知エラー:",
+            error
+          )
+      );
+
+  }
+
+  sendButton.disabled =
+    false;
+
+  messageInput.focus();
+}
+
+
+/* =========================
+   画像ボタン
+========================= */
+
+imageButton.addEventListener(
+  "click",
+  function() {
+    imageInput.click();
+  }
+);
+
+
+/* =========================
+   画像送信
+========================= */
+
+imageInput.addEventListener(
+  "change",
+  async function() {
+
+    const file =
+      imageInput.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (
+      !file.type.startsWith("image/")
+    ) {
+
+      alert(
+        "画像ファイルを選んでください。"
+      );
+
+      imageInput.value =
+        "";
+
+      return;
+    }
+
+    imageButton.disabled =
+      true;
+
+    sendButton.disabled =
+      true;
+
+    try {
+
+      const extension =
+        file.name.split(".").pop() ||
+        "jpg";
+
+      const filePath =
+        "groups/" +
+        groupId +
+        "/" +
+        currentUsername +
+        "/" +
+        Date.now() +
+        "_" +
+        Math.random()
+          .toString(36)
+          .slice(2) +
+        "." +
+        extension;
+
+      const {
+        error: uploadError
+      } =
+        await supabaseClient.storage
+          .from("chat-images")
+          .upload(
+            filePath,
+            file,
+            {
+              contentType:
+                file.type,
+
+              upsert:
+                false
+            }
+          );
+
+      if (uploadError) {
 
         alert(
-          "ユーザー情報を取得できていません。"
+          "画像をアップロードできませんでした。\n\n" +
+          uploadError.message
         );
 
         return;
       }
-
-      sendButton.disabled =
-        true;
-
-
-      /* =====================
-         返信
-      ===================== */
-
-      if (replyingToMessage) {
-
-        const targetMessage =
-          replyingToMessage;
-
-        const {
-          error
-        } =
-          await supabaseClient
-            .from("group_replies")
-            .insert({
-
-              group_message_id:
-                targetMessage.id,
-
-              sender_id:
-                currentUsername,
-
-              content:
-                text
-
-            });
-
-
-        if (error) {
-
-          console.error(
-            "返信送信エラー:",
-            error
-          );
-
-          alert(
-            "返信を送信できませんでした。\n" +
-            error.message
-          );
-
-          sendButton.disabled =
-            false;
-
-          messageInput.focus();
-
-          return;
-        }
-
-
-        /*
-         * ここが重要。
-         *
-         * 返信保存が成功したら、
-         * 通知処理を待たずに
-         * すぐ画面を更新する。
-         */
-
-        messageInput.value =
-          "";
-
-        replyingToMessage =
-          null;
-
-        replyArea.style.display =
-          "none";
-
-        messageInput.placeholder =
-          "メッセージを入力...";
-
-
-        await loadMessages();
-
-
-        /*
-         * 通知は後から処理。
-         *
-         * 通知に失敗しても
-         * 返信には影響しない。
-         */
-
-        createGroupReplyNotification(
-          targetMessage
-        ).catch(function(error) {
-
-          console.error(
-            "返信通知処理エラー:",
-            error
-          );
-
-        });
-
-
-        sendButton.disabled =
-          false;
-
-        messageInput.focus();
-
-        return;
-      }
-
-
-      /* =====================
-         通常メッセージ
-      ===================== */
 
       const {
         error
@@ -1823,7 +1782,6 @@
         await supabaseClient
           .from("group_messages")
           .insert({
-
             group_id:
               Number(groupId),
 
@@ -1831,736 +1789,499 @@
               currentUsername,
 
             content:
-              text,
+              "",
 
             image_url:
-              ""
-
+              filePath
           });
-
 
       if (error) {
 
-        console.error(error);
-
         alert(
-          "送信できませんでした。\n" +
+          "画像メッセージを保存できませんでした。\n\n" +
           error.message
         );
 
-      } else {
-
-        messageInput.value =
-          "";
-
-        await loadMessages();
-
-
-        /*
-         * 通知は後処理。
-         */
-
-        createGroupNotifications()
-          .catch(function(error) {
-
-            console.error(
-              "グループ通知処理エラー:",
-              error
-            );
-
-          });
-
+        return;
       }
 
+      await loadMessages();
+
+      createGroupNotifications()
+        .catch(
+          error =>
+            console.error(
+              "通知エラー:",
+              error
+            )
+        );
+
+    } finally {
+
+      imageButton.disabled =
+        false;
 
       sendButton.disabled =
         false;
 
-      messageInput.focus();
-
-    }
-
-
-    /* =========================
-       画像ボタン
-    ========================= */
-
-    imageButton.addEventListener(
-      "click",
-      function() {
-
-        imageInput.click();
-
-      }
-    );
-
-
-    /* =========================
-       画像送信
-    ========================= */
-
-    imageInput.addEventListener(
-      "change",
-      async function() {
-
-        const file =
-          imageInput.files?.[0];
-
-        if (!file) {
-          return;
-        }
-
-        if (
-          !file.type.startsWith("image/")
-        ) {
-
-          alert(
-            "画像ファイルを選んでください。"
-          );
-
-          imageInput.value =
-            "";
-
-          return;
-        }
-
-        if (
-          !currentUsername ||
-          !groupId
-        ) {
-
-          alert(
-            "ログイン情報またはグループ情報を取得できません。"
-          );
-
-          imageInput.value =
-            "";
-
-          return;
-        }
-
-        imageButton.disabled =
-          true;
-
-        sendButton.disabled =
-          true;
-
-
-        try {
-
-          const extension =
-            file.name.split(".").pop() ||
-            "jpg";
-
-          const filePath =
-            "groups/" +
-            groupId +
-            "/" +
-            currentUsername +
-            "/" +
-            Date.now() +
-            "_" +
-            Math.random()
-              .toString(36)
-              .slice(2) +
-            "." +
-            extension;
-
-
-          const {
-            error: uploadError
-          } =
-            await supabaseClient.storage
-              .from("chat-images")
-              .upload(
-                filePath,
-                file,
-                {
-                  contentType:
-                    file.type,
-
-                  upsert:
-                    false
-                }
-              );
-
-
-          if (uploadError) {
-
-            console.error(
-              "画像アップロードエラー:",
-              uploadError
-            );
-
-            alert(
-              "画像をアップロードできませんでした。\n\n" +
-              uploadError.message
-            );
-
-            return;
-          }
-
-
-          const {
-            error
-          } =
-            await supabaseClient
-              .from("group_messages")
-              .insert({
-
-                group_id:
-                  Number(groupId),
-
-                sender_id:
-                  currentUsername,
-
-                content:
-                  "",
-
-                image_url:
-                  filePath
-
-              });
-
-
-          if (error) {
-
-            console.error(
-              "画像メッセージ保存エラー:",
-              error
-            );
-
-            alert(
-              "画像メッセージを保存できませんでした。\n\n" +
-              error.message
-            );
-
-            return;
-          }
-
-
-          await loadMessages();
-
-
-          /*
-           * 画像通知も後処理。
-           */
-
-          createGroupNotifications()
-            .catch(function(error) {
-
-              console.error(
-                "画像通知処理エラー:",
-                error
-              );
-
-            });
-
-
-        } finally {
-
-          imageButton.disabled =
-            false;
-
-          sendButton.disabled =
-            false;
-
-          imageInput.value =
-            "";
-
-        }
-
-      }
-    );
-
-
-    /* =========================
-       メンバー一覧
-    ========================= */
-
-    async function loadMembers() {
-
-      memberList.innerHTML =
-        '<div class="member-loading">読み込み中...</div>';
-
-
-      const {
-        data: members,
-        error: membersError
-      } =
-        await supabaseClient
-          .from("group_members")
-          .select("user_id")
-          .eq(
-            "group_id",
-            Number(groupId)
-          );
-
-
-      if (membersError) {
-
-        console.error(
-          membersError
-        );
-
-        memberList.innerHTML =
-          '<div class="member-empty">メンバーを読み込めませんでした。</div>';
-
-        return;
-      }
-
-
-      if (
-        !members ||
-        members.length === 0
-      ) {
-
-        memberList.innerHTML =
-          '<div class="member-empty">まだメンバーがいません。</div>';
-
-        return;
-      }
-
-
-      memberList.innerHTML =
+      imageInput.value =
         "";
 
-
-      for (
-        const member of members
-      ) {
-
-        const profile =
-          await getProfile(
-            member.user_id
-          );
-
-
-        const item =
-          document.createElement("div");
-
-        item.className =
-          "member-item";
-
-
-        const icon =
-          document.createElement("div");
-
-        icon.className =
-          "member-icon";
-
-
-        if (
-          profile &&
-          profile.avatar_url
-        ) {
-
-          const img =
-            document.createElement("img");
-
-          img.src =
-            profile.avatar_url;
-
-          img.alt =
-            "アイコン";
-
-          img.style.width =
-            "100%";
-
-          img.style.height =
-            "100%";
-
-          img.style.objectFit =
-            "cover";
-
-          icon.appendChild(
-            img
-          );
-
-        } else {
-
-          icon.textContent =
-            "👤";
-
-        }
-
-
-        const info =
-          document.createElement("div");
-
-        info.className =
-          "member-info";
-
-
-        const name =
-          document.createElement("div");
-
-        name.className =
-          "member-name";
-
-        name.textContent =
-          profile?.name ||
-          member.user_id;
-
-
-        const id =
-          document.createElement("div");
-
-        id.className =
-          "member-id";
-
-        id.textContent =
-          "@" +
-          member.user_id;
-
-
-        info.appendChild(
-          name
-        );
-
-        info.appendChild(
-          id
-        );
-
-
-        item.appendChild(
-          icon
-        );
-
-        item.appendChild(
-          info
-        );
-
-
-        memberList.appendChild(
-          item
-        );
-
-      }
-
     }
 
-
-    /* =========================
-       メンバー追加
-    ========================= */
-
-    async function addMember() {
-
-      const friendId =
-        memberInput.value.trim();
+  }
+);
 
 
-      if (!friendId) {
+/* =========================
+   メンバー一覧
+========================= */
 
-        alert(
-          "追加するユーザーIDを入力してね。"
-        );
+async function loadMembers() {
 
-        return;
-      }
+  memberList.innerHTML =
+    '<div class="member-loading">読み込み中...</div>';
 
-
-      if (
-        friendId ===
-        currentUsername
-      ) {
-
-        alert(
-          "自分はすでにメンバーだよ。"
-        );
-
-        return;
-      }
-
-
-      addMemberButton.disabled =
-        true;
-
-
-      const {
-        data: profile,
-        error: profileError
-      } =
-        await supabaseClient
-          .from("profiles")
-          .select("user_id, name")
-          .eq(
-            "user_id",
-            friendId
-          )
-          .maybeSingle();
-
-
-      if (profileError) {
-
-        console.error(
-          profileError
-        );
-
-        alert(
-          "ユーザーを確認できませんでした。\n" +
-          profileError.message
-        );
-
-        addMemberButton.disabled =
-          false;
-
-        return;
-      }
-
-
-      if (!profile) {
-
-        alert(
-          "そのユーザーIDは見つかりません。"
-        );
-
-        addMemberButton.disabled =
-          false;
-
-        return;
-      }
-
-
-      const {
-        data: existing,
-        error: existingError
-      } =
-        await supabaseClient
-          .from("group_members")
-          .select("id")
-          .eq(
-            "group_id",
-            Number(groupId)
-          )
-          .eq(
-            "user_id",
-            friendId
-          )
-          .maybeSingle();
-
-
-      if (existingError) {
-
-        console.error(
-          existingError
-        );
-
-        alert(
-          "メンバー情報を確認できませんでした。\n" +
-          existingError.message
-        );
-
-        addMemberButton.disabled =
-          false;
-
-        return;
-      }
-
-
-      if (existing) {
-
-        alert(
-          "そのユーザーはすでにメンバーだよ。"
-        );
-
-        addMemberButton.disabled =
-          false;
-
-        return;
-      }
-
-
-      const {
-        error: insertError
-      } =
-        await supabaseClient
-          .from("group_members")
-          .insert({
-
-            group_id:
-              Number(groupId),
-
-            user_id:
-              friendId
-
-          });
-
-
-      if (insertError) {
-
-        console.error(
-          insertError
-        );
-
-        alert(
-          "メンバーを追加できませんでした。\n" +
-          insertError.message
-        );
-
-        addMemberButton.disabled =
-          false;
-
-        return;
-      }
-
-
-      alert(
-        "@" +
-        friendId +
-        " をグループに追加したよ！"
+  const {
+    data: members,
+    error
+  } =
+    await supabaseClient
+      .from("group_members")
+      .select("user_id")
+      .eq(
+        "group_id",
+        Number(groupId)
       );
 
+  if (error) {
 
-      memberInput.value =
-        "";
+    memberList.innerHTML =
+      '<div class="member-empty">メンバーを読み込めませんでした。</div>';
 
-      addMemberButton.disabled =
-        false;
+    return;
+  }
 
+  if (!members || !members.length) {
 
-      await loadMembers();
+    memberList.innerHTML =
+      '<div class="member-empty">まだメンバーがいません。</div>';
+
+    return;
+  }
+
+  memberList.innerHTML =
+    "";
+
+  for (
+    const member of members
+  ) {
+
+    const profile =
+      await getProfile(
+        member.user_id
+      );
+
+    const item =
+      document.createElement("div");
+
+    item.className =
+      "member-item";
+
+    const icon =
+      document.createElement("div");
+
+    icon.className =
+      "member-icon";
+
+    if (
+      profile &&
+      profile.avatar_url
+    ) {
+
+      const img =
+        document.createElement("img");
+
+      img.src =
+        profile.avatar_url;
+
+      img.style.width =
+        "100%";
+
+      img.style.height =
+        "100%";
+
+      img.style.objectFit =
+        "cover";
+
+      icon.appendChild(img);
+
+    } else {
+
+      icon.textContent =
+        "👤";
 
     }
 
+    const info =
+      document.createElement("div");
 
-    /* =========================
-       メンバーボタン
-    ========================= */
+    info.className =
+      "member-info";
 
-    memberButton.addEventListener(
-      "click",
-      async function() {
+    const name =
+      document.createElement("div");
 
-        memberModal.style.display =
-          "flex";
+    name.className =
+      "member-name";
 
-        await loadMembers();
+    name.textContent =
+      profile?.name ||
+      member.user_id;
 
-        memberInput.focus();
+    const id =
+      document.createElement("div");
 
-      }
+    id.className =
+      "member-id";
+
+    id.textContent =
+      "@" +
+      member.user_id;
+
+    info.appendChild(name);
+    info.appendChild(id);
+
+    item.appendChild(icon);
+    item.appendChild(info);
+
+    memberList.appendChild(item);
+  }
+}
+
+
+/* =========================
+   メンバー追加
+========================= */
+
+async function addMember() {
+
+  const friendId =
+    memberInput.value.trim();
+
+  if (!friendId) {
+
+    alert(
+      "追加するユーザーIDを入力してね。"
     );
 
+    return;
+  }
 
-    closeModalButton.addEventListener(
-      "click",
-      function() {
+  if (
+    friendId ===
+    currentUsername
+  ) {
 
-        memberModal.style.display =
-          "none";
-
-      }
+    alert(
+      "自分はすでにメンバーだよ。"
     );
 
+    return;
+  }
 
-    memberModal.addEventListener(
-      "click",
-      function(event) {
+  addMemberButton.disabled =
+    true;
 
-        if (
-          event.target ===
-          memberModal
-        ) {
+  const {
+    data: profile,
+    error: profileError
+  } =
+    await supabaseClient
+      .from("profiles")
+      .select("user_id, name")
+      .eq(
+        "user_id",
+        friendId
+      )
+      .maybeSingle();
 
-          memberModal.style.display =
+  if (profileError) {
+
+    alert(
+      "ユーザーを確認できませんでした。\n" +
+      profileError.message
+    );
+
+    addMemberButton.disabled =
+      false;
+
+    return;
+  }
+
+  if (!profile) {
+
+    alert(
+      "そのユーザーIDは見つかりません。"
+    );
+
+    addMemberButton.disabled =
+      false;
+
+    return;
+  }
+
+  const {
+    data: existing
+  } =
+    await supabaseClient
+      .from("group_members")
+      .select("id")
+      .eq(
+        "group_id",
+        Number(groupId)
+      )
+      .eq(
+        "user_id",
+        friendId
+      )
+      .maybeSingle();
+
+  if (existing) {
+
+    alert(
+      "そのユーザーはすでにメンバーだよ。"
+    );
+
+    addMemberButton.disabled =
+      false;
+
+    return;
+  }
+
+  const {
+    error
+  } =
+    await supabaseClient
+      .from("group_members")
+      .insert({
+        group_id:
+          Number(groupId),
+
+        user_id:
+          friendId
+      });
+
+  if (error) {
+
+    alert(
+      "メンバーを追加できませんでした。\n" +
+      error.message
+    );
+
+    addMemberButton.disabled =
+      false;
+
+    return;
+  }
+
+  alert(
+    "@" +
+    friendId +
+    " をグループに追加したよ！"
+  );
+
+  memberInput.value =
+    "";
+
+  addMemberButton.disabled =
+    false;
+
+  await loadMembers();
+}
+
+
+/* =========================
+   メンバー画面
+========================= */
+
+memberButton.addEventListener(
+  "click",
+  async function() {
+
+    memberModal.style.display =
+      "flex";
+
+    await loadMembers();
+
+    memberInput.focus();
+
+  }
+);
+
+closeModalButton.addEventListener(
+  "click",
+  function() {
+
+    memberModal.style.display =
+      "none";
+
+  }
+);
+
+memberModal.addEventListener(
+  "click",
+  function(event) {
+
+    if (
+      event.target ===
+      memberModal
+    ) {
+
+      memberModal.style.display =
+        "none";
+
+    }
+
+  }
+);
+
+addMemberButton.addEventListener(
+  "click",
+  addMember
+);
+
+memberInput.addEventListener(
+  "keydown",
+  function(event) {
+
+    if (
+      event.key === "Enter"
+    ) {
+
+      event.preventDefault();
+
+      addMember();
+
+    }
+
+  }
+);
+
+
+/* =========================
+   送信
+========================= */
+
+sendButton.addEventListener(
+  "click",
+  sendMessage
+);
+
+messageInput.addEventListener(
+  "keydown",
+  function(event) {
+
+    if (
+      event.key === "Enter"
+    ) {
+
+      event.preventDefault();
+
+      sendMessage();
+
+    }
+
+  }
+);
+
+
+/* =========================
+   画面外をタップ
+========================= */
+
+document.addEventListener(
+  "click",
+  function() {
+
+    document
+      .querySelectorAll(".message-menu")
+      .forEach(
+        menu => {
+          menu.style.display =
             "none";
-
         }
+      );
 
-      }
-    );
-
-
-    addMemberButton.addEventListener(
-      "click",
-      addMember
-    );
-
-
-    memberInput.addEventListener(
-      "keydown",
-      function(event) {
-
-        if (
-          event.key ===
-          "Enter"
-        ) {
-
-          event.preventDefault();
-
-          addMember();
-
+    document
+      .querySelectorAll(".reaction-picker")
+      .forEach(
+        picker => {
+          picker.style.display =
+            "none";
         }
+      );
 
-      }
+  }
+);
+
+
+/* =========================
+   起動
+========================= */
+
+async function start() {
+
+  if (!groupId) {
+
+    groupName.textContent =
+      "グループが見つかりません";
+
+    return;
+  }
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient.auth.getSession();
+
+  if (
+    error ||
+    !data.session
+  ) {
+
+    window.location.href =
+      "index.html";
+
+    return;
+  }
+
+  currentUsername =
+    data.session.user
+      .user_metadata?.username || "";
+
+  if (!currentUsername) {
+
+    alert(
+      "ユーザー情報を取得できませんでした。"
     );
 
+    return;
+  }
 
-    sendButton.addEventListener(
-      "click",
-      sendMessage
-    );
+  await loadGroup();
 
+  await loadMessages();
 
-    messageInput.addEventListener(
-      "keydown",
-      function(event) {
-
-        if (
-          event.key ===
-          "Enter"
-        ) {
-
-          event.preventDefault();
-
-          sendMessage();
-
-        }
-
-      }
-    );
+}
 
 
-    document.addEventListener(
-      "click",
-      function() {
+/* 開始 */
 
-        document
-          .querySelectorAll(".message-menu")
-          .forEach(
-            function(menu) {
+start();
 
-              menu.style.display =
-                "none";
-
-            }
-          );
-
-
-        document
-          .querySelectorAll(".reaction-picker")
-          .forEach(
-            function(picker) {
-
-              picker.style.display =
-                "none";
-
-            }
-          );
-
-      }
-    );
-
-
-    /* =========================
-       起動
-    ========================= */
-
-    start();
-
-  </script>
+</script>
 
 </body>
 </html>
