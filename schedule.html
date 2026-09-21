@@ -88,18 +88,69 @@
     }
 
     input,
-    textarea {
+    textarea,
+    select {
       width: 100%;
       border: 1px solid #ddd;
       border-radius: 12px;
       padding: 12px;
       font-size: 15px;
       font-family: inherit;
+      background: white;
     }
 
     textarea {
       min-height: 90px;
       resize: vertical;
+    }
+
+    .friend-list {
+      display: none;
+      margin-top: 10px;
+      padding: 10px;
+      background: #f8f7ff;
+      border-radius: 14px;
+    }
+
+    .friend-list.show {
+      display: block;
+    }
+
+    .friend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 4px;
+      border-bottom: 1px solid #e7e5f5;
+    }
+
+    .friend-item:last-child {
+      border-bottom: none;
+    }
+
+    .friend-item input {
+      width: 20px;
+      height: 20px;
+      margin: 0;
+      flex-shrink: 0;
+    }
+
+    .friend-name {
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .friend-id {
+      color: #999;
+      font-size: 12px;
+      margin-left: 4px;
+    }
+
+    .no-friends {
+      color: #888;
+      text-align: center;
+      padding: 12px;
+      font-size: 13px;
     }
 
     .save-button {
@@ -113,6 +164,10 @@
       font-weight: bold;
       margin-top: 18px;
       cursor: pointer;
+    }
+
+    .save-button:disabled {
+      opacity: 0.6;
     }
 
     .cancel-button {
@@ -152,6 +207,17 @@
       line-height: 1.7;
     }
 
+    .visibility {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 5px 9px;
+      border-radius: 10px;
+      background: #f0edff;
+      color: #6557c9;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
     .delete-button {
       border: none;
       background: #ffecec;
@@ -172,6 +238,13 @@
       text-align: center;
       color: #888;
       padding: 30px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: bold;
+      margin-top: 16px;
+      margin-bottom: 7px;
     }
   </style>
 </head>
@@ -224,23 +297,48 @@
       placeholder="予定についてのメモ"
     ></textarea>
 
-    <button class="save-button" id="saveButton">
+    <label>誰に見せる？</label>
+
+    <select id="visibility">
+      <option value="private">🔒 自分だけ</option>
+      <option value="friend">👤 フレンドに見せる</option>
+    </select>
+
+    <div
+      class="friend-list"
+      id="friendList"
+    ></div>
+
+    <button
+      class="save-button"
+      id="saveButton"
+    >
       💾 予定を保存
     </button>
 
-    <button class="cancel-button" id="cancelButton">
+    <button
+      class="cancel-button"
+      id="cancelButton"
+    >
       キャンセル
     </button>
 
   </div>
 
   <div id="scheduleList">
-    <div class="loading">予定を読み込んでいます…</div>
+    <div class="loading">
+      予定を読み込んでいます…
+    </div>
   </div>
 
 </div>
 
 <script>
+
+  // =========================
+  // Supabase
+  // =========================
+
   const SUPABASE_URL =
     "https://yxonmqdyekwenyzekjwj.supabase.co";
 
@@ -253,90 +351,457 @@
       SUPABASE_KEY
     );
 
+
   let currentUsername = "";
 
-  const form = document.getElementById("form");
-  const addButton = document.getElementById("addButton");
-  const cancelButton = document.getElementById("cancelButton");
-  const saveButton = document.getElementById("saveButton");
-  const scheduleList = document.getElementById("scheduleList");
+  let friendsData = [];
 
-  const titleInput = document.getElementById("title");
-  const dateInput = document.getElementById("date");
-  const timeInput = document.getElementById("time");
-  const placeInput = document.getElementById("place");
-  const memoInput = document.getElementById("memo");
 
-  document.getElementById("backButton").addEventListener("click", () => {
-    window.location.href = "home.html";
-  });
+  // =========================
+  // DOM
+  // =========================
 
-  addButton.addEventListener("click", () => {
-    form.classList.add("show");
+  const form =
+    document.getElementById("form");
 
-    if (!dateInput.value) {
-      const today = new Date();
-      const yyyy = today.getFullYear();
-      const mm = String(today.getMonth() + 1).padStart(2, "0");
-      const dd = String(today.getDate()).padStart(2, "0");
+  const addButton =
+    document.getElementById("addButton");
 
-      dateInput.value = `${yyyy}-${mm}-${dd}`;
+  const cancelButton =
+    document.getElementById("cancelButton");
+
+  const saveButton =
+    document.getElementById("saveButton");
+
+  const scheduleList =
+    document.getElementById("scheduleList");
+
+  const friendList =
+    document.getElementById("friendList");
+
+  const visibility =
+    document.getElementById("visibility");
+
+  const titleInput =
+    document.getElementById("title");
+
+  const dateInput =
+    document.getElementById("date");
+
+  const timeInput =
+    document.getElementById("time");
+
+  const placeInput =
+    document.getElementById("place");
+
+  const memoInput =
+    document.getElementById("memo");
+
+
+  // =========================
+  // ホーム
+  // =========================
+
+  document
+    .getElementById("backButton")
+    .addEventListener("click", function() {
+
+      window.location.href =
+        "home.html";
+
+    });
+
+
+  // =========================
+  // 新しい予定
+  // =========================
+
+  addButton.addEventListener(
+    "click",
+    async function() {
+
+      form.classList.add("show");
+
+      if (!dateInput.value) {
+
+        const today =
+          new Date();
+
+        const yyyy =
+          today.getFullYear();
+
+        const mm =
+          String(
+            today.getMonth() + 1
+          ).padStart(2, "0");
+
+        const dd =
+          String(
+            today.getDate()
+          ).padStart(2, "0");
+
+        dateInput.value =
+          `${yyyy}-${mm}-${dd}`;
+      }
+
+      await loadFriends();
+
+      titleInput.focus();
+
     }
+  );
 
-    titleInput.focus();
-  });
 
-  cancelButton.addEventListener("click", () => {
-    closeForm();
-  });
+  // =========================
+  // 公開設定変更
+  // =========================
+
+  visibility.addEventListener(
+    "change",
+    function() {
+
+      if (
+        visibility.value === "friend"
+      ) {
+
+        friendList.classList.add(
+          "show"
+        );
+
+        renderFriends();
+
+      } else {
+
+        friendList.classList.remove(
+          "show"
+        );
+
+      }
+
+    }
+  );
+
+
+  // =========================
+  // キャンセル
+  // =========================
+
+  cancelButton.addEventListener(
+    "click",
+    function() {
+
+      closeForm();
+
+    }
+  );
+
 
   function closeForm() {
-    form.classList.remove("show");
+
+    form.classList.remove(
+      "show"
+    );
 
     titleInput.value = "";
     dateInput.value = "";
     timeInput.value = "";
     placeInput.value = "";
     memoInput.value = "";
+
+    visibility.value =
+      "private";
+
+    friendList.classList.remove(
+      "show"
+    );
+
+    friendList.innerHTML = "";
+
   }
+
+
+  // =========================
+  // ログインユーザー
+  // =========================
 
   async function getCurrentUser() {
 
     const {
-      data: { session },
+      data: {
+        session
+      },
       error
-    } = await supabaseClient.auth.getSession();
+    } =
+      await supabaseClient.auth.getSession();
 
-    if (error || !session) {
-      window.location.href = "index.html";
+
+    if (
+      error ||
+      !session
+    ) {
+
+      window.location.href =
+        "index.html";
+
       return false;
     }
+
 
     currentUsername =
-      session.user.user_metadata?.username || "";
+      session.user
+        .user_metadata
+        ?.username || "";
+
 
     if (!currentUsername) {
-      alert("ユーザー情報を取得できませんでした。");
+
+      alert(
+        "ユーザー情報を取得できませんでした。"
+      );
+
       return false;
     }
+
 
     return true;
   }
+
+
+  // =========================
+  // フレンド取得
+  // =========================
+
+  async function loadFriends() {
+
+    friendList.innerHTML =
+      '<div class="loading">フレンドを読み込んでいます…</div>';
+
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient
+        .from("friends")
+        .select("friend_id")
+        .eq(
+          "user_id",
+          currentUsername
+        );
+
+
+    if (error) {
+
+      console.error(
+        "フレンド取得エラー:",
+        error
+      );
+
+      friendsData = [];
+
+      friendList.innerHTML =
+        '<div class="no-friends">フレンドを読み込めませんでした。</div>';
+
+      return;
+    }
+
+
+    friendsData =
+      data || [];
+
+
+    renderFriends();
+
+  }
+
+
+  // =========================
+  // フレンド表示
+  // =========================
+
+  async function renderFriends() {
+
+    if (
+      visibility.value !== "friend"
+    ) {
+      return;
+    }
+
+
+    if (
+      !friendsData.length
+    ) {
+
+      friendList.innerHTML =
+        '<div class="no-friends">まだフレンドがいません。</div>';
+
+      return;
+    }
+
+
+    const ids =
+      friendsData.map(
+        friend => friend.friend_id
+      );
+
+
+    const {
+      data: profiles,
+      error
+    } =
+      await supabaseClient
+        .from("profiles")
+        .select(
+          "user_id, name, avatar_url"
+        )
+        .in(
+          "user_id",
+          ids
+        );
+
+
+    if (error) {
+
+      console.error(
+        "プロフィール取得エラー:",
+        error
+      );
+
+      friendList.innerHTML =
+        '<div class="no-friends">フレンド情報を取得できませんでした。</div>';
+
+      return;
+    }
+
+
+    const profileMap = {};
+
+    (profiles || []).forEach(
+      profile => {
+
+        profileMap[
+          profile.user_id
+        ] = profile;
+
+      }
+    );
+
+
+    friendList.innerHTML = "";
+
+
+    friendsData.forEach(
+      friend => {
+
+        const id =
+          friend.friend_id;
+
+        const profile =
+          profileMap[id];
+
+
+        const label =
+          document.createElement(
+            "label"
+          );
+
+        label.className =
+          "friend-item";
+
+
+        const checkbox =
+          document.createElement(
+            "input"
+          );
+
+        checkbox.type =
+          "checkbox";
+
+        checkbox.value =
+          id;
+
+        checkbox.className =
+          "friend-checkbox";
+
+
+        const text =
+          document.createElement(
+            "div"
+          );
+
+        const name =
+          profile &&
+          profile.name
+            ? profile.name
+            : id;
+
+
+        text.innerHTML =
+          `
+          <span class="friend-name">
+            ${escapeHtml(name)}
+          </span>
+          <span class="friend-id">
+            @${escapeHtml(id)}
+          </span>
+          `;
+
+
+        label.appendChild(
+          checkbox
+        );
+
+        label.appendChild(
+          text
+        );
+
+        friendList.appendChild(
+          label
+        );
+
+      }
+    );
+
+  }
+
+
+  // =========================
+  // 予定一覧
+  // =========================
 
   async function loadSchedules() {
 
     scheduleList.innerHTML =
       '<div class="loading">予定を読み込んでいます…</div>';
 
-    const { data, error } = await supabaseClient
-      .from("schedules")
-      .select("*")
-      .eq("user_id", currentUsername)
-      .order("date", { ascending: true })
-      .order("time", { ascending: true });
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient
+        .from("schedules")
+        .select("*")
+        .order(
+          "date",
+          {
+            ascending: true
+          }
+        )
+        .order(
+          "time",
+          {
+            ascending: true
+          }
+        );
+
 
     if (error) {
-      console.error("予定取得エラー:", error);
+
+      console.error(
+        "予定取得エラー:",
+        error
+      );
 
       scheduleList.innerHTML =
         '<div class="empty">予定を読み込めませんでした。</div>';
@@ -344,134 +809,396 @@
       return;
     }
 
-    if (!data || data.length === 0) {
+
+    if (
+      !data ||
+      data.length === 0
+    ) {
+
       scheduleList.innerHTML =
         '<div class="empty">📅 まだ予定はありません</div>';
 
       return;
     }
 
+
     scheduleList.innerHTML = "";
 
-    data.forEach(schedule => {
 
-      const element = document.createElement("div");
-      element.className = "schedule";
+    data.forEach(
+      schedule => {
 
-      const dateText = formatDate(schedule.date);
+        const element =
+          document.createElement(
+            "div"
+          );
 
-      let info = "";
+        element.className =
+          "schedule";
 
-      if (schedule.time) {
-        info += `⏰ ${schedule.time.slice(0, 5)}<br>`;
+
+        const dateText =
+          formatDate(
+            schedule.date
+          );
+
+
+        let info = "";
+
+
+        if (schedule.time) {
+
+          info +=
+            `⏰ ${schedule.time.slice(0, 5)}<br>`;
+
+        }
+
+
+        if (schedule.place) {
+
+          info +=
+            `📍 ${escapeHtml(schedule.place)}<br>`;
+
+        }
+
+
+        if (schedule.memo) {
+
+          info +=
+            `📝 ${escapeHtml(schedule.memo)
+              .replace(/\n/g, "<br>")}`;
+
+        }
+
+
+        const visibilityText =
+          schedule.visibility === "friend"
+            ? "👤 フレンドに公開"
+            : "🔒 自分だけ";
+
+
+        element.innerHTML =
+          `
+          <div class="schedule-date">
+            📅 ${dateText}
+          </div>
+
+          <div class="schedule-title">
+            ${escapeHtml(schedule.title)}
+          </div>
+
+          <div class="schedule-info">
+            ${info || "詳細はありません"}
+          </div>
+
+          <div class="visibility">
+            ${visibilityText}
+          </div>
+
+          ${
+            schedule.user_id === currentUsername
+              ? `
+                <br>
+                <button class="delete-button">
+                  🗑️ 削除
+                </button>
+              `
+              : ""
+          }
+          `;
+
+
+        const deleteButton =
+          element.querySelector(
+            ".delete-button"
+          );
+
+
+        if (deleteButton) {
+
+          deleteButton.addEventListener(
+            "click",
+            function() {
+
+              deleteSchedule(
+                schedule.id
+              );
+
+            }
+          );
+
+        }
+
+
+        scheduleList.appendChild(
+          element
+        );
+
       }
+    );
 
-      if (schedule.place) {
-        info += `📍 ${escapeHtml(schedule.place)}<br>`;
-      }
-
-      if (schedule.memo) {
-        info += `📝 ${escapeHtml(schedule.memo).replace(/\n/g, "<br>")}`;
-      }
-
-      element.innerHTML = `
-        <div class="schedule-date">
-          📅 ${dateText}
-        </div>
-
-        <div class="schedule-title">
-          ${escapeHtml(schedule.title)}
-        </div>
-
-        <div class="schedule-info">
-          ${info || "詳細はありません"}
-        </div>
-
-        <button class="delete-button">
-          🗑️ 削除
-        </button>
-      `;
-
-      element
-        .querySelector(".delete-button")
-        .addEventListener("click", () => {
-          deleteSchedule(schedule.id);
-        });
-
-      scheduleList.appendChild(element);
-    });
   }
+
+
+  // =========================
+  // 予定保存
+  // =========================
 
   async function saveSchedule() {
 
-    const title = titleInput.value.trim();
-    const date = dateInput.value;
-    const time = timeInput.value || null;
-    const place = placeInput.value.trim() || null;
-    const memo = memoInput.value.trim() || null;
+    const title =
+      titleInput.value.trim();
+
+    const date =
+      dateInput.value;
+
+    const time =
+      timeInput.value || null;
+
+    const place =
+      placeInput.value.trim() || null;
+
+    const memo =
+      memoInput.value.trim() || null;
+
+    const selectedFriends =
+      Array.from(
+        document.querySelectorAll(
+          ".friend-checkbox:checked"
+        )
+      ).map(
+        checkbox =>
+          checkbox.value
+      );
+
 
     if (!title) {
-      alert("予定名を入力してください。");
+
+      alert(
+        "予定名を入力してください。"
+      );
+
       titleInput.focus();
+
       return;
     }
+
 
     if (!date) {
-      alert("日付を選択してください。");
+
+      alert(
+        "日付を選択してください。"
+      );
+
       dateInput.focus();
+
       return;
     }
 
-    saveButton.disabled = true;
-    saveButton.textContent = "保存中…";
 
-    const { error } = await supabaseClient
-      .from("schedules")
-      .insert({
-        user_id: currentUsername,
-        title: title,
-        date: date,
-        time: time,
-        place: place,
-        memo: memo
-      });
+    if (
+      visibility.value === "friend" &&
+      selectedFriends.length === 0
+    ) {
+
+      alert(
+        "見せるフレンドを1人以上選択してください。"
+      );
+
+      return;
+    }
+
+
+    saveButton.disabled =
+      true;
+
+    saveButton.textContent =
+      "保存中…";
+
+
+    // -------------------------
+    // 予定本体
+    // -------------------------
+
+    const {
+      data: schedule,
+      error
+    } =
+      await supabaseClient
+        .from("schedules")
+        .insert({
+          user_id:
+            currentUsername,
+
+          title:
+            title,
+
+          date:
+            date,
+
+          time:
+            time,
+
+          place:
+            place,
+
+          memo:
+            memo,
+
+          visibility:
+            visibility.value
+        })
+        .select()
+        .single();
+
 
     if (error) {
-      console.error("予定保存エラー:", error);
+
+      console.error(
+        "予定保存エラー:",
+        error
+      );
 
       alert(
         "予定を保存できませんでした。\n\n" +
         error.message
       );
 
-      saveButton.disabled = false;
-      saveButton.textContent = "💾 予定を保存";
+      saveButton.disabled =
+        false;
+
+      saveButton.textContent =
+        "💾 予定を保存";
+
       return;
     }
+
+
+    // -------------------------
+    // フレンド共有
+    // -------------------------
+
+    if (
+      visibility.value === "friend" &&
+      selectedFriends.length > 0
+    ) {
+
+      const rows =
+        selectedFriends.map(
+          userId => ({
+            schedule_id:
+              schedule.id,
+
+            user_id:
+              userId
+          })
+        );
+
+
+      const {
+        error: shareError
+      } =
+        await supabaseClient
+          .from("schedule_shares")
+          .insert(rows);
+
+
+      if (shareError) {
+
+        console.error(
+          "予定共有設定エラー:",
+          shareError
+        );
+
+
+        // 共有設定だけ失敗した場合、
+        // 作成した予定を削除して元に戻す
+        await supabaseClient
+          .from("schedules")
+          .delete()
+          .eq(
+            "id",
+            schedule.id
+          )
+          .eq(
+            "user_id",
+            currentUsername
+          );
+
+
+        alert(
+          "予定の共有設定に失敗しました。\n\n" +
+          shareError.message
+        );
+
+
+        saveButton.disabled =
+          false;
+
+        saveButton.textContent =
+          "💾 予定を保存";
+
+        return;
+      }
+
+    }
+
 
     closeForm();
 
     await loadSchedules();
 
-    saveButton.disabled = false;
-    saveButton.textContent = "💾 予定を保存";
+
+    saveButton.disabled =
+      false;
+
+    saveButton.textContent =
+      "💾 予定を保存";
+
   }
 
-  async function deleteSchedule(id) {
+
+  // =========================
+  // 予定削除
+  // =========================
+
+  async function deleteSchedule(
+    id
+  ) {
 
     const confirmed =
-      window.confirm("この予定を削除しますか？");
+      window.confirm(
+        "この予定を削除しますか？"
+      );
 
-    if (!confirmed) return;
 
-    const { error } = await supabaseClient
-      .from("schedules")
-      .delete()
-      .eq("id", id)
-      .eq("user_id", currentUsername);
+    if (!confirmed) {
+      return;
+    }
+
+
+    const {
+      error
+    } =
+      await supabaseClient
+        .from("schedules")
+        .delete()
+        .eq(
+          "id",
+          id
+        )
+        .eq(
+          "user_id",
+          currentUsername
+        );
+
 
     if (error) {
-      console.error("予定削除エラー:", error);
+
+      console.error(
+        "予定削除エラー:",
+        error
+      );
 
       alert(
         "予定を削除できませんでした。\n\n" +
@@ -481,24 +1208,50 @@
       return;
     }
 
+
     await loadSchedules();
+
   }
 
-  function formatDate(dateString) {
 
-    const parts = dateString.split("-");
+  // =========================
+  // 日付表示
+  // =========================
 
-    if (parts.length !== 3) {
+  function formatDate(
+    dateString
+  ) {
+
+    const parts =
+      dateString.split("-");
+
+
+    if (
+      parts.length !== 3
+    ) {
       return dateString;
     }
 
-    const year = Number(parts[0]);
-    const month = Number(parts[1]);
-    const day = Number(parts[2]);
 
-    const date = new Date(
-      Date.UTC(year, month - 1, day)
-    );
+    const year =
+      Number(parts[0]);
+
+    const month =
+      Number(parts[1]);
+
+    const day =
+      Number(parts[2]);
+
+
+    const date =
+      new Date(
+        Date.UTC(
+          year,
+          month - 1,
+          day
+        )
+      );
+
 
     const week = [
       "日",
@@ -510,31 +1263,70 @@
       "土"
     ];
 
-    return `${year}年${month}月${day}日（${week[date.getUTCDay()]}）`;
+
+    return (
+      `${year}年${month}月${day}日` +
+      `（${week[date.getUTCDay()]}）`
+    );
+
   }
 
-  function escapeHtml(value) {
+
+  // =========================
+  // HTMLエスケープ
+  // =========================
+
+  function escapeHtml(
+    value
+  ) {
 
     return String(value)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+      .replace(
+        /&/g,
+        "&amp;"
+      )
+      .replace(
+        /</g,
+        "&lt;"
+      )
+      .replace(
+        />/g,
+        "&gt;"
+      )
+      .replace(
+        /"/g,
+        "&quot;"
+      )
+      .replace(
+        /'/g,
+        "&#039;"
+      );
+
   }
 
-  saveButton.addEventListener("click", saveSchedule);
+
+  // =========================
+  // 開始
+  // =========================
 
   async function start() {
 
-    const ok = await getCurrentUser();
+    const ok =
+      await getCurrentUser();
 
-    if (!ok) return;
+
+    if (!ok) {
+      return;
+    }
+
 
     await loadSchedules();
+
   }
 
+
   start();
+
 </script>
 
 </body>
