@@ -43,10 +43,6 @@
       overflow: hidden;
     }
 
-    /* =========================
-       ヘッダー
-    ========================= */
-
     .header {
       position: relative;
       flex-shrink: 0;
@@ -103,9 +99,20 @@
       object-fit: cover;
     }
 
-    /* =========================
-       メッセージ
-    ========================= */
+    /* オンライン表示 */
+    .friend-status {
+      margin-top: 3px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .friend-status.online {
+      color: #22a447;
+    }
+
+    .friend-status.offline {
+      color: #999;
+    }
 
     .messages-wrapper {
       position: relative;
@@ -201,20 +208,12 @@
       color: #eee;
     }
 
-    /* =========================
-       既読
-    ========================= */
-
     .read-status {
       font-size: 10px;
       color: #8f7cff;
       margin-top: 3px;
       font-weight: bold;
     }
-
-    /* =========================
-       取り消し
-    ========================= */
 
     .deleted-message {
       color: #999 !important;
@@ -238,10 +237,6 @@
     .delete-button:active {
       transform: scale(0.95);
     }
-
-    /* =========================
-       最新へ
-    ========================= */
 
     .latest-button {
       position: absolute;
@@ -274,10 +269,6 @@
     .latest-button:active {
       transform: scale(0.95);
     }
-
-    /* =========================
-       入力
-    ========================= */
 
     .input-area {
       flex-shrink: 0;
@@ -340,7 +331,6 @@
 
   <main class="container">
 
-    <!-- ヘッダー -->
     <header class="header">
 
       <a
@@ -359,16 +349,24 @@
           👤
         </div>
 
-        <h1 id="chatTitle">
-          💬 チャット
-        </h1>
+        <div>
+          <h1 id="chatTitle">
+            💬 チャット
+          </h1>
+
+          <div
+            id="friendStatus"
+            class="friend-status offline"
+          >
+            ⚪ オフライン
+          </div>
+        </div>
 
       </div>
 
     </header>
 
 
-    <!-- メッセージ -->
     <div class="messages-wrapper">
 
       <section
@@ -393,7 +391,6 @@
     </div>
 
 
-    <!-- 入力 -->
     <form
       class="input-area"
       id="messageForm"
@@ -438,10 +435,6 @@
 
   <script>
 
-    /* =========================================
-       Supabase
-    ========================================= */
-
     const SUPABASE_URL =
       "https://yxonmqdyekwenyzekjwj.supabase.co";
 
@@ -454,10 +447,6 @@
         SUPABASE_KEY
       );
 
-
-    /* =========================================
-       要素
-    ========================================= */
 
     const messagesElement =
       document.getElementById("messages");
@@ -486,10 +475,9 @@
     const latestButton =
       document.getElementById("latestButton");
 
+    const friendStatus =
+      document.getElementById("friendStatus");
 
-    /* =========================================
-       基本変数
-    ========================================= */
 
     let currentUsername = "";
     let friendId = "";
@@ -498,8 +486,12 @@
     let myAvatarUrl = "";
     let friendAvatarUrl = "";
 
-    /* 既読済みメッセージID */
     let readMessageIds = new Set();
+
+    let presenceTimer = null;
+
+    const ONLINE_LIMIT =
+      60 * 1000;
 
 
     const params =
@@ -512,8 +504,133 @@
 
 
     /* =========================================
-       アバター
+       相手のオンライン状態
     ========================================= */
+
+    async function updateFriendStatus() {
+
+      if (!friendId) {
+        return;
+      }
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient
+          .from("user_presence")
+          .select(
+            "last_seen"
+          )
+          .eq(
+            "user_id",
+            friendId
+          )
+          .maybeSingle();
+
+
+      if (error) {
+
+        console.error(
+          "オンライン状態取得エラー:",
+          error
+        );
+
+        friendStatus.className =
+          "friend-status offline";
+
+        friendStatus.textContent =
+          "⚪ オフライン";
+
+        return;
+      }
+
+
+      if (!data?.last_seen) {
+
+        friendStatus.className =
+          "friend-status offline";
+
+        friendStatus.textContent =
+          "⚪ オフライン";
+
+        return;
+      }
+
+
+      const lastSeen =
+        new Date(
+          data.last_seen
+        ).getTime();
+
+
+      const online =
+        !Number.isNaN(lastSeen) &&
+        Date.now() - lastSeen <= ONLINE_LIMIT;
+
+
+      if (online) {
+
+        friendStatus.className =
+          "friend-status online";
+
+        friendStatus.textContent =
+          "🟢 オンライン";
+
+      } else {
+
+        friendStatus.className =
+          "friend-status offline";
+
+        friendStatus.textContent =
+          "⚪ オフライン";
+
+      }
+
+    }
+
+
+    /* =========================================
+       自分のオンライン状態
+    ========================================= */
+
+    async function updateMyPresence() {
+
+      if (!currentUsername) {
+        return;
+      }
+
+      const {
+        error
+      } =
+        await supabaseClient
+          .from("user_presence")
+          .upsert(
+            {
+              user_id:
+                currentUsername,
+
+              last_seen:
+                new Date().toISOString()
+            },
+            {
+              onConflict:
+                "user_id"
+            }
+          );
+
+
+      if (error) {
+
+        console.error(
+          "自分のオンライン状態更新エラー:",
+          error
+        );
+
+      }
+
+    }
+
 
     function createAvatar(
       url,
@@ -538,7 +655,8 @@
         img.onerror =
           function() {
 
-            avatar.innerHTML = fallback;
+            avatar.innerHTML =
+              fallback;
 
           };
 
@@ -546,7 +664,8 @@
 
       } else {
 
-        avatar.textContent = fallback;
+        avatar.textContent =
+          fallback;
 
       }
 
@@ -554,10 +673,6 @@
 
     }
 
-
-    /* =========================================
-       通知
-    ========================================= */
 
     async function createNotification() {
 
@@ -612,10 +727,6 @@
     }
 
 
-    /* =========================================
-       一番下へ
-    ========================================= */
-
     function scrollToBottom(
       smooth = false
     ) {
@@ -634,10 +745,6 @@
 
     }
 
-
-    /* =========================================
-       最新ボタン
-    ========================================= */
 
     function updateLatestButton() {
 
@@ -684,10 +791,6 @@
       }
     );
 
-
-    /* =========================================
-       既読を保存
-    ========================================= */
 
     async function markMessagesAsRead(
       messages
@@ -780,10 +883,6 @@
     }
 
 
-    /* =========================================
-       自分のメッセージの既読状態を取得
-    ========================================= */
-
     async function loadReadStatuses(
       messages
     ) {
@@ -868,10 +967,6 @@
     }
 
 
-    /* =========================================
-       送信取り消し
-    ========================================= */
-
     async function deleteMessage(
       messageId
     ) {
@@ -928,10 +1023,6 @@
 
     }
 
-
-    /* =========================================
-       開始
-    ========================================= */
 
     async function start() {
 
@@ -992,6 +1083,10 @@
       }
 
 
+      /* 自分をオンラインにする */
+      await updateMyPresence();
+
+
       /* 相手プロフィール */
 
       const {
@@ -1029,6 +1124,10 @@
       }
 
 
+      /* 相手のオンライン状態 */
+      await updateFriendStatus();
+
+
       /* 自分プロフィール */
 
       const {
@@ -1054,12 +1153,27 @@
 
       startRealtime();
 
+
+      /*
+        30秒ごとに
+
+        ・自分をオンライン更新
+        ・相手の状態を確認
+      */
+
+      presenceTimer =
+        setInterval(
+          async function() {
+
+            await updateMyPresence();
+            await updateFriendStatus();
+
+          },
+          30000
+        );
+
     }
 
-
-    /* =========================================
-       メッセージ読み込み
-    ========================================= */
 
     async function loadMessages() {
 
@@ -1079,8 +1193,6 @@
 
       }
 
-
-      /* 自分 → 相手 */
 
       const {
         data: sentMessages,
@@ -1114,8 +1226,6 @@
       }
 
 
-      /* 相手 → 自分 */
-
       const {
         data: receivedMessages,
         error: receivedError
@@ -1148,15 +1258,11 @@
       }
 
 
-      /* 2つを合体 */
-
       const messages = [
         ...(sentMessages || []),
         ...(receivedMessages || [])
       ];
 
-
-      /* 時刻順 */
 
       messages.sort(
         function(a, b) {
@@ -1170,14 +1276,10 @@
       );
 
 
-      /* 自分の送信済みメッセージの既読状態 */
-
       await loadReadStatuses(
         messages
       );
 
-
-      /* 相手から来たメッセージを既読にする */
 
       await markMessagesAsRead(
         messages
@@ -1219,10 +1321,6 @@
     }
 
 
-    /* =========================================
-       メッセージ表示
-    ========================================= */
-
     async function addMessageToScreen(
       message
     ) {
@@ -1247,8 +1345,6 @@
       }
 
 
-      /* 相手アイコン */
-
       if (!isMine) {
 
         const avatar =
@@ -1264,8 +1360,6 @@
       }
 
 
-      /* メッセージ内容 */
-
       const messageContentBox =
         document.createElement("div");
 
@@ -1280,8 +1374,6 @@
         "bubble";
 
 
-      /* 取り消し済み */
-
       if (message.is_deleted) {
 
         bubble.classList.add(
@@ -1292,8 +1384,6 @@
           "このメッセージは取り消されました";
 
       } else {
-
-        /* 画像 */
 
         if (message.image_url) {
 
@@ -1336,8 +1426,6 @@
         }
 
 
-        /* テキスト */
-
         if (message.content) {
 
           const text =
@@ -1354,8 +1442,6 @@
 
       }
 
-
-      /* 時刻 */
 
       const time =
         document.createElement("div");
@@ -1390,10 +1476,6 @@
       );
 
 
-      /* =========================
-         既読表示
-      ========================= */
-
       if (
         isMine &&
         !message.is_deleted &&
@@ -1417,8 +1499,6 @@
 
       }
 
-
-      /* 取り消しボタン */
 
       if (
         isMine &&
@@ -1465,8 +1545,6 @@
       );
 
 
-      /* 自分アイコン */
-
       if (isMine) {
 
         const avatar =
@@ -1489,10 +1567,6 @@
     }
 
 
-    /* =========================================
-       リアルタイム
-    ========================================= */
-
     function startRealtime() {
 
       if (realtimeChannel) {
@@ -1508,11 +1582,6 @@
             "-" +
             friendId
           )
-
-
-          /* =========================
-             新規メッセージ
-          ========================= */
 
           .on(
             "postgres_changes",
@@ -1547,8 +1616,6 @@
               }
 
 
-              /* 自分のメッセージは送信処理側で表示 */
-
               if (
                 message.sender_id ===
                 currentUsername
@@ -1558,11 +1625,6 @@
 
               }
 
-
-              /*
-                相手から新しいメッセージが
-                来たので、その場で既読にする
-              */
 
               await markMessagesAsRead([
                 message
@@ -1580,11 +1642,6 @@
 
             }
           )
-
-
-          /* =========================
-             送信取り消し
-          ========================= */
 
           .on(
             "postgres_changes",
@@ -1627,11 +1684,6 @@
 
             }
           )
-
-
-          /* =========================
-             既読
-          ========================= */
 
           .on(
             "postgres_changes",
@@ -1697,15 +1749,10 @@
             }
           )
 
-
           .subscribe();
 
     }
 
-
-    /* =========================================
-       テキスト送信
-    ========================================= */
 
     messageForm.addEventListener(
       "submit",
@@ -1810,10 +1857,6 @@
     );
 
 
-    /* =========================================
-       画像ボタン
-    ========================================= */
-
     imageButton.addEventListener(
       "click",
       function() {
@@ -1823,10 +1866,6 @@
       }
     );
 
-
-    /* =========================================
-       画像送信
-    ========================================= */
 
     imageInput.addEventListener(
       "change",
@@ -1902,8 +1941,6 @@
             extension;
 
 
-          /* アップロード */
-
           const {
             error:
               uploadError
@@ -1939,8 +1976,6 @@
 
           }
 
-
-          /* メッセージ保存 */
 
           const {
             data,
@@ -2016,9 +2051,35 @@
     );
 
 
-    /* =========================================
-       起動
-    ========================================= */
+    /* ページを離れたらタイマー停止 */
+
+    window.addEventListener(
+      "pagehide",
+      function() {
+
+        if (presenceTimer) {
+
+          clearInterval(
+            presenceTimer
+          );
+
+          presenceTimer = null;
+
+        }
+
+        if (realtimeChannel) {
+
+          supabaseClient.removeChannel(
+            realtimeChannel
+          );
+
+          realtimeChannel = null;
+
+        }
+
+      }
+    );
+
 
     start();
 
