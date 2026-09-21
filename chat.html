@@ -202,6 +202,17 @@
     }
 
     /* =========================
+       既読
+    ========================= */
+
+    .read-status {
+      font-size: 10px;
+      color: #8f7cff;
+      margin-top: 3px;
+      font-weight: bold;
+    }
+
+    /* =========================
        取り消し
     ========================= */
 
@@ -487,6 +498,9 @@
     let myAvatarUrl = "";
     let friendAvatarUrl = "";
 
+    /* 既読済みメッセージID */
+    let readMessageIds = new Set();
+
 
     const params =
       new URLSearchParams(
@@ -669,6 +683,189 @@
 
       }
     );
+
+
+    /* =========================================
+       既読を保存
+    ========================================= */
+
+    async function markMessagesAsRead(
+      messages
+    ) {
+
+      if (
+        !currentUsername ||
+        !friendId ||
+        !messages ||
+        messages.length === 0
+      ) {
+        return;
+      }
+
+
+      const unreadMessages =
+        messages.filter(
+          function(message) {
+
+            return (
+              message.sender_id === friendId &&
+              message.receiver_id === currentUsername &&
+              !message.is_deleted &&
+              !readMessageIds.has(message.id)
+            );
+
+          }
+        );
+
+
+      if (
+        unreadMessages.length === 0
+      ) {
+        return;
+      }
+
+
+      const rows =
+        unreadMessages.map(
+          function(message) {
+
+            return {
+              message_id:
+                message.id,
+
+              user_id:
+                currentUsername
+            };
+
+          }
+        );
+
+
+      const {
+        error
+      } =
+        await supabaseClient
+          .from("message_reads")
+          .upsert(
+            rows,
+            {
+              onConflict:
+                "message_id,user_id"
+            }
+          );
+
+
+      if (error) {
+
+        console.error(
+          "既読保存エラー:",
+          error
+        );
+
+        return;
+
+      }
+
+
+      unreadMessages.forEach(
+        function(message) {
+
+          readMessageIds.add(
+            message.id
+          );
+
+        }
+      );
+
+    }
+
+
+    /* =========================================
+       自分のメッセージの既読状態を取得
+    ========================================= */
+
+    async function loadReadStatuses(
+      messages
+    ) {
+
+      readMessageIds =
+        new Set();
+
+
+      const myMessages =
+        messages.filter(
+          function(message) {
+
+            return (
+              message.sender_id ===
+                currentUsername &&
+              message.receiver_id ===
+                friendId
+            );
+
+          }
+        );
+
+
+      if (
+        myMessages.length === 0
+      ) {
+        return;
+      }
+
+
+      const ids =
+        myMessages.map(
+          function(message) {
+
+            return message.id;
+
+          }
+        );
+
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient
+          .from("message_reads")
+          .select(
+            "message_id"
+          )
+          .eq(
+            "user_id",
+            friendId
+          )
+          .in(
+            "message_id",
+            ids
+          );
+
+
+      if (error) {
+
+        console.error(
+          "既読状態取得エラー:",
+          error
+        );
+
+        return;
+
+      }
+
+
+      (data || []).forEach(
+        function(row) {
+
+          readMessageIds.add(
+            row.message_id
+          );
+
+        }
+      );
+
+    }
 
 
     /* =========================================
@@ -862,10 +1059,6 @@
 
     /* =========================================
        メッセージ読み込み
-       
-       ここを変更！
-       自分→相手、相手→自分を
-       別々に取得して最後に合体
     ========================================= */
 
     async function loadMessages() {
@@ -974,6 +1167,20 @@
           );
 
         }
+      );
+
+
+      /* 自分の送信済みメッセージの既読状態 */
+
+      await loadReadStatuses(
+        messages
+      );
+
+
+      /* 相手から来たメッセージを既読にする */
+
+      await markMessagesAsRead(
+        messages
       );
 
 
@@ -1183,6 +1390,34 @@
       );
 
 
+      /* =========================
+         既読表示
+      ========================= */
+
+      if (
+        isMine &&
+        !message.is_deleted &&
+        readMessageIds.has(
+          message.id
+        )
+      ) {
+
+        const readStatus =
+          document.createElement("div");
+
+        readStatus.className =
+          "read-status";
+
+        readStatus.textContent =
+          "既読";
+
+        messageContentBox.appendChild(
+          readStatus
+        );
+
+      }
+
+
       /* 取り消しボタン */
 
       if (
@@ -1275,7 +1510,9 @@
           )
 
 
-          /* 新規メッセージ */
+          /* =========================
+             新規メッセージ
+          ========================= */
 
           .on(
             "postgres_changes",
@@ -1310,10 +1547,7 @@
               }
 
 
-              /*
-                自分のメッセージは
-                送信処理側ですでに表示
-              */
+              /* 自分のメッセージは送信処理側で表示 */
 
               if (
                 message.sender_id ===
@@ -1325,9 +1559,20 @@
               }
 
 
+              /*
+                相手から新しいメッセージが
+                来たので、その場で既読にする
+              */
+
+              await markMessagesAsRead([
+                message
+              ]);
+
+
               await addMessageToScreen(
                 message
               );
+
 
               scrollToBottom();
 
@@ -1337,7 +1582,9 @@
           )
 
 
-          /* 送信取り消し */
+          /* =========================
+             送信取り消し
+          ========================= */
 
           .on(
             "postgres_changes",
@@ -1377,6 +1624,75 @@
               scrollToBottom();
 
               updateLatestButton();
+
+            }
+          )
+
+
+          /* =========================
+             既読
+          ========================= */
+
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "message_reads"
+            },
+            async function(payload) {
+
+              const read =
+                payload.new;
+
+
+              if (
+                read.user_id !== friendId
+              ) {
+
+                return;
+
+              }
+
+
+              const {
+                data: message
+              } =
+                await supabaseClient
+                  .from("messages")
+                  .select(
+                    "id, sender_id, receiver_id"
+                  )
+                  .eq(
+                    "id",
+                    read.message_id
+                  )
+                  .maybeSingle();
+
+
+              if (!message) {
+                return;
+              }
+
+
+              if (
+                message.sender_id !==
+                  currentUsername ||
+                message.receiver_id !==
+                  friendId
+              ) {
+
+                return;
+
+              }
+
+
+              readMessageIds.add(
+                read.message_id
+              );
+
+
+              await loadMessages();
 
             }
           )
