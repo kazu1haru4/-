@@ -84,6 +84,7 @@
       flex: 1;
       padding: 18px;
       overflow-y: auto;
+      overflow-anchor: none;
     }
 
     .empty {
@@ -309,6 +310,7 @@
     const headerAvatar =
       document.getElementById("headerAvatar");
 
+
     let currentUsername = "";
     let friendId = "";
     let realtimeChannel = null;
@@ -316,9 +318,6 @@
     let myAvatarUrl = "";
     let friendAvatarUrl = "";
 
-    /*
-      更新前のスクロール位置を復元するときに使う
-    */
     let isRestoringScroll = false;
 
     const params =
@@ -329,18 +328,24 @@
     friendId =
       params.get("user") || "";
 
+
     /*
-      チャット相手ごとに別々のスクロール位置を保存
+      相手ごとにスクロール位置を保存
     */
+
     const chatScrollKey =
-      "chat-scroll-" + friendId;
+      "chat-scroll-" +
+      friendId;
 
 
     // =========================
     // プロフィール画像
     // =========================
 
-    function createAvatar(url, fallback) {
+    function createAvatar(
+      url,
+      fallback
+    ) {
 
       const avatar =
         document.createElement("div");
@@ -353,7 +358,8 @@
         const img =
           document.createElement("img");
 
-        img.src = url;
+        img.src =
+          url;
 
         img.alt =
           "プロフィール画像";
@@ -383,7 +389,7 @@
 
 
     // =========================
-    // 通知を作成
+    // 通知
     // =========================
 
     async function createNotification() {
@@ -401,6 +407,7 @@
         await supabaseClient
           .from("notifications")
           .insert({
+
             user_id:
               friendId,
 
@@ -422,6 +429,7 @@
 
             is_read:
               false
+
           });
 
       if (error) {
@@ -454,6 +462,7 @@
           '<div class="empty">フレンドから相手を選んでね</div>';
 
         return;
+
       }
 
 
@@ -637,14 +646,6 @@
       }
 
 
-      /*
-        ここが重要。
-
-        今までは scrollToBottom() で
-        必ず一番下にしていた。
-
-        今回は保存していた位置へ戻す。
-      */
       restoreScrollPosition();
 
     }
@@ -659,7 +660,9 @@
     ) {
 
       const wrapper =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       wrapper.className =
         "message";
@@ -695,7 +698,9 @@
 
 
       const bubble =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       bubble.className =
         "bubble";
@@ -836,28 +841,40 @@
 
 
     // =========================
-    // 一番下へ移動
+    // 一番下へ
     // =========================
 
     function scrollToBottom() {
 
+      isRestoringScroll =
+        true;
+
       messagesElement.scrollTop =
         messagesElement.scrollHeight;
+
+      requestAnimationFrame(
+        function() {
+
+          messagesElement.scrollTop =
+            messagesElement.scrollHeight;
+
+          isRestoringScroll =
+            false;
+
+        }
+      );
 
     }
 
 
     // =========================
-    // スクロール位置を保存
+    // スクロール位置保存
     // =========================
 
     messagesElement.addEventListener(
       "scroll",
       function() {
 
-        /*
-          復元中は保存しない
-        */
         if (isRestoringScroll) {
           return;
         }
@@ -875,7 +892,7 @@
 
 
     // =========================
-    // 更新前の位置へ戻す
+    // スクロール位置復元
     // =========================
 
     function restoreScrollPosition() {
@@ -893,10 +910,6 @@
         saved <= 0
       ) {
 
-        /*
-          保存位置がない場合だけ
-          最初は一番下にする
-        */
         scrollToBottom();
 
         return;
@@ -908,29 +921,60 @@
         true;
 
 
-      messagesElement.scrollTop =
-        saved;
+      function restore() {
+
+        messagesElement.scrollTop =
+          saved;
+
+      }
 
 
-      /*
-        メッセージ表示後の
-        レイアウト確定を待ってもう一度設定
-      */
+      restore();
+
+
       requestAnimationFrame(
         function() {
 
-          messagesElement.scrollTop =
-            saved;
+          restore();
 
 
           requestAnimationFrame(
             function() {
 
-              messagesElement.scrollTop =
-                saved;
+              restore();
 
-              isRestoringScroll =
-                false;
+
+              setTimeout(
+                function() {
+
+                  restore();
+
+                },
+                100
+              );
+
+
+              setTimeout(
+                function() {
+
+                  restore();
+
+                },
+                300
+              );
+
+
+              setTimeout(
+                function() {
+
+                  restore();
+
+                  isRestoringScroll =
+                    false;
+
+                },
+                700
+              );
 
             }
           );
@@ -972,7 +1016,7 @@
               table:
                 "messages"
             },
-            async (payload) => {
+            async function(payload) {
 
               const message =
                 payload.new;
@@ -998,18 +1042,11 @@
               }
 
 
-              /*
-                自分が送ったメッセージは
-                Realtimeで二重表示しない
-              */
-
               if (
                 message.sender_id ===
                 currentUsername
               ) {
-
                 return;
-
               }
 
 
@@ -1017,11 +1054,6 @@
                 message
               );
 
-
-              /*
-                相手から新しいメッセージが来た場合は
-                今まで通り一番下へ
-              */
 
               scrollToBottom();
 
@@ -1077,6 +1109,7 @@
           await supabaseClient
             .from("messages")
             .insert({
+
               sender_id:
                 currentUsername,
 
@@ -1088,6 +1121,7 @@
 
               image_url:
                 ""
+
             })
             .select()
             .single();
@@ -1104,12 +1138,10 @@
             error
           );
 
-
           alert(
             "メッセージを送信できませんでした。\n\n" +
             error.message
           );
-
 
           return;
 
@@ -1125,17 +1157,8 @@
         );
 
 
-        /*
-          自分で送信した場合は
-          一番下へ
-        */
-
         scrollToBottom();
 
-
-        /*
-          通知を作成
-        */
 
         await createNotification();
 
@@ -1265,12 +1288,10 @@
               uploadError
             );
 
-
             alert(
               "画像をアップロードできませんでした。\n\n" +
               uploadError.message
             );
-
 
             return;
 
@@ -1284,6 +1305,7 @@
             await supabaseClient
               .from("messages")
               .insert({
+
                 sender_id:
                   currentUsername,
 
@@ -1295,6 +1317,7 @@
 
                 image_url:
                   filePath
+
               })
               .select()
               .single();
@@ -1307,12 +1330,10 @@
               error
             );
 
-
             alert(
               "画像メッセージを保存できませんでした。\n\n" +
               error.message
             );
-
 
             return;
 
@@ -1324,16 +1345,8 @@
           );
 
 
-          /*
-            画像送信後は一番下へ
-          */
-
           scrollToBottom();
 
-
-          /*
-            画像でも通知を作成
-          */
 
           await createNotification();
 
