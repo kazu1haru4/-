@@ -82,8 +82,6 @@
       margin: auto;
     }
 
-    /* メッセージ全体 */
-
     .message-row {
       display: flex;
       align-items: flex-start;
@@ -286,8 +284,6 @@
       padding: 20px;
     }
 
-    /* モーダル */
-
     .modal {
       display: none;
       position: fixed;
@@ -416,8 +412,6 @@
       margin-bottom: 8px;
     }
 
-    /* 返信 */
-
     .reply-area {
       display: none;
       position: fixed;
@@ -504,8 +498,6 @@
   ></div>
 
 
-  <!-- 返信中表示 -->
-
   <div
     id="replyArea"
     class="reply-area"
@@ -562,8 +554,6 @@
     accept="image/*"
   >
 
-
-  <!-- メンバー画面 -->
 
   <div
     id="memberModal"
@@ -726,7 +716,6 @@
     let currentUsername = "";
     let replyingToMessage = null;
 
-    /* プロフィール画像を一時保存 */
     const profileCache = {};
 
 
@@ -771,7 +760,7 @@
 
 
     /* =========================
-       プロフィール画像作成
+       プロフィール画像
     ========================= */
 
     function createAvatar(profile) {
@@ -813,6 +802,154 @@
 
 
       return avatar;
+    }
+
+
+    /* =========================
+       グループ通知作成
+    ========================= */
+
+    async function createGroupNotifications() {
+
+      if (
+        !currentUsername ||
+        !groupId
+      ) {
+        return;
+      }
+
+
+      const {
+        data: group,
+        error: groupError
+      } =
+        await supabaseClient
+          .from("groups")
+          .select("name")
+          .eq(
+            "id",
+            Number(groupId)
+          )
+          .maybeSingle();
+
+
+      if (groupError) {
+
+        console.error(
+          "グループ取得エラー:",
+          groupError
+        );
+
+        return;
+      }
+
+
+      const groupTitle =
+        group?.name ||
+        "グループ";
+
+
+      const {
+        data: members,
+        error: membersError
+      } =
+        await supabaseClient
+          .from("group_members")
+          .select("user_id")
+          .eq(
+            "group_id",
+            Number(groupId)
+          );
+
+
+      if (membersError) {
+
+        console.error(
+          "グループメンバー取得エラー:",
+          membersError
+        );
+
+        return;
+      }
+
+
+      if (
+        !members ||
+        members.length === 0
+      ) {
+        return;
+      }
+
+
+      const notifications =
+        members
+          .filter(function(member) {
+
+            return (
+              member.user_id !==
+              currentUsername
+            );
+
+          })
+          .map(function(member) {
+
+            return {
+
+              user_id:
+                member.user_id,
+
+              type:
+                "group",
+
+              title:
+                "👥 グループに新しいメッセージ",
+
+              message:
+                currentUsername +
+                "さんが「" +
+                groupTitle +
+                "」にメッセージを送信しました",
+
+              link:
+                "group_chat.html?id=" +
+                encodeURIComponent(
+                  groupId
+                ),
+
+              is_read:
+                false
+
+            };
+
+          });
+
+
+      if (
+        notifications.length === 0
+      ) {
+        return;
+      }
+
+
+      const {
+        error: insertError
+      } =
+        await supabaseClient
+          .from("notifications")
+          .insert(
+            notifications
+          );
+
+
+      if (insertError) {
+
+        console.error(
+          "グループ通知作成エラー:",
+          insertError
+        );
+
+      }
+
     }
 
 
@@ -878,7 +1015,10 @@
         await supabaseClient
           .from("groups")
           .select("name")
-          .eq("id", groupId)
+          .eq(
+            "id",
+            groupId
+          )
           .single();
 
 
@@ -937,7 +1077,8 @@
       }
 
 
-      messages.innerHTML = "";
+      messages.innerHTML =
+        "";
 
 
       for (
@@ -945,7 +1086,10 @@
         of data || []
       ) {
 
-        await addMessage(message);
+        await addMessage(
+          message
+        );
+
       }
     }
 
@@ -971,17 +1115,15 @@
         "message-row";
 
 
-      /* プロフィール画像 */
-
       const avatar =
-        createAvatar(profile);
+        createAvatar(
+          profile
+        );
 
       row.appendChild(
         avatar
       );
 
-
-      /* メッセージ本体 */
 
       const box =
         document.createElement(
@@ -1086,7 +1228,7 @@
       }
 
 
-      /* 返信表示 */
+      /* 返信 */
 
       const {
         data: replies
@@ -1135,6 +1277,7 @@
           replySender
         );
 
+
         replyBox.appendChild(
           document.createTextNode(
             " " +
@@ -1149,7 +1292,7 @@
       }
 
 
-      /* リアクション表示 */
+      /* リアクション */
 
       const {
         data: reactions
@@ -1327,6 +1470,7 @@
               "none";
 
             await loadMessages();
+
           }
         );
 
@@ -1336,8 +1480,6 @@
         );
       }
 
-
-      /* リアクションボタン */
 
       reactionButton.addEventListener(
         "click",
@@ -1350,11 +1492,10 @@
 
           picker.style.display =
             "flex";
+
         }
       );
 
-
-      /* 返信 */
 
       replyButton.addEventListener(
         "click",
@@ -1371,17 +1512,17 @@
 
           picker.style.display =
             "none";
+
         }
       );
 
-
-      /* メッセージをタップ */
 
       box.addEventListener(
         "click",
         function(event) {
 
           event.stopPropagation();
+
 
           document
             .querySelectorAll(
@@ -1397,6 +1538,7 @@
                   other.style.display =
                     "none";
                 }
+
               }
             );
 
@@ -1415,6 +1557,7 @@
                   other.style.display =
                     "none";
                 }
+
               }
             );
 
@@ -1425,8 +1568,10 @@
               ? "none"
               : "block";
 
+
           picker.style.display =
             "none";
+
         }
       );
 
@@ -1448,6 +1593,7 @@
       messages.appendChild(
         row
       );
+
     }
 
 
@@ -1522,6 +1668,7 @@
           "リアクションを追加できませんでした。\n" +
           error.message
         );
+
       }
     }
 
@@ -1544,6 +1691,7 @@
         document.createElement(
           "strong"
         );
+
 
       strong.textContent =
         message.sender_id ===
@@ -1578,6 +1726,7 @@
 
 
       messageInput.focus();
+
     }
 
 
@@ -1599,8 +1748,124 @@
           "メッセージを入力...";
 
         messageInput.focus();
+
       }
     );
+
+
+    /* =========================
+       返信通知
+    ========================= */
+
+    async function createGroupReplyNotification(
+      message
+    ) {
+
+      if (
+        !message ||
+        !currentUsername
+      ) {
+        return;
+      }
+
+
+      // 自分のメッセージへの返信なら
+      // 自分に通知する
+
+      if (
+        message.sender_id ===
+        currentUsername
+      ) {
+
+        const {
+          error
+        } =
+          await supabaseClient
+            .from("notifications")
+            .insert({
+
+              user_id:
+                currentUsername,
+
+              type:
+                "group_reply",
+
+              title:
+                "↩️ グループで返信がありました",
+
+              message:
+                "あなたのメッセージに" +
+                "@" +
+                currentUsername +
+                "さんから返信がありました",
+
+              link:
+                "group_chat.html?id=" +
+                encodeURIComponent(
+                  groupId
+                ),
+
+              is_read:
+                false
+
+            });
+
+
+        if (error) {
+
+          console.error(
+            "返信通知エラー:",
+            error
+          );
+
+        }
+
+        return;
+      }
+
+
+      const {
+        error
+      } =
+        await supabaseClient
+          .from("notifications")
+          .insert({
+
+            user_id:
+              message.sender_id,
+
+            type:
+              "group_reply",
+
+            title:
+              "↩️ グループで返信がありました",
+
+            message:
+              currentUsername +
+              "さんがあなたのメッセージに返信しました",
+
+            link:
+              "group_chat.html?id=" +
+              encodeURIComponent(
+                groupId
+              ),
+
+            is_read:
+              false
+
+          });
+
+
+      if (error) {
+
+        console.error(
+          "返信通知エラー:",
+          error
+        );
+
+      }
+
+    }
 
 
     /* =========================
@@ -1632,11 +1897,15 @@
         true;
 
 
-      /* 返信中 */
+      /* 返信 */
 
       if (
         replyingToMessage
       ) {
+
+        const targetMessage =
+          replyingToMessage;
+
 
         const {
           error
@@ -1646,7 +1915,7 @@
             .insert({
 
               group_message_id:
-                replyingToMessage.id,
+                targetMessage.id,
 
               sender_id:
                 currentUsername,
@@ -1680,7 +1949,14 @@
           messageInput.placeholder =
             "メッセージを入力...";
 
+
+          await createGroupReplyNotification(
+            targetMessage
+          );
+
+
           await loadMessages();
+
         }
 
 
@@ -1732,6 +2008,11 @@
           "";
 
         await loadMessages();
+
+        // グループメンバーへ通知
+
+        await createGroupNotifications();
+
       }
 
 
@@ -1739,11 +2020,12 @@
         false;
 
       messageInput.focus();
+
     }
 
 
     /* =========================
-       🖼️ 画像送信
+       画像ボタン
     ========================= */
 
     imageButton.addEventListener(
@@ -1755,6 +2037,10 @@
       }
     );
 
+
+    /* =========================
+       画像送信
+    ========================= */
 
     imageInput.addEventListener(
       "change",
@@ -1769,7 +2055,9 @@
         }
 
 
-        if (!file.type.startsWith("image/")) {
+        if (
+          !file.type.startsWith("image/")
+        ) {
 
           alert(
             "画像ファイルを選んでください。"
@@ -1782,7 +2070,10 @@
         }
 
 
-        if (!currentUsername || !groupId) {
+        if (
+          !currentUsername ||
+          !groupId
+        ) {
 
           alert(
             "ログイン情報またはグループ情報を取得できません。"
@@ -1824,8 +2115,6 @@
             extension;
 
 
-          /* Storageへアップロード */
-
           const {
             error: uploadError
           } =
@@ -1859,8 +2148,6 @@
             return;
           }
 
-
-          /* group_messagesに画像を保存 */
 
           const {
             error
@@ -1901,6 +2188,10 @@
 
 
           await loadMessages();
+
+          // 画像送信も通知
+
+          await createGroupNotifications();
 
         } finally {
 
@@ -2033,6 +2324,7 @@
 
           icon.textContent =
             "👤";
+
         }
 
 
@@ -2092,7 +2384,9 @@
         memberList.appendChild(
           item
         );
+
       }
+
     }
 
 
@@ -2276,7 +2570,9 @@
       addMemberButton.disabled =
         false;
 
+
       await loadMembers();
+
     }
 
 
@@ -2321,6 +2617,7 @@
 
           memberModal.style.display =
             "none";
+
         }
 
       }
@@ -2345,6 +2642,7 @@
           event.preventDefault();
 
           addMember();
+
         }
 
       }
@@ -2369,6 +2667,7 @@
           event.preventDefault();
 
           sendMessage();
+
         }
 
       }
@@ -2388,6 +2687,7 @@
 
               menu.style.display =
                 "none";
+
             }
           );
 
@@ -2401,6 +2701,7 @@
 
               picker.style.display =
                 "none";
+
             }
           );
 
