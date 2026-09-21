@@ -22,9 +22,13 @@
     .header {
       position: relative;
       background: white;
-      padding: 18px 120px 18px 60px;
+      padding: 14px 120px 14px 60px;
       text-align: center;
       box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
     }
 
     .home-button {
@@ -55,6 +59,10 @@
       cursor: pointer;
     }
 
+    .title-area {
+      min-width: 0;
+    }
+
     .title {
       font-size: 22px;
       font-weight: bold;
@@ -74,14 +82,44 @@
       margin: auto;
     }
 
+    /* メッセージ全体 */
+
+    .message-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .message-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #dceaff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 21px;
+      flex-shrink: 0;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    .message-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
     .message {
       position: relative;
       background: white;
       border-radius: 15px;
       padding: 10px 13px;
-      margin-bottom: 10px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
       cursor: pointer;
+      min-width: 0;
+      flex: 1;
     }
 
     .message:active {
@@ -443,15 +481,19 @@
       👥 メンバー
     </button>
 
-    <div class="title">
-      👥 グループチャット
-    </div>
+    <div class="title-area">
 
-    <div
-      class="group-name"
-      id="groupName"
-    >
-      読み込み中...
+      <div class="title">
+        👥 グループチャット
+      </div>
+
+      <div
+        class="group-name"
+        id="groupName"
+      >
+        読み込み中...
+      </div>
+
     </div>
 
   </div>
@@ -684,6 +726,95 @@
     let currentUsername = "";
     let replyingToMessage = null;
 
+    /* プロフィール画像を一時保存 */
+    const profileCache = {};
+
+
+    /* =========================
+       プロフィール取得
+    ========================= */
+
+    async function getProfile(username) {
+
+      if (!username) {
+        return null;
+      }
+
+      if (
+        Object.prototype.hasOwnProperty.call(
+          profileCache,
+          username
+        )
+      ) {
+        return profileCache[username];
+      }
+
+      const {
+        data: profile
+      } =
+        await supabaseClient
+          .from("profiles")
+          .select(
+            "user_id, name, avatar_url"
+          )
+          .eq(
+            "user_id",
+            username
+          )
+          .maybeSingle();
+
+      profileCache[username] =
+        profile || null;
+
+      return profile || null;
+    }
+
+
+    /* =========================
+       プロフィール画像作成
+    ========================= */
+
+    function createAvatar(profile) {
+
+      const avatar =
+        document.createElement(
+          "div"
+        );
+
+      avatar.className =
+        "message-avatar";
+
+
+      if (
+        profile &&
+        profile.avatar_url
+      ) {
+
+        const img =
+          document.createElement(
+            "img"
+          );
+
+        img.src =
+          profile.avatar_url;
+
+        img.alt =
+          "プロフィール画像";
+
+        avatar.appendChild(
+          img
+        );
+
+      } else {
+
+        avatar.textContent =
+          "👤";
+      }
+
+
+      return avatar;
+    }
+
 
     /* =========================
        開始
@@ -723,6 +854,10 @@
         data.session.user
           .user_metadata?.username || "";
 
+
+      await getProfile(
+        currentUsername
+      );
 
       await loadGroup();
 
@@ -821,6 +956,33 @@
 
     async function addMessage(message) {
 
+      const profile =
+        await getProfile(
+          message.sender_id
+        );
+
+
+      const row =
+        document.createElement(
+          "div"
+        );
+
+      row.className =
+        "message-row";
+
+
+      /* プロフィール画像 */
+
+      const avatar =
+        createAvatar(profile);
+
+      row.appendChild(
+        avatar
+      );
+
+
+      /* メッセージ本体 */
+
       const box =
         document.createElement(
           "div"
@@ -890,7 +1052,9 @@
           image.addEventListener(
             "click",
             function(event) {
+
               event.stopPropagation();
+
             }
           );
 
@@ -1276,8 +1440,13 @@
       );
 
 
-      messages.appendChild(
+      row.appendChild(
         box
+      );
+
+
+      messages.appendChild(
+        row
       );
     }
 
@@ -1807,19 +1976,10 @@
         of members
       ) {
 
-        const {
-          data: profile
-        } =
-          await supabaseClient
-            .from("profiles")
-            .select(
-              "user_id, name, avatar_url"
-            )
-            .eq(
-              "user_id",
-              member.user_id
-            )
-            .maybeSingle();
+        const profile =
+          await getProfile(
+            member.user_id
+          );
 
 
         const item =
