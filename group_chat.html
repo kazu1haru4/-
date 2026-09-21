@@ -194,6 +194,18 @@
       padding: 4px 0;
     }
 
+    /* =========================
+       既読
+    ========================= */
+
+    .read-status {
+      margin-top: 5px;
+      color: #8a63d2;
+      font-size: 11px;
+      font-weight: bold;
+      text-align: right;
+    }
+
     .reply-preview {
       background: #f0f5ff;
       border-left: 4px solid #6aa9ff;
@@ -764,6 +776,12 @@ const profileCache = {};
 
 let groupMembersCache = [];
 
+/* =========================
+   既読管理
+========================= */
+
+const groupReadCounts = {};
+
 
 /* =========================
    プロフィール
@@ -909,6 +927,148 @@ async function getGroupMembers() {
 
 
 /* =========================
+   既読数を取得
+========================= */
+
+async function loadGroupReadCounts(
+  messageIds
+) {
+
+  for (
+    const key of Object.keys(groupReadCounts)
+  ) {
+    delete groupReadCounts[key];
+  }
+
+  if (
+    !messageIds ||
+    !messageIds.length
+  ) {
+    return;
+  }
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("group_message_reads")
+      .select(
+        "group_message_id, user_id"
+      )
+      .in(
+        "group_message_id",
+        messageIds
+      );
+
+  if (error) {
+
+    console.error(
+      "グループ既読取得エラー:",
+      error
+    );
+
+    return;
+  }
+
+  for (
+    const read of data || []
+  ) {
+
+    if (
+      read.user_id ===
+      currentUsername
+    ) {
+      continue;
+    }
+
+    const id =
+      String(
+        read.group_message_id
+      );
+
+    if (
+      !groupReadCounts[id]
+    ) {
+      groupReadCounts[id] =
+        new Set();
+    }
+
+    groupReadCounts[id].add(
+      read.user_id
+    );
+  }
+}
+
+
+/* =========================
+   自分以外のメッセージを既読
+========================= */
+
+async function markGroupMessagesAsRead(
+  messagesData
+) {
+
+  if (
+    !currentUsername ||
+    !messagesData ||
+    !messagesData.length
+  ) {
+    return;
+  }
+
+  const unreadMessages =
+    messagesData.filter(
+      message =>
+        !message.is_deleted &&
+        message.sender_id !==
+          currentUsername
+    );
+
+  if (
+    !unreadMessages.length
+  ) {
+    return;
+  }
+
+  const rows =
+    unreadMessages.map(
+      message => ({
+        group_message_id:
+          message.id,
+
+        user_id:
+          currentUsername
+      })
+    );
+
+  const {
+    error
+  } =
+    await supabaseClient
+      .from("group_message_reads")
+      .upsert(
+        rows,
+        {
+          onConflict:
+            "group_message_id,user_id",
+          ignoreDuplicates:
+            true
+        }
+      );
+
+  if (error) {
+
+    console.error(
+      "グループ既読登録エラー:",
+      error
+    );
+
+  }
+}
+
+
+/* =========================
    最新へ
 ========================= */
 
@@ -916,7 +1076,10 @@ function scrollToBottom(smooth = false) {
 
   messages.scrollTo({
     top: messages.scrollHeight,
-    behavior: smooth ? "smooth" : "auto"
+    behavior:
+      smooth
+        ? "smooth"
+        : "auto"
   });
 
   updateLatestButton();
@@ -930,13 +1093,19 @@ function updateLatestButton() {
     messages.scrollTop -
     messages.clientHeight;
 
-  if (distanceFromBottom > 150) {
+  if (
+    distanceFromBottom > 150
+  ) {
 
-    latestButton.classList.add("show");
+    latestButton.classList.add(
+      "show"
+    );
 
   } else {
 
-    latestButton.classList.remove("show");
+    latestButton.classList.remove(
+      "show"
+    );
 
   }
 }
@@ -971,7 +1140,10 @@ async function loadMessages() {
     await supabaseClient
       .from("group_messages")
       .select("*")
-      .eq("group_id", Number(groupId))
+      .eq(
+        "group_id",
+        Number(groupId)
+      )
       .order(
         "created_at",
         {
@@ -992,14 +1164,48 @@ async function loadMessages() {
     return;
   }
 
+  const messageData =
+    data || [];
+
+  const messageIds =
+    messageData.map(
+      message =>
+        message.id
+    );
+
+  /*
+    まず既読情報を取得
+  */
+  await loadGroupReadCounts(
+    messageIds
+  );
+
+  /*
+    この画面を開いたユーザーが
+    自分以外のメッセージを既読にする
+  */
+  await markGroupMessagesAsRead(
+    messageData
+  );
+
+  /*
+    自分が既読にした分も
+    自分の画面側で反映
+  */
+  await loadGroupReadCounts(
+    messageIds
+  );
+
   messages.innerHTML =
     "";
 
   for (
-    const message of data || []
+    const message of messageData
   ) {
 
-    await addMessage(message);
+    await addMessage(
+      message
+    );
 
   }
 
@@ -1062,7 +1268,9 @@ function appendMentionContent(
    送信取り消し
 ========================= */
 
-async function deleteMessage(messageId) {
+async function deleteMessage(
+  messageId
+) {
 
   const confirmed =
     window.confirm(
@@ -1115,7 +1323,9 @@ async function deleteMessage(messageId) {
    メッセージ表示
 ========================= */
 
-async function addMessage(message) {
+async function addMessage(
+  message
+) {
 
   const profile =
     await getProfile(
@@ -1145,9 +1355,11 @@ async function addMessage(message) {
     "sender";
 
   sender.textContent =
-    message.sender_id === currentUsername
+    message.sender_id ===
+    currentUsername
       ? "あなた"
-      : "@" + message.sender_id;
+      : "@" +
+        message.sender_id;
 
   box.appendChild(sender);
 
@@ -1167,11 +1379,17 @@ async function addMessage(message) {
     deleted.textContent =
       "このメッセージは取り消されました";
 
-    box.appendChild(deleted);
+    box.appendChild(
+      deleted
+    );
 
-    row.appendChild(box);
+    row.appendChild(
+      box
+    );
 
-    messages.appendChild(row);
+    messages.appendChild(
+      row
+    );
 
     return;
   }
@@ -1193,7 +1411,9 @@ async function addMessage(message) {
           3600
         );
 
-    if (signedData?.signedUrl) {
+    if (
+      signedData?.signedUrl
+    ) {
 
       const image =
         document.createElement("img");
@@ -1214,7 +1434,9 @@ async function addMessage(message) {
         }
       );
 
-      box.appendChild(image);
+      box.appendChild(
+        image
+      );
 
     }
   }
@@ -1237,7 +1459,52 @@ async function addMessage(message) {
       message.content
     );
 
-    box.appendChild(content);
+    box.appendChild(
+      content
+    );
+
+  }
+
+
+  /* =========================
+     既読
+  ========================= */
+
+  if (
+    message.sender_id ===
+    currentUsername
+  ) {
+
+    const readSet =
+      groupReadCounts[
+        String(message.id)
+      ];
+
+    const readCount =
+      readSet
+        ? readSet.size
+        : 0;
+
+    if (
+      readCount > 0
+    ) {
+
+      const readStatus =
+        document.createElement("div");
+
+      readStatus.className =
+        "read-status";
+
+      readStatus.textContent =
+        "既読 " +
+        readCount +
+        "人";
+
+      box.appendChild(
+        readStatus
+      );
+
+    }
 
   }
 
@@ -1291,15 +1558,20 @@ async function addMessage(message) {
       reply.sender_id +
       "：";
 
-    replyBox.appendChild(strong);
+    replyBox.appendChild(
+      strong
+    );
 
     replyBox.appendChild(
       document.createTextNode(
-        " " + reply.content
+        " " +
+        reply.content
       )
     );
 
-    box.appendChild(replyBox);
+    box.appendChild(
+      replyBox
+    );
 
   }
 
@@ -1336,15 +1608,21 @@ async function addMessage(message) {
       const reaction of reactions
     ) {
 
-      counts[reaction.reaction] =
+      counts[
+        reaction.reaction
+      ] =
         (
-          counts[reaction.reaction] || 0
+          counts[
+            reaction.reaction
+          ] || 0
         ) + 1;
 
     }
 
     for (
-      const emoji of Object.keys(counts)
+      const emoji of Object.keys(
+        counts
+      )
     ) {
 
       const item =
@@ -1358,7 +1636,9 @@ async function addMessage(message) {
         " " +
         counts[emoji];
 
-      reactionArea.appendChild(item);
+      reactionArea.appendChild(
+        item
+      );
 
     }
 
@@ -1511,7 +1791,9 @@ async function addMessage(message) {
       }
     );
 
-    picker.appendChild(button);
+    picker.appendChild(
+      button
+    );
 
   }
 
@@ -1543,7 +1825,9 @@ async function addMessage(message) {
       event.preventDefault();
       event.stopPropagation();
 
-      startReply(message);
+      startReply(
+        message
+      );
 
       menu.style.display =
         "none";
@@ -1566,26 +1850,38 @@ async function addMessage(message) {
       event.stopPropagation();
 
       document
-        .querySelectorAll(".message-menu")
+        .querySelectorAll(
+          ".message-menu"
+        )
         .forEach(
           function(other) {
 
-            if (other !== menu) {
+            if (
+              other !== menu
+            ) {
+
               other.style.display =
                 "none";
+
             }
 
           }
         );
 
       document
-        .querySelectorAll(".reaction-picker")
+        .querySelectorAll(
+          ".reaction-picker"
+        )
         .forEach(
           function(other) {
 
-            if (other !== picker) {
+            if (
+              other !== picker
+            ) {
+
               other.style.display =
                 "none";
+
             }
 
           }
@@ -1595,7 +1891,8 @@ async function addMessage(message) {
         "none";
 
       menu.style.display =
-        menu.style.display === "block"
+        menu.style.display ===
+        "block"
           ? "none"
           : "block";
 
@@ -1603,12 +1900,21 @@ async function addMessage(message) {
   );
 
 
-  box.appendChild(menu);
-  box.appendChild(picker);
+  box.appendChild(
+    menu
+  );
 
-  row.appendChild(box);
+  box.appendChild(
+    picker
+  );
 
-  messages.appendChild(row);
+  row.appendChild(
+    box
+  );
+
+  messages.appendChild(
+    row
+  );
 }
 
 
@@ -1685,7 +1991,9 @@ async function addReaction(
    返信開始
 ========================= */
 
-function startReply(message) {
+function startReply(
+  message
+) {
 
   replyingToMessage =
     message;
@@ -1697,11 +2005,15 @@ function startReply(message) {
     document.createElement("strong");
 
   strong.textContent =
-    message.sender_id === currentUsername
+    message.sender_id ===
+    currentUsername
       ? "あなた"
-      : "@" + message.sender_id;
+      : "@" +
+        message.sender_id;
 
-  replyText.appendChild(strong);
+  replyText.appendChild(
+    strong
+  );
 
   replyText.appendChild(
     document.createTextNode(
@@ -1793,7 +2105,9 @@ async function createGroupReplyNotification(
 
           link:
             "group_chat.html?id=" +
-            encodeURIComponent(groupId),
+            encodeURIComponent(
+              groupId
+            ),
 
           is_read:
             false
@@ -1882,19 +2196,26 @@ async function createGroupNotifications() {
             message:
               currentUsername +
               "さんが「" +
-              (group?.name || "グループ") +
+              (
+                group?.name ||
+                "グループ"
+              ) +
               "」にメッセージを送信しました",
 
             link:
               "group_chat.html?id=" +
-              encodeURIComponent(groupId),
+              encodeURIComponent(
+                groupId
+              ),
 
             is_read:
               false
           })
         );
 
-    if (!notifications.length) {
+    if (
+      !notifications.length
+    ) {
       return;
     }
 
@@ -1903,7 +2224,9 @@ async function createGroupNotifications() {
     } =
       await supabaseClient
         .from("notifications")
-        .insert(notifications);
+        .insert(
+          notifications
+        );
 
     if (error) {
 
@@ -1961,7 +2284,9 @@ async function showMentionSuggestions() {
   const query =
     getMentionQuery();
 
-  if (query === null) {
+  if (
+    query === null
+  ) {
 
     mentionList.classList.remove(
       "show"
@@ -1994,12 +2319,17 @@ async function showMentionSuggestions() {
             .toLowerCase()
             .startsWith(query)
       )
-      .slice(0, 8);
+      .slice(
+        0,
+        8
+      );
 
   mentionList.innerHTML =
     "";
 
-  if (!candidates.length) {
+  if (
+    !candidates.length
+  ) {
 
     mentionList.classList.remove(
       "show"
@@ -2046,7 +2376,9 @@ async function showMentionSuggestions() {
       img.alt =
         "プロフィール画像";
 
-      avatar.appendChild(img);
+      avatar.appendChild(
+        img
+      );
 
     } else {
 
@@ -2078,11 +2410,21 @@ async function showMentionSuggestions() {
       "@" +
       member.user_id;
 
-    info.appendChild(name);
-    info.appendChild(id);
+    info.appendChild(
+      name
+    );
 
-    button.appendChild(avatar);
-    button.appendChild(info);
+    info.appendChild(
+      id
+    );
+
+    button.appendChild(
+      avatar
+    );
+
+    button.appendChild(
+      info
+    );
 
     button.addEventListener(
       "click",
@@ -2098,7 +2440,9 @@ async function showMentionSuggestions() {
       }
     );
 
-    mentionList.appendChild(button);
+    mentionList.appendChild(
+      button
+    );
   }
 
   mentionList.classList.add(
@@ -2107,7 +2451,9 @@ async function showMentionSuggestions() {
 }
 
 
-function insertMention(username) {
+function insertMention(
+  username
+) {
 
   const cursor =
     messageInput.selectionStart;
@@ -2184,7 +2530,9 @@ messageInput.addEventListener(
    メンション通知
 ========================= */
 
-function extractMentionUsernames(text) {
+function extractMentionUsernames(
+  text
+) {
 
   if (!text) {
     return [];
@@ -2202,7 +2550,9 @@ function extractMentionUsernames(text) {
     );
 
   return [
-    ...new Set(usernames)
+    ...new Set(
+      usernames
+    )
   ];
 }
 
@@ -2214,9 +2564,13 @@ async function createMentionNotifications(
   try {
 
     const mentioned =
-      extractMentionUsernames(text);
+      extractMentionUsernames(
+        text
+      );
 
-    if (!mentioned.length) {
+    if (
+      !mentioned.length
+    ) {
       return;
     }
 
@@ -2236,11 +2590,16 @@ async function createMentionNotifications(
     const targets =
       mentioned.filter(
         username =>
-          username !== currentUsername &&
-          memberIds.has(username)
+          username !==
+            currentUsername &&
+          memberIds.has(
+            username
+          )
       );
 
-    if (!targets.length) {
+    if (
+      !targets.length
+    ) {
       return;
     }
 
@@ -2271,12 +2630,17 @@ async function createMentionNotifications(
           message:
             currentUsername +
             "さんが「" +
-            (group?.name || "グループ") +
+            (
+              group?.name ||
+              "グループ"
+            ) +
             "」であなたをメンションしました",
 
           link:
             "group_chat.html?id=" +
-            encodeURIComponent(groupId),
+            encodeURIComponent(
+              groupId
+            ),
 
           is_read:
             false
@@ -2288,7 +2652,9 @@ async function createMentionNotifications(
     } =
       await supabaseClient
         .from("notifications")
-        .insert(notifications);
+        .insert(
+          notifications
+        );
 
     if (error) {
 
@@ -2340,7 +2706,9 @@ async function sendMessage() {
   );
 
 
-  if (replyingToMessage) {
+  if (
+    replyingToMessage
+  ) {
 
     const targetMessage =
       replyingToMessage;
@@ -2491,7 +2859,9 @@ async function sendMessage() {
 imageButton.addEventListener(
   "click",
   function() {
+
     imageInput.click();
+
   }
 );
 
@@ -2512,7 +2882,9 @@ imageInput.addEventListener(
     }
 
     if (
-      !file.type.startsWith("image/")
+      !file.type.startsWith(
+        "image/"
+      )
     ) {
 
       alert(
@@ -2653,12 +3025,20 @@ function startRealtime() {
       "-" +
       Date.now()
     )
+
+    /* 新しいメッセージ */
     .on(
       "postgres_changes",
       {
-        event: "INSERT",
-        schema: "public",
-        table: "group_messages",
+        event:
+          "INSERT",
+
+        schema:
+          "public",
+
+        table:
+          "group_messages",
+
         filter:
           "group_id=eq." +
           groupId
@@ -2671,12 +3051,20 @@ function startRealtime() {
 
       }
     )
+
+    /* メッセージ取り消し */
     .on(
       "postgres_changes",
       {
-        event: "UPDATE",
-        schema: "public",
-        table: "group_messages",
+        event:
+          "UPDATE",
+
+        schema:
+          "public",
+
+        table:
+          "group_messages",
+
         filter:
           "group_id=eq." +
           groupId
@@ -2687,8 +3075,99 @@ function startRealtime() {
 
       }
     )
-    .subscribe();
 
+    /* =========================
+       グループ既読
+    ========================= */
+
+    .on(
+      "postgres_changes",
+      {
+        event:
+          "INSERT",
+
+        schema:
+          "public",
+
+        table:
+          "group_message_reads"
+      },
+      async function(payload) {
+
+        const read =
+          payload.new;
+
+        if (!read) {
+          return;
+        }
+
+        const {
+          data: message
+        } =
+          await supabaseClient
+            .from("group_messages")
+            .select(
+              "id, group_id, sender_id"
+            )
+            .eq(
+              "id",
+              read.group_message_id
+            )
+            .maybeSingle();
+
+        if (
+          !message ||
+          String(message.group_id) !==
+            String(groupId)
+        ) {
+          return;
+        }
+
+        /*
+          自分が送ったメッセージの
+          既読だけを画面に反映
+        */
+        if (
+          message.sender_id !==
+          currentUsername
+        ) {
+          return;
+        }
+
+        if (
+          read.user_id ===
+          currentUsername
+        ) {
+          return;
+        }
+
+        const id =
+          String(
+            read.group_message_id
+          );
+
+        if (
+          !groupReadCounts[id]
+        ) {
+
+          groupReadCounts[id] =
+            new Set();
+
+        }
+
+        groupReadCounts[id].add(
+          read.user_id
+        );
+
+        /*
+          画面を再描画
+        */
+        await loadMessages();
+
+      }
+    )
+
+    .subscribe();
 }
 
 
@@ -2779,7 +3258,9 @@ async function loadMembers() {
       img.style.objectFit =
         "cover";
 
-      icon.appendChild(img);
+      icon.appendChild(
+        img
+      );
 
     } else {
 
@@ -2814,13 +3295,25 @@ async function loadMembers() {
       "@" +
       member.user_id;
 
-    info.appendChild(name);
-    info.appendChild(id);
+    info.appendChild(
+      name
+    );
 
-    item.appendChild(icon);
-    item.appendChild(info);
+    info.appendChild(
+      id
+    );
 
-    memberList.appendChild(item);
+    item.appendChild(
+      icon
+    );
+
+    item.appendChild(
+      info
+    );
+
+    memberList.appendChild(
+      item
+    );
   }
 }
 
@@ -2864,7 +3357,9 @@ async function addMember() {
   } =
     await supabaseClient
       .from("profiles")
-      .select("user_id, name")
+      .select(
+        "user_id, name"
+      )
       .eq(
         "user_id",
         friendId
@@ -3021,7 +3516,8 @@ memberInput.addEventListener(
   function(event) {
 
     if (
-      event.key === "Enter"
+      event.key ===
+      "Enter"
     ) {
 
       event.preventDefault();
@@ -3048,7 +3544,8 @@ messageInput.addEventListener(
   function(event) {
 
     if (
-      event.key === "Enter"
+      event.key ===
+      "Enter"
     ) {
 
       event.preventDefault();
@@ -3070,7 +3567,9 @@ document.addEventListener(
   function() {
 
     document
-      .querySelectorAll(".message-menu")
+      .querySelectorAll(
+        ".message-menu"
+      )
       .forEach(
         menu => {
           menu.style.display =
@@ -3079,7 +3578,9 @@ document.addEventListener(
       );
 
     document
-      .querySelectorAll(".reaction-picker")
+      .querySelectorAll(
+        ".reaction-picker"
+      )
       .forEach(
         picker => {
           picker.style.display =
@@ -3109,7 +3610,8 @@ async function start() {
     data,
     error
   } =
-    await supabaseClient.auth.getSession();
+    await supabaseClient.auth
+      .getSession();
 
   if (
     error ||
@@ -3124,7 +3626,8 @@ async function start() {
 
   currentUsername =
     data.session.user
-      .user_metadata?.username || "";
+      .user_metadata?.username ||
+      "";
 
   if (!currentUsername) {
 
