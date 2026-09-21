@@ -12,15 +12,24 @@
       box-sizing: border-box;
     }
 
+    html,
     body {
       margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
       font-family: sans-serif;
       background: linear-gradient(135deg, #eef7ff, #f7efff);
-      min-height: 100vh;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
     }
 
     .header {
       position: relative;
+      flex: 0 0 auto;
       background: white;
       padding: 14px 120px 14px 60px;
       text-align: center;
@@ -28,6 +37,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      z-index: 40;
     }
 
     .home-button {
@@ -70,11 +80,49 @@
       margin-top: 4px;
     }
 
+    /* =========================
+       メッセージエリア
+    ========================= */
+
+    .messages-wrapper {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
+    }
+
     .messages {
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       padding: 15px;
-      padding-bottom: 120px;
+      padding-bottom: 25px;
       max-width: 700px;
       margin: auto;
+    }
+
+    /* 最新へボタン */
+
+    #latestButton {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      border: none;
+      background: #6aa9ff;
+      color: white;
+      border-radius: 50px;
+      padding: 11px 15px;
+      font-size: 14px;
+      font-weight: bold;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+      cursor: pointer;
+      display: none;
+      z-index: 30;
+    }
+
+    #latestButton.show {
+      display: block;
     }
 
     .message-row {
@@ -125,6 +173,17 @@
       font-size: 16px;
       color: #333;
       word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    /* メンション */
+
+    .mention {
+      color: #4d8fe8;
+      background: #eaf3ff;
+      border-radius: 5px;
+      padding: 1px 3px;
+      font-weight: bold;
     }
 
     .chat-image {
@@ -217,17 +276,91 @@
       cursor: pointer;
     }
 
-    .input-area {
+    /* =========================
+       メンション候補
+    ========================= */
+
+    .mention-list {
+      display: none;
       position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      left: 10px;
+      right: 10px;
+      bottom: 65px;
+      max-width: 500px;
+      margin: auto;
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+      padding: 7px;
+      max-height: 220px;
+      overflow-y: auto;
+      z-index: 80;
+    }
+
+    .mention-list.show {
+      display: block;
+    }
+
+    .mention-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      width: 100%;
+      border: none;
+      background: white;
+      border-radius: 10px;
+      padding: 10px;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .mention-item:hover,
+    .mention-item:active {
+      background: #f0f5ff;
+    }
+
+    .mention-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #dceaff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .mention-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .mention-name {
+      font-size: 14px;
+      font-weight: bold;
+      color: #444;
+    }
+
+    .mention-id {
+      font-size: 12px;
+      color: #888;
+    }
+
+    /* =========================
+       入力
+    ========================= */
+
+    .input-area {
+      position: relative;
+      flex: 0 0 auto;
       background: white;
       padding: 10px;
       display: flex;
       gap: 8px;
       box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
-      z-index: 50;
+      z-index: 70;
     }
 
     #messageInput {
@@ -237,6 +370,11 @@
       border-radius: 12px;
       font-size: 16px;
       min-width: 0;
+      outline: none;
+    }
+
+    #messageInput:focus {
+      border-color: #6aa9ff;
     }
 
     #imageButton {
@@ -275,16 +413,17 @@
       padding: 20px;
     }
 
+    /* =========================
+       返信
+    ========================= */
+
     .reply-area {
       display: none;
-      position: fixed;
-      bottom: 61px;
-      left: 0;
-      right: 0;
+      flex: 0 0 auto;
       background: white;
       border-top: 1px solid #ddd;
       padding: 8px 10px;
-      z-index: 45;
+      z-index: 65;
     }
 
     .reply-info {
@@ -318,6 +457,10 @@
       font-size: 18px;
       cursor: pointer;
     }
+
+    /* =========================
+       モーダル
+    ========================= */
 
     .modal {
       display: none;
@@ -464,7 +607,13 @@
     </div>
   </div>
 
-  <div id="messages" class="messages"></div>
+  <div class="messages-wrapper">
+    <div id="messages" class="messages"></div>
+
+    <button id="latestButton" type="button">
+      ⬇️ 最新へ
+    </button>
+  </div>
 
   <div id="replyArea" class="reply-area">
     <div class="reply-info">
@@ -477,6 +626,7 @@
   </div>
 
   <div class="input-area">
+
     <input
       id="messageInput"
       type="text"
@@ -484,20 +634,17 @@
       autocomplete="off"
     >
 
-    <button
-      id="imageButton"
-      type="button"
-    >
+    <button id="imageButton" type="button">
       🖼️
     </button>
 
-    <button
-      id="sendButton"
-      type="button"
-    >
+    <button id="sendButton" type="button">
       送信
     </button>
+
   </div>
+
+  <div id="mentionList" class="mention-list"></div>
 
   <input
     id="imageInput"
@@ -506,6 +653,7 @@
   >
 
   <div id="memberModal" class="modal">
+
     <div class="modal-box">
 
       <div class="modal-title">
@@ -533,24 +681,20 @@
 
         <div class="modal-buttons">
 
-          <button
-            id="closeModalButton"
-            type="button"
-          >
+          <button id="closeModalButton" type="button">
             閉じる
           </button>
 
-          <button
-            id="addMemberButton"
-            type="button"
-          >
+          <button id="addMemberButton" type="button">
             追加
           </button>
 
         </div>
 
       </div>
+
     </div>
+
   </div>
 
 <script>
@@ -580,6 +724,9 @@ const groupName =
 
 const messages =
   document.getElementById("messages");
+
+const latestButton =
+  document.getElementById("latestButton");
 
 const messageInput =
   document.getElementById("messageInput");
@@ -620,10 +767,15 @@ const replyText =
 const cancelReplyButton =
   document.getElementById("cancelReplyButton");
 
+const mentionList =
+  document.getElementById("mentionList");
+
 let currentUsername = "";
 let replyingToMessage = null;
 
 const profileCache = {};
+
+let groupMembersCache = [];
 
 
 /* =========================
@@ -735,6 +887,91 @@ async function loadGroup() {
 
 
 /* =========================
+   メンバー取得
+========================= */
+
+async function getGroupMembers() {
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("group_members")
+      .select("user_id")
+      .eq(
+        "group_id",
+        Number(groupId)
+      );
+
+  if (error) {
+
+    console.error(
+      "メンバー取得エラー:",
+      error
+    );
+
+    return [];
+  }
+
+  groupMembersCache =
+    data || [];
+
+  return groupMembersCache;
+}
+
+
+/* =========================
+   最新へ
+========================= */
+
+function scrollToBottom(smooth = false) {
+
+  messages.scrollTo({
+    top: messages.scrollHeight,
+    behavior: smooth ? "smooth" : "auto"
+  });
+
+  updateLatestButton();
+}
+
+
+function updateLatestButton() {
+
+  const distanceFromBottom =
+    messages.scrollHeight -
+    messages.scrollTop -
+    messages.clientHeight;
+
+  if (distanceFromBottom > 150) {
+
+    latestButton.classList.add("show");
+
+  } else {
+
+    latestButton.classList.remove("show");
+
+  }
+}
+
+
+messages.addEventListener(
+  "scroll",
+  updateLatestButton
+);
+
+
+latestButton.addEventListener(
+  "click",
+  function() {
+
+    scrollToBottom(true);
+
+  }
+);
+
+
+/* =========================
    メッセージ読み込み
 ========================= */
 
@@ -776,6 +1013,59 @@ async function loadMessages() {
   ) {
 
     await addMessage(message);
+
+  }
+
+  requestAnimationFrame(
+    function() {
+      scrollToBottom(false);
+    }
+  );
+}
+
+
+/* =========================
+   メンション表示
+========================= */
+
+function appendMentionContent(
+  element,
+  text
+) {
+
+  const parts =
+    text.split(
+      /(@[A-Za-z0-9_]+)/g
+    );
+
+  for (
+    const part of parts
+  ) {
+
+    if (
+      /^@[A-Za-z0-9_]+$/.test(part)
+    ) {
+
+      const mention =
+        document.createElement("span");
+
+      mention.className =
+        "mention";
+
+      mention.textContent =
+        part;
+
+      element.appendChild(
+        mention
+      );
+
+    } else {
+
+      element.appendChild(
+        document.createTextNode(part)
+      );
+
+    }
 
   }
 }
@@ -822,7 +1112,9 @@ async function addMessage(message) {
   box.appendChild(sender);
 
 
-  /* 画像 */
+  /* =========================
+     画像
+  ========================= */
 
   if (message.image_url) {
 
@@ -863,7 +1155,9 @@ async function addMessage(message) {
   }
 
 
-  /* テキスト */
+  /* =========================
+     テキスト
+  ========================= */
 
   if (message.content) {
 
@@ -873,15 +1167,19 @@ async function addMessage(message) {
     content.className =
       "content";
 
-    content.textContent =
-      message.content;
+    appendMentionContent(
+      content,
+      message.content
+    );
 
     box.appendChild(content);
 
   }
 
 
-  /* 返信 */
+  /* =========================
+     返信
+  ========================= */
 
   const {
     data: replies,
@@ -941,7 +1239,9 @@ async function addMessage(message) {
   }
 
 
-  /* リアクション */
+  /* =========================
+     リアクション
+  ========================= */
 
   const {
     data: reactions
@@ -1044,7 +1344,9 @@ async function addMessage(message) {
   );
 
 
-  /* リアクション選択 */
+  /* =========================
+     リアクション選択
+  ========================= */
 
   const picker =
     document.createElement("div");
@@ -1100,8 +1402,6 @@ async function addMessage(message) {
   }
 
 
-  /* リアクションボタン */
-
   reactionButton.addEventListener(
     "click",
     function(event) {
@@ -1119,7 +1419,7 @@ async function addMessage(message) {
 
 
   /* =========================
-     ★ 返信ボタン
+     返信
   ========================= */
 
   replyButton.addEventListener(
@@ -1128,11 +1428,6 @@ async function addMessage(message) {
 
       event.preventDefault();
       event.stopPropagation();
-
-      console.log(
-        "返信ボタン:",
-        message
-      );
 
       startReply(message);
 
@@ -1146,7 +1441,9 @@ async function addMessage(message) {
   );
 
 
-  /* メッセージクリック */
+  /* =========================
+     メッセージクリック
+  ========================= */
 
   box.addEventListener(
     "click",
@@ -1271,15 +1568,10 @@ async function addReaction(
 
 
 /* =========================
-   ★ 返信開始
+   返信開始
 ========================= */
 
 function startReply(message) {
-
-  console.log(
-    "startReply:",
-    message
-  );
 
   replyingToMessage =
     message;
@@ -1394,10 +1686,12 @@ async function createGroupReplyNotification(
         });
 
     if (error) {
+
       console.error(
         "返信通知エラー:",
         error
       );
+
     }
 
   } catch (error) {
@@ -1498,10 +1792,12 @@ async function createGroupNotifications() {
         .insert(notifications);
 
     if (error) {
+
       console.error(
         "グループ通知エラー:",
         error
       );
+
     }
 
   } catch (error) {
@@ -1516,7 +1812,392 @@ async function createGroupNotifications() {
 
 
 /* =========================
-   ★ テキスト送信
+   メンション候補
+========================= */
+
+function getMentionQuery() {
+
+  const text =
+    messageInput.value;
+
+  const cursor =
+    messageInput.selectionStart;
+
+  const beforeCursor =
+    text.slice(
+      0,
+      cursor
+    );
+
+  const match =
+    beforeCursor.match(
+      /(?:^|\s)@([A-Za-z0-9_]*)$/
+    );
+
+  if (!match) {
+    return null;
+  }
+
+  return match[1].toLowerCase();
+}
+
+
+async function showMentionSuggestions() {
+
+  const query =
+    getMentionQuery();
+
+  if (query === null) {
+
+    mentionList.classList.remove(
+      "show"
+    );
+
+    mentionList.innerHTML =
+      "";
+
+    return;
+  }
+
+  if (
+    !groupMembersCache.length
+  ) {
+
+    await getGroupMembers();
+
+  }
+
+  const candidates =
+    groupMembersCache
+      .filter(
+        member =>
+          member.user_id !==
+          currentUsername
+      )
+      .filter(
+        member =>
+          member.user_id
+            .toLowerCase()
+            .startsWith(query)
+      )
+      .slice(0, 8);
+
+  mentionList.innerHTML =
+    "";
+
+  if (!candidates.length) {
+
+    mentionList.classList.remove(
+      "show"
+    );
+
+    return;
+  }
+
+  for (
+    const member of candidates
+  ) {
+
+    const profile =
+      await getProfile(
+        member.user_id
+      );
+
+    const button =
+      document.createElement("button");
+
+    button.type =
+      "button";
+
+    button.className =
+      "mention-item";
+
+    const avatar =
+      document.createElement("div");
+
+    avatar.className =
+      "mention-avatar";
+
+    if (
+      profile &&
+      profile.avatar_url
+    ) {
+
+      const img =
+        document.createElement("img");
+
+      img.src =
+        profile.avatar_url;
+
+      img.alt =
+        "プロフィール画像";
+
+      avatar.appendChild(img);
+
+    } else {
+
+      avatar.textContent =
+        "👤";
+
+    }
+
+    const info =
+      document.createElement("div");
+
+    const name =
+      document.createElement("div");
+
+    name.className =
+      "mention-name";
+
+    name.textContent =
+      profile?.name ||
+      member.user_id;
+
+    const id =
+      document.createElement("div");
+
+    id.className =
+      "mention-id";
+
+    id.textContent =
+      "@" +
+      member.user_id;
+
+    info.appendChild(name);
+    info.appendChild(id);
+
+    button.appendChild(avatar);
+    button.appendChild(info);
+
+    button.addEventListener(
+      "click",
+      function(event) {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        insertMention(
+          member.user_id
+        );
+
+      }
+    );
+
+    mentionList.appendChild(button);
+  }
+
+  mentionList.classList.add(
+    "show"
+  );
+}
+
+
+function insertMention(username) {
+
+  const cursor =
+    messageInput.selectionStart;
+
+  const text =
+    messageInput.value;
+
+  const before =
+    text.slice(
+      0,
+      cursor
+    );
+
+  const after =
+    text.slice(
+      cursor
+    );
+
+  const match =
+    before.match(
+      /(?:^|\s)@([A-Za-z0-9_]*)$/
+    );
+
+  if (!match) {
+    return;
+  }
+
+  const start =
+    match.index +
+    (
+      match[0].startsWith(" ")
+        ? 1
+        : 0
+    );
+
+  const newText =
+    text.slice(
+      0,
+      start
+    ) +
+    "@" +
+    username +
+    " " +
+    after;
+
+  messageInput.value =
+    newText;
+
+  const newCursor =
+    start +
+    username.length +
+    2;
+
+  messageInput.setSelectionRange(
+    newCursor,
+    newCursor
+  );
+
+  mentionList.classList.remove(
+    "show"
+  );
+
+  messageInput.focus();
+}
+
+
+messageInput.addEventListener(
+  "input",
+  showMentionSuggestions
+);
+
+
+/* =========================
+   メンション通知
+========================= */
+
+function extractMentionUsernames(text) {
+
+  if (!text) {
+    return [];
+  }
+
+  const matches =
+    text.match(
+      /@[A-Za-z0-9_]+/g
+    ) || [];
+
+  const usernames =
+    matches.map(
+      mention =>
+        mention.slice(1)
+    );
+
+  return [
+    ...new Set(usernames)
+  ];
+}
+
+
+async function createMentionNotifications(
+  text
+) {
+
+  try {
+
+    const mentioned =
+      extractMentionUsernames(text);
+
+    if (!mentioned.length) {
+      return;
+    }
+
+    const validMembers =
+      groupMembersCache.length
+        ? groupMembersCache
+        : await getGroupMembers();
+
+    const memberIds =
+      new Set(
+        validMembers.map(
+          member =>
+            member.user_id
+        )
+      );
+
+    const targets =
+      mentioned.filter(
+        username =>
+          username !== currentUsername &&
+          memberIds.has(username)
+      );
+
+    if (!targets.length) {
+      return;
+    }
+
+    const {
+      data: group
+    } =
+      await supabaseClient
+        .from("groups")
+        .select("name")
+        .eq(
+          "id",
+          Number(groupId)
+        )
+        .maybeSingle();
+
+    const notifications =
+      targets.map(
+        username => ({
+          user_id:
+            username,
+
+          type:
+            "group_mention",
+
+          title:
+            "🔔 グループでメンションされました",
+
+          message:
+            currentUsername +
+            "さんが「" +
+            (group?.name || "グループ") +
+            "」であなたをメンションしました",
+
+          link:
+            "group_chat.html?id=" +
+            encodeURIComponent(groupId),
+
+          is_read:
+            false
+        })
+      );
+
+    const {
+      error
+    } =
+      await supabaseClient
+        .from("notifications")
+        .insert(notifications);
+
+    if (error) {
+
+      console.error(
+        "メンション通知エラー:",
+        error
+      );
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      "メンション通知処理エラー:",
+      error
+    );
+
+  }
+}
+
+
+/* =========================
+   テキスト送信
 ========================= */
 
 async function sendMessage() {
@@ -1540,6 +2221,10 @@ async function sendMessage() {
   sendButton.disabled =
     true;
 
+  mentionList.classList.remove(
+    "show"
+  );
+
 
   /* =====================
      返信
@@ -1549,11 +2234,6 @@ async function sendMessage() {
 
     const targetMessage =
       replyingToMessage;
-
-    console.log(
-      "返信送信:",
-      targetMessage
-    );
 
     const {
       error
@@ -1602,6 +2282,8 @@ async function sendMessage() {
       "メッセージを入力...";
 
     await loadMessages();
+
+    scrollToBottom(true);
 
     createGroupReplyNotification(
       targetMessage
@@ -1664,6 +2346,10 @@ async function sendMessage() {
 
     await loadMessages();
 
+    /* 送信したら必ず最新へ */
+
+    scrollToBottom(true);
+
     createGroupNotifications()
       .catch(
         error =>
@@ -1673,6 +2359,15 @@ async function sendMessage() {
           )
       );
 
+    createMentionNotifications(
+      text
+    ).catch(
+      error =>
+        console.error(
+          "メンション通知エラー:",
+          error
+        )
+    );
   }
 
   sendButton.disabled =
@@ -1807,6 +2502,10 @@ imageInput.addEventListener(
 
       await loadMessages();
 
+      /* 画像送信も必ず最新へ */
+
+      scrollToBottom(true);
+
       createGroupNotifications()
         .catch(
           error =>
@@ -1862,7 +2561,13 @@ async function loadMembers() {
     return;
   }
 
-  if (!members || !members.length) {
+  groupMembersCache =
+    members || [];
+
+  if (
+    !members ||
+    !members.length
+  ) {
 
     memberList.innerHTML =
       '<div class="member-empty">まだメンバーがいません。</div>';
@@ -2197,7 +2902,7 @@ messageInput.addEventListener(
 
 
 /* =========================
-   画面外をタップ
+   画面外タップ
 ========================= */
 
 document.addEventListener(
@@ -2272,8 +2977,13 @@ async function start() {
 
   await loadGroup();
 
+  await getGroupMembers();
+
   await loadMessages();
 
+  /* 初期表示も一番下 */
+
+  scrollToBottom(false);
 }
 
 
