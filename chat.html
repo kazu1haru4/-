@@ -316,6 +316,11 @@
     let myAvatarUrl = "";
     let friendAvatarUrl = "";
 
+    /*
+      更新前のスクロール位置を復元するときに使う
+    */
+    let isRestoringScroll = false;
+
     const params =
       new URLSearchParams(
         window.location.search
@@ -323,6 +328,12 @@
 
     friendId =
       params.get("user") || "";
+
+    /*
+      チャット相手ごとに別々のスクロール位置を保存
+    */
+    const chatScrollKey =
+      "chat-scroll-" + friendId;
 
 
     // =========================
@@ -344,13 +355,20 @@
 
         img.src = url;
 
-        img.alt = "プロフィール画像";
+        img.alt =
+          "プロフィール画像";
 
-        img.onerror = function() {
-          avatar.innerHTML = fallback;
-        };
+        img.onerror =
+          function() {
 
-        avatar.appendChild(img);
+            avatar.innerHTML =
+              fallback;
+
+          };
+
+        avatar.appendChild(
+          img
+        );
 
       } else {
 
@@ -383,16 +401,27 @@
         await supabaseClient
           .from("notifications")
           .insert({
-            user_id: friendId,
-            type: "chat",
-            title: "💬 新しいメッセージ",
+            user_id:
+              friendId,
+
+            type:
+              "chat",
+
+            title:
+              "💬 新しいメッセージ",
+
             message:
               currentUsername +
               "さんからメッセージが届きました",
+
             link:
               "chat.html?user=" +
-              encodeURIComponent(currentUsername),
-            is_read: false
+              encodeURIComponent(
+                currentUsername
+              ),
+
+            is_read:
+              false
           });
 
       if (error) {
@@ -427,18 +456,22 @@
         return;
       }
 
+
       const {
         data,
         error
       } =
         await supabaseClient.auth.getSession();
 
+
       if (
         error ||
         !data.session
       ) {
 
-        alert("ログインしてください。");
+        alert(
+          "ログインしてください。"
+        );
 
         window.location.href =
           "index.html";
@@ -447,8 +480,12 @@
 
       }
 
+
       currentUsername =
-        data.session.user.user_metadata?.username || "";
+        data.session.user
+          .user_metadata
+          ?.username || "";
+
 
       if (!currentUsername) {
 
@@ -470,19 +507,28 @@
       } =
         await supabaseClient
           .from("profiles")
-          .select("name, avatar_url")
+          .select(
+            "name, avatar_url"
+          )
           .eq(
             "user_id",
             friendId
           )
           .maybeSingle();
 
+
       friendAvatarUrl =
-        friendProfile?.avatar_url || "";
+        friendProfile?.avatar_url ||
+        "";
+
 
       chatTitle.textContent =
         "💬 " +
-        (friendProfile?.name || friendId);
+        (
+          friendProfile?.name ||
+          friendId
+        );
+
 
       if (friendAvatarUrl) {
 
@@ -501,15 +547,19 @@
       } =
         await supabaseClient
           .from("profiles")
-          .select("avatar_url")
+          .select(
+            "avatar_url"
+          )
           .eq(
             "user_id",
             currentUsername
           )
           .maybeSingle();
 
+
       myAvatarUrl =
-        myProfile?.avatar_url || "";
+        myProfile?.avatar_url ||
+        "";
 
 
       await loadMessages();
@@ -538,9 +588,11 @@
           .order(
             "created_at",
             {
-              ascending: true
+              ascending:
+                true
             }
           );
+
 
       if (error) {
 
@@ -556,7 +608,10 @@
 
       }
 
-      messagesElement.innerHTML = "";
+
+      messagesElement.innerHTML =
+        "";
+
 
       if (
         !data ||
@@ -570,6 +625,7 @@
 
       }
 
+
       for (
         const message of data
       ) {
@@ -580,7 +636,16 @@
 
       }
 
-      scrollToBottom();
+
+      /*
+        ここが重要。
+
+        今までは scrollToBottom() で
+        必ず一番下にしていた。
+
+        今回は保存していた位置へ戻す。
+      */
+      restoreScrollPosition();
 
     }
 
@@ -599,13 +664,17 @@
       wrapper.className =
         "message";
 
+
       const isMine =
         message.sender_id ===
         currentUsername;
 
+
       if (isMine) {
 
-        wrapper.classList.add("mine");
+        wrapper.classList.add(
+          "mine"
+        );
 
       }
 
@@ -632,12 +701,16 @@
         "bubble";
 
 
+      // =========================
       // 画像
+      // =========================
 
       if (message.image_url) {
 
         const image =
-          document.createElement("img");
+          document.createElement(
+            "img"
+          );
 
         image.className =
           "chat-image";
@@ -645,16 +718,20 @@
         image.alt =
           "送信された画像";
 
+
         const {
           data,
           error
         } =
           await supabaseClient.storage
-            .from("chat-images")
+            .from(
+              "chat-images"
+            )
             .createSignedUrl(
               message.image_url,
               3600
             );
+
 
         if (
           !error &&
@@ -673,12 +750,16 @@
       }
 
 
+      // =========================
       // テキスト
+      // =========================
 
       if (message.content) {
 
         const text =
-          document.createElement("div");
+          document.createElement(
+            "div"
+          );
 
         text.textContent =
           message.content;
@@ -690,31 +771,42 @@
       }
 
 
+      // =========================
       // 時刻
+      // =========================
 
       const time =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       time.className =
         "time";
+
 
       const date =
         new Date(
           message.created_at
         );
 
+
       time.textContent =
         date.toLocaleTimeString(
           "ja-JP",
           {
-            hour: "2-digit",
-            minute: "2-digit"
+            hour:
+              "2-digit",
+
+            minute:
+              "2-digit"
           }
         );
+
 
       bubble.appendChild(
         time
       );
+
 
       wrapper.appendChild(
         bubble
@@ -735,6 +827,7 @@
 
       }
 
+
       messagesElement.appendChild(
         wrapper
       );
@@ -743,13 +836,107 @@
 
 
     // =========================
-    // 一番下
+    // 一番下へ移動
     // =========================
 
     function scrollToBottom() {
 
       messagesElement.scrollTop =
         messagesElement.scrollHeight;
+
+    }
+
+
+    // =========================
+    // スクロール位置を保存
+    // =========================
+
+    messagesElement.addEventListener(
+      "scroll",
+      function() {
+
+        /*
+          復元中は保存しない
+        */
+        if (isRestoringScroll) {
+          return;
+        }
+
+
+        sessionStorage.setItem(
+          chatScrollKey,
+          String(
+            messagesElement.scrollTop
+          )
+        );
+
+      }
+    );
+
+
+    // =========================
+    // 更新前の位置へ戻す
+    // =========================
+
+    function restoreScrollPosition() {
+
+      const saved =
+        Number(
+          sessionStorage.getItem(
+            chatScrollKey
+          ) || 0
+        );
+
+
+      if (
+        !Number.isFinite(saved) ||
+        saved <= 0
+      ) {
+
+        /*
+          保存位置がない場合だけ
+          最初は一番下にする
+        */
+        scrollToBottom();
+
+        return;
+
+      }
+
+
+      isRestoringScroll =
+        true;
+
+
+      messagesElement.scrollTop =
+        saved;
+
+
+      /*
+        メッセージ表示後の
+        レイアウト確定を待ってもう一度設定
+      */
+      requestAnimationFrame(
+        function() {
+
+          messagesElement.scrollTop =
+            saved;
+
+
+          requestAnimationFrame(
+            function() {
+
+              messagesElement.scrollTop =
+                saved;
+
+              isRestoringScroll =
+                false;
+
+            }
+          );
+
+        }
+      );
 
     }
 
@@ -764,6 +951,7 @@
         return;
       }
 
+
       realtimeChannel =
         supabaseClient
           .channel(
@@ -775,14 +963,20 @@
           .on(
             "postgres_changes",
             {
-              event: "INSERT",
-              schema: "public",
-              table: "messages"
+              event:
+                "INSERT",
+
+              schema:
+                "public",
+
+              table:
+                "messages"
             },
             async (payload) => {
 
               const message =
                 payload.new;
+
 
               const isThisChat =
                 (
@@ -798,24 +992,36 @@
                     currentUsername
                 );
 
+
               if (!isThisChat) {
                 return;
               }
 
 
-              // 自分が送ったメッセージは通知しない
+              /*
+                自分が送ったメッセージは
+                Realtimeで二重表示しない
+              */
 
               if (
                 message.sender_id ===
                 currentUsername
               ) {
+
                 return;
+
               }
 
 
               await addMessageToScreen(
                 message
               );
+
+
+              /*
+                相手から新しいメッセージが来た場合は
+                今まで通り一番下へ
+              */
 
               scrollToBottom();
 
@@ -836,12 +1042,15 @@
 
         event.preventDefault();
 
+
         const text =
           messageInput.value.trim();
+
 
         if (!text) {
           return;
         }
+
 
         if (
           !currentUsername ||
@@ -856,8 +1065,10 @@
 
         }
 
+
         sendButton.disabled =
           true;
+
 
         const {
           data,
@@ -881,8 +1092,10 @@
             .select()
             .single();
 
+
         sendButton.disabled =
           false;
+
 
         if (error) {
 
@@ -891,10 +1104,12 @@
             error
           );
 
+
           alert(
             "メッセージを送信できませんでした。\n\n" +
             error.message
           );
+
 
           return;
 
@@ -904,14 +1119,23 @@
         messageInput.value =
           "";
 
+
         await addMessageToScreen(
           data
         );
 
+
+        /*
+          自分で送信した場合は
+          一番下へ
+        */
+
         scrollToBottom();
 
 
-        // 通知を作成
+        /*
+          通知を作成
+        */
 
         await createNotification();
 
@@ -944,9 +1168,11 @@
         const file =
           imageInput.files?.[0];
 
+
         if (!file) {
           return;
         }
+
 
         if (
           !currentUsername ||
@@ -964,8 +1190,11 @@
 
         }
 
+
         if (
-          !file.type.startsWith("image/")
+          !file.type.startsWith(
+            "image/"
+          )
         ) {
 
           alert(
@@ -979,11 +1208,13 @@
 
         }
 
+
         imageButton.disabled =
           true;
 
         sendButton.disabled =
           true;
+
 
         try {
 
@@ -992,6 +1223,7 @@
               .split(".")
               .pop() ||
             "jpg";
+
 
           const filePath =
             currentUsername +
@@ -1006,10 +1238,13 @@
 
 
           const {
-            error: uploadError
+            error:
+              uploadError
           } =
             await supabaseClient.storage
-              .from("chat-images")
+              .from(
+                "chat-images"
+              )
               .upload(
                 filePath,
                 file,
@@ -1030,10 +1265,12 @@
               uploadError
             );
 
+
             alert(
               "画像をアップロードできませんでした。\n\n" +
               uploadError.message
             );
+
 
             return;
 
@@ -1070,10 +1307,12 @@
               error
             );
 
+
             alert(
               "画像メッセージを保存できませんでした。\n\n" +
               error.message
             );
+
 
             return;
 
@@ -1084,10 +1323,17 @@
             data
           );
 
+
+          /*
+            画像送信後は一番下へ
+          */
+
           scrollToBottom();
 
 
-          // 画像でも通知を作成
+          /*
+            画像でも通知を作成
+          */
 
           await createNotification();
 
