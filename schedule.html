@@ -1130,6 +1130,12 @@
       );
 
 
+    console.log(
+      "予定保存時の通知対象:",
+      selectedFriends
+    );
+
+
     if (!title) {
 
       alert(
@@ -1295,12 +1301,127 @@
 
         }
 
+
+        // =======================
+        // 通知作成
+        // =======================
+
+        let notificationSuccessCount = 0;
+
+        let notificationErrorMessages = [];
+
+
+        for (
+          const userId
+          of selectedFriends
+        ) {
+
+          console.log(
+            "通知送信開始:",
+            userId
+          );
+
+
+          const {
+            data: notificationData,
+            error: notificationError
+          } =
+            await supabaseClient
+              .from("notifications")
+              .insert({
+
+                user_id:
+                  userId,
+
+                type:
+                  "schedule",
+
+                title:
+                  "📅 予定が共有されました",
+
+                message:
+                  `「${title}」があなたに共有されました。`,
+
+                link:
+                  "schedule.html",
+
+                is_read:
+                  false
+
+              })
+              .select();
+
+
+          if (notificationError) {
+
+            console.error(
+              "予定共有通知エラー:",
+              notificationError
+            );
+
+            notificationErrorMessages.push(
+              `${userId}: ${notificationError.message}`
+            );
+
+          } else {
+
+            console.log(
+              "通知作成成功:",
+              notificationData
+            );
+
+            notificationSuccessCount++;
+
+          }
+
+        }
+
+
+        // =======================
+        // 通知結果
+        // =======================
+
+        if (
+          notificationErrorMessages.length > 0
+        ) {
+
+          alert(
+            "予定は保存されましたが、通知の作成に失敗しました。\n\n" +
+            notificationErrorMessages.join("\n")
+          );
+
+        } else {
+
+          console.log(
+            `通知作成完了: ${notificationSuccessCount}件`
+          );
+
+        }
+
       }
 
 
-      alert(
-        "予定を保存しました！📅"
-      );
+      // =======================
+      // 完了
+      // =======================
+
+      if (
+        visibility.value === "friend" &&
+        selectedFriends.length > 0
+      ) {
+
+        alert(
+          "予定を保存しました！📅\n\n" +
+          "フレンドへの通知も送信しました 🔔"
+        );
+
+      } else {
+
+        alert(
+          "予定を保存しました！📅"
+        );
+
+      }
 
 
       closeForm();
