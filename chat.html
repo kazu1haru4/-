@@ -10,6 +10,10 @@
       box-sizing: border-box;
     }
 
+    html {
+      scroll-behavior: auto;
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
@@ -85,6 +89,7 @@
       padding: 18px;
       overflow-y: auto;
       overflow-anchor: none;
+      -webkit-overflow-scrolling: touch;
     }
 
     .empty {
@@ -274,6 +279,10 @@
 
   <script>
 
+    /* =========================================
+       Supabase
+    ========================================= */
+
     const SUPABASE_URL =
       "https://yxonmqdyekwenyzekjwj.supabase.co";
 
@@ -285,6 +294,11 @@
         SUPABASE_URL,
         SUPABASE_KEY
       );
+
+
+    /* =========================================
+       要素
+    ========================================= */
 
     const messagesElement =
       document.getElementById("messages");
@@ -311,6 +325,10 @@
       document.getElementById("headerAvatar");
 
 
+    /* =========================================
+       基本変数
+    ========================================= */
+
     let currentUsername = "";
     let friendId = "";
     let realtimeChannel = null;
@@ -318,7 +336,8 @@
     let myAvatarUrl = "";
     let friendAvatarUrl = "";
 
-    let isRestoringScroll = false;
+    let restoringPosition = false;
+
 
     const params =
       new URLSearchParams(
@@ -330,17 +349,31 @@
 
 
     /*
-      相手ごとにスクロール位置を保存
+      相手ごとの保存キー
     */
 
-    const chatScrollKey =
-      "chat-scroll-" +
+    const chatPositionKey =
+      "chat-position-" +
       friendId;
 
 
-    // =========================
-    // プロフィール画像
-    // =========================
+    /*
+      ブラウザ側の自動スクロール復元をOFF
+    */
+
+    if (
+      "scrollRestoration" in history
+    ) {
+
+      history.scrollRestoration =
+        "manual";
+
+    }
+
+
+    /* =========================================
+       プロフィール画像
+    ========================================= */
 
     function createAvatar(
       url,
@@ -348,21 +381,27 @@
     ) {
 
       const avatar =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       avatar.className =
         "message-avatar";
 
+
       if (url) {
 
         const img =
-          document.createElement("img");
+          document.createElement(
+            "img"
+          );
 
         img.src =
           url;
 
         img.alt =
           "プロフィール画像";
+
 
         img.onerror =
           function() {
@@ -371,6 +410,7 @@
               fallback;
 
           };
+
 
         avatar.appendChild(
           img
@@ -383,14 +423,15 @@
 
       }
 
+
       return avatar;
 
     }
 
 
-    // =========================
-    // 通知
-    // =========================
+    /* =========================================
+       通知
+    ========================================= */
 
     async function createNotification() {
 
@@ -400,6 +441,7 @@
       ) {
         return;
       }
+
 
       const {
         error
@@ -432,6 +474,7 @@
 
           });
 
+
       if (error) {
 
         console.error(
@@ -444,9 +487,534 @@
     }
 
 
-    // =========================
-    // 開始
-    // =========================
+    /* =========================================
+       更新前の位置を保存
+    ========================================= */
+
+    function saveChatPosition() {
+
+      if (
+        restoringPosition ||
+        !messagesElement
+      ) {
+        return;
+      }
+
+
+      const messageElements =
+        messagesElement.querySelectorAll(
+          ".message[data-message-id]"
+        );
+
+
+      if (
+        !messageElements.length
+      ) {
+        return;
+      }
+
+
+      const containerRect =
+        messagesElement.getBoundingClientRect();
+
+
+      /*
+        画面上で一番上に近い
+        「見えているメッセージ」を探す
+      */
+
+      let target = null;
+
+
+      for (
+        const element of messageElements
+      ) {
+
+        const rect =
+          element.getBoundingClientRect();
+
+
+        if (
+          rect.bottom >
+          containerRect.top + 5
+        ) {
+
+          target =
+            element;
+
+          break;
+
+        }
+
+      }
+
+
+      if (!target) {
+
+        target =
+          messageElements[
+            messageElements.length - 1
+          ];
+
+      }
+
+
+      const rect =
+        target.getBoundingClientRect();
+
+
+      const position =
+        {
+
+          messageId:
+            target.dataset.messageId,
+
+          offset:
+            rect.top -
+            containerRect.top,
+
+          scrollTop:
+            messagesElement.scrollTop
+
+        };
+
+
+      try {
+
+        sessionStorage.setItem(
+          chatPositionKey,
+          JSON.stringify(
+            position
+          )
+        );
+
+      } catch (error) {
+
+        console.error(
+          "スクロール位置保存エラー:",
+          error
+        );
+
+      }
+
+    }
+
+
+    /* =========================================
+       スクロール時
+    ========================================= */
+
+    messagesElement.addEventListener(
+      "scroll",
+      function() {
+
+        if (
+          restoringPosition
+        ) {
+          return;
+        }
+
+
+        saveChatPosition();
+
+      },
+      {
+        passive: true
+      }
+    );
+
+
+    /* =========================================
+       ページを離れる直前にも保存
+    ========================================= */
+
+    window.addEventListener(
+      "pagehide",
+      function() {
+
+        saveChatPosition();
+
+      }
+    );
+
+
+    window.addEventListener(
+      "beforeunload",
+      function() {
+
+        saveChatPosition();
+
+      }
+    );
+
+
+    /* =========================================
+       画像の読み込み完了を待つ
+    ========================================= */
+
+    async function waitForImages() {
+
+      const images =
+        Array.from(
+          messagesElement.querySelectorAll(
+            "img.chat-image"
+          )
+        );
+
+
+      if (!images.length) {
+        return;
+      }
+
+
+      await Promise.all(
+
+        images.map(
+          function(img) {
+
+            if (
+              img.complete
+            ) {
+
+              return Promise.resolve();
+
+            }
+
+
+            return new Promise(
+              function(resolve) {
+
+                let finished =
+                  false;
+
+
+                function done() {
+
+                  if (
+                    finished
+                  ) {
+                    return;
+                  }
+
+
+                  finished =
+                    true;
+
+
+                  resolve();
+
+                }
+
+
+                img.addEventListener(
+                  "load",
+                  done,
+                  {
+                    once: true
+                  }
+                );
+
+
+                img.addEventListener(
+                  "error",
+                  done,
+                  {
+                    once: true
+                  }
+                );
+
+
+                /*
+                  念のため最大3秒
+                */
+
+                setTimeout(
+                  done,
+                  3000
+                );
+
+              }
+            );
+
+          }
+        )
+
+      );
+
+    }
+
+
+    /* =========================================
+       保存したメッセージ位置へ戻す
+    ========================================= */
+
+    async function restoreChatPosition() {
+
+      let saved = null;
+
+
+      try {
+
+        saved =
+          JSON.parse(
+            sessionStorage.getItem(
+              chatPositionKey
+            ) || "null"
+          );
+
+      } catch (error) {
+
+        saved =
+          null;
+
+      }
+
+
+      /*
+        保存位置がなければ一番下
+      */
+
+      if (
+        !saved ||
+        !saved.messageId
+      ) {
+
+        scrollToBottom();
+
+        return;
+
+      }
+
+
+      restoringPosition =
+        true;
+
+
+      /*
+        画像の高さが確定するまで待つ
+      */
+
+      await waitForImages();
+
+
+      let target =
+        messagesElement.querySelector(
+          `[data-message-id="${CSS.escape(String(saved.messageId))}"]`
+        );
+
+
+      /*
+        CSS.escapeが使えない場合用
+      */
+
+      if (!target) {
+
+        const all =
+          messagesElement.querySelectorAll(
+            ".message[data-message-id]"
+          );
+
+
+        for (
+          const element of all
+        ) {
+
+          if (
+            String(
+              element.dataset.messageId
+            ) ===
+            String(
+              saved.messageId
+            )
+          ) {
+
+            target =
+              element;
+
+            break;
+
+          }
+
+        }
+
+      }
+
+
+      /*
+        目印のメッセージが見つからない場合
+      */
+
+      if (!target) {
+
+        messagesElement.scrollTop =
+          Number(
+            saved.scrollTop || 0
+          );
+
+      } else {
+
+        const containerRect =
+          messagesElement.getBoundingClientRect();
+
+
+        const targetRect =
+          target.getBoundingClientRect();
+
+
+        const currentOffset =
+          targetRect.top -
+          containerRect.top;
+
+
+        const difference =
+          currentOffset -
+          Number(
+            saved.offset || 0
+          );
+
+
+        messagesElement.scrollTop =
+          messagesElement.scrollTop +
+          difference;
+
+      }
+
+
+      /*
+        レイアウト確定後にも再調整
+      */
+
+      const correctPosition =
+        function() {
+
+          if (!target) {
+            return;
+          }
+
+
+          const containerRect =
+            messagesElement.getBoundingClientRect();
+
+
+          const targetRect =
+            target.getBoundingClientRect();
+
+
+          const currentOffset =
+            targetRect.top -
+            containerRect.top;
+
+
+          const difference =
+            currentOffset -
+            Number(
+              saved.offset || 0
+            );
+
+
+          if (
+            Math.abs(
+              difference
+            ) > 1
+          ) {
+
+            messagesElement.scrollTop =
+              messagesElement.scrollTop +
+              difference;
+
+          }
+
+        };
+
+
+      requestAnimationFrame(
+        function() {
+
+          correctPosition();
+
+
+          requestAnimationFrame(
+            function() {
+
+              correctPosition();
+
+
+              setTimeout(
+                correctPosition,
+                100
+              );
+
+
+              setTimeout(
+                correctPosition,
+                300
+              );
+
+
+              setTimeout(
+                function() {
+
+                  correctPosition();
+
+                  restoringPosition =
+                    false;
+
+                },
+                700
+              );
+
+            }
+          );
+
+        }
+      );
+
+    }
+
+
+    /* =========================================
+       一番下へ
+    ========================================= */
+
+    function scrollToBottom() {
+
+      restoringPosition =
+        true;
+
+
+      messagesElement.scrollTop =
+        messagesElement.scrollHeight;
+
+
+      requestAnimationFrame(
+        function() {
+
+          messagesElement.scrollTop =
+            messagesElement.scrollHeight;
+
+
+          requestAnimationFrame(
+            function() {
+
+              messagesElement.scrollTop =
+                messagesElement.scrollHeight;
+
+
+              restoringPosition =
+                false;
+
+            }
+          );
+
+        }
+      );
+
+    }
+
+
+    /* =========================================
+       開始
+    ========================================= */
 
     async function start() {
 
@@ -455,11 +1023,14 @@
         chatTitle.textContent =
           "💬 相手が選ばれていません";
 
+
         messageForm.style.display =
           "none";
 
+
         messagesElement.innerHTML =
           '<div class="empty">フレンドから相手を選んでね</div>';
+
 
         return;
 
@@ -482,8 +1053,10 @@
           "ログインしてください。"
         );
 
+
         window.location.href =
           "index.html";
+
 
         return;
 
@@ -502,14 +1075,13 @@
           "ログイン中のユーザーIDを取得できませんでした。"
         );
 
+
         return;
 
       }
 
 
-      // =========================
-      // 相手プロフィール
-      // =========================
+      /* 相手プロフィール */
 
       const {
         data: friendProfile
@@ -547,9 +1119,7 @@
       }
 
 
-      // =========================
-      // 自分プロフィール
-      // =========================
+      /* 自分プロフィール */
 
       const {
         data: myProfile
@@ -573,14 +1143,15 @@
 
       await loadMessages();
 
+
       startRealtime();
 
     }
 
 
-    // =========================
-    // メッセージ読み込み
-    // =========================
+    /* =========================================
+       メッセージ読み込み
+    ========================================= */
 
     async function loadMessages() {
 
@@ -610,8 +1181,10 @@
           error
         );
 
+
         messagesElement.innerHTML =
           '<div class="empty">メッセージを読み込めませんでした</div>';
+
 
         return;
 
@@ -630,6 +1203,7 @@
         messagesElement.innerHTML =
           '<div class="empty">まだメッセージがありません</div>';
 
+
         return;
 
       }
@@ -646,14 +1220,18 @@
       }
 
 
-      restoreScrollPosition();
+      /*
+        ここで保存位置へ復元
+      */
+
+      await restoreChatPosition();
 
     }
 
 
-    // =========================
-    // メッセージ表示
-    // =========================
+    /* =========================================
+       メッセージ表示
+    ========================================= */
 
     async function addMessageToScreen(
       message
@@ -664,8 +1242,20 @@
           "div"
         );
 
+
       wrapper.className =
         "message";
+
+
+      /*
+        ★重要
+        メッセージIDをHTMLに保存
+      */
+
+      wrapper.dataset.messageId =
+        String(
+          message.id
+        );
 
 
       const isMine =
@@ -690,6 +1280,7 @@
             "👤"
           );
 
+
         wrapper.appendChild(
           avatar
         );
@@ -702,13 +1293,12 @@
           "div"
         );
 
+
       bubble.className =
         "bubble";
 
 
-      // =========================
-      // 画像
-      // =========================
+      /* 画像 */
 
       if (message.image_url) {
 
@@ -717,8 +1307,10 @@
             "img"
           );
 
+
         image.className =
           "chat-image";
+
 
         image.alt =
           "送信された画像";
@@ -746,6 +1338,7 @@
           image.src =
             data.signedUrl;
 
+
           bubble.appendChild(
             image
           );
@@ -755,9 +1348,7 @@
       }
 
 
-      // =========================
-      // テキスト
-      // =========================
+      /* テキスト */
 
       if (message.content) {
 
@@ -766,8 +1357,10 @@
             "div"
           );
 
+
         text.textContent =
           message.content;
+
 
         bubble.appendChild(
           text
@@ -776,14 +1369,13 @@
       }
 
 
-      // =========================
-      // 時刻
-      // =========================
+      /* 時刻 */
 
       const time =
         document.createElement(
           "div"
         );
+
 
       time.className =
         "time";
@@ -826,6 +1418,7 @@
             "😊"
           );
 
+
         wrapper.appendChild(
           avatar
         );
@@ -840,154 +1433,9 @@
     }
 
 
-    // =========================
-    // 一番下へ
-    // =========================
-
-    function scrollToBottom() {
-
-      isRestoringScroll =
-        true;
-
-      messagesElement.scrollTop =
-        messagesElement.scrollHeight;
-
-      requestAnimationFrame(
-        function() {
-
-          messagesElement.scrollTop =
-            messagesElement.scrollHeight;
-
-          isRestoringScroll =
-            false;
-
-        }
-      );
-
-    }
-
-
-    // =========================
-    // スクロール位置保存
-    // =========================
-
-    messagesElement.addEventListener(
-      "scroll",
-      function() {
-
-        if (isRestoringScroll) {
-          return;
-        }
-
-
-        sessionStorage.setItem(
-          chatScrollKey,
-          String(
-            messagesElement.scrollTop
-          )
-        );
-
-      }
-    );
-
-
-    // =========================
-    // スクロール位置復元
-    // =========================
-
-    function restoreScrollPosition() {
-
-      const saved =
-        Number(
-          sessionStorage.getItem(
-            chatScrollKey
-          ) || 0
-        );
-
-
-      if (
-        !Number.isFinite(saved) ||
-        saved <= 0
-      ) {
-
-        scrollToBottom();
-
-        return;
-
-      }
-
-
-      isRestoringScroll =
-        true;
-
-
-      function restore() {
-
-        messagesElement.scrollTop =
-          saved;
-
-      }
-
-
-      restore();
-
-
-      requestAnimationFrame(
-        function() {
-
-          restore();
-
-
-          requestAnimationFrame(
-            function() {
-
-              restore();
-
-
-              setTimeout(
-                function() {
-
-                  restore();
-
-                },
-                100
-              );
-
-
-              setTimeout(
-                function() {
-
-                  restore();
-
-                },
-                300
-              );
-
-
-              setTimeout(
-                function() {
-
-                  restore();
-
-                  isRestoringScroll =
-                    false;
-
-                },
-                700
-              );
-
-            }
-          );
-
-        }
-      );
-
-    }
-
-
-    // =========================
-    // リアルタイム
-    // =========================
+    /* =========================================
+       リアルタイム
+    ========================================= */
 
     function startRealtime() {
 
@@ -1042,11 +1490,18 @@
               }
 
 
+              /*
+                自分のメッセージは
+                すでに画面に追加済み
+              */
+
               if (
                 message.sender_id ===
                 currentUsername
               ) {
+
                 return;
+
               }
 
 
@@ -1054,6 +1509,10 @@
                 message
               );
 
+
+              /*
+                相手から新着なら一番下
+              */
 
               scrollToBottom();
 
@@ -1064,9 +1523,9 @@
     }
 
 
-    // =========================
-    // テキスト送信
-    // =========================
+    /* =========================================
+       テキスト送信
+    ========================================= */
 
     messageForm.addEventListener(
       "submit",
@@ -1092,6 +1551,7 @@
           alert(
             "ログイン情報または相手の情報を取得できません。"
           );
+
 
           return;
 
@@ -1138,10 +1598,12 @@
             error
           );
 
+
           alert(
             "メッセージを送信できませんでした。\n\n" +
             error.message
           );
+
 
           return;
 
@@ -1157,6 +1619,10 @@
         );
 
 
+        /*
+          送信したら一番下
+        */
+
         scrollToBottom();
 
 
@@ -1166,9 +1632,9 @@
     );
 
 
-    // =========================
-    // 画像ボタン
-    // =========================
+    /* =========================================
+       画像ボタン
+    ========================================= */
 
     imageButton.addEventListener(
       "click",
@@ -1180,9 +1646,9 @@
     );
 
 
-    // =========================
-    // 画像送信
-    // =========================
+    /* =========================================
+       画像送信
+    ========================================= */
 
     imageInput.addEventListener(
       "change",
@@ -1206,8 +1672,10 @@
             "ログイン情報または相手の情報を取得できません。"
           );
 
+
           imageInput.value =
             "";
+
 
           return;
 
@@ -1224,8 +1692,10 @@
             "画像ファイルを選んでください。"
           );
 
+
           imageInput.value =
             "";
+
 
           return;
 
@@ -1234,6 +1704,7 @@
 
         imageButton.disabled =
           true;
+
 
         sendButton.disabled =
           true;
@@ -1288,10 +1759,12 @@
               uploadError
             );
 
+
             alert(
               "画像をアップロードできませんでした。\n\n" +
               uploadError.message
             );
+
 
             return;
 
@@ -1330,10 +1803,12 @@
               error
             );
 
+
             alert(
               "画像メッセージを保存できませんでした。\n\n" +
               error.message
             );
+
 
             return;
 
@@ -1355,8 +1830,10 @@
           imageButton.disabled =
             false;
 
+
           sendButton.disabled =
             false;
+
 
           imageInput.value =
             "";
@@ -1367,9 +1844,9 @@
     );
 
 
-    // =========================
-    // 起動
-    // =========================
+    /* =========================================
+       起動
+    ========================================= */
 
     start();
 
