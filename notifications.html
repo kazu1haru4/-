@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>通知</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      background: linear-gradient(135deg, #fff3fb, #eef5ff);
+      color: #333;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background: rgba(255,255,255,0.7);
+    }
+
+    .header {
+      position: relative;
+      background: white;
+      padding: 18px 60px;
+      text-align: center;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .back-button {
+      position: absolute;
+      left: 12px;
+      top: 12px;
+      padding: 9px 12px;
+      background: #f5f5f5;
+      color: #555;
+      text-decoration: none;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .notifications {
+      padding: 14px;
+    }
+
+    .notification {
+      display: block;
+      text-decoration: none;
+      color: #333;
+      background: white;
+      border-radius: 18px;
+      padding: 15px;
+      margin-bottom: 10px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+    }
+
+    .notification.unread {
+      background: #f3f0ff;
+      border-left: 5px solid #8f7cff;
+    }
+
+    .notification-title {
+      font-weight: bold;
+      font-size: 15px;
+      margin-bottom: 5px;
+    }
+
+    .notification-message {
+      font-size: 14px;
+      color: #555;
+      line-height: 1.5;
+    }
+
+    .notification-time {
+      margin-top: 7px;
+      font-size: 11px;
+      color: #999;
+    }
+
+    .empty {
+      text-align: center;
+      color: #999;
+      padding: 60px 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="container">
+
+    <header class="header">
+      <a href="home.html" class="back-button">
+        🏠 ホーム
+      </a>
+
+      <h1>🔔 通知</h1>
+    </header>
+
+    <section
+      class="notifications"
+      id="notifications"
+    >
+      <div class="empty">
+        通知を読み込み中...
+      </div>
+    </section>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+
+    const SUPABASE_URL =
+      "https://yxonmqdyekwenyzekjwj.supabase.co";
+
+    const SUPABASE_KEY =
+      "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+
+    const supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
+    const notificationsElement =
+      document.getElementById("notifications");
+
+    let currentUsername = "";
+
+    // =========================
+    // 通知読み込み
+    // =========================
+
+    async function loadNotifications() {
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient.auth.getSession();
+
+      if (
+        error ||
+        !data.session
+      ) {
+
+        alert("ログインしてください。");
+
+        window.location.href =
+          "index.html";
+
+        return;
+
+      }
+
+      currentUsername =
+        data.session.user.user_metadata?.username || "";
+
+      if (!currentUsername) {
+
+        notificationsElement.innerHTML =
+          '<div class="empty">ユーザーIDを取得できませんでした。</div>';
+
+        return;
+
+      }
+
+      const {
+        data: notifications,
+        error: notificationError
+      } =
+        await supabaseClient
+          .from("notifications")
+          .select("*")
+          .eq(
+            "user_id",
+            currentUsername
+          )
+          .order(
+            "created_at",
+            {
+              ascending: false
+            }
+          );
+
+      if (notificationError) {
+
+        console.error(
+          notificationError
+        );
+
+        notificationsElement.innerHTML =
+          '<div class="empty">通知を読み込めませんでした。</div>';
+
+        return;
+
+      }
+
+      notificationsElement.innerHTML = "";
+
+      if (
+        !notifications ||
+        notifications.length === 0
+      ) {
+
+        notificationsElement.innerHTML =
+          '<div class="empty">まだ通知はありません 🔔</div>';
+
+        return;
+
+      }
+
+      for (
+        const notification of notifications
+      ) {
+
+        const item =
+          document.createElement("a");
+
+        item.className =
+          "notification";
+
+        if (
+          !notification.is_read
+        ) {
+
+          item.classList.add(
+            "unread"
+          );
+
+        }
+
+        item.href =
+          notification.link || "#";
+
+        const title =
+          document.createElement("div");
+
+        title.className =
+          "notification-title";
+
+        title.textContent =
+          notification.title;
+
+        const message =
+          document.createElement("div");
+
+        message.className =
+          "notification-message";
+
+        message.textContent =
+          notification.message;
+
+        const time =
+          document.createElement("div");
+
+        time.className =
+          "notification-time";
+
+        time.textContent =
+          formatTime(
+            notification.created_at
+          );
+
+        item.appendChild(title);
+        item.appendChild(message);
+        item.appendChild(time);
+
+        notificationsElement.appendChild(
+          item
+        );
+
+        // 未読なら既読にする
+
+        if (
+          !notification.is_read
+        ) {
+
+          await supabaseClient
+            .from("notifications")
+            .update({
+              is_read: true
+            })
+            .eq(
+              "id",
+              notification.id
+            );
+
+        }
+
+      }
+
+    }
+
+    // =========================
+    // 時刻
+    // =========================
+
+    function formatTime(
+      value
+    ) {
+
+      const date =
+        new Date(value);
+
+      return date.toLocaleString(
+        "ja-JP",
+        {
+          month: "numeric",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        }
+      );
+
+    }
+
+    // =========================
+    // 起動
+    // =========================
+
+    loadNotifications();
+
+  </script>
+
+</body>
+</html>
