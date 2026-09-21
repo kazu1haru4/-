@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>予定</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Hiragino Kaku Gothic ProN",
+        "Yu Gothic",
+        sans-serif;
+      background: linear-gradient(135deg, #fff4fb, #eef7ff);
+      color: #333;
+    }
+
+    .container {
+      width: min(92%, 500px);
+      margin: 0 auto;
+      padding: 24px 0 40px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .back {
+      border: none;
+      background: white;
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 25px;
+    }
+
+    .add-button {
+      width: 100%;
+      border: none;
+      border-radius: 18px;
+      padding: 15px;
+      background: #8f7cff;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 18px;
+    }
+
+    .form {
+      display: none;
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    }
+
+    .form.show {
+      display: block;
+    }
+
+    label {
+      display: block;
+      margin-top: 13px;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 15px;
+      font-family: inherit;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .save-button {
+      width: 100%;
+      border: none;
+      border-radius: 14px;
+      padding: 13px;
+      background: #ff82b2;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      margin-top: 18px;
+      cursor: pointer;
+    }
+
+    .cancel-button {
+      width: 100%;
+      border: none;
+      background: #f1f1f1;
+      border-radius: 14px;
+      padding: 12px;
+      margin-top: 9px;
+      cursor: pointer;
+    }
+
+    .schedule {
+      background: white;
+      border-radius: 20px;
+      padding: 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 5px 18px rgba(0,0,0,0.07);
+    }
+
+    .schedule-date {
+      color: #8f7cff;
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .schedule-title {
+      font-size: 19px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .schedule-info {
+      color: #666;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .delete-button {
+      border: none;
+      background: #ffecec;
+      color: #e05252;
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-top: 12px;
+      cursor: pointer;
+    }
+
+    .empty {
+      text-align: center;
+      color: #888;
+      padding: 40px 10px;
+    }
+
+    .loading {
+      text-align: center;
+      color: #888;
+      padding: 30px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <button class="back" id="backButton">← ホーム</button>
+    <h1>📅 予定</h1>
+    <div style="width:78px;"></div>
+  </div>
+
+  <button class="add-button" id="addButton">
+    ＋ 新しい予定
+  </button>
+
+  <div class="form" id="form">
+
+    <label>予定名</label>
+    <input
+      type="text"
+      id="title"
+      placeholder="例：友達と遊ぶ"
+    >
+
+    <label>日付</label>
+    <input
+      type="date"
+      id="date"
+    >
+
+    <label>時間</label>
+    <input
+      type="time"
+      id="time"
+    >
+
+    <label>場所</label>
+    <input
+      type="text"
+      id="place"
+      placeholder="例：渋谷駅"
+    >
+
+    <label>メモ</label>
+    <textarea
+      id="memo"
+      placeholder="予定についてのメモ"
+    ></textarea>
+
+    <button class="save-button" id="saveButton">
+      💾 予定を保存
+    </button>
+
+    <button class="cancel-button" id="cancelButton">
+      キャンセル
+    </button>
+
+  </div>
+
+  <div id="scheduleList">
+    <div class="loading">予定を読み込んでいます…</div>
+  </div>
+
+</div>
+
+<script>
+  const SUPABASE_URL =
+    "https://yxonmqdyekwenyzekjwj.supabase.co";
+
+  const SUPABASE_KEY =
+    "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+
+  const supabaseClient =
+    window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
+
+  let currentUsername = "";
+
+  const form = document.getElementById("form");
+  const addButton = document.getElementById("addButton");
+  const cancelButton = document.getElementById("cancelButton");
+  const saveButton = document.getElementById("saveButton");
+  const scheduleList = document.getElementById("scheduleList");
+
+  const titleInput = document.getElementById("title");
+  const dateInput = document.getElementById("date");
+  const timeInput = document.getElementById("time");
+  const placeInput = document.getElementById("place");
+  const memoInput = document.getElementById("memo");
+
+  document.getElementById("backButton").addEventListener("click", () => {
+    window.location.href = "home.html";
+  });
+
+  addButton.addEventListener("click", () => {
+    form.classList.add("show");
+
+    if (!dateInput.value) {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, "0");
+      const dd = String(today.getDate()).padStart(2, "0");
+
+      dateInput.value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    titleInput.focus();
+  });
+
+  cancelButton.addEventListener("click", () => {
+    closeForm();
+  });
+
+  function closeForm() {
+    form.classList.remove("show");
+
+    titleInput.value = "";
+    dateInput.value = "";
+    timeInput.value = "";
+    placeInput.value = "";
+    memoInput.value = "";
+  }
+
+  async function getCurrentUser() {
+
+    const {
+      data: { session },
+      error
+    } = await supabaseClient.auth.getSession();
+
+    if (error || !session) {
+      window.location.href = "index.html";
+      return false;
+    }
+
+    currentUsername =
+      session.user.user_metadata?.username || "";
+
+    if (!currentUsername) {
+      alert("ユーザー情報を取得できませんでした。");
+      return false;
+    }
+
+    return true;
+  }
+
+  async function loadSchedules() {
+
+    scheduleList.innerHTML =
+      '<div class="loading">予定を読み込んでいます…</div>';
+
+    const { data, error } = await supabaseClient
+      .from("schedules")
+      .select("*")
+      .eq("user_id", currentUsername)
+      .order("date", { ascending: true })
+      .order("time", { ascending: true });
+
+    if (error) {
+      console.error("予定取得エラー:", error);
+
+      scheduleList.innerHTML =
+        '<div class="empty">予定を読み込めませんでした。</div>';
+
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      scheduleList.innerHTML =
+        '<div class="empty">📅 まだ予定はありません</div>';
+
+      return;
+    }
+
+    scheduleList.innerHTML = "";
+
+    data.forEach(schedule => {
+
+      const element = document.createElement("div");
+      element.className = "schedule";
+
+      const dateText = formatDate(schedule.date);
+
+      let info = "";
+
+      if (schedule.time) {
+        info += `⏰ ${schedule.time.slice(0, 5)}<br>`;
+      }
+
+      if (schedule.place) {
+        info += `📍 ${escapeHtml(schedule.place)}<br>`;
+      }
+
+      if (schedule.memo) {
+        info += `📝 ${escapeHtml(schedule.memo).replace(/\n/g, "<br>")}`;
+      }
+
+      element.innerHTML = `
+        <div class="schedule-date">
+          📅 ${dateText}
+        </div>
+
+        <div class="schedule-title">
+          ${escapeHtml(schedule.title)}
+        </div>
+
+        <div class="schedule-info">
+          ${info || "詳細はありません"}
+        </div>
+
+        <button class="delete-button">
+          🗑️ 削除
+        </button>
+      `;
+
+      element
+        .querySelector(".delete-button")
+        .addEventListener("click", () => {
+          deleteSchedule(schedule.id);
+        });
+
+      scheduleList.appendChild(element);
+    });
+  }
+
+  async function saveSchedule() {
+
+    const title = titleInput.value.trim();
+    const date = dateInput.value;
+    const time = timeInput.value || null;
+    const place = placeInput.value.trim() || null;
+    const memo = memoInput.value.trim() || null;
+
+    if (!title) {
+      alert("予定名を入力してください。");
+      titleInput.focus();
+      return;
+    }
+
+    if (!date) {
+      alert("日付を選択してください。");
+      dateInput.focus();
+      return;
+    }
+
+    saveButton.disabled = true;
+    saveButton.textContent = "保存中…";
+
+    const { error } = await supabaseClient
+      .from("schedules")
+      .insert({
+        user_id: currentUsername,
+        title: title,
+        date: date,
+        time: time,
+        place: place,
+        memo: memo
+      });
+
+    if (error) {
+      console.error("予定保存エラー:", error);
+
+      alert(
+        "予定を保存できませんでした。\n\n" +
+        error.message
+      );
+
+      saveButton.disabled = false;
+      saveButton.textContent = "💾 予定を保存";
+      return;
+    }
+
+    closeForm();
+
+    await loadSchedules();
+
+    saveButton.disabled = false;
+    saveButton.textContent = "💾 予定を保存";
+  }
+
+  async function deleteSchedule(id) {
+
+    const confirmed =
+      window.confirm("この予定を削除しますか？");
+
+    if (!confirmed) return;
+
+    const { error } = await supabaseClient
+      .from("schedules")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", currentUsername);
+
+    if (error) {
+      console.error("予定削除エラー:", error);
+
+      alert(
+        "予定を削除できませんでした。\n\n" +
+        error.message
+      );
+
+      return;
+    }
+
+    await loadSchedules();
+  }
+
+  function formatDate(dateString) {
+
+    const parts = dateString.split("-");
+
+    if (parts.length !== 3) {
+      return dateString;
+    }
+
+    const year = Number(parts[0]);
+    const month = Number(parts[1]);
+    const day = Number(parts[2]);
+
+    const date = new Date(
+      Date.UTC(year, month - 1, day)
+    );
+
+    const week = [
+      "日",
+      "月",
+      "火",
+      "水",
+      "木",
+      "金",
+      "土"
+    ];
+
+    return `${year}年${month}月${day}日（${week[date.getUTCDay()]}）`;
+  }
+
+  function escapeHtml(value) {
+
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  saveButton.addEventListener("click", saveSchedule);
+
+  async function start() {
+
+    const ok = await getCurrentUser();
+
+    if (!ok) return;
+
+    await loadSchedules();
+  }
+
+  start();
+</script>
+
+</body>
+</html>
