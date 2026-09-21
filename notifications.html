@@ -65,6 +65,13 @@
       padding: 15px;
       margin-bottom: 10px;
       box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+      cursor: pointer;
+      transition: transform 0.12s, background 0.12s;
+    }
+
+    .notification:active {
+      transform: scale(0.98);
+      background: #f8f8ff;
     }
 
     .notification.unread {
@@ -103,11 +110,16 @@
   <main class="container">
 
     <header class="header">
-      <a href="home.html" class="back-button">
+
+      <a
+        href="home.html"
+        class="back-button"
+      >
         🏠 ホーム
       </a>
 
       <h1>🔔 通知</h1>
+
     </header>
 
     <section
@@ -120,6 +132,7 @@
     </section>
 
   </main>
+
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -137,10 +150,94 @@
         SUPABASE_KEY
       );
 
+
     const notificationsElement =
-      document.getElementById("notifications");
+      document.getElementById(
+        "notifications"
+      );
+
 
     let currentUsername = "";
+
+
+    // =========================
+    // 通知を既読にする
+    // =========================
+
+    async function markAsRead(
+      notificationId
+    ) {
+
+      const {
+        error
+      } =
+        await supabaseClient
+          .from("notifications")
+          .update({
+            is_read: true
+          })
+          .eq(
+            "id",
+            notificationId
+          );
+
+      if (error) {
+
+        console.error(
+          "既読処理エラー:",
+          error
+        );
+
+      }
+
+    }
+
+
+    // =========================
+    // 通知を開く
+    // =========================
+
+    async function openNotification(
+      notification
+    ) {
+
+      // まず既読にする
+
+      if (
+        !notification.is_read
+      ) {
+
+        await markAsRead(
+          notification.id
+        );
+
+      }
+
+
+      // 移動先がある場合
+
+      if (
+        notification.link &&
+        notification.link !== "#"
+      ) {
+
+        window.location.href =
+          notification.link;
+
+        return;
+
+      }
+
+
+      // 移動先がない場合
+
+      console.log(
+        "通知にリンクがありません:",
+        notification
+      );
+
+    }
+
 
     // =========================
     // 通知読み込み
@@ -154,12 +251,15 @@
       } =
         await supabaseClient.auth.getSession();
 
+
       if (
         error ||
         !data.session
       ) {
 
-        alert("ログインしてください。");
+        alert(
+          "ログインしてください。"
+        );
 
         window.location.href =
           "index.html";
@@ -168,8 +268,11 @@
 
       }
 
+
       currentUsername =
-        data.session.user.user_metadata?.username || "";
+        data.session.user
+          .user_metadata?.username || "";
+
 
       if (!currentUsername) {
 
@@ -179,6 +282,7 @@
         return;
 
       }
+
 
       const {
         data: notifications,
@@ -198,6 +302,7 @@
             }
           );
 
+
       if (notificationError) {
 
         console.error(
@@ -211,7 +316,10 @@
 
       }
 
-      notificationsElement.innerHTML = "";
+
+      notificationsElement.innerHTML =
+        "";
+
 
       if (
         !notifications ||
@@ -225,15 +333,20 @@
 
       }
 
+
       for (
         const notification of notifications
       ) {
 
         const item =
-          document.createElement("a");
+          document.createElement(
+            "div"
+          );
+
 
         item.className =
           "notification";
+
 
         if (
           !notification.is_read
@@ -245,29 +358,65 @@
 
         }
 
-        item.href =
-          notification.link || "#";
+
+        // =====================
+        // タップ処理
+        // =====================
+
+        item.addEventListener(
+          "click",
+          function() {
+
+            openNotification(
+              notification
+            );
+
+          }
+        );
+
+
+        // =====================
+        // タイトル
+        // =====================
 
         const title =
-          document.createElement("div");
+          document.createElement(
+            "div"
+          );
 
         title.className =
           "notification-title";
 
         title.textContent =
-          notification.title;
+          notification.title ||
+          "通知";
+
+
+        // =====================
+        // 本文
+        // =====================
 
         const message =
-          document.createElement("div");
+          document.createElement(
+            "div"
+          );
 
         message.className =
           "notification-message";
 
         message.textContent =
-          notification.message;
+          notification.message ||
+          "";
+
+
+        // =====================
+        // 時刻
+        // =====================
 
         const time =
-          document.createElement("div");
+          document.createElement(
+            "div"
+          );
 
         time.className =
           "notification-time";
@@ -277,35 +426,28 @@
             notification.created_at
           );
 
-        item.appendChild(title);
-        item.appendChild(message);
-        item.appendChild(time);
+
+        item.appendChild(
+          title
+        );
+
+        item.appendChild(
+          message
+        );
+
+        item.appendChild(
+          time
+        );
+
 
         notificationsElement.appendChild(
           item
         );
 
-        // 未読なら既読にする
-
-        if (
-          !notification.is_read
-        ) {
-
-          await supabaseClient
-            .from("notifications")
-            .update({
-              is_read: true
-            })
-            .eq(
-              "id",
-              notification.id
-            );
-
-        }
-
       }
 
     }
+
 
     // =========================
     // 時刻
@@ -315,8 +457,25 @@
       value
     ) {
 
+      if (!value) {
+        return "";
+      }
+
+
       const date =
         new Date(value);
+
+
+      if (
+        Number.isNaN(
+          date.getTime()
+        )
+      ) {
+
+        return "";
+
+      }
+
 
       return date.toLocaleString(
         "ja-JP",
@@ -329,6 +488,7 @@
       );
 
     }
+
 
     // =========================
     // 起動
