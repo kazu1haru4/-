@@ -28,12 +28,45 @@
     }
 
     .header {
+      position: relative;
       background: white;
       border-radius: 24px;
       padding: 25px 20px;
       text-align: center;
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
       margin-bottom: 20px;
+    }
+
+    .notification-button {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      background: #f3f0ff;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 25px;
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      min-width: 21px;
+      height: 21px;
+      padding: 0 5px;
+      border-radius: 20px;
+      background: #ff4d67;
+      color: white;
+      font-size: 11px;
+      font-weight: bold;
+      display: none;
+      align-items: center;
+      justify-content: center;
     }
 
     .logo {
@@ -134,6 +167,20 @@
 
     <section class="header">
 
+      <a
+        href="notifications.html"
+        class="notification-button"
+        aria-label="通知"
+      >
+        🔔
+        <span
+          class="notification-badge"
+          id="notificationBadge"
+        >
+          0
+        </span>
+      </a>
+
       <div class="logo">💬</div>
 
       <h1>フレンドチャット</h1>
@@ -209,6 +256,10 @@
       );
 
 
+    // =========================
+    // ホーム開始
+    // =========================
+
     async function start() {
 
       const {
@@ -227,13 +278,20 @@
       }
 
 
+      const username =
+        data.user.user_metadata?.username || "";
+
+
       const {
         data: profile
       } =
         await supabaseClient
           .from("profiles")
           .select("name")
-          .eq("user_id", data.user.user_metadata?.username || "")
+          .eq(
+            "user_id",
+            username
+          )
           .maybeSingle();
 
 
@@ -246,6 +304,92 @@
 
         document.getElementById("welcome").textContent =
           "ログイン中です！";
+
+      }
+
+
+      // 通知件数を読み込む
+
+      await loadNotificationCount(
+        username
+      );
+
+    }
+
+
+    // =========================
+    // 未読通知件数
+    // =========================
+
+    async function loadNotificationCount(
+      username
+    ) {
+
+      if (!username) {
+
+        return;
+
+      }
+
+
+      const {
+        count,
+        error
+      } =
+        await supabaseClient
+          .from("notifications")
+          .select(
+            "id",
+            {
+              count: "exact",
+              head: true
+            }
+          )
+          .eq(
+            "user_id",
+            username
+          )
+          .eq(
+            "is_read",
+            false
+          );
+
+
+      if (error) {
+
+        console.error(
+          "通知件数取得エラー:",
+          error
+        );
+
+        return;
+
+      }
+
+
+      const badge =
+        document.getElementById(
+          "notificationBadge"
+        );
+
+
+      if (
+        count &&
+        count > 0
+      ) {
+
+        badge.textContent =
+          count > 99
+            ? "99+"
+            : String(count);
+
+        badge.style.display =
+          "flex";
+
+      } else {
+
+        badge.style.display =
+          "none";
 
       }
 
