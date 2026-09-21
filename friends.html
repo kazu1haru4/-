@@ -140,7 +140,6 @@
       color: #999;
     }
 
-    /* ★ 最終オンライン */
     .last-online {
       margin-top: 2px;
       color: #999;
@@ -244,10 +243,9 @@
 
     let currentUsername = "";
 
-    // 60秒以内ならオンライン
-    const ONLINE_LIMIT = 60 * 1000;
+    const ONLINE_LIMIT =
+      60 * 1000;
 
-    // オンライン更新タイマー
     let presenceTimer = null;
 
 
@@ -286,24 +284,22 @@
       }
 
 
-      // 自分をオンラインにする
       await updatePresence();
 
-
-      // フレンド一覧
       await loadFriends();
 
 
-      // 30秒ごとに更新
-      presenceTimer = setInterval(
-        async function() {
+      presenceTimer =
+        setInterval(
+          async function() {
 
-          await updatePresence();
-          await loadFriends();
+            await updatePresence();
 
-        },
-        30000
-      );
+            await loadFriends();
+
+          },
+          30000
+        );
 
     }
 
@@ -327,7 +323,8 @@
           .upsert(
             {
               user_id: currentUsername,
-              last_seen: new Date().toISOString()
+              last_seen:
+                new Date().toISOString()
             },
             {
               onConflict: "user_id"
@@ -368,14 +365,15 @@
 
 
       return (
-        Date.now() - lastTime <= ONLINE_LIMIT
+        Date.now() - lastTime <=
+        ONLINE_LIMIT
       );
 
     }
 
 
     // =========================
-    // ★ 最終オンライン
+    // 最終オンライン
     // =========================
 
     function formatLastOnline(lastSeen) {
@@ -529,7 +527,6 @@
       }
 
 
-      // フレンドID一覧
       const friendIds =
         data.map(
           friend =>
@@ -592,7 +589,6 @@
 
       for (const friend of data) {
 
-        // プロフィール
         const {
           data: profile
         } =
@@ -611,17 +607,16 @@
         const div =
           document.createElement("div");
 
-        div.className = "friend";
+        div.className =
+          "friend";
 
 
-        // =========================
         // アバター
-        // =========================
-
         const avatar =
           document.createElement("div");
 
-        avatar.className = "avatar";
+        avatar.className =
+          "avatar";
 
 
         if (profile?.avatar_url) {
@@ -636,36 +631,38 @@
             "プロフィール画像";
 
 
-          img.onerror = function() {
+          img.onerror =
+            function() {
 
-            avatar.innerHTML = "👤";
+              avatar.innerHTML =
+                "👤";
 
-          };
+            };
 
 
           avatar.appendChild(img);
 
         } else {
 
-          avatar.textContent = "👤";
+          avatar.textContent =
+            "👤";
 
         }
 
 
-        // =========================
         // 情報
-        // =========================
-
         const info =
           document.createElement("div");
 
-        info.className = "info";
+        info.className =
+          "info";
 
 
         const name =
           document.createElement("div");
 
-        name.className = "name";
+        name.className =
+          "name";
 
         name.textContent =
           profile?.name ||
@@ -675,16 +672,15 @@
         const userId =
           document.createElement("div");
 
-        userId.className = "user-id";
+        userId.className =
+          "user-id";
 
         userId.textContent =
-          "@" + friend.friend_id;
+          "@" +
+          friend.friend_id;
 
 
-        // =========================
         // オンライン
-        // =========================
-
         const status =
           document.createElement("div");
 
@@ -723,10 +719,7 @@
         }
 
 
-        // =========================
-        // ★ 最終オンライン
-        // =========================
-
+        // 最終オンライン
         const lastOnline =
           document.createElement("div");
 
@@ -755,16 +748,15 @@
         info.appendChild(lastOnline);
 
 
-        // =========================
         // 矢印
-        // =========================
-
         const arrow =
           document.createElement("div");
 
-        arrow.className = "arrow";
+        arrow.className =
+          "arrow";
 
-        arrow.textContent = "›";
+        arrow.textContent =
+          "›";
 
 
         div.appendChild(avatar);
@@ -773,15 +765,15 @@
 
 
         // =========================
-        // チャットへ
+        // ★ プロフィールへ
         // =========================
 
         div.addEventListener(
           "click",
-          () => {
+          function() {
 
             window.location.href =
-              "chat.html?user=" +
+              "friend_profile.html?user=" +
               encodeURIComponent(
                 friend.friend_id
               );
@@ -856,7 +848,7 @@
       }
 
 
-      // 相手のプロフィール確認
+      // プロフィール確認
       const {
         data: profile,
         error: profileError
