@@ -8,103 +8,615 @@
 
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:sans-serif;background:linear-gradient(135deg,#eef7ff,#f7efff)}
-body{display:flex;flex-direction:column}
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  font-family:sans-serif;
+  background:linear-gradient(135deg,#eef7ff,#f7efff)
+}
+body{
+  display:flex;
+  flex-direction:column
+}
 
-.header{position:relative;flex:0 0 auto;background:white;padding:14px 120px 14px 60px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.08);display:flex;align-items:center;justify-content:center;z-index:40}
-.home-button{position:absolute;top:12px;left:12px;padding:9px 12px;background:white;color:#555;text-decoration:none;border-radius:12px;font-size:13px;font-weight:bold;box-shadow:0 3px 10px rgba(0,0,0,.08)}
-.member-button{position:absolute;top:12px;right:12px;border:none;padding:9px 12px;background:#6aa9ff;color:white;border-radius:12px;font-size:13px;font-weight:bold;cursor:pointer}
-.title{font-size:22px;font-weight:bold;color:#444}
-.group-name{font-size:14px;color:#888;margin-top:4px}
+.header{
+  position:relative;
+  flex:0 0 auto;
+  background:white;
+  padding:14px 120px 14px 60px;
+  text-align:center;
+  box-shadow:0 2px 10px rgba(0,0,0,.08);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:40
+}
 
-.messages-wrapper{position:relative;flex:1 1 auto;min-height:0;overflow:hidden}
-.messages{width:100%;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:15px;padding-bottom:25px;max-width:700px;margin:auto}
+.home-button{
+  position:absolute;
+  top:12px;
+  left:12px;
+  padding:9px 12px;
+  background:white;
+  color:#555;
+  text-decoration:none;
+  border-radius:12px;
+  font-size:13px;
+  font-weight:bold;
+  box-shadow:0 3px 10px rgba(0,0,0,.08)
+}
 
-#latestButton{position:absolute;right:18px;bottom:18px;border:none;background:#6aa9ff;color:white;border-radius:50px;padding:11px 15px;font-size:14px;font-weight:bold;box-shadow:0 4px 14px rgba(0,0,0,.18);cursor:pointer;display:none;z-index:30}
-#latestButton.show{display:block}
+.member-button{
+  position:absolute;
+  top:12px;
+  right:12px;
+  border:none;
+  padding:9px 12px;
+  background:#6aa9ff;
+  color:white;
+  border-radius:12px;
+  font-size:13px;
+  font-weight:bold;
+  cursor:pointer
+}
 
-.message-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:10px}
-.message-avatar{width:40px;height:40px;border-radius:50%;background:#dceaff;display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0;overflow:hidden}
-.message-avatar img{width:100%;height:100%;object-fit:cover}
+.title{
+  font-size:22px;
+  font-weight:bold;
+  color:#444
+}
 
-.message{position:relative;background:white;border-radius:15px;padding:10px 13px;box-shadow:0 2px 8px rgba(0,0,0,.06);cursor:pointer;min-width:0;flex:1}
-.sender{font-size:12px;color:#777;margin-bottom:4px;font-weight:bold}
-.content{font-size:16px;color:#333;word-break:break-word;white-space:pre-wrap}
-.mention{color:#4d8fe8;background:#eaf3ff;border-radius:5px;padding:1px 3px;font-weight:bold}
-.chat-image{display:block;max-width:250px;max-height:320px;border-radius:14px;margin-top:5px;object-fit:contain}
-.deleted-message{color:#999;font-style:italic;font-size:14px;padding:4px 0}
+.group-name{
+  font-size:14px;
+  color:#888;
+  margin-top:4px
+}
 
-.read-status{margin-top:5px;color:#8a63d2;font-size:11px;font-weight:bold;text-align:right}
-.reply-preview{background:#f0f5ff;border-left:4px solid #6aa9ff;border-radius:8px;padding:7px 9px;margin-top:8px;font-size:12px;color:#666}
-.reply-preview strong{color:#5588cc}
-.reactions{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
-.reaction-item{background:#f2f5fa;border-radius:20px;padding:4px 8px;font-size:14px}
+.messages-wrapper{
+  position:relative;
+  flex:1 1 auto;
+  min-height:0;
+  overflow:hidden
+}
 
-.message-menu{display:none;position:absolute;top:calc(100% + 5px);left:10px;z-index:100;background:white;border-radius:14px;padding:7px;box-shadow:0 6px 20px rgba(0,0,0,.18);min-width:200px}
-.message-menu button{display:block;width:100%;border:none;background:white;text-align:left;padding:11px 12px;border-radius:9px;font-size:15px;cursor:pointer}
-.message-menu button:hover,.message-menu button:active{background:#f0f5ff}
-.delete-button{color:#d9534f!important}
+.messages{
+  width:100%;
+  height:100%;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:15px;
+  padding-bottom:25px;
+  max-width:700px;
+  margin:auto
+}
 
-.reaction-picker{display:none;position:absolute;top:calc(100% + 5px);left:10px;z-index:110;background:white;border-radius:15px;padding:8px;box-shadow:0 6px 20px rgba(0,0,0,.18);gap:5px}
-.reaction-picker button{border:none;background:#f5f7fb;border-radius:10px;width:42px;height:42px;font-size:21px;cursor:pointer}
+#latestButton{
+  position:absolute;
+  right:18px;
+  bottom:18px;
+  border:none;
+  background:#6aa9ff;
+  color:white;
+  border-radius:50px;
+  padding:11px 15px;
+  font-size:14px;
+  font-weight:bold;
+  box-shadow:0 4px 14px rgba(0,0,0,.18);
+  cursor:pointer;
+  display:none;
+  z-index:30
+}
 
-.mention-list{display:none;position:fixed;left:10px;right:10px;bottom:65px;max-width:500px;margin:auto;background:white;border-radius:14px;box-shadow:0 -4px 20px rgba(0,0,0,.15);padding:7px;max-height:220px;overflow-y:auto;z-index:80}
-.mention-list.show{display:block}
-.mention-item{display:flex;align-items:center;gap:9px;width:100%;border:none;background:white;border-radius:10px;padding:10px;cursor:pointer;text-align:left}
-.mention-item:hover,.mention-item:active{background:#f0f5ff}
-.mention-avatar{width:34px;height:34px;border-radius:50%;background:#dceaff;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
-.mention-avatar img{width:100%;height:100%;object-fit:cover}
-.mention-name{font-size:14px;font-weight:bold;color:#444}
-.mention-id{font-size:12px;color:#888}
+#latestButton.show{
+  display:block
+}
 
-.input-area{position:relative;flex:0 0 auto;background:white;padding:10px;display:flex;gap:8px;box-shadow:0 -2px 10px rgba(0,0,0,.08);z-index:70}
-#messageInput{flex:1;padding:12px;border:1px solid #ddd;border-radius:12px;font-size:16px;min-width:0;outline:none}
-#messageInput:focus{border-color:#6aa9ff}
-#imageButton{width:48px;border:none;background:#f0f5ff;color:#5588cc;border-radius:12px;font-size:21px;cursor:pointer}
-#sendButton{border:none;background:#6aa9ff;color:white;border-radius:12px;padding:0 18px;font-weight:bold;cursor:pointer;font-size:15px}
-#sendButton:disabled,#imageButton:disabled{background:#bbb}
-#imageInput{display:none}
-.error{text-align:center;color:#d55;padding:20px}
+.message-row{
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  margin-bottom:10px
+}
 
-.reply-area{display:none;flex:0 0 auto;background:white;border-top:1px solid #ddd;padding:8px 10px;z-index:65}
-.reply-info{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#f0f5ff;border-left:4px solid #6aa9ff;border-radius:8px;padding:8px 10px}
-.reply-text{font-size:12px;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-.reply-text strong{color:#5588cc}
-#cancelReplyButton{border:none;background:transparent;color:#777;font-size:18px;cursor:pointer}
+.message-avatar{
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  background:#dceaff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:21px;
+  flex-shrink:0;
+  overflow:hidden
+}
 
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);align-items:center;justify-content:center;padding:20px;z-index:200}
-.modal-box{width:100%;max-width:360px;background:white;border-radius:20px;padding:22px;box-shadow:0 8px 30px rgba(0,0,0,.18);max-height:80vh;overflow-y:auto}
-.modal-title{font-size:20px;font-weight:bold;color:#444;text-align:center;margin-bottom:15px}
-.member-list{margin-bottom:15px}
+.message-avatar img{
+  width:100%;
+  height:100%;
+  object-fit:cover
+}
 
-.member-item{display:flex;align-items:center;gap:10px;background:#f5f8ff;border-radius:12px;padding:10px;margin-bottom:8px}
-.member-icon{width:38px;height:38px;border-radius:50%;background:#dceaff;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden}
-.member-icon img{width:100%;height:100%;object-fit:cover}
-.member-info{min-width:0;flex:1}
-.member-name{font-size:14px;font-weight:bold;color:#444;word-break:break-word}
-.member-id{font-size:12px;color:#888;word-break:break-word}
+.message{
+  position:relative;
+  background:white;
+  border-radius:15px;
+  padding:10px 13px;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+  cursor:pointer;
+  min-width:0;
+  flex:1
+}
 
-.member-status{font-size:12px;font-weight:bold;margin-top:3px}
-.member-status.online{color:#22a447}
-.member-status.offline{color:#999}
+.sender{
+  font-size:12px;
+  color:#777;
+  margin-bottom:4px;
+  font-weight:bold
+}
 
-.member-loading,.member-empty{text-align:center;color:#888;padding:15px 5px;font-size:14px}
+.content{
+  font-size:16px;
+  color:#333;
+  word-break:break-word;
+  white-space:pre-wrap
+}
 
-#memberInput{width:100%;padding:12px;border:1px solid #ddd;border-radius:12px;font-size:16px;margin-bottom:10px}
-.modal-buttons{display:flex;gap:8px}
-.modal-buttons button{flex:1;border:none;border-radius:12px;padding:12px;font-weight:bold;cursor:pointer}
-#addMemberButton{background:#6aa9ff;color:white}
-#closeModalButton{background:#eee;color:#555}
+.mention{
+  color:#4d8fe8;
+  background:#eaf3ff;
+  border-radius:5px;
+  padding:1px 3px;
+  font-weight:bold
+}
 
-.add-section{border-top:1px solid #eee;margin-top:15px;padding-top:15px}
-.add-section-title{font-size:14px;font-weight:bold;color:#555;margin-bottom:8px}
+.chat-image{
+  display:block;
+  max-width:250px;
+  max-height:320px;
+  border-radius:14px;
+  margin-top:5px;
+  object-fit:contain
+}
+
+.deleted-message{
+  color:#999;
+  font-style:italic;
+  font-size:14px;
+  padding:4px 0
+}
+
+.read-status{
+  margin-top:5px;
+  color:#8a63d2;
+  font-size:11px;
+  font-weight:bold;
+  text-align:right
+}
+
+.reply-preview{
+  background:#f0f5ff;
+  border-left:4px solid #6aa9ff;
+  border-radius:8px;
+  padding:7px 9px;
+  margin-top:8px;
+  font-size:12px;
+  color:#666
+}
+
+.reply-preview strong{
+  color:#5588cc
+}
+
+.reactions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:7px
+}
+
+.reaction-item{
+  background:#f2f5fa;
+  border-radius:20px;
+  padding:4px 8px;
+  font-size:14px
+}
+
+.message-menu{
+  display:none;
+  position:absolute;
+  top:calc(100% + 5px);
+  left:10px;
+  z-index:100;
+  background:white;
+  border-radius:14px;
+  padding:7px;
+  box-shadow:0 6px 20px rgba(0,0,0,.18);
+  min-width:200px
+}
+
+.message-menu button{
+  display:block;
+  width:100%;
+  border:none;
+  background:white;
+  text-align:left;
+  padding:11px 12px;
+  border-radius:9px;
+  font-size:15px;
+  cursor:pointer
+}
+
+.message-menu button:hover,
+.message-menu button:active{
+  background:#f0f5ff
+}
+
+.delete-button{
+  color:#d9534f!important
+}
+
+.reaction-picker{
+  display:none;
+  position:absolute;
+  top:calc(100% + 5px);
+  left:10px;
+  z-index:110;
+  background:white;
+  border-radius:15px;
+  padding:8px;
+  box-shadow:0 6px 20px rgba(0,0,0,.18);
+  gap:5px
+}
+
+.reaction-picker button{
+  border:none;
+  background:#f5f7fb;
+  border-radius:10px;
+  width:42px;
+  height:42px;
+  font-size:21px;
+  cursor:pointer
+}
+
+.mention-list{
+  display:none;
+  position:fixed;
+  left:10px;
+  right:10px;
+  bottom:65px;
+  max-width:500px;
+  margin:auto;
+  background:white;
+  border-radius:14px;
+  box-shadow:0 -4px 20px rgba(0,0,0,.15);
+  padding:7px;
+  max-height:220px;
+  overflow-y:auto;
+  z-index:80
+}
+
+.mention-list.show{
+  display:block
+}
+
+.mention-item{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  width:100%;
+  border:none;
+  background:white;
+  border-radius:10px;
+  padding:10px;
+  cursor:pointer;
+  text-align:left
+}
+
+.mention-item:hover,
+.mention-item:active{
+  background:#f0f5ff
+}
+
+.mention-avatar{
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  background:#dceaff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  flex-shrink:0
+}
+
+.mention-avatar img{
+  width:100%;
+  height:100%;
+  object-fit:cover
+}
+
+.mention-name{
+  font-size:14px;
+  font-weight:bold;
+  color:#444
+}
+
+.mention-id{
+  font-size:12px;
+  color:#888
+}
+
+.input-area{
+  position:relative;
+  flex:0 0 auto;
+  background:white;
+  padding:10px;
+  display:flex;
+  gap:8px;
+  box-shadow:0 -2px 10px rgba(0,0,0,.08);
+  z-index:70
+}
+
+#messageInput{
+  flex:1;
+  padding:12px;
+  border:1px solid #ddd;
+  border-radius:12px;
+  font-size:16px;
+  min-width:0;
+  outline:none
+}
+
+#messageInput:focus{
+  border-color:#6aa9ff
+}
+
+#imageButton{
+  width:48px;
+  border:none;
+  background:#f0f5ff;
+  color:#5588cc;
+  border-radius:12px;
+  font-size:21px;
+  cursor:pointer
+}
+
+#sendButton{
+  border:none;
+  background:#6aa9ff;
+  color:white;
+  border-radius:12px;
+  padding:0 18px;
+  font-weight:bold;
+  cursor:pointer;
+  font-size:15px
+}
+
+#sendButton:disabled,
+#imageButton:disabled{
+  background:#bbb
+}
+
+#imageInput{
+  display:none
+}
+
+.error{
+  text-align:center;
+  color:#d55;
+  padding:20px
+}
+
+.reply-area{
+  display:none;
+  flex:0 0 auto;
+  background:white;
+  border-top:1px solid #ddd;
+  padding:8px 10px;
+  z-index:65
+}
+
+.reply-info{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  background:#f0f5ff;
+  border-left:4px solid #6aa9ff;
+  border-radius:8px;
+  padding:8px 10px
+}
+
+.reply-text{
+  font-size:12px;
+  color:#666;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  min-width:0
+}
+
+.reply-text strong{
+  color:#5588cc
+}
+
+#cancelReplyButton{
+  border:none;
+  background:transparent;
+  color:#777;
+  font-size:18px;
+  cursor:pointer
+}
+
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.35);
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  z-index:200
+}
+
+.modal-box{
+  width:100%;
+  max-width:360px;
+  background:white;
+  border-radius:20px;
+  padding:22px;
+  box-shadow:0 8px 30px rgba(0,0,0,.18);
+  max-height:80vh;
+  overflow-y:auto
+}
+
+.modal-title{
+  font-size:20px;
+  font-weight:bold;
+  color:#444;
+  text-align:center;
+  margin-bottom:15px
+}
+
+.member-list{
+  margin-bottom:15px
+}
+
+.member-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:#f5f8ff;
+  border-radius:12px;
+  padding:10px;
+  margin-bottom:8px
+}
+
+.member-icon{
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  background:#dceaff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+  flex-shrink:0;
+  overflow:hidden
+}
+
+.member-icon img{
+  width:100%;
+  height:100%;
+  object-fit:cover
+}
+
+.member-info{
+  min-width:0;
+  flex:1
+}
+
+.member-name{
+  font-size:14px;
+  font-weight:bold;
+  color:#444;
+  word-break:break-word
+}
+
+.member-id{
+  font-size:12px;
+  color:#888;
+  word-break:break-word
+}
+
+.member-status{
+  font-size:12px;
+  font-weight:bold;
+  margin-top:3px
+}
+
+.member-status.online{
+  color:#22a447
+}
+
+.member-status.offline{
+  color:#999
+}
+
+/* ★ 最終オンライン */
+.last-online{
+  font-size:11px;
+  color:#999;
+  margin-top:2px;
+  word-break:break-word
+}
+
+.member-loading,
+.member-empty{
+  text-align:center;
+  color:#888;
+  padding:15px 5px;
+  font-size:14px
+}
+
+#memberInput{
+  width:100%;
+  padding:12px;
+  border:1px solid #ddd;
+  border-radius:12px;
+  font-size:16px;
+  margin-bottom:10px
+}
+
+.modal-buttons{
+  display:flex;
+  gap:8px
+}
+
+.modal-buttons button{
+  flex:1;
+  border:none;
+  border-radius:12px;
+  padding:12px;
+  font-weight:bold;
+  cursor:pointer
+}
+
+#addMemberButton{
+  background:#6aa9ff;
+  color:white
+}
+
+#closeModalButton{
+  background:#eee;
+  color:#555
+}
+
+.add-section{
+  border-top:1px solid #eee;
+  margin-top:15px;
+  padding-top:15px
+}
+
+.add-section-title{
+  font-size:14px;
+  font-weight:bold;
+  color:#555;
+  margin-bottom:8px
+}
 </style>
 </head>
 
 <body>
 
 <div class="header">
-<a href="home.html" class="home-button">🏠 ホーム</a>
+
+<a href="home.html" class="home-button">
+🏠 ホーム
+</a>
 
 <button id="memberButton" class="member-button" type="button">
 👥 メンバー
@@ -112,23 +624,35 @@ body{display:flex;flex-direction:column}
 
 <div>
 <div class="title">👥 グループチャット</div>
-<div id="groupName" class="group-name">読み込み中...</div>
+<div id="groupName" class="group-name">
+読み込み中...
 </div>
 </div>
 
+</div>
+
 <div class="messages-wrapper">
+
 <div id="messages" class="messages"></div>
 
 <button id="latestButton" type="button">
 ⬇️ 最新へ
 </button>
+
 </div>
 
 <div id="replyArea" class="reply-area">
+
 <div class="reply-info">
+
 <div id="replyText" class="reply-text"></div>
-<button id="cancelReplyButton" type="button">✕</button>
+
+<button id="cancelReplyButton" type="button">
+✕
+</button>
+
 </div>
+
 </div>
 
 <div class="input-area">
@@ -140,15 +664,23 @@ placeholder="メッセージを入力..."
 autocomplete="off"
 >
 
-<button id="imageButton" type="button">🖼️</button>
+<button id="imageButton" type="button">
+🖼️
+</button>
 
-<button id="sendButton" type="button">送信</button>
+<button id="sendButton" type="button">
+送信
+</button>
 
 </div>
 
 <div id="mentionList" class="mention-list"></div>
 
-<input id="imageInput" type="file" accept="image/*">
+<input
+id="imageInput"
+type="file"
+accept="image/*"
+>
 
 <div id="memberModal" class="modal">
 
@@ -159,7 +691,9 @@ autocomplete="off"
 </div>
 
 <div id="memberList" class="member-list">
-<div class="member-loading">読み込み中...</div>
+<div class="member-loading">
+読み込み中...
+</div>
 </div>
 
 <div class="add-section">
@@ -186,6 +720,7 @@ autocomplete="off"
 </button>
 
 </div>
+
 </div>
 
 </div>
@@ -206,7 +741,9 @@ SUPABASE_KEY
 );
 
 const params =
-new URLSearchParams(window.location.search);
+new URLSearchParams(
+window.location.search
+);
 
 const groupId =
 params.get("id");
@@ -270,16 +807,105 @@ let presenceTimer = null;
 const profileCache = {};
 const groupReadCounts = {};
 
+/* =========================
+   オンライン判定
+========================= */
+
 function isOnline(lastSeen) {
 
-if (!lastSeen) return false;
+  if (!lastSeen) return false;
 
-const time =
-new Date(lastSeen).getTime();
+  const time =
+    new Date(lastSeen).getTime();
 
-if (Number.isNaN(time)) return false;
+  if (Number.isNaN(time)) {
+    return false;
+  }
 
-return Date.now() - time <= 60000;
+  return (
+    Date.now() - time <= 60000
+  );
+}
+
+/* =========================
+   最終オンライン表示
+========================= */
+
+function formatLastOnline(lastSeen) {
+
+  if (!lastSeen) {
+    return "最終オンライン：不明";
+  }
+
+  const time =
+    new Date(lastSeen).getTime();
+
+  if (Number.isNaN(time)) {
+    return "最終オンライン：不明";
+  }
+
+  const diff =
+    Date.now() - time;
+
+  if (diff < 0) {
+    return "最終オンライン：たった今";
+  }
+
+  const seconds =
+    Math.floor(diff / 1000);
+
+  if (seconds < 60) {
+    return "最終オンライン：たった今";
+  }
+
+  const minutes =
+    Math.floor(seconds / 60);
+
+  if (minutes < 60) {
+    return (
+      "最終オンライン：" +
+      minutes +
+      "分前"
+    );
+  }
+
+  const hours =
+    Math.floor(minutes / 60);
+
+  if (hours < 24) {
+    return (
+      "最終オンライン：" +
+      hours +
+      "時間前"
+    );
+  }
+
+  const days =
+    Math.floor(hours / 24);
+
+  if (days < 30) {
+    return (
+      "最終オンライン：" +
+      days +
+      "日前"
+    );
+  }
+
+  const date =
+    new Date(lastSeen);
+
+  return (
+    "最終オンライン：" +
+    date.getFullYear() +
+    "/" +
+    String(
+      date.getMonth() + 1
+    ).padStart(2,"0") +
+    "/" +
+    String(
+      date.getDate()
+    ).padStart(2,"0")
+  );
 }
 
 /* =========================
@@ -288,27 +914,29 @@ return Date.now() - time <= 60000;
 
 async function updateMyPresence() {
 
-if (!currentUsername) return;
+  if (!currentUsername) return;
 
-const { error } =
-await supabaseClient
-.from("user_presence")
-.upsert(
-{
-user_id: currentUsername,
-last_seen: new Date().toISOString()
-},
-{
-onConflict: "user_id"
-}
-);
+  const { error } =
+    await supabaseClient
+      .from("user_presence")
+      .upsert(
+        {
+          user_id: currentUsername,
+          last_seen:
+            new Date().toISOString()
+        },
+        {
+          onConflict:"user_id"
+        }
+      );
 
-if (error) {
-console.error(
-"オンライン状態更新エラー:",
-error
-);
-}
+  if (error) {
+
+    console.error(
+      "オンライン状態更新エラー:",
+      error
+    );
+  }
 }
 
 /* =========================
@@ -317,58 +945,59 @@ error
 
 async function getProfile(username) {
 
-if (!username) return null;
+  if (!username) return null;
 
-if (
-Object.prototype.hasOwnProperty.call(
-profileCache,
-username
-)
-) {
-return profileCache[username];
-}
+  if (
+    Object.prototype.hasOwnProperty.call(
+      profileCache,
+      username
+    )
+  ) {
+    return profileCache[username];
+  }
 
-const { data } =
-await supabaseClient
-.from("profiles")
-.select("user_id,name,avatar_url")
-.eq("user_id",username)
-.maybeSingle();
+  const { data } =
+    await supabaseClient
+      .from("profiles")
+      .select(
+        "user_id,name,avatar_url"
+      )
+      .eq("user_id",username)
+      .maybeSingle();
 
-profileCache[username] =
-data || null;
+  profileCache[username] =
+    data || null;
 
-return data || null;
+  return data || null;
 }
 
 function createAvatar(profile) {
 
-const avatar =
-document.createElement("div");
+  const avatar =
+    document.createElement("div");
 
-avatar.className =
-"message-avatar";
+  avatar.className =
+    "message-avatar";
 
-if (profile?.avatar_url) {
+  if (profile?.avatar_url) {
 
-const img =
-document.createElement("img");
+    const img =
+      document.createElement("img");
 
-img.src =
-profile.avatar_url;
+    img.src =
+      profile.avatar_url;
 
-img.alt =
-"プロフィール画像";
+    img.alt =
+      "プロフィール画像";
 
-avatar.appendChild(img);
+    avatar.appendChild(img);
 
-} else {
+  } else {
 
-avatar.textContent = "👤";
+    avatar.textContent = "👤";
+  }
 
-}
-
-return avatar;
+  return avatar;
 }
 
 /* =========================
@@ -377,28 +1006,28 @@ return avatar;
 
 async function loadGroup() {
 
-const { data,error } =
-await supabaseClient
-.from("groups")
-.select("name")
-.eq("id",Number(groupId))
-.single();
+  const { data,error } =
+    await supabaseClient
+      .from("groups")
+      .select("name")
+      .eq("id",Number(groupId))
+      .single();
 
-if (error || !data) {
+  if (error || !data) {
 
-console.error(
-"グループ取得エラー:",
-error
-);
+    console.error(
+      "グループ取得エラー:",
+      error
+    );
 
-groupName.textContent =
-"グループが見つかりません";
+    groupName.textContent =
+      "グループが見つかりません";
 
-return;
-}
+    return;
+  }
 
-groupName.textContent =
-data.name;
+  groupName.textContent =
+    data.name;
 }
 
 /* =========================
@@ -407,151 +1036,197 @@ data.name;
 
 async function getGroupMembers() {
 
-const { data,error } =
-await supabaseClient
-.from("group_members")
-.select("user_id")
-.eq("group_id",Number(groupId));
+  const { data,error } =
+    await supabaseClient
+      .from("group_members")
+      .select("user_id")
+      .eq("group_id",Number(groupId));
 
-if (error) {
+  if (error) {
 
-console.error(
-"メンバー取得エラー:",
-error
-);
+    console.error(
+      "メンバー取得エラー:",
+      error
+    );
 
-return [];
-}
+    return [];
+  }
 
-groupMembersCache =
-data || [];
+  groupMembersCache =
+    data || [];
 
-return groupMembersCache;
+  return groupMembersCache;
 }
 
 /* =========================
    既読
 ========================= */
 
-async function loadGroupReadCounts(messageIds) {
+async function loadGroupReadCounts(
+  messageIds
+) {
 
-for (const key of Object.keys(groupReadCounts)) {
-delete groupReadCounts[key];
+  for (
+    const key of Object.keys(
+      groupReadCounts
+    )
+  ) {
+    delete groupReadCounts[key];
+  }
+
+  if (!messageIds?.length) return;
+
+  const { data,error } =
+    await supabaseClient
+      .from("group_message_reads")
+      .select(
+        "group_message_id,user_id"
+      )
+      .in(
+        "group_message_id",
+        messageIds
+      );
+
+  if (error) {
+
+    console.error(
+      "グループ既読取得エラー:",
+      error
+    );
+
+    return;
+  }
+
+  for (const read of data || []) {
+
+    if (
+      read.user_id ===
+      currentUsername
+    ) {
+      continue;
+    }
+
+    const id =
+      String(
+        read.group_message_id
+      );
+
+    if (!groupReadCounts[id]) {
+
+      groupReadCounts[id] =
+        new Set();
+    }
+
+    groupReadCounts[id].add(
+      read.user_id
+    );
+  }
 }
 
-if (!messageIds?.length) return;
+async function markGroupMessagesAsRead(
+  messagesData
+) {
 
-const { data,error } =
-await supabaseClient
-.from("group_message_reads")
-.select("group_message_id,user_id")
-.in("group_message_id",messageIds);
+  if (
+    !currentUsername ||
+    !messagesData?.length
+  ) {
+    return;
+  }
 
-if (error) {
+  const unreadMessages =
+    messagesData.filter(
+      message =>
+        !message.is_deleted &&
+        message.sender_id !==
+          currentUsername
+    );
 
-console.error(
-"グループ既読取得エラー:",
-error
-);
+  if (!unreadMessages.length) {
+    return;
+  }
 
-return;
-}
+  const rows =
+    unreadMessages.map(
+      message => ({
+        group_message_id:
+          message.id,
+        user_id:
+          currentUsername
+      })
+    );
 
-for (const read of data || []) {
+  const { error } =
+    await supabaseClient
+      .from("group_message_reads")
+      .upsert(
+        rows,
+        {
+          onConflict:
+            "group_message_id,user_id",
+          ignoreDuplicates:true
+        }
+      );
 
-if (read.user_id === currentUsername) continue;
+  if (error) {
 
-const id =
-String(read.group_message_id);
-
-if (!groupReadCounts[id]) {
-groupReadCounts[id] = new Set();
-}
-
-groupReadCounts[id].add(
-read.user_id
-);
-}
-}
-
-async function markGroupMessagesAsRead(messagesData) {
-
-if (!currentUsername || !messagesData?.length) {
-return;
-}
-
-const unreadMessages =
-messagesData.filter(
-message =>
-!message.is_deleted &&
-message.sender_id !== currentUsername
-);
-
-if (!unreadMessages.length) return;
-
-const rows =
-unreadMessages.map(
-message => ({
-group_message_id: message.id,
-user_id: currentUsername
-})
-);
-
-const { error } =
-await supabaseClient
-.from("group_message_reads")
-.upsert(
-rows,
-{
-onConflict:"group_message_id,user_id",
-ignoreDuplicates:true
-}
-);
-
-if (error) {
-console.error(
-"グループ既読登録エラー:",
-error
-);
-}
+    console.error(
+      "グループ既読登録エラー:",
+      error
+    );
+  }
 }
 
 /* =========================
    最新へ
 ========================= */
 
-function scrollToBottom(smooth=false) {
+function scrollToBottom(
+  smooth=false
+) {
 
-messages.scrollTo({
-top:messages.scrollHeight,
-behavior:smooth ? "smooth" : "auto"
-});
+  messages.scrollTo({
+    top:
+      messages.scrollHeight,
+    behavior:
+      smooth
+        ? "smooth"
+        : "auto"
+  });
 
-updateLatestButton();
+  updateLatestButton();
 }
 
 function updateLatestButton() {
 
-const distance =
-messages.scrollHeight -
-messages.scrollTop -
-messages.clientHeight;
+  const distance =
+    messages.scrollHeight -
+    messages.scrollTop -
+    messages.clientHeight;
 
-if (distance > 150) {
-latestButton.classList.add("show");
-} else {
-latestButton.classList.remove("show");
-}
+  if (distance > 150) {
+
+    latestButton.classList.add(
+      "show"
+    );
+
+  } else {
+
+    latestButton.classList.remove(
+      "show"
+    );
+  }
 }
 
 messages.addEventListener(
-"scroll",
-updateLatestButton
+  "scroll",
+  updateLatestButton
 );
 
 latestButton.addEventListener(
-"click",
-() => scrollToBottom(true)
+  "click",
+  () =>
+    scrollToBottom(true)
 );
 
 /* =========================
@@ -560,112 +1235,145 @@ latestButton.addEventListener(
 
 async function loadMessages() {
 
-const { data,error } =
-await supabaseClient
-.from("group_messages")
-.select("*")
-.eq("group_id",Number(groupId))
-.order("created_at",{ascending:true});
+  const { data,error } =
+    await supabaseClient
+      .from("group_messages")
+      .select("*")
+      .eq("group_id",Number(groupId))
+      .order(
+        "created_at",
+        {ascending:true}
+      );
 
-if (error) {
+  if (error) {
 
-console.error(
-"メッセージ読み込みエラー:",
-error
-);
+    console.error(
+      "メッセージ読み込みエラー:",
+      error
+    );
 
-messages.innerHTML =
-'<div class="error">メッセージを読み込めませんでした。</div>';
+    messages.innerHTML =
+      '<div class="error">メッセージを読み込めませんでした。</div>';
 
-return;
-}
+    return;
+  }
 
-const messageData =
-data || [];
+  const messageData =
+    data || [];
 
-const messageIds =
-messageData.map(message => message.id);
+  const messageIds =
+    messageData.map(
+      message => message.id
+    );
 
-await loadGroupReadCounts(messageIds);
+  await loadGroupReadCounts(
+    messageIds
+  );
 
-await markGroupMessagesAsRead(messageData);
+  await markGroupMessagesAsRead(
+    messageData
+  );
 
-await loadGroupReadCounts(messageIds);
+  await loadGroupReadCounts(
+    messageIds
+  );
 
-messages.innerHTML = "";
+  messages.innerHTML = "";
 
-for (const message of messageData) {
-await addMessage(message);
-}
+  for (
+    const message of messageData
+  ) {
+    await addMessage(message);
+  }
 
-requestAnimationFrame(
-() => scrollToBottom(false)
-);
+  requestAnimationFrame(
+    () =>
+      scrollToBottom(false)
+  );
 }
 
 /* =========================
-   メンション表示
+   メンション
 ========================= */
 
-function appendMentionContent(element,text) {
+function appendMentionContent(
+  element,
+  text
+) {
 
-const parts =
-text.split(/(@[A-Za-z0-9_]+)/g);
+  const parts =
+    text.split(
+      /(@[A-Za-z0-9_]+)/g
+    );
 
-for (const part of parts) {
+  for (const part of parts) {
 
-if (/^@[A-Za-z0-9_]+$/.test(part)) {
+    if (
+      /^@[A-Za-z0-9_]+$/.test(part)
+    ) {
 
-const mention =
-document.createElement("span");
+      const mention =
+        document.createElement("span");
 
-mention.className = "mention";
-mention.textContent = part;
+      mention.className =
+        "mention";
 
-element.appendChild(mention);
+      mention.textContent =
+        part;
 
-} else {
+      element.appendChild(
+        mention
+      );
 
-element.appendChild(
-document.createTextNode(part)
-);
-}
-}
+    } else {
+
+      element.appendChild(
+        document.createTextNode(part)
+      );
+    }
+  }
 }
 
 /* =========================
    送信取り消し
 ========================= */
 
-async function deleteMessage(messageId) {
-
-if (
-!window.confirm(
-"このメッセージを取り消しますか？"
-)
+async function deleteMessage(
+  messageId
 ) {
-return;
-}
 
-const { error } =
-await supabaseClient
-.from("group_messages")
-.update({is_deleted:true})
-.eq("id",messageId)
-.eq("sender_id",currentUsername);
+  if (
+    !window.confirm(
+      "このメッセージを取り消しますか？"
+    )
+  ) {
+    return;
+  }
 
-if (error) {
+  const { error } =
+    await supabaseClient
+      .from("group_messages")
+      .update({
+        is_deleted:true
+      })
+      .eq("id",messageId)
+      .eq(
+        "sender_id",
+        currentUsername
+      );
 
-alert(
-"送信取り消しに失敗しました。\n\n" +
-error.message
-);
+  if (error) {
 
-return;
-}
+    alert(
+      "送信取り消しに失敗しました。\n\n" +
+      error.message
+    );
 
-await loadMessages();
-scrollToBottom(true);
+    return;
+  }
+
+  await loadMessages();
+  scrollToBottom(true);
 }
 
 /* =========================
@@ -674,397 +1382,526 @@ scrollToBottom(true);
 
 async function addMessage(message) {
 
-const profile =
-await getProfile(message.sender_id);
+  const profile =
+    await getProfile(
+      message.sender_id
+    );
 
-const row =
-document.createElement("div");
+  const row =
+    document.createElement("div");
 
-row.className = "message-row";
+  row.className =
+    "message-row";
 
-row.appendChild(
-createAvatar(profile)
-);
+  row.appendChild(
+    createAvatar(profile)
+  );
 
-const box =
-document.createElement("div");
+  const box =
+    document.createElement("div");
 
-box.className = "message";
+  box.className =
+    "message";
 
-const sender =
-document.createElement("div");
+  const sender =
+    document.createElement("div");
 
-sender.className = "sender";
+  sender.className =
+    "sender";
 
-sender.textContent =
-message.sender_id === currentUsername
-? "あなた"
-: "@" + message.sender_id;
+  sender.textContent =
+    message.sender_id ===
+    currentUsername
+      ? "あなた"
+      : "@" +
+        message.sender_id;
 
-box.appendChild(sender);
+  box.appendChild(sender);
 
-if (message.is_deleted) {
+  if (message.is_deleted) {
 
-const deleted =
-document.createElement("div");
+    const deleted =
+      document.createElement("div");
 
-deleted.className =
-"deleted-message";
+    deleted.className =
+      "deleted-message";
 
-deleted.textContent =
-"このメッセージは取り消されました";
+    deleted.textContent =
+      "このメッセージは取り消されました";
 
-box.appendChild(deleted);
+    box.appendChild(deleted);
 
-row.appendChild(box);
-messages.appendChild(row);
+    row.appendChild(box);
 
-return;
-}
+    messages.appendChild(row);
 
-if (message.image_url) {
+    return;
+  }
 
-const { data:signedData } =
-await supabaseClient.storage
-.from("chat-images")
-.createSignedUrl(
-message.image_url,
-3600
-);
+  if (message.image_url) {
 
-if (signedData?.signedUrl) {
+    const {
+      data:signedData
+    } =
+      await supabaseClient.storage
+        .from("chat-images")
+        .createSignedUrl(
+          message.image_url,
+          3600
+        );
 
-const image =
-document.createElement("img");
+    if (signedData?.signedUrl) {
 
-image.className = "chat-image";
-image.src = signedData.signedUrl;
-image.alt = "送信された画像";
+      const image =
+        document.createElement("img");
 
-image.addEventListener(
-"click",
-event => event.stopPropagation()
-);
+      image.className =
+        "chat-image";
 
-box.appendChild(image);
-}
-}
+      image.src =
+        signedData.signedUrl;
 
-if (message.content) {
+      image.alt =
+        "送信された画像";
 
-const content =
-document.createElement("div");
+      image.addEventListener(
+        "click",
+        event =>
+          event.stopPropagation()
+      );
 
-content.className = "content";
+      box.appendChild(image);
+    }
+  }
 
-appendMentionContent(
-content,
-message.content
-);
+  if (message.content) {
 
-box.appendChild(content);
-}
+    const content =
+      document.createElement("div");
 
-/* 既読 */
-
-if (message.sender_id === currentUsername) {
-
-const readSet =
-groupReadCounts[String(message.id)];
-
-const readCount =
-readSet ? readSet.size : 0;
-
-if (readCount > 0) {
-
-const readStatus =
-document.createElement("div");
-
-readStatus.className =
-"read-status";
-
-readStatus.textContent =
-"既読 " + readCount + "人";
-
-box.appendChild(readStatus);
-}
-}
-
-/* 返信 */
-
-const { data:replies } =
-await supabaseClient
-.from("group_replies")
-.select("*")
-.eq("group_message_id",message.id)
-.order("created_at",{ascending:true});
-
-for (const reply of replies || []) {
-
-const replyBox =
-document.createElement("div");
-
-replyBox.className =
-"reply-preview";
-
-const strong =
-document.createElement("strong");
-
-strong.textContent =
-"@" + reply.sender_id + "：";
-
-replyBox.appendChild(strong);
-
-replyBox.appendChild(
-document.createTextNode(
-" " + reply.content
-)
-);
-
-box.appendChild(replyBox);
-}
-
-/* リアクション */
-
-const { data:reactions } =
-await supabaseClient
-.from("group_reactions")
-.select("*")
-.eq("group_message_id",message.id);
-
-if (reactions?.length) {
-
-const reactionArea =
-document.createElement("div");
-
-reactionArea.className =
-"reactions";
-
-const counts = {};
-
-for (const reaction of reactions) {
-
-counts[reaction.reaction] =
-(counts[reaction.reaction] || 0) + 1;
-}
-
-for (const emoji of Object.keys(counts)) {
-
-const item =
-document.createElement("div");
-
-item.className =
-"reaction-item";
-
-item.textContent =
-emoji + " " + counts[emoji];
-
-reactionArea.appendChild(item);
-}
-
-box.appendChild(reactionArea);
-}
-
-/* メニュー */
-
-const menu =
-document.createElement("div");
-
-menu.className =
-"message-menu";
-
-const reactionButton =
-document.createElement("button");
-
-reactionButton.type = "button";
-reactionButton.textContent =
-"❤️ リアクション";
-
-const replyButton =
-document.createElement("button");
-
-replyButton.type = "button";
-replyButton.textContent =
-"↩️ 返信";
-
-menu.appendChild(reactionButton);
-menu.appendChild(replyButton);
-
-/* 削除 */
-
-if (message.sender_id === currentUsername) {
-
-const deleteButton =
-document.createElement("button");
-
-deleteButton.type = "button";
-deleteButton.className =
-"delete-button";
-
-deleteButton.textContent =
-"🗑️ 送信取り消し";
-
-deleteButton.addEventListener(
-"click",
-async event => {
-
-event.preventDefault();
-event.stopPropagation();
-
-menu.style.display = "none";
-picker.style.display = "none";
-
-await deleteMessage(message.id);
-}
-);
-
-menu.appendChild(deleteButton);
-}
-
-/* リアクション */
-
-const picker =
-document.createElement("div");
-
-picker.className =
-"reaction-picker";
-
-for (const emoji of [
-"❤️","😂","👍","😮","😢"
-]) {
-
-const button =
-document.createElement("button");
-
-button.type = "button";
-button.textContent = emoji;
-
-button.addEventListener(
-"click",
-async event => {
-
-event.stopPropagation();
-
-await addReaction(
-message.id,
-emoji
-);
-
-picker.style.display = "none";
-menu.style.display = "none";
-
-await loadMessages();
-}
-);
-
-picker.appendChild(button);
-}
-
-reactionButton.addEventListener(
-"click",
-event => {
-
-event.stopPropagation();
-
-menu.style.display = "none";
-picker.style.display = "flex";
-}
-);
-
-replyButton.addEventListener(
-"click",
-event => {
-
-event.preventDefault();
-event.stopPropagation();
-
-startReply(message);
-
-menu.style.display = "none";
-picker.style.display = "none";
-}
-);
-
-box.addEventListener(
-"click",
-event => {
-
-event.stopPropagation();
-
-document.querySelectorAll(
-".message-menu"
-).forEach(
-other => {
-if (other !== menu)
-other.style.display = "none";
-}
-);
-
-document.querySelectorAll(
-".reaction-picker"
-).forEach(
-other => {
-if (other !== picker)
-other.style.display = "none";
-}
-);
-
-picker.style.display = "none";
-
-menu.style.display =
-menu.style.display === "block"
-? "none"
-: "block";
-}
-);
-
-box.appendChild(menu);
-box.appendChild(picker);
-
-row.appendChild(box);
-messages.appendChild(row);
+    content.className =
+      "content";
+
+    appendMentionContent(
+      content,
+      message.content
+    );
+
+    box.appendChild(content);
+  }
+
+  if (
+    message.sender_id ===
+    currentUsername
+  ) {
+
+    const readSet =
+      groupReadCounts[
+        String(message.id)
+      ];
+
+    const readCount =
+      readSet
+        ? readSet.size
+        : 0;
+
+    if (readCount > 0) {
+
+      const readStatus =
+        document.createElement("div");
+
+      readStatus.className =
+        "read-status";
+
+      readStatus.textContent =
+        "既読 " +
+        readCount +
+        "人";
+
+      box.appendChild(
+        readStatus
+      );
+    }
+  }
+
+  const {
+    data:replies
+  } =
+    await supabaseClient
+      .from("group_replies")
+      .select("*")
+      .eq(
+        "group_message_id",
+        message.id
+      )
+      .order(
+        "created_at",
+        {ascending:true}
+      );
+
+  for (
+    const reply of replies || []
+  ) {
+
+    const replyBox =
+      document.createElement("div");
+
+    replyBox.className =
+      "reply-preview";
+
+    const strong =
+      document.createElement("strong");
+
+    strong.textContent =
+      "@" +
+      reply.sender_id +
+      "：";
+
+    replyBox.appendChild(
+      strong
+    );
+
+    replyBox.appendChild(
+      document.createTextNode(
+        " " +
+        reply.content
+      )
+    );
+
+    box.appendChild(
+      replyBox
+    );
+  }
+
+  const {
+    data:reactions
+  } =
+    await supabaseClient
+      .from("group_reactions")
+      .select("*")
+      .eq(
+        "group_message_id",
+        message.id
+      );
+
+  if (reactions?.length) {
+
+    const reactionArea =
+      document.createElement("div");
+
+    reactionArea.className =
+      "reactions";
+
+    const counts = {};
+
+    for (
+      const reaction of reactions
+    ) {
+
+      counts[
+        reaction.reaction
+      ] =
+        (
+          counts[
+            reaction.reaction
+          ] || 0
+        ) + 1;
+    }
+
+    for (
+      const emoji of Object.keys(
+        counts
+      )
+    ) {
+
+      const item =
+        document.createElement("div");
+
+      item.className =
+        "reaction-item";
+
+      item.textContent =
+        emoji +
+        " " +
+        counts[emoji];
+
+      reactionArea.appendChild(
+        item
+      );
+    }
+
+    box.appendChild(
+      reactionArea
+    );
+  }
+
+  const menu =
+    document.createElement("div");
+
+  menu.className =
+    "message-menu";
+
+  const reactionButton =
+    document.createElement("button");
+
+  reactionButton.type =
+    "button";
+
+  reactionButton.textContent =
+    "❤️ リアクション";
+
+  const replyButton =
+    document.createElement("button");
+
+  replyButton.type =
+    "button";
+
+  replyButton.textContent =
+    "↩️ 返信";
+
+  menu.appendChild(
+    reactionButton
+  );
+
+  menu.appendChild(
+    replyButton
+  );
+
+  if (
+    message.sender_id ===
+    currentUsername
+  ) {
+
+    const deleteButton =
+      document.createElement("button");
+
+    deleteButton.type =
+      "button";
+
+    deleteButton.className =
+      "delete-button";
+
+    deleteButton.textContent =
+      "🗑️ 送信取り消し";
+
+    deleteButton.addEventListener(
+      "click",
+      async event => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        menu.style.display =
+          "none";
+
+        picker.style.display =
+          "none";
+
+        await deleteMessage(
+          message.id
+        );
+      }
+    );
+
+    menu.appendChild(
+      deleteButton
+    );
+  }
+
+  const picker =
+    document.createElement("div");
+
+  picker.className =
+    "reaction-picker";
+
+  for (
+    const emoji of [
+      "❤️",
+      "😂",
+      "👍",
+      "😮",
+      "😢"
+    ]
+  ) {
+
+    const button =
+      document.createElement("button");
+
+    button.type =
+      "button";
+
+    button.textContent =
+      emoji;
+
+    button.addEventListener(
+      "click",
+      async event => {
+
+        event.stopPropagation();
+
+        await addReaction(
+          message.id,
+          emoji
+        );
+
+        picker.style.display =
+          "none";
+
+        menu.style.display =
+          "none";
+
+        await loadMessages();
+      }
+    );
+
+    picker.appendChild(
+      button
+    );
+  }
+
+  reactionButton.addEventListener(
+    "click",
+    event => {
+
+      event.stopPropagation();
+
+      menu.style.display =
+        "none";
+
+      picker.style.display =
+        "flex";
+    }
+  );
+
+  replyButton.addEventListener(
+    "click",
+    event => {
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      startReply(message);
+
+      menu.style.display =
+        "none";
+
+      picker.style.display =
+        "none";
+    }
+  );
+
+  box.addEventListener(
+    "click",
+    event => {
+
+      event.stopPropagation();
+
+      document
+        .querySelectorAll(
+          ".message-menu"
+        )
+        .forEach(
+          other => {
+
+            if (other !== menu) {
+              other.style.display =
+                "none";
+            }
+          }
+        );
+
+      document
+        .querySelectorAll(
+          ".reaction-picker"
+        )
+        .forEach(
+          other => {
+
+            if (other !== picker) {
+              other.style.display =
+                "none";
+            }
+          }
+        );
+
+      picker.style.display =
+        "none";
+
+      menu.style.display =
+        menu.style.display ===
+        "block"
+          ? "none"
+          : "block";
+    }
+  );
+
+  box.appendChild(menu);
+  box.appendChild(picker);
+
+  row.appendChild(box);
+
+  messages.appendChild(row);
 }
 
 /* =========================
    リアクション
 ========================= */
 
-async function addReaction(messageId,emoji) {
+async function addReaction(
+  messageId,
+  emoji
+) {
 
-const { data:existing } =
-await supabaseClient
-.from("group_reactions")
-.select("id")
-.eq("group_message_id",messageId)
-.eq("user_id",currentUsername)
-.eq("reaction",emoji)
-.maybeSingle();
+  const { data:existing } =
+    await supabaseClient
+      .from("group_reactions")
+      .select("id")
+      .eq(
+        "group_message_id",
+        messageId
+      )
+      .eq(
+        "user_id",
+        currentUsername
+      )
+      .eq(
+        "reaction",
+        emoji
+      )
+      .maybeSingle();
 
-if (existing) {
+  if (existing) {
 
-await supabaseClient
-.from("group_reactions")
-.delete()
-.eq("id",existing.id);
+    await supabaseClient
+      .from("group_reactions")
+      .delete()
+      .eq(
+        "id",
+        existing.id
+      );
 
-return;
-}
+    return;
+  }
 
-const { error } =
-await supabaseClient
-.from("group_reactions")
-.insert({
-group_message_id:messageId,
-user_id:currentUsername,
-reaction:emoji
-});
+  const { error } =
+    await supabaseClient
+      .from("group_reactions")
+      .insert({
+        group_message_id:
+          messageId,
+        user_id:
+          currentUsername,
+        reaction:
+          emoji
+      });
 
-if (error) {
-alert(
-"リアクションを追加できませんでした。\n" +
-error.message
-);
-}
+  if (error) {
+
+    alert(
+      "リアクションを追加できませんでした。\n" +
+      error.message
+    );
+  }
 }
 
 /* =========================
@@ -1073,122 +1910,170 @@ error.message
 
 function startReply(message) {
 
-replyingToMessage = message;
+  replyingToMessage =
+    message;
 
-replyText.innerHTML = "";
+  replyText.innerHTML =
+    "";
 
-const strong =
-document.createElement("strong");
+  const strong =
+    document.createElement("strong");
 
-strong.textContent =
-message.sender_id === currentUsername
-? "あなた"
-: "@" + message.sender_id;
+  strong.textContent =
+    message.sender_id ===
+    currentUsername
+      ? "あなた"
+      : "@" +
+        message.sender_id;
 
-replyText.appendChild(strong);
+  replyText.appendChild(
+    strong
+  );
 
-replyText.appendChild(
-document.createTextNode(
-" に返信： " +
-(message.content || "画像")
-)
-);
+  replyText.appendChild(
+    document.createTextNode(
+      " に返信： " +
+      (
+        message.content ||
+        "画像"
+      )
+    )
+  );
 
-replyArea.style.display = "block";
-messageInput.placeholder =
-"返信を入力...";
-messageInput.focus();
+  replyArea.style.display =
+    "block";
+
+  messageInput.placeholder =
+    "返信を入力...";
+
+  messageInput.focus();
 }
 
 cancelReplyButton.addEventListener(
-"click",
-event => {
+  "click",
+  event => {
 
-event.preventDefault();
+    event.preventDefault();
 
-replyingToMessage = null;
-replyArea.style.display = "none";
-messageInput.placeholder =
-"メッセージを入力...";
-messageInput.focus();
-}
+    replyingToMessage =
+      null;
+
+    replyArea.style.display =
+      "none";
+
+    messageInput.placeholder =
+      "メッセージを入力...";
+
+    messageInput.focus();
+  }
 );
 
 /* =========================
    通知
 ========================= */
 
-async function createGroupReplyNotification(message) {
+async function createGroupReplyNotification(
+  message
+) {
 
-if (
-!message ||
-!currentUsername ||
-message.sender_id === currentUsername
-) return;
+  if (
+    !message ||
+    !currentUsername ||
+    message.sender_id ===
+      currentUsername
+  ) {
+    return;
+  }
 
-await supabaseClient
-.from("notifications")
-.insert({
-user_id:message.sender_id,
-type:"group_reply",
-title:"↩️ グループで返信がありました",
-message:
-currentUsername +
-"さんがあなたのメッセージに返信しました",
-link:
-"group_chat.html?id=" +
-encodeURIComponent(groupId),
-is_read:false
-});
+  await supabaseClient
+    .from("notifications")
+    .insert({
+      user_id:
+        message.sender_id,
+      type:
+        "group_reply",
+      title:
+        "↩️ グループで返信がありました",
+      message:
+        currentUsername +
+        "さんがあなたのメッセージに返信しました",
+      link:
+        "group_chat.html?id=" +
+        encodeURIComponent(
+          groupId
+        ),
+      is_read:false
+    });
 }
 
 async function createGroupNotifications() {
 
-if (!currentUsername || !groupId) return;
+  if (
+    !currentUsername ||
+    !groupId
+  ) {
+    return;
+  }
 
-const { data:group } =
-await supabaseClient
-.from("groups")
-.select("name")
-.eq("id",Number(groupId))
-.maybeSingle();
+  const { data:group } =
+    await supabaseClient
+      .from("groups")
+      .select("name")
+      .eq("id",Number(groupId))
+      .maybeSingle();
 
-const { data:members } =
-await supabaseClient
-.from("group_members")
-.select("user_id")
-.eq("group_id",Number(groupId));
+  const { data:members } =
+    await supabaseClient
+      .from("group_members")
+      .select("user_id")
+      .eq(
+        "group_id",
+        Number(groupId)
+      );
 
-if (!members) return;
+  if (!members) return;
 
-const notifications =
-members
-.filter(
-member =>
-member.user_id !== currentUsername
-)
-.map(
-member => ({
-user_id:member.user_id,
-type:"group",
-title:"👥 グループに新しいメッセージ",
-message:
-currentUsername +
-"さんが「" +
-(group?.name || "グループ") +
-"」にメッセージを送信しました",
-link:
-"group_chat.html?id=" +
-encodeURIComponent(groupId),
-is_read:false
-})
-);
+  const notifications =
+    members
+      .filter(
+        member =>
+          member.user_id !==
+          currentUsername
+      )
+      .map(
+        member => ({
+          user_id:
+            member.user_id,
+          type:
+            "group",
+          title:
+            "👥 グループに新しいメッセージ",
+          message:
+            currentUsername +
+            "さんが「" +
+            (
+              group?.name ||
+              "グループ"
+            ) +
+            "」にメッセージを送信しました",
+          link:
+            "group_chat.html?id=" +
+            encodeURIComponent(
+              groupId
+            ),
+          is_read:false
+        })
+      );
 
-if (!notifications.length) return;
+  if (!notifications.length) {
+    return;
+  }
 
-await supabaseClient
-.from("notifications")
-.insert(notifications);
+  await supabaseClient
+    .from("notifications")
+    .insert(
+      notifications
+    );
 }
 
 /* =========================
@@ -1197,251 +2082,337 @@ await supabaseClient
 
 function getMentionQuery() {
 
-const text = messageInput.value;
-const cursor = messageInput.selectionStart;
+  const text =
+    messageInput.value;
 
-const beforeCursor =
-text.slice(0,cursor);
+  const cursor =
+    messageInput.selectionStart;
 
-const match =
-beforeCursor.match(
-/(?:^|\s)@([A-Za-z0-9_]*)$/
-);
+  const beforeCursor =
+    text.slice(0,cursor);
 
-if (!match) return null;
+  const match =
+    beforeCursor.match(
+      /(?:^|\s)@([A-Za-z0-9_]*)$/
+    );
 
-return match[1].toLowerCase();
+  if (!match) return null;
+
+  return match[1].toLowerCase();
 }
 
 async function showMentionSuggestions() {
 
-const query = getMentionQuery();
+  const query =
+    getMentionQuery();
 
-if (query === null) {
+  if (query === null) {
 
-mentionList.classList.remove("show");
-mentionList.innerHTML = "";
-return;
+    mentionList.classList.remove(
+      "show"
+    );
+
+    mentionList.innerHTML =
+      "";
+
+    return;
+  }
+
+  if (!groupMembersCache.length) {
+    await getGroupMembers();
+  }
+
+  const candidates =
+    groupMembersCache
+      .filter(
+        member =>
+          member.user_id !==
+          currentUsername
+      )
+      .filter(
+        member =>
+          member.user_id
+            .toLowerCase()
+            .startsWith(query)
+      )
+      .slice(0,8);
+
+  mentionList.innerHTML =
+    "";
+
+  if (!candidates.length) {
+
+    mentionList.classList.remove(
+      "show"
+    );
+
+    return;
+  }
+
+  for (
+    const member of candidates
+  ) {
+
+    const profile =
+      await getProfile(
+        member.user_id
+      );
+
+    const button =
+      document.createElement(
+        "button"
+      );
+
+    button.type =
+      "button";
+
+    button.className =
+      "mention-item";
+
+    const avatar =
+      document.createElement(
+        "div"
+      );
+
+    avatar.className =
+      "mention-avatar";
+
+    if (profile?.avatar_url) {
+
+      const img =
+        document.createElement(
+          "img"
+        );
+
+      img.src =
+        profile.avatar_url;
+
+      img.alt =
+        "プロフィール画像";
+
+      avatar.appendChild(img);
+
+    } else {
+
+      avatar.textContent =
+        "👤";
+    }
+
+    const info =
+      document.createElement(
+        "div"
+      );
+
+    const name =
+      document.createElement(
+        "div"
+      );
+
+    name.className =
+      "mention-name";
+
+    name.textContent =
+      profile?.name ||
+      member.user_id;
+
+    const id =
+      document.createElement(
+        "div"
+      );
+
+    id.className =
+      "mention-id";
+
+    id.textContent =
+      "@" +
+      member.user_id;
+
+    info.appendChild(name);
+    info.appendChild(id);
+
+    button.appendChild(avatar);
+    button.appendChild(info);
+
+    button.addEventListener(
+      "click",
+      event => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        insertMention(
+          member.user_id
+        );
+      }
+    );
+
+    mentionList.appendChild(
+      button
+    );
+  }
+
+  mentionList.classList.add(
+    "show"
+  );
 }
 
-if (!groupMembersCache.length) {
-await getGroupMembers();
-}
+function insertMention(
+  username
+) {
 
-const candidates =
-groupMembersCache
-.filter(
-member =>
-member.user_id !== currentUsername
-)
-.filter(
-member =>
-member.user_id
-.toLowerCase()
-.startsWith(query)
-)
-.slice(0,8);
+  const cursor =
+    messageInput.selectionStart;
 
-mentionList.innerHTML = "";
+  const text =
+    messageInput.value;
 
-if (!candidates.length) {
+  const before =
+    text.slice(0,cursor);
 
-mentionList.classList.remove("show");
-return;
-}
+  const after =
+    text.slice(cursor);
 
-for (const member of candidates) {
+  const match =
+    before.match(
+      /(?:^|\s)@([A-Za-z0-9_]*)$/
+    );
 
-const profile =
-await getProfile(member.user_id);
+  if (!match) return;
 
-const button =
-document.createElement("button");
+  const start =
+    match.index +
+    (
+      match[0].startsWith(" ")
+        ? 1
+        : 0
+    );
 
-button.type = "button";
-button.className = "mention-item";
+  messageInput.value =
+    text.slice(0,start) +
+    "@" +
+    username +
+    " " +
+    after;
 
-const avatar =
-document.createElement("div");
+  const newCursor =
+    start +
+    username.length +
+    2;
 
-avatar.className = "mention-avatar";
+  messageInput.setSelectionRange(
+    newCursor,
+    newCursor
+  );
 
-if (profile?.avatar_url) {
+  mentionList.classList.remove(
+    "show"
+  );
 
-const img =
-document.createElement("img");
-
-img.src = profile.avatar_url;
-img.alt = "プロフィール画像";
-
-avatar.appendChild(img);
-
-} else {
-
-avatar.textContent = "👤";
-}
-
-const info =
-document.createElement("div");
-
-const name =
-document.createElement("div");
-
-name.className = "mention-name";
-name.textContent =
-profile?.name || member.user_id;
-
-const id =
-document.createElement("div");
-
-id.className = "mention-id";
-id.textContent =
-"@" + member.user_id;
-
-info.appendChild(name);
-info.appendChild(id);
-
-button.appendChild(avatar);
-button.appendChild(info);
-
-button.addEventListener(
-"click",
-event => {
-
-event.preventDefault();
-event.stopPropagation();
-
-insertMention(member.user_id);
-}
-);
-
-mentionList.appendChild(button);
-}
-
-mentionList.classList.add("show");
-}
-
-function insertMention(username) {
-
-const cursor =
-messageInput.selectionStart;
-
-const text =
-messageInput.value;
-
-const before =
-text.slice(0,cursor);
-
-const after =
-text.slice(cursor);
-
-const match =
-before.match(
-/(?:^|\s)@([A-Za-z0-9_]*)$/
-);
-
-if (!match) return;
-
-const start =
-match.index +
-(match[0].startsWith(" ") ? 1 : 0);
-
-messageInput.value =
-text.slice(0,start) +
-"@" +
-username +
-" " +
-after;
-
-const newCursor =
-start + username.length + 2;
-
-messageInput.setSelectionRange(
-newCursor,
-newCursor
-);
-
-mentionList.classList.remove("show");
-messageInput.focus();
+  messageInput.focus();
 }
 
 messageInput.addEventListener(
-"input",
-showMentionSuggestions
+  "input",
+  showMentionSuggestions
 );
 
-function extractMentionUsernames(text) {
+function extractMentionUsernames(
+  text
+) {
 
-if (!text) return [];
+  if (!text) return [];
 
-const matches =
-text.match(/@[A-Za-z0-9_]+/g) || [];
+  const matches =
+    text.match(
+      /@[A-Za-z0-9_]+/g
+    ) || [];
 
-return [
-...new Set(
-matches.map(
-mention => mention.slice(1)
-)
-)
-];
+  return [
+    ...new Set(
+      matches.map(
+        mention =>
+          mention.slice(1)
+      )
+    )
+  ];
 }
 
-async function createMentionNotifications(text) {
+async function createMentionNotifications(
+  text
+) {
 
-const mentioned =
-extractMentionUsernames(text);
+  const mentioned =
+    extractMentionUsernames(
+      text
+    );
 
-if (!mentioned.length) return;
+  if (!mentioned.length) {
+    return;
+  }
 
-const members =
-groupMembersCache.length
-? groupMembersCache
-: await getGroupMembers();
+  const members =
+    groupMembersCache.length
+      ? groupMembersCache
+      : await getGroupMembers();
 
-const memberIds =
-new Set(
-members.map(
-member => member.user_id
-)
-);
+  const memberIds =
+    new Set(
+      members.map(
+        member =>
+          member.user_id
+      )
+    );
 
-const targets =
-mentioned.filter(
-username =>
-username !== currentUsername &&
-memberIds.has(username)
-);
+  const targets =
+    mentioned.filter(
+      username =>
+        username !==
+          currentUsername &&
+        memberIds.has(username)
+    );
 
-if (!targets.length) return;
+  if (!targets.length) {
+    return;
+  }
 
-const { data:group } =
-await supabaseClient
-.from("groups")
-.select("name")
-.eq("id",Number(groupId))
-.maybeSingle();
+  const { data:group } =
+    await supabaseClient
+      .from("groups")
+      .select("name")
+      .eq("id",Number(groupId))
+      .maybeSingle();
 
-const notifications =
-targets.map(
-username => ({
-user_id:username,
-type:"group_mention",
-title:"🔔 グループでメンションされました",
-message:
-currentUsername +
-"さんが「" +
-(group?.name || "グループ") +
-"」であなたをメンションしました",
-link:
-"group_chat.html?id=" +
-encodeURIComponent(groupId),
-is_read:false
-})
-);
+  const notifications =
+    targets.map(
+      username => ({
+        user_id:
+          username,
+        type:
+          "group_mention",
+        title:
+          "🔔 グループでメンションされました",
+        message:
+          currentUsername +
+          "さんが「" +
+          (
+            group?.name ||
+            "グループ"
+          ) +
+          "」であなたをメンションしました",
+        link:
+          "group_chat.html?id=" +
+          encodeURIComponent(
+            groupId
+          ),
+        is_read:false
+      })
+    );
 
-await supabaseClient
-.from("notifications")
-.insert(notifications);
+  await supabaseClient
+    .from("notifications")
+    .insert(
+      notifications
+    );
 }
 
 /* =========================
@@ -1450,99 +2421,128 @@ await supabaseClient
 
 async function sendMessage() {
 
-const text =
-messageInput.value.trim();
+  const text =
+    messageInput.value.trim();
 
-if (!text) return;
+  if (!text) return;
 
-if (!currentUsername) {
+  if (!currentUsername) {
 
-alert(
-"ユーザー情報を取得できていません。"
-);
+    alert(
+      "ユーザー情報を取得できていません。"
+    );
 
-return;
-}
+    return;
+  }
 
-sendButton.disabled = true;
+  sendButton.disabled =
+    true;
 
-mentionList.classList.remove("show");
+  mentionList.classList.remove(
+    "show"
+  );
 
-if (replyingToMessage) {
+  if (replyingToMessage) {
 
-const targetMessage =
-replyingToMessage;
+    const targetMessage =
+      replyingToMessage;
 
-const { error } =
-await supabaseClient
-.from("group_replies")
-.insert({
-group_message_id:targetMessage.id,
-sender_id:currentUsername,
-content:text
-});
+    const { error } =
+      await supabaseClient
+        .from("group_replies")
+        .insert({
+          group_message_id:
+            targetMessage.id,
+          sender_id:
+            currentUsername,
+          content:
+            text
+        });
 
-if (error) {
+    if (error) {
 
-alert(
-"返信を送信できませんでした。\n\n" +
-error.message
-);
+      alert(
+        "返信を送信できませんでした。\n\n" +
+        error.message
+      );
 
-sendButton.disabled = false;
-return;
-}
+      sendButton.disabled =
+        false;
 
-messageInput.value = "";
-replyingToMessage = null;
-replyArea.style.display = "none";
-messageInput.placeholder =
-"メッセージを入力...";
+      return;
+    }
 
-await loadMessages();
-scrollToBottom(true);
+    messageInput.value =
+      "";
 
-createGroupReplyNotification(
-targetMessage
-);
+    replyingToMessage =
+      null;
 
-sendButton.disabled = false;
-messageInput.focus();
+    replyArea.style.display =
+      "none";
 
-return;
-}
+    messageInput.placeholder =
+      "メッセージを入力...";
 
-const { error } =
-await supabaseClient
-.from("group_messages")
-.insert({
-group_id:Number(groupId),
-sender_id:currentUsername,
-content:text,
-image_url:"",
-is_deleted:false
-});
+    await loadMessages();
 
-if (error) {
+    scrollToBottom(true);
 
-alert(
-"送信できませんでした。\n\n" +
-error.message
-);
+    createGroupReplyNotification(
+      targetMessage
+    );
 
-} else {
+    sendButton.disabled =
+      false;
 
-messageInput.value = "";
+    messageInput.focus();
 
-await loadMessages();
-scrollToBottom(true);
+    return;
+  }
 
-createGroupNotifications();
-createMentionNotifications(text);
-}
+  const { error } =
+    await supabaseClient
+      .from("group_messages")
+      .insert({
+        group_id:
+          Number(groupId),
+        sender_id:
+          currentUsername,
+        content:
+          text,
+        image_url:
+          "",
+        is_deleted:
+          false
+      });
 
-sendButton.disabled = false;
-messageInput.focus();
+  if (error) {
+
+    alert(
+      "送信できませんでした。\n\n" +
+      error.message
+    );
+
+  } else {
+
+    messageInput.value =
+      "";
+
+    await loadMessages();
+
+    scrollToBottom(true);
+
+    createGroupNotifications();
+
+    createMentionNotifications(
+      text
+    );
+  }
+
+  sendButton.disabled =
+    false;
+
+  messageInput.focus();
 }
 
 /* =========================
@@ -1550,101 +2550,129 @@ messageInput.focus();
 ========================= */
 
 imageButton.addEventListener(
-"click",
-() => imageInput.click()
+  "click",
+  () =>
+    imageInput.click()
 );
 
 imageInput.addEventListener(
-"change",
-async () => {
+  "change",
+  async () => {
 
-const file =
-imageInput.files?.[0];
+    const file =
+      imageInput.files?.[0];
 
-if (!file) return;
+    if (!file) return;
 
-if (!file.type.startsWith("image/")) {
+    if (
+      !file.type.startsWith(
+        "image/"
+      )
+    ) {
 
-alert("画像ファイルを選んでください。");
-imageInput.value = "";
-return;
-}
+      alert(
+        "画像ファイルを選んでください。"
+      );
 
-imageButton.disabled = true;
-sendButton.disabled = true;
+      imageInput.value =
+        "";
 
-try {
+      return;
+    }
 
-const extension =
-file.name.split(".").pop() || "jpg";
+    imageButton.disabled =
+      true;
 
-const filePath =
-"groups/" +
-groupId +
-"/" +
-currentUsername +
-"/" +
-Date.now() +
-"_" +
-Math.random().toString(36).slice(2) +
-"." +
-extension;
+    sendButton.disabled =
+      true;
 
-const { error:uploadError } =
-await supabaseClient.storage
-.from("chat-images")
-.upload(
-filePath,
-file,
-{
-contentType:file.type,
-upsert:false
-}
-);
+    try {
 
-if (uploadError) {
+      const extension =
+        file.name.split(".").pop() ||
+        "jpg";
 
-alert(
-"画像をアップロードできませんでした。\n\n" +
-uploadError.message
-);
+      const filePath =
+        "groups/" +
+        groupId +
+        "/" +
+        currentUsername +
+        "/" +
+        Date.now() +
+        "_" +
+        Math.random()
+          .toString(36)
+          .slice(2) +
+        "." +
+        extension;
 
-return;
-}
+      const {
+        error:uploadError
+      } =
+        await supabaseClient.storage
+          .from("chat-images")
+          .upload(
+            filePath,
+            file,
+            {
+              contentType:
+                file.type,
+              upsert:false
+            }
+          );
 
-const { error } =
-await supabaseClient
-.from("group_messages")
-.insert({
-group_id:Number(groupId),
-sender_id:currentUsername,
-content:"",
-image_url:filePath,
-is_deleted:false
-});
+      if (uploadError) {
 
-if (error) {
+        alert(
+          "画像をアップロードできませんでした。\n\n" +
+          uploadError.message
+        );
 
-alert(
-"画像メッセージを保存できませんでした。\n\n" +
-error.message
-);
+        return;
+      }
 
-return;
-}
+      const { error } =
+        await supabaseClient
+          .from("group_messages")
+          .insert({
+            group_id:
+              Number(groupId),
+            sender_id:
+              currentUsername,
+            content:"",
+            image_url:
+              filePath,
+            is_deleted:false
+          });
 
-await loadMessages();
-scrollToBottom(true);
+      if (error) {
 
-createGroupNotifications();
+        alert(
+          "画像メッセージを保存できませんでした。\n\n" +
+          error.message
+        );
 
-} finally {
+        return;
+      }
 
-imageButton.disabled = false;
-sendButton.disabled = false;
-imageInput.value = "";
-}
-}
+      await loadMessages();
+
+      scrollToBottom(true);
+
+      createGroupNotifications();
+
+    } finally {
+
+      imageButton.disabled =
+        false;
+
+      sendButton.disabled =
+        false;
+
+      imageInput.value =
+        "";
+    }
+  }
 );
 
 /* =========================
@@ -1653,243 +2681,385 @@ imageInput.value = "";
 
 function startRealtime() {
 
-supabaseClient
-.channel(
-"group-chat-" +
-groupId +
-"-" +
-Date.now()
-)
+  supabaseClient
+    .channel(
+      "group-chat-" +
+      groupId +
+      "-" +
+      Date.now()
+    )
 
-.on(
-"postgres_changes",
-{
-event:"INSERT",
-schema:"public",
-table:"group_messages",
-filter:"group_id=eq." + groupId
-},
-async () => {
+    .on(
+      "postgres_changes",
+      {
+        event:"INSERT",
+        schema:"public",
+        table:"group_messages",
+        filter:
+          "group_id=eq." +
+          groupId
+      },
+      async () => {
 
-await loadMessages();
-scrollToBottom(true);
-}
-)
+        await loadMessages();
 
-.on(
-"postgres_changes",
-{
-event:"UPDATE",
-schema:"public",
-table:"group_messages",
-filter:"group_id=eq." + groupId
-},
-async () => {
+        scrollToBottom(true);
+      }
+    )
 
-await loadMessages();
-}
-)
+    .on(
+      "postgres_changes",
+      {
+        event:"UPDATE",
+        schema:"public",
+        table:"group_messages",
+        filter:
+          "group_id=eq." +
+          groupId
+      },
+      async () => {
 
-.on(
-"postgres_changes",
-{
-event:"INSERT",
-schema:"public",
-table:"group_message_reads"
-},
-async payload => {
+        await loadMessages();
+      }
+    )
 
-const read = payload.new;
+    .on(
+      "postgres_changes",
+      {
+        event:"INSERT",
+        schema:"public",
+        table:"group_message_reads"
+      },
+      async payload => {
 
-if (!read) return;
+        const read =
+          payload.new;
 
-const { data:message } =
-await supabaseClient
-.from("group_messages")
-.select("id,group_id,sender_id")
-.eq("id",read.group_message_id)
-.maybeSingle();
+        if (!read) return;
 
-if (
-!message ||
-String(message.group_id) !==
-String(groupId)
-) return;
+        const {
+          data:message
+        } =
+          await supabaseClient
+            .from("group_messages")
+            .select(
+              "id,group_id,sender_id"
+            )
+            .eq(
+              "id",
+              read.group_message_id
+            )
+            .maybeSingle();
 
-if (
-message.sender_id !== currentUsername ||
-read.user_id === currentUsername
-) return;
+        if (
+          !message ||
+          String(
+            message.group_id
+          ) !==
+            String(groupId)
+        ) {
+          return;
+        }
 
-const id =
-String(read.group_message_id);
+        if (
+          message.sender_id !==
+            currentUsername ||
+          read.user_id ===
+            currentUsername
+        ) {
+          return;
+        }
 
-if (!groupReadCounts[id]) {
-groupReadCounts[id] = new Set();
-}
+        const id =
+          String(
+            read.group_message_id
+          );
 
-groupReadCounts[id].add(
-read.user_id
-);
+        if (
+          !groupReadCounts[id]
+        ) {
 
-await loadMessages();
-}
-)
+          groupReadCounts[id] =
+            new Set();
+        }
 
-.subscribe();
+        groupReadCounts[id].add(
+          read.user_id
+        );
+
+        await loadMessages();
+      }
+    )
+
+    .subscribe();
 }
 
 /* =========================
-   メンバー一覧
-   ★オンライン表示追加
+   ★ メンバー一覧
+   オンライン＋最終オンライン
 ========================= */
 
 async function loadMembers() {
 
-memberList.innerHTML =
-'<div class="member-loading">読み込み中...</div>';
+  memberList.innerHTML =
+    '<div class="member-loading">読み込み中...</div>';
 
-const { data:members,error } =
-await supabaseClient
-.from("group_members")
-.select("user_id")
-.eq("group_id",Number(groupId));
+  const {
+    data:members,
+    error
+  } =
+    await supabaseClient
+      .from("group_members")
+      .select("user_id")
+      .eq(
+        "group_id",
+        Number(groupId)
+      );
 
-if (error) {
+  if (error) {
 
-memberList.innerHTML =
-'<div class="member-empty">メンバーを読み込めませんでした。</div>';
+    console.error(
+      "メンバー取得エラー:",
+      error
+    );
 
-return;
-}
+    memberList.innerHTML =
+      '<div class="member-empty">メンバーを読み込めませんでした。</div>';
 
-groupMembersCache =
-members || [];
+    return;
+  }
 
-if (!members?.length) {
+  groupMembersCache =
+    members || [];
 
-memberList.innerHTML =
-'<div class="member-empty">まだメンバーがいません。</div>';
+  if (
+    !members ||
+    !members.length
+  ) {
 
-return;
-}
+    memberList.innerHTML =
+      '<div class="member-empty">まだメンバーがいません。</div>';
 
-/*
-  メンバーのプロフィール
-  ＋オンライン状態をまとめて取得
-*/
+    return;
+  }
 
-const memberIds =
-members.map(member => member.user_id);
+  const memberIds =
+    members.map(
+      member =>
+        member.user_id
+    );
 
-const { data:presenceData } =
-await supabaseClient
-.from("user_presence")
-.select("user_id,last_seen")
-.in("user_id",memberIds);
+  const {
+    data:presenceData,
+    error:presenceError
+  } =
+    await supabaseClient
+      .from("user_presence")
+      .select(
+        "user_id,last_seen"
+      )
+      .in(
+        "user_id",
+        memberIds
+      );
 
-const presenceMap = {};
+  if (presenceError) {
 
-for (const presence of presenceData || []) {
+    console.error(
+      "オンライン状態取得エラー:",
+      presenceError
+    );
+  }
 
-presenceMap[presence.user_id] =
-presence.last_seen;
-}
+  const presenceMap = {};
 
-memberList.innerHTML = "";
+  for (
+    const presence of
+      presenceData || []
+  ) {
 
-for (const member of members) {
+    presenceMap[
+      presence.user_id
+    ] =
+      presence.last_seen;
+  }
 
-const profile =
-await getProfile(member.user_id);
+  memberList.innerHTML =
+    "";
 
-const item =
-document.createElement("div");
+  for (
+    const member of members
+  ) {
 
-item.className =
-"member-item";
+    const profile =
+      await getProfile(
+        member.user_id
+      );
 
-const icon =
-document.createElement("div");
+    const item =
+      document.createElement(
+        "div"
+      );
 
-icon.className =
-"member-icon";
+    item.className =
+      "member-item";
 
-if (profile?.avatar_url) {
+    /* アイコン */
 
-const img =
-document.createElement("img");
+    const icon =
+      document.createElement(
+        "div"
+      );
 
-img.src =
-profile.avatar_url;
+    icon.className =
+      "member-icon";
 
-img.alt =
-"プロフィール画像";
+    if (
+      profile?.avatar_url
+    ) {
 
-icon.appendChild(img);
+      const img =
+        document.createElement(
+          "img"
+        );
 
-} else {
+      img.src =
+        profile.avatar_url;
 
-icon.textContent = "👤";
-}
+      img.alt =
+        "プロフィール画像";
 
-const info =
-document.createElement("div");
+      icon.appendChild(img);
 
-info.className = "member-info";
+    } else {
 
-const name =
-document.createElement("div");
+      icon.textContent =
+        "👤";
+    }
 
-name.className = "member-name";
+    /* 名前・ID */
 
-name.textContent =
-profile?.name || member.user_id;
+    const info =
+      document.createElement(
+        "div"
+      );
 
-const id =
-document.createElement("div");
+    info.className =
+      "member-info";
 
-id.className = "member-id";
+    const name =
+      document.createElement(
+        "div"
+      );
 
-id.textContent =
-"@" + member.user_id;
+    name.className =
+      "member-name";
 
-/*
-  ★ここがオンライン表示
-*/
+    name.textContent =
+      profile?.name ||
+      member.user_id;
 
-const status =
-document.createElement("div");
+    const id =
+      document.createElement(
+        "div"
+      );
 
-status.className =
-"member-status";
+    id.className =
+      "member-id";
 
-if (
-isOnline(
-presenceMap[member.user_id]
-)
-) {
+    id.textContent =
+      "@" +
+      member.user_id;
 
-status.classList.add("online");
-status.textContent =
-"🟢 オンライン";
+    /* オンライン状態 */
 
-} else {
+    const status =
+      document.createElement(
+        "div"
+      );
 
-status.classList.add("offline");
-status.textContent =
-"⚪ オフライン";
-}
+    status.className =
+      "member-status";
 
-info.appendChild(name);
-info.appendChild(id);
-info.appendChild(status);
+    const lastSeen =
+      presenceMap[
+        member.user_id
+      ];
 
-item.appendChild(icon);
-item.appendChild(info);
+    if (
+      isOnline(lastSeen)
+    ) {
 
-memberList.appendChild(item);
-}
+      status.classList.add(
+        "online"
+      );
+
+      status.textContent =
+        "🟢 オンライン";
+
+    } else {
+
+      status.classList.add(
+        "offline"
+      );
+
+      status.textContent =
+        "⚪ オフライン";
+    }
+
+    /* ★ 最終オンライン */
+
+    const lastOnline =
+      document.createElement(
+        "div"
+      );
+
+    lastOnline.className =
+      "last-online";
+
+    if (
+      isOnline(lastSeen)
+    ) {
+
+      lastOnline.textContent =
+        "最終オンライン：今";
+
+    } else {
+
+      lastOnline.textContent =
+        formatLastOnline(
+          lastSeen
+        );
+    }
+
+    info.appendChild(
+      name
+    );
+
+    info.appendChild(
+      id
+    );
+
+    info.appendChild(
+      status
+    );
+
+    info.appendChild(
+      lastOnline
+    );
+
+    item.appendChild(
+      icon
+    );
+
+    item.appendChild(
+      info
+    );
+
+    memberList.appendChild(
+      item
+    );
+  }
 }
 
 /* =========================
@@ -1898,105 +3068,136 @@ memberList.appendChild(item);
 
 async function addMember() {
 
-const friendId =
-memberInput.value.trim();
+  const friendId =
+    memberInput.value.trim();
 
-if (!friendId) {
+  if (!friendId) {
 
-alert(
-"追加するユーザーIDを入力してね。"
-);
+    alert(
+      "追加するユーザーIDを入力してね。"
+    );
 
-return;
-}
+    return;
+  }
 
-if (friendId === currentUsername) {
+  if (
+    friendId ===
+    currentUsername
+  ) {
 
-alert(
-"自分はすでにメンバーだよ。"
-);
+    alert(
+      "自分はすでにメンバーだよ。"
+    );
 
-return;
-}
+    return;
+  }
 
-addMemberButton.disabled = true;
+  addMemberButton.disabled =
+    true;
 
-const { data:profile,error:profileError } =
-await supabaseClient
-.from("profiles")
-.select("user_id,name")
-.eq("user_id",friendId)
-.maybeSingle();
+  const {
+    data:profile,
+    error:profileError
+  } =
+    await supabaseClient
+      .from("profiles")
+      .select(
+        "user_id,name"
+      )
+      .eq(
+        "user_id",
+        friendId
+      )
+      .maybeSingle();
 
-if (profileError) {
+  if (profileError) {
 
-alert(
-"ユーザーを確認できませんでした。\n" +
-profileError.message
-);
+    alert(
+      "ユーザーを確認できませんでした。\n" +
+      profileError.message
+    );
 
-addMemberButton.disabled = false;
-return;
-}
+    addMemberButton.disabled =
+      false;
 
-if (!profile) {
+    return;
+  }
 
-alert(
-"そのユーザーIDは見つかりません。"
-);
+  if (!profile) {
 
-addMemberButton.disabled = false;
-return;
-}
+    alert(
+      "そのユーザーIDは見つかりません。"
+    );
 
-const { data:existing } =
-await supabaseClient
-.from("group_members")
-.select("id")
-.eq("group_id",Number(groupId))
-.eq("user_id",friendId)
-.maybeSingle();
+    addMemberButton.disabled =
+      false;
 
-if (existing) {
+    return;
+  }
 
-alert(
-"そのユーザーはすでにメンバーだよ。"
-);
+  const { data:existing } =
+    await supabaseClient
+      .from("group_members")
+      .select("id")
+      .eq(
+        "group_id",
+        Number(groupId)
+      )
+      .eq(
+        "user_id",
+        friendId
+      )
+      .maybeSingle();
 
-addMemberButton.disabled = false;
-return;
-}
+  if (existing) {
 
-const { error } =
-await supabaseClient
-.from("group_members")
-.insert({
-group_id:Number(groupId),
-user_id:friendId
-});
+    alert(
+      "そのユーザーはすでにメンバーだよ。"
+    );
 
-if (error) {
+    addMemberButton.disabled =
+      false;
 
-alert(
-"メンバーを追加できませんでした。\n" +
-error.message
-);
+    return;
+  }
 
-addMemberButton.disabled = false;
-return;
-}
+  const { error } =
+    await supabaseClient
+      .from("group_members")
+      .insert({
+        group_id:
+          Number(groupId),
+        user_id:
+          friendId
+      });
 
-alert(
-"@" +
-friendId +
-" をグループに追加したよ！"
-);
+  if (error) {
 
-memberInput.value = "";
-addMemberButton.disabled = false;
+    alert(
+      "メンバーを追加できませんでした。\n" +
+      error.message
+    );
 
-await getGroupMembers();
-await loadMembers();
+    addMemberButton.disabled =
+      false;
+
+    return;
+  }
+
+  alert(
+    "@" +
+    friendId +
+    " をグループに追加したよ！"
+  );
+
+  memberInput.value =
+    "";
+
+  addMemberButton.disabled =
+    false;
+
+  await getGroupMembers();
+  await loadMembers();
 }
 
 /* =========================
@@ -2004,50 +3205,60 @@ await loadMembers();
 ========================= */
 
 memberButton.addEventListener(
-"click",
-async () => {
+  "click",
+  async () => {
 
-memberModal.style.display = "flex";
+    memberModal.style.display =
+      "flex";
 
-await updateMyPresence();
-await loadMembers();
+    await updateMyPresence();
 
-memberInput.focus();
-}
+    await loadMembers();
+
+    memberInput.focus();
+  }
 );
 
 closeModalButton.addEventListener(
-"click",
-() => {
-memberModal.style.display = "none";
-}
+  "click",
+  () => {
+
+    memberModal.style.display =
+      "none";
+  }
 );
 
 memberModal.addEventListener(
-"click",
-event => {
+  "click",
+  event => {
 
-if (event.target === memberModal) {
-memberModal.style.display = "none";
-}
-}
+    if (
+      event.target ===
+      memberModal
+    ) {
+
+      memberModal.style.display =
+        "none";
+    }
+  }
 );
 
 addMemberButton.addEventListener(
-"click",
-addMember
+  "click",
+  addMember
 );
 
 memberInput.addEventListener(
-"keydown",
-event => {
+  "keydown",
+  event => {
 
-if (event.key === "Enter") {
+    if (event.key === "Enter") {
 
-event.preventDefault();
-addMember();
-}
-}
+      event.preventDefault();
+
+      addMember();
+    }
+  }
 );
 
 /* =========================
@@ -2055,20 +3266,21 @@ addMember();
 ========================= */
 
 sendButton.addEventListener(
-"click",
-sendMessage
+  "click",
+  sendMessage
 );
 
 messageInput.addEventListener(
-"keydown",
-event => {
+  "keydown",
+  event => {
 
-if (event.key === "Enter") {
+    if (event.key === "Enter") {
 
-event.preventDefault();
-sendMessage();
-}
-}
+      event.preventDefault();
+
+      sendMessage();
+    }
+  }
 );
 
 /* =========================
@@ -2076,25 +3288,33 @@ sendMessage();
 ========================= */
 
 document.addEventListener(
-"click",
-() => {
+  "click",
+  () => {
 
-document.querySelectorAll(
-".message-menu"
-).forEach(
-menu => {
-menu.style.display = "none";
-}
-);
+    document
+      .querySelectorAll(
+        ".message-menu"
+      )
+      .forEach(
+        menu => {
 
-document.querySelectorAll(
-".reaction-picker"
-).forEach(
-picker => {
-picker.style.display = "none";
-}
-);
-}
+          menu.style.display =
+            "none";
+        }
+      );
+
+    document
+      .querySelectorAll(
+        ".reaction-picker"
+      )
+      .forEach(
+        picker => {
+
+          picker.style.display =
+            "none";
+        }
+      );
+  }
 );
 
 /* =========================
@@ -2103,93 +3323,99 @@ picker.style.display = "none";
 
 async function start() {
 
-if (!groupId) {
+  if (!groupId) {
 
-groupName.textContent =
-"グループが見つかりません";
+    groupName.textContent =
+      "グループが見つかりません";
 
-return;
+    return;
+  }
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient.auth
+      .getSession();
+
+  if (
+    error ||
+    !data.session
+  ) {
+
+    window.location.href =
+      "index.html";
+
+    return;
+  }
+
+  currentUsername =
+    data.session.user
+      .user_metadata
+      ?.username || "";
+
+  if (!currentUsername) {
+
+    alert(
+      "ユーザー情報を取得できませんでした。"
+    );
+
+    return;
+  }
+
+  await updateMyPresence();
+
+  await loadGroup();
+
+  await getGroupMembers();
+
+  await loadMessages();
+
+  scrollToBottom(false);
+
+  startRealtime();
+
+  /*
+    30秒ごとにオンライン更新
+  */
+
+  presenceTimer =
+    setInterval(
+      async () => {
+
+        await updateMyPresence();
+
+        /*
+          メンバー一覧を開いているときだけ
+          最終オンラインも更新
+        */
+
+        if (
+          memberModal.style.display ===
+          "flex"
+        ) {
+
+          await loadMembers();
+        }
+
+      },
+      30000
+    );
 }
-
-const { data,error } =
-await supabaseClient.auth.getSession();
-
-if (error || !data.session) {
-
-window.location.href =
-"index.html";
-
-return;
-}
-
-currentUsername =
-data.session.user
-.user_metadata?.username || "";
-
-if (!currentUsername) {
-
-alert(
-"ユーザー情報を取得できませんでした。"
-);
-
-return;
-}
-
-/*
-  自分をオンラインにする
-*/
-
-await updateMyPresence();
-
-await loadGroup();
-
-await getGroupMembers();
-
-await loadMessages();
-
-scrollToBottom(false);
-
-startRealtime();
-
-/*
-  30秒ごとに自分のオンライン状態を更新
-  ＋メンバー一覧を更新
-*/
-
-presenceTimer =
-setInterval(
-async () => {
-
-await updateMyPresence();
-
-if (
-memberModal.style.display === "flex"
-) {
-
-await loadMembers();
-
-}
-
-},
-30000
-);
-}
-
-/*
-  ページを離れたらタイマー停止
-*/
 
 window.addEventListener(
-"pagehide",
-() => {
+  "pagehide",
+  () => {
 
-if (presenceTimer) {
+    if (presenceTimer) {
 
-clearInterval(presenceTimer);
-presenceTimer = null;
+      clearInterval(
+        presenceTimer
+      );
 
-}
-}
+      presenceTimer = null;
+    }
+  }
 );
 
 start();
