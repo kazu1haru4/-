@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+とりまchat.htmlは<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -78,22 +78,6 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-    }
-
-    .notification-button {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      border: none;
-      padding: 9px 11px;
-      background: #fff4cc;
-      border-radius: 12px;
-      font-size: 18px;
-      cursor: pointer;
-    }
-
-    .notification-button.enabled {
-      background: #e7f8e7;
     }
 
     .messages {
@@ -207,8 +191,7 @@
     }
 
     .send-button:disabled,
-    .image-button:disabled,
-    .notification-button:disabled {
+    .image-button:disabled {
       opacity: 0.5;
     }
 
@@ -227,15 +210,6 @@
       <a href="home.html" class="home-button">
         🏠 ホーム
       </a>
-
-      <button
-        id="notificationButton"
-        class="notification-button"
-        type="button"
-        title="通知を設定"
-      >
-        🔔
-      </button>
 
       <div class="profile-header">
 
@@ -295,42 +269,9 @@
 
   </main>
 
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
-
-    // =========================
-    // Service Worker登録
-    // =========================
-
-    if ("serviceWorker" in navigator) {
-
-      navigator.serviceWorker.register(
-        "./service-worker.js"
-      )
-      .then(function() {
-
-        console.log(
-          "Service Worker 登録成功"
-        );
-
-      })
-      .catch(function(error) {
-
-        console.error(
-          "Service Worker 登録失敗:",
-          error
-        );
-
-      });
-
-    }
-
-
-    // =========================
-    // Supabase
-    // =========================
 
     const SUPABASE_URL =
       "https://yxonmqdyekwenyzekjwj.supabase.co";
@@ -343,11 +284,6 @@
         SUPABASE_URL,
         SUPABASE_KEY
       );
-
-
-    // =========================
-    // 要素
-    // =========================
 
     const messagesElement =
       document.getElementById("messages");
@@ -373,27 +309,12 @@
     const headerAvatar =
       document.getElementById("headerAvatar");
 
-    const notificationButton =
-      document.getElementById(
-        "notificationButton"
-      );
-
-
-    // =========================
-    // 状態
-    // =========================
-
     let currentUsername = "";
     let friendId = "";
     let realtimeChannel = null;
 
     let myAvatarUrl = "";
     let friendAvatarUrl = "";
-
-
-    // =========================
-    // URL
-    // =========================
 
     const params =
       new URLSearchParams(
@@ -403,268 +324,11 @@
     friendId =
       params.get("user") || "";
 
-
     // =========================
-    // 通知ボタン状態
-    // =========================
-
-    function updateNotificationButton() {
-
-      if (!("Notification" in window)) {
-
-        notificationButton.textContent =
-          "🔕";
-
-        notificationButton.title =
-          "このブラウザは通知に対応していません";
-
-        return;
-
-      }
-
-
-      if (
-        Notification.permission ===
-        "granted"
-      ) {
-
-        notificationButton.textContent =
-          "🔔";
-
-        notificationButton.classList.add(
-          "enabled"
-        );
-
-        notificationButton.title =
-          "通知ON";
-
-      } else if (
-        Notification.permission ===
-        "denied"
-      ) {
-
-        notificationButton.textContent =
-          "🔕";
-
-        notificationButton.classList.remove(
-          "enabled"
-        );
-
-        notificationButton.title =
-          "通知がOFFです";
-
-      } else {
-
-        notificationButton.textContent =
-          "🔔";
-
-        notificationButton.classList.remove(
-          "enabled"
-        );
-
-        notificationButton.title =
-          "通知をONにする";
-
-      }
-
-    }
-
-
-    // =========================
-    // 通知許可
+    // プロフィール画像を作る
     // =========================
 
-    async function enableNotifications() {
-
-      if (!("Notification" in window)) {
-
-        alert(
-          "このブラウザでは通知を利用できません。"
-        );
-
-        return;
-
-      }
-
-
-      if (
-        Notification.permission ===
-        "granted"
-      ) {
-
-        alert(
-          "通知はすでにONになっています。"
-        );
-
-        return;
-
-      }
-
-
-      if (
-        Notification.permission ===
-        "denied"
-      ) {
-
-        alert(
-          "通知がOFFになっています。\n\n" +
-          "iPhoneの設定から通知を許可してください。"
-        );
-
-        return;
-
-      }
-
-
-      try {
-
-        const permission =
-          await Notification.requestPermission();
-
-
-        updateNotificationButton();
-
-
-        if (
-          permission === "granted"
-        ) {
-
-          alert(
-            "通知がONになりました！"
-          );
-
-        } else {
-
-          alert(
-            "通知が許可されませんでした。"
-          );
-
-        }
-
-      } catch (error) {
-
-        console.error(
-          "通知設定エラー:",
-          error
-        );
-
-        alert(
-          "通知の設定に失敗しました。"
-        );
-
-      }
-
-    }
-
-
-    notificationButton.addEventListener(
-      "click",
-      enableNotifications
-    );
-
-
-    // =========================
-    // 通知表示
-    // =========================
-
-    function showMessageNotification(
-      message
-    ) {
-
-      let body =
-        "新しいメッセージが届きました";
-
-
-      if (message.content) {
-
-        body =
-          message.content;
-
-      } else if (
-        message.image_url
-      ) {
-
-        body =
-          "🖼️ 画像が届きました";
-
-      }
-
-
-      document.title =
-        "🔴 新着メッセージ！";
-
-
-      setTimeout(
-        function() {
-
-          document.title =
-            "チャット";
-
-        },
-        3000
-      );
-
-
-      if (
-        "Notification" in window &&
-        Notification.permission ===
-        "granted"
-      ) {
-
-        try {
-
-          const notification =
-            new Notification(
-              "💬 " +
-              (
-                chatTitle.textContent
-                  .replace("💬 ", "")
-                  .trim() ||
-                friendId
-              ),
-              {
-                body: body,
-                icon:
-                  friendAvatarUrl ||
-                  undefined,
-                tag:
-                  "friend-chat-" +
-                  friendId
-              }
-            );
-
-
-          notification.onclick =
-            function() {
-
-              window.focus();
-
-              notification.close();
-
-            };
-
-        } catch (error) {
-
-          console.error(
-            "通知表示エラー:",
-            error
-          );
-
-        }
-
-      }
-
-    }
-
-
-    // =========================
-    // アバター
-    // =========================
-
-    function createAvatar(
-      url,
-      fallback
-    ) {
+    function createAvatar(url, fallback) {
 
       const avatar =
         document.createElement("div");
@@ -672,31 +336,22 @@
       avatar.className =
         "message-avatar";
 
-
       if (url) {
 
         const img =
           document.createElement("img");
 
-        img.src =
-          url;
+        img.src = url;
 
-        img.alt =
-          "プロフィール画像";
+        img.alt = "プロフィール画像";
 
+        img.onerror = function() {
 
-        img.onerror =
-          function() {
+          avatar.innerHTML = fallback;
 
-            avatar.innerHTML =
-              fallback;
+        };
 
-          };
-
-
-        avatar.appendChild(
-          img
-        );
+        avatar.appendChild(img);
 
       } else {
 
@@ -705,20 +360,15 @@
 
       }
 
-
       return avatar;
 
     }
-
 
     // =========================
     // 開始
     // =========================
 
     async function start() {
-
-      updateNotificationButton();
-
 
       if (!friendId) {
 
@@ -732,9 +382,7 @@
           '<div class="empty">フレンドから相手を選んでね</div>';
 
         return;
-
       }
-
 
       const {
         data,
@@ -742,29 +390,18 @@
       } =
         await supabaseClient.auth.getSession();
 
+      if (error || !data.session) {
 
-      if (
-        error ||
-        !data.session
-      ) {
-
-        alert(
-          "ログインしてください。"
-        );
+        alert("ログインしてください。");
 
         window.location.href =
           "index.html";
 
         return;
-
       }
 
-
       currentUsername =
-        data.session.user
-          .user_metadata
-          ?.username || "";
-
+        data.session.user.user_metadata?.username || "";
 
       if (!currentUsername) {
 
@@ -773,12 +410,10 @@
         );
 
         return;
-
       }
 
-
       // =========================
-      // 相手プロフィール
+      // 相手のプロフィール
       // =========================
 
       const {
@@ -786,28 +421,21 @@
       } =
         await supabaseClient
           .from("profiles")
-          .select(
-            "name, avatar_url"
-          )
+          .select("name, avatar_url")
           .eq(
             "user_id",
             friendId
           )
           .maybeSingle();
 
-
       friendAvatarUrl =
-        friendProfile?.avatar_url ||
-        "";
-
+        friendProfile?.avatar_url || "";
 
       chatTitle.textContent =
         "💬 " +
-        (
-          friendProfile?.name ||
-          friendId
-        );
+        (friendProfile?.name || friendId);
 
+      // ヘッダー画像
 
       if (friendAvatarUrl) {
 
@@ -815,7 +443,6 @@
           `<img src="${friendAvatarUrl}" alt="プロフィール画像">`;
 
       }
-
 
       // =========================
       // 自分のプロフィール
@@ -826,27 +453,21 @@
       } =
         await supabaseClient
           .from("profiles")
-          .select(
-            "avatar_url"
-          )
+          .select("avatar_url")
           .eq(
             "user_id",
             currentUsername
           )
           .maybeSingle();
 
-
       myAvatarUrl =
-        myProfile?.avatar_url ||
-        "";
-
+        myProfile?.avatar_url || "";
 
       await loadMessages();
 
       startRealtime();
 
     }
-
 
     // =========================
     // メッセージ読み込み
@@ -871,7 +492,6 @@
             }
           );
 
-
       if (error) {
 
         console.error(
@@ -883,30 +503,19 @@
           '<div class="empty">メッセージを読み込めませんでした</div>';
 
         return;
-
       }
 
+      messagesElement.innerHTML = "";
 
-      messagesElement.innerHTML =
-        "";
-
-
-      if (
-        !data ||
-        data.length === 0
-      ) {
+      if (!data || data.length === 0) {
 
         messagesElement.innerHTML =
           '<div class="empty">まだメッセージがありません</div>';
 
         return;
-
       }
 
-
-      for (
-        const message of data
-      ) {
+      for (const message of data) {
 
         await addMessageToScreen(
           message
@@ -914,19 +523,15 @@
 
       }
 
-
       scrollToBottom();
 
     }
-
 
     // =========================
     // メッセージ表示
     // =========================
 
-    async function addMessageToScreen(
-      message
-    ) {
+    async function addMessageToScreen(message) {
 
       const wrapper =
         document.createElement("div");
@@ -934,20 +539,17 @@
       wrapper.className =
         "message";
 
-
       const isMine =
         message.sender_id ===
         currentUsername;
 
-
       if (isMine) {
 
-        wrapper.classList.add(
-          "mine"
-        );
+        wrapper.classList.add("mine");
 
       }
 
+      // 相手の画像
 
       if (!isMine) {
 
@@ -963,6 +565,7 @@
 
       }
 
+      // 吹き出し
 
       const bubble =
         document.createElement("div");
@@ -970,10 +573,7 @@
       bubble.className =
         "bubble";
 
-
-      // =========================
-      // 画像
-      // =========================
+      // 画像メッセージ
 
       if (message.image_url) {
 
@@ -986,23 +586,18 @@
         image.alt =
           "送信された画像";
 
-
         const {
           data,
           error
         } =
-        await supabaseClient.storage
-          .from("chat-images")
-          .createSignedUrl(
-            message.image_url,
-            3600
-          );
+          await supabaseClient.storage
+            .from("chat-images")
+            .createSignedUrl(
+              message.image_url,
+              3600
+            );
 
-
-        if (
-          !error &&
-          data?.signedUrl
-        ) {
+        if (!error && data?.signedUrl) {
 
           image.src =
             data.signedUrl;
@@ -1015,10 +610,7 @@
 
       }
 
-
-      // =========================
       // テキスト
-      // =========================
 
       if (message.content) {
 
@@ -1034,10 +626,7 @@
 
       }
 
-
-      // =========================
       // 時刻
-      // =========================
 
       const time =
         document.createElement("div");
@@ -1045,12 +634,10 @@
       time.className =
         "time";
 
-
       const date =
         new Date(
           message.created_at
         );
-
 
       time.textContent =
         date.toLocaleTimeString(
@@ -1061,16 +648,15 @@
           }
         );
 
-
       bubble.appendChild(
         time
       );
-
 
       wrapper.appendChild(
         bubble
       );
 
+      // 自分の画像
 
       if (isMine) {
 
@@ -1086,13 +672,11 @@
 
       }
 
-
       messagesElement.appendChild(
         wrapper
       );
 
     }
-
 
     // =========================
     // 一番下へ
@@ -1105,7 +689,6 @@
 
     }
 
-
     // =========================
     // リアルタイム
     // =========================
@@ -1117,7 +700,6 @@
         return;
 
       }
-
 
       realtimeChannel =
         supabaseClient
@@ -1134,11 +716,10 @@
               schema: "public",
               table: "messages"
             },
-            async function(payload) {
+            async (payload) => {
 
               const message =
                 payload.new;
-
 
               const isThisChat =
                 (
@@ -1154,13 +735,11 @@
                     currentUsername
                 );
 
-
               if (!isThisChat) {
 
                 return;
 
               }
-
 
               if (
                 message.sender_id ===
@@ -1171,26 +750,17 @@
 
               }
 
-
               await addMessageToScreen(
                 message
               );
 
               scrollToBottom();
 
-
-              // 通知
-
-              showMessageNotification(
-                message
-              );
-
             }
           )
           .subscribe();
 
     }
-
 
     // =========================
     // テキスト送信
@@ -1202,17 +772,14 @@
 
         event.preventDefault();
 
-
         const text =
           messageInput.value.trim();
-
 
         if (!text) {
 
           return;
 
         }
-
 
         if (
           !currentUsername ||
@@ -1227,10 +794,8 @@
 
         }
 
-
         sendButton.disabled =
           true;
-
 
         const {
           data,
@@ -1256,10 +821,8 @@
             .select()
             .single();
 
-
         sendButton.disabled =
           false;
-
 
         if (error) {
 
@@ -1277,10 +840,8 @@
 
         }
 
-
         messageInput.value =
           "";
-
 
         await addMessageToScreen(
           data
@@ -1290,7 +851,6 @@
 
       }
     );
-
 
     // =========================
     // 画像ボタン
@@ -1305,7 +865,6 @@
       }
     );
 
-
     // =========================
     // 画像送信
     // =========================
@@ -1317,13 +876,11 @@
         const file =
           imageInput.files?.[0];
 
-
         if (!file) {
 
           return;
 
         }
-
 
         if (
           !currentUsername ||
@@ -1341,7 +898,6 @@
 
         }
 
-
         if (
           !file.type.startsWith("image/")
         ) {
@@ -1357,13 +913,11 @@
 
         }
 
-
         imageButton.disabled =
           true;
 
         sendButton.disabled =
           true;
-
 
         try {
 
@@ -1372,7 +926,6 @@
               .split(".")
               .pop() ||
             "jpg";
-
 
           const filePath =
             currentUsername +
@@ -1384,7 +937,6 @@
               .slice(2) +
             "." +
             extension;
-
 
           const {
             error: uploadError
@@ -1403,7 +955,6 @@
                 }
               );
 
-
           if (uploadError) {
 
             console.error(
@@ -1419,7 +970,6 @@
             return;
 
           }
-
 
           const {
             data,
@@ -1445,7 +995,6 @@
               .select()
               .single();
 
-
           if (error) {
 
             console.error(
@@ -1462,13 +1011,11 @@
 
           }
 
-
           await addMessageToScreen(
             data
           );
 
           scrollToBottom();
-
 
         } finally {
 
@@ -1486,7 +1033,6 @@
       }
     );
 
-
     // =========================
     // 起動
     // =========================
@@ -1497,3 +1043,4 @@
 
 </body>
 </html>
+に戻しとくね
