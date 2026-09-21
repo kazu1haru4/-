@@ -126,10 +126,6 @@
       margin-top: 3px;
     }
 
-    /* =========================
-       オンライン表示
-    ========================= */
-
     .status {
       margin-top: 5px;
       font-size: 12px;
@@ -243,6 +239,9 @@
     // 60秒以内ならオンライン
     const ONLINE_LIMIT = 60 * 1000;
 
+    // オンライン更新タイマー
+    let presenceTimer = null;
+
 
     // =========================
     // 開始
@@ -279,7 +278,64 @@
       }
 
 
+      // 最初にオンライン状態を更新
+      await updatePresence();
+
+
+      // フレンド一覧を読み込む
       await loadFriends();
+
+
+      // 30秒ごとにオンライン状態を更新
+      presenceTimer = setInterval(
+        async function() {
+
+          await updatePresence();
+          await loadFriends();
+
+        },
+        30000
+      );
+
+    }
+
+
+    // =========================
+    // オンライン状態を更新
+    // =========================
+
+    async function updatePresence() {
+
+      if (!currentUsername) {
+        return;
+      }
+
+
+      const {
+        error
+      } =
+        await supabaseClient
+          .from("user_presence")
+          .upsert(
+            {
+              user_id: currentUsername,
+              last_seen: new Date().toISOString()
+            },
+            {
+              onConflict: "user_id"
+            }
+          );
+
+
+      if (error) {
+
+        console.error(
+          "オンライン状態更新エラー:",
+          error
+        );
+
+        return;
+      }
 
     }
 
@@ -320,6 +376,11 @@
     // =========================
 
     async function loadFriends() {
+
+      if (!currentUsername) {
+        return;
+      }
+
 
       const {
         data,
@@ -416,10 +477,7 @@
 
       for (const friend of data) {
 
-        // =========================
         // プロフィール取得
-        // =========================
-
         const {
           data: profile
         } =
@@ -434,10 +492,6 @@
             )
             .maybeSingle();
 
-
-        // =========================
-        // フレンド表示
-        // =========================
 
         const div =
           document.createElement("div");
@@ -553,9 +607,7 @@
 
 
         info.appendChild(name);
-
         info.appendChild(userId);
-
         info.appendChild(status);
 
 
@@ -576,9 +628,7 @@
         // =========================
 
         div.appendChild(avatar);
-
         div.appendChild(info);
-
         div.appendChild(arrow);
 
 
@@ -608,18 +658,24 @@
 
 
     // =========================
-    // 1分ごとにオンライン更新
+    // ページを離れるとき
     // =========================
 
-    setInterval(
+    window.addEventListener(
+      "pagehide",
       function() {
 
-        if (currentUsername) {
-          loadFriends();
+        if (presenceTimer) {
+
+          clearInterval(
+            presenceTimer
+          );
+
+          presenceTimer = null;
+
         }
 
-      },
-      30000
+      }
     );
 
 
