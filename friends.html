@@ -126,6 +126,24 @@
       margin-top: 3px;
     }
 
+    /* =========================
+       オンライン表示
+    ========================= */
+
+    .status {
+      margin-top: 5px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .status.online {
+      color: #22a447;
+    }
+
+    .status.offline {
+      color: #999;
+    }
+
     .arrow {
       color: #aaa;
       font-size: 22px;
@@ -222,6 +240,9 @@
 
     let currentUsername = "";
 
+    // 60秒以内ならオンライン
+    const ONLINE_LIMIT = 60 * 1000;
+
 
     // =========================
     // 開始
@@ -259,6 +280,37 @@
 
 
       await loadFriends();
+
+    }
+
+
+    // =========================
+    // オンライン判定
+    // =========================
+
+    function isOnline(lastSeen) {
+
+      if (!lastSeen) {
+        return false;
+      }
+
+
+      const lastTime =
+        new Date(lastSeen).getTime();
+
+
+      if (Number.isNaN(lastTime)) {
+        return false;
+      }
+
+
+      const now =
+        Date.now();
+
+
+      return (
+        now - lastTime <= ONLINE_LIMIT
+      );
 
     }
 
@@ -305,6 +357,63 @@
       friendList.innerHTML = "";
 
 
+      // フレンドのIDをまとめて取得
+      const friendIds =
+        data.map(
+          friend => friend.friend_id
+        );
+
+
+      // =========================
+      // オンライン情報取得
+      // =========================
+
+      const {
+        data: presenceData,
+        error: presenceError
+      } =
+        await supabaseClient
+          .from("user_presence")
+          .select(
+            "user_id, last_seen"
+          )
+          .in(
+            "user_id",
+            friendIds
+          );
+
+
+      if (presenceError) {
+
+        console.error(
+          "オンライン情報取得エラー:",
+          presenceError
+        );
+
+      }
+
+
+      const presenceMap =
+        new Map();
+
+
+      for (
+        const presence of
+        presenceData || []
+      ) {
+
+        presenceMap.set(
+          presence.user_id,
+          presence.last_seen
+        );
+
+      }
+
+
+      // =========================
+      // フレンド表示
+      // =========================
+
       for (const friend of data) {
 
         // =========================
@@ -336,7 +445,9 @@
         div.className = "friend";
 
 
+        // =========================
         // アバター
+        // =========================
 
         const avatar =
           document.createElement("div");
@@ -356,8 +467,6 @@
             "プロフィール画像";
 
 
-          // 画像が読み込めなかった場合
-
           img.onerror = function() {
 
             avatar.innerHTML = "👤";
@@ -374,7 +483,9 @@
         }
 
 
+        // =========================
         // 情報
+        // =========================
 
         const info =
           document.createElement("div");
@@ -401,12 +512,56 @@
           "@" + friend.friend_id;
 
 
+        // =========================
+        // オンライン状態
+        // =========================
+
+        const status =
+          document.createElement("div");
+
+        status.className =
+          "status";
+
+
+        const lastSeen =
+          presenceMap.get(
+            friend.friend_id
+          );
+
+
+        if (
+          isOnline(lastSeen)
+        ) {
+
+          status.classList.add(
+            "online"
+          );
+
+          status.textContent =
+            "🟢 オンライン";
+
+        } else {
+
+          status.classList.add(
+            "offline"
+          );
+
+          status.textContent =
+            "⚪ オフライン";
+
+        }
+
+
         info.appendChild(name);
 
         info.appendChild(userId);
 
+        info.appendChild(status);
 
+
+        // =========================
         // 矢印
+        // =========================
 
         const arrow =
           document.createElement("div");
@@ -416,7 +571,9 @@
         arrow.textContent = "›";
 
 
+        // =========================
         // 追加
+        // =========================
 
         div.appendChild(avatar);
 
@@ -448,6 +605,22 @@
       }
 
     }
+
+
+    // =========================
+    // 1分ごとにオンライン更新
+    // =========================
+
+    setInterval(
+      function() {
+
+        if (currentUsername) {
+          loadFriends();
+        }
+
+      },
+      30000
+    );
 
 
     // =========================
