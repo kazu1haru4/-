@@ -80,6 +80,24 @@
       object-fit: cover;
     }
 
+    /* 通知ボタン */
+
+    .notification-button {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      border: none;
+      padding: 9px 11px;
+      background: #fff4cc;
+      border-radius: 12px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .notification-button.enabled {
+      background: #e7f8e7;
+    }
+
     .messages {
       flex: 1;
       padding: 18px;
@@ -191,7 +209,8 @@
     }
 
     .send-button:disabled,
-    .image-button:disabled {
+    .image-button:disabled,
+    .notification-button:disabled {
       opacity: 0.5;
     }
 
@@ -210,6 +229,15 @@
       <a href="home.html" class="home-button">
         🏠 ホーム
       </a>
+
+      <button
+        id="notificationButton"
+        class="notification-button"
+        type="button"
+        title="通知を設定"
+      >
+        🔔
+      </button>
 
       <div class="profile-header">
 
@@ -311,6 +339,9 @@
     const headerAvatar =
       document.getElementById("headerAvatar");
 
+    const notificationButton =
+      document.getElementById("notificationButton");
+
 
     let currentUsername = "";
     let friendId = "";
@@ -318,6 +349,8 @@
 
     let myAvatarUrl = "";
     let friendAvatarUrl = "";
+
+    let notificationPermission = "default";
 
 
     const params =
@@ -330,10 +363,285 @@
 
 
     // =========================
+    // 通知の状態を確認
+    // =========================
+
+    function updateNotificationButton() {
+
+      if (!("Notification" in window)) {
+
+        notificationButton.textContent =
+          "🔕";
+
+        notificationButton.title =
+          "このブラウザは通知に対応していません";
+
+        return;
+      }
+
+
+      notificationPermission =
+        Notification.permission;
+
+
+      if (notificationPermission === "granted") {
+
+        notificationButton.textContent =
+          "🔔";
+
+        notificationButton.classList.add(
+          "enabled"
+        );
+
+        notificationButton.title =
+          "通知ON";
+
+      } else if (
+        notificationPermission === "denied"
+      ) {
+
+        notificationButton.textContent =
+          "🔕";
+
+        notificationButton.classList.remove(
+          "enabled"
+        );
+
+        notificationButton.title =
+          "通知がOFFです";
+
+      } else {
+
+        notificationButton.textContent =
+          "🔔";
+
+        notificationButton.classList.remove(
+          "enabled"
+        );
+
+        notificationButton.title =
+          "通知をONにする";
+
+      }
+
+    }
+
+
+    // =========================
+    // 通知をON
+    // =========================
+
+    async function enableNotifications() {
+
+      if (!("Notification" in window)) {
+
+        alert(
+          "このブラウザでは通知を利用できません。"
+        );
+
+        return;
+
+      }
+
+
+      if (
+        Notification.permission ===
+        "granted"
+      ) {
+
+        alert(
+          "通知はすでにONになっています。"
+        );
+
+        updateNotificationButton();
+
+        return;
+
+      }
+
+
+      if (
+        Notification.permission ===
+        "denied"
+      ) {
+
+        alert(
+          "通知がOFFになっています。\n\n" +
+          "iPhoneの設定から、このサイトの通知を許可してください。"
+        );
+
+        return;
+
+      }
+
+
+      try {
+
+        const permission =
+          await Notification.requestPermission();
+
+        notificationPermission =
+          permission;
+
+        updateNotificationButton();
+
+
+        if (
+          permission === "granted"
+        ) {
+
+          new Notification(
+            "フレンドチャット",
+            {
+              body:
+                "通知がONになりました！"
+            }
+          );
+
+        } else {
+
+          alert(
+            "通知が許可されませんでした。"
+          );
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          "通知設定エラー:",
+          error
+        );
+
+        alert(
+          "通知の設定に失敗しました。"
+        );
+
+      }
+
+    }
+
+
+    notificationButton.addEventListener(
+      "click",
+      enableNotifications
+    );
+
+
+    // =========================
+    // 新着通知
+    // =========================
+
+    function showMessageNotification(
+      message
+    ) {
+
+      const senderName =
+        chatTitle.textContent
+          .replace("💬 ", "")
+          .trim() ||
+        friendId;
+
+
+      let body =
+        "新しいメッセージが届きました";
+
+
+      if (message.content) {
+
+        body =
+          message.content;
+
+      } else if (
+        message.image_url
+      ) {
+
+        body =
+          "🖼️ 画像が届きました";
+
+      }
+
+
+      // ページが見えている場合は
+      // タイトルだけ変更
+
+      if (
+        document.visibilityState ===
+        "visible"
+      ) {
+
+        document.title =
+          "🔴 新着メッセージ！";
+
+        setTimeout(
+          function() {
+
+            document.title =
+              "チャット";
+
+          },
+          3000
+        );
+
+      }
+
+
+      // ブラウザ通知
+
+      if (
+        "Notification" in window &&
+        Notification.permission ===
+        "granted"
+      ) {
+
+        try {
+
+          const notification =
+            new Notification(
+              "💬 " + senderName,
+              {
+                body: body,
+                icon:
+                  friendAvatarUrl ||
+                  undefined,
+                tag:
+                  "friend-chat-" +
+                  friendId
+              }
+            );
+
+
+          notification.onclick =
+            function() {
+
+              window.focus();
+
+              notification.close();
+
+            };
+
+        } catch (error) {
+
+          console.error(
+            "通知表示エラー:",
+            error
+          );
+
+        }
+
+      }
+
+    }
+
+
+    // =========================
     // プロフィール画像を作る
     // =========================
 
-    function createAvatar(url, fallback) {
+    function createAvatar(
+      url,
+      fallback
+    ) {
 
       const avatar =
         document.createElement("div");
@@ -347,19 +655,25 @@
         const img =
           document.createElement("img");
 
-        img.src = url;
+        img.src =
+          url;
 
-        img.alt = "プロフィール画像";
-
-
-        img.onerror = function() {
-
-          avatar.innerHTML = fallback;
-
-        };
+        img.alt =
+          "プロフィール画像";
 
 
-        avatar.appendChild(img);
+        img.onerror =
+          function() {
+
+            avatar.innerHTML =
+              fallback;
+
+          };
+
+
+        avatar.appendChild(
+          img
+        );
 
       } else {
 
@@ -380,6 +694,9 @@
 
     async function start() {
 
+      updateNotificationButton();
+
+
       if (!friendId) {
 
         chatTitle.textContent =
@@ -392,6 +709,7 @@
           '<div class="empty">フレンドから相手を選んでね</div>';
 
         return;
+
       }
 
 
@@ -402,19 +720,26 @@
         await supabaseClient.auth.getSession();
 
 
-      if (error || !data.session) {
+      if (
+        error ||
+        !data.session
+      ) {
 
-        alert("ログインしてください。");
+        alert(
+          "ログインしてください。"
+        );
 
         window.location.href =
           "index.html";
 
         return;
+
       }
 
 
       currentUsername =
-        data.session.user.user_metadata?.username || "";
+        data.session.user.user_metadata?.username ||
+        "";
 
 
       if (!currentUsername) {
@@ -424,6 +749,7 @@
         );
 
         return;
+
       }
 
 
@@ -436,7 +762,9 @@
       } =
         await supabaseClient
           .from("profiles")
-          .select("name, avatar_url")
+          .select(
+            "name, avatar_url"
+          )
           .eq(
             "user_id",
             friendId
@@ -445,12 +773,16 @@
 
 
       friendAvatarUrl =
-        friendProfile?.avatar_url || "";
+        friendProfile?.avatar_url ||
+        "";
 
 
       chatTitle.textContent =
         "💬 " +
-        (friendProfile?.name || friendId);
+        (
+          friendProfile?.name ||
+          friendId
+        );
 
 
       // ヘッダー画像
@@ -472,7 +804,9 @@
       } =
         await supabaseClient
           .from("profiles")
-          .select("avatar_url")
+          .select(
+            "avatar_url"
+          )
           .eq(
             "user_id",
             currentUsername
@@ -481,7 +815,8 @@
 
 
       myAvatarUrl =
-        myProfile?.avatar_url || "";
+        myProfile?.avatar_url ||
+        "";
 
 
       await loadMessages();
@@ -526,22 +861,30 @@
           '<div class="empty">メッセージを読み込めませんでした</div>';
 
         return;
+
       }
 
 
-      messagesElement.innerHTML = "";
+      messagesElement.innerHTML =
+        "";
 
 
-      if (!data || data.length === 0) {
+      if (
+        !data ||
+        data.length === 0
+      ) {
 
         messagesElement.innerHTML =
           '<div class="empty">まだメッセージがありません</div>';
 
         return;
+
       }
 
 
-      for (const message of data) {
+      for (
+        const message of data
+      ) {
 
         await addMessageToScreen(
           message
@@ -559,7 +902,9 @@
     // メッセージ表示
     // =========================
 
-    async function addMessageToScreen(message) {
+    async function addMessageToScreen(
+      message
+    ) {
 
       const wrapper =
         document.createElement("div");
@@ -575,7 +920,9 @@
 
       if (isMine) {
 
-        wrapper.classList.add("mine");
+        wrapper.classList.add(
+          "mine"
+        );
 
       }
 
@@ -632,7 +979,10 @@
             );
 
 
-        if (!error && data?.signedUrl) {
+        if (
+          !error &&
+          data?.signedUrl
+        ) {
 
           image.src =
             data.signedUrl;
@@ -790,6 +1140,9 @@
               }
 
 
+              // 自分が送ったメッセージは
+              // 通知しない
+
               if (
                 message.sender_id ===
                 currentUsername
@@ -805,6 +1158,13 @@
               );
 
               scrollToBottom();
+
+
+              // 🔔 通知
+
+              showMessageNotification(
+                message
+              );
 
             }
           )
