@@ -80,8 +80,6 @@
       object-fit: cover;
     }
 
-    /* 通知ボタン */
-
     .notification-button {
       position: absolute;
       top: 12px;
@@ -302,6 +300,38 @@
 
   <script>
 
+    // =========================
+    // Service Worker登録
+    // =========================
+
+    if ("serviceWorker" in navigator) {
+
+      navigator.serviceWorker.register(
+        "./service-worker.js"
+      )
+      .then(function() {
+
+        console.log(
+          "Service Worker 登録成功"
+        );
+
+      })
+      .catch(function(error) {
+
+        console.error(
+          "Service Worker 登録失敗:",
+          error
+        );
+
+      });
+
+    }
+
+
+    // =========================
+    // Supabase
+    // =========================
+
     const SUPABASE_URL =
       "https://yxonmqdyekwenyzekjwj.supabase.co";
 
@@ -314,6 +344,10 @@
         SUPABASE_KEY
       );
 
+
+    // =========================
+    // 要素
+    // =========================
 
     const messagesElement =
       document.getElementById("messages");
@@ -340,8 +374,14 @@
       document.getElementById("headerAvatar");
 
     const notificationButton =
-      document.getElementById("notificationButton");
+      document.getElementById(
+        "notificationButton"
+      );
 
+
+    // =========================
+    // 状態
+    // =========================
 
     let currentUsername = "";
     let friendId = "";
@@ -350,8 +390,10 @@
     let myAvatarUrl = "";
     let friendAvatarUrl = "";
 
-    let notificationPermission = "default";
 
+    // =========================
+    // URL
+    // =========================
 
     const params =
       new URLSearchParams(
@@ -363,7 +405,7 @@
 
 
     // =========================
-    // 通知の状態を確認
+    // 通知ボタン状態
     // =========================
 
     function updateNotificationButton() {
@@ -377,14 +419,14 @@
           "このブラウザは通知に対応していません";
 
         return;
+
       }
 
 
-      notificationPermission =
-        Notification.permission;
-
-
-      if (notificationPermission === "granted") {
+      if (
+        Notification.permission ===
+        "granted"
+      ) {
 
         notificationButton.textContent =
           "🔔";
@@ -397,7 +439,8 @@
           "通知ON";
 
       } else if (
-        notificationPermission === "denied"
+        Notification.permission ===
+        "denied"
       ) {
 
         notificationButton.textContent =
@@ -428,7 +471,7 @@
 
 
     // =========================
-    // 通知をON
+    // 通知許可
     // =========================
 
     async function enableNotifications() {
@@ -453,8 +496,6 @@
           "通知はすでにONになっています。"
         );
 
-        updateNotificationButton();
-
         return;
 
       }
@@ -467,7 +508,7 @@
 
         alert(
           "通知がOFFになっています。\n\n" +
-          "iPhoneの設定から、このサイトの通知を許可してください。"
+          "iPhoneの設定から通知を許可してください。"
         );
 
         return;
@@ -480,8 +521,6 @@
         const permission =
           await Notification.requestPermission();
 
-        notificationPermission =
-          permission;
 
         updateNotificationButton();
 
@@ -490,12 +529,8 @@
           permission === "granted"
         ) {
 
-          new Notification(
-            "フレンドチャット",
-            {
-              body:
-                "通知がONになりました！"
-            }
+          alert(
+            "通知がONになりました！"
           );
 
         } else {
@@ -529,19 +564,12 @@
 
 
     // =========================
-    // 新着通知
+    // 通知表示
     // =========================
 
     function showMessageNotification(
       message
     ) {
-
-      const senderName =
-        chatTitle.textContent
-          .replace("💬 ", "")
-          .trim() ||
-        friendId;
-
 
       let body =
         "新しいメッセージが届きました";
@@ -562,31 +590,20 @@
       }
 
 
-      // ページが見えている場合は
-      // タイトルだけ変更
-
-      if (
-        document.visibilityState ===
-        "visible"
-      ) {
-
-        document.title =
-          "🔴 新着メッセージ！";
-
-        setTimeout(
-          function() {
-
-            document.title =
-              "チャット";
-
-          },
-          3000
-        );
-
-      }
+      document.title =
+        "🔴 新着メッセージ！";
 
 
-      // ブラウザ通知
+      setTimeout(
+        function() {
+
+          document.title =
+            "チャット";
+
+        },
+        3000
+      );
+
 
       if (
         "Notification" in window &&
@@ -598,7 +615,13 @@
 
           const notification =
             new Notification(
-              "💬 " + senderName,
+              "💬 " +
+              (
+                chatTitle.textContent
+                  .replace("💬 ", "")
+                  .trim() ||
+                friendId
+              ),
               {
                 body: body,
                 icon:
@@ -635,7 +658,7 @@
 
 
     // =========================
-    // プロフィール画像を作る
+    // アバター
     // =========================
 
     function createAvatar(
@@ -738,8 +761,9 @@
 
 
       currentUsername =
-        data.session.user.user_metadata?.username ||
-        "";
+        data.session.user
+          .user_metadata
+          ?.username || "";
 
 
       if (!currentUsername) {
@@ -754,7 +778,7 @@
 
 
       // =========================
-      // 相手のプロフィール
+      // 相手プロフィール
       // =========================
 
       const {
@@ -784,8 +808,6 @@
           friendId
         );
 
-
-      // ヘッダー画像
 
       if (friendAvatarUrl) {
 
@@ -927,8 +949,6 @@
       }
 
 
-      // 相手の画像
-
       if (!isMine) {
 
         const avatar =
@@ -944,8 +964,6 @@
       }
 
 
-      // 吹き出し
-
       const bubble =
         document.createElement("div");
 
@@ -953,7 +971,9 @@
         "bubble";
 
 
-      // 画像メッセージ
+      // =========================
+      // 画像
+      // =========================
 
       if (message.image_url) {
 
@@ -971,12 +991,12 @@
           data,
           error
         } =
-          await supabaseClient.storage
-            .from("chat-images")
-            .createSignedUrl(
-              message.image_url,
-              3600
-            );
+        await supabaseClient.storage
+          .from("chat-images")
+          .createSignedUrl(
+            message.image_url,
+            3600
+          );
 
 
         if (
@@ -996,7 +1016,9 @@
       }
 
 
+      // =========================
       // テキスト
+      // =========================
 
       if (message.content) {
 
@@ -1013,7 +1035,9 @@
       }
 
 
+      // =========================
       // 時刻
+      // =========================
 
       const time =
         document.createElement("div");
@@ -1047,8 +1071,6 @@
         bubble
       );
 
-
-      // 自分の画像
 
       if (isMine) {
 
@@ -1112,7 +1134,7 @@
               schema: "public",
               table: "messages"
             },
-            async (payload) => {
+            async function(payload) {
 
               const message =
                 payload.new;
@@ -1140,9 +1162,6 @@
               }
 
 
-              // 自分が送ったメッセージは
-              // 通知しない
-
               if (
                 message.sender_id ===
                 currentUsername
@@ -1160,7 +1179,7 @@
               scrollToBottom();
 
 
-              // 🔔 通知
+              // 通知
 
               showMessageNotification(
                 message
