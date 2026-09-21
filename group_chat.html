@@ -497,7 +497,6 @@
     class="messages"
   ></div>
 
-
   <div
     id="replyArea"
     class="reply-area"
@@ -520,7 +519,6 @@
     </div>
 
   </div>
-
 
   <div class="input-area">
 
@@ -553,7 +551,6 @@
     type="file"
     accept="image/*"
   >
-
 
   <div
     id="memberModal"
@@ -612,7 +609,6 @@
 
   </div>
 
-
   <script>
 
     const SUPABASE_URL =
@@ -638,79 +634,49 @@
 
 
     const groupName =
-      document.getElementById(
-        "groupName"
-      );
+      document.getElementById("groupName");
 
     const messages =
-      document.getElementById(
-        "messages"
-      );
+      document.getElementById("messages");
 
     const messageInput =
-      document.getElementById(
-        "messageInput"
-      );
+      document.getElementById("messageInput");
 
     const sendButton =
-      document.getElementById(
-        "sendButton"
-      );
+      document.getElementById("sendButton");
 
     const imageButton =
-      document.getElementById(
-        "imageButton"
-      );
+      document.getElementById("imageButton");
 
     const imageInput =
-      document.getElementById(
-        "imageInput"
-      );
+      document.getElementById("imageInput");
 
     const memberButton =
-      document.getElementById(
-        "memberButton"
-      );
+      document.getElementById("memberButton");
 
     const memberModal =
-      document.getElementById(
-        "memberModal"
-      );
+      document.getElementById("memberModal");
 
     const memberList =
-      document.getElementById(
-        "memberList"
-      );
+      document.getElementById("memberList");
 
     const memberInput =
-      document.getElementById(
-        "memberInput"
-      );
+      document.getElementById("memberInput");
 
     const addMemberButton =
-      document.getElementById(
-        "addMemberButton"
-      );
+      document.getElementById("addMemberButton");
 
     const closeModalButton =
-      document.getElementById(
-        "closeModalButton"
-      );
+      document.getElementById("closeModalButton");
 
     const replyArea =
-      document.getElementById(
-        "replyArea"
-      );
+      document.getElementById("replyArea");
 
     const replyText =
-      document.getElementById(
-        "replyText"
-      );
+      document.getElementById("replyText");
 
     const cancelReplyButton =
-      document.getElementById(
-        "cancelReplyButton"
-      );
+      document.getElementById("cancelReplyButton");
 
 
     let currentUsername = "";
@@ -743,13 +709,8 @@
       } =
         await supabaseClient
           .from("profiles")
-          .select(
-            "user_id, name, avatar_url"
-          )
-          .eq(
-            "user_id",
-            username
-          )
+          .select("user_id, name, avatar_url")
+          .eq("user_id", username)
           .maybeSingle();
 
       profileCache[username] =
@@ -760,19 +721,16 @@
 
 
     /* =========================
-       プロフィール画像
+       アバター
     ========================= */
 
     function createAvatar(profile) {
 
       const avatar =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       avatar.className =
         "message-avatar";
-
 
       if (
         profile &&
@@ -780,9 +738,7 @@
       ) {
 
         const img =
-          document.createElement(
-            "img"
-          );
+          document.createElement("img");
 
         img.src =
           profile.avatar_url;
@@ -790,9 +746,7 @@
         img.alt =
           "プロフィール画像";
 
-        avatar.appendChild(
-          img
-        );
+        avatar.appendChild(img);
 
       } else {
 
@@ -800,152 +754,206 @@
           "👤";
       }
 
-
       return avatar;
     }
 
 
     /* =========================
-       グループ通知作成
+       グループ通知
     ========================= */
 
     async function createGroupNotifications() {
 
-      if (
-        !currentUsername ||
-        !groupId
-      ) {
-        return;
-      }
+      try {
 
+        if (
+          !currentUsername ||
+          !groupId
+        ) {
+          return;
+        }
 
-      const {
-        data: group,
-        error: groupError
-      } =
-        await supabaseClient
-          .from("groups")
-          .select("name")
-          .eq(
-            "id",
-            Number(groupId)
-          )
-          .maybeSingle();
+        const {
+          data: group,
+          error: groupError
+        } =
+          await supabaseClient
+            .from("groups")
+            .select("name")
+            .eq("id", Number(groupId))
+            .maybeSingle();
 
-
-      if (groupError) {
-
-        console.error(
-          "グループ取得エラー:",
-          groupError
-        );
-
-        return;
-      }
-
-
-      const groupTitle =
-        group?.name ||
-        "グループ";
-
-
-      const {
-        data: members,
-        error: membersError
-      } =
-        await supabaseClient
-          .from("group_members")
-          .select("user_id")
-          .eq(
-            "group_id",
-            Number(groupId)
+        if (groupError) {
+          console.error(
+            "グループ取得エラー:",
+            groupError
           );
+          return;
+        }
 
+        const groupTitle =
+          group?.name || "グループ";
 
-      if (membersError) {
+        const {
+          data: members,
+          error: membersError
+        } =
+          await supabaseClient
+            .from("group_members")
+            .select("user_id")
+            .eq("group_id", Number(groupId));
+
+        if (membersError) {
+          console.error(
+            "グループメンバー取得エラー:",
+            membersError
+          );
+          return;
+        }
+
+        if (
+          !members ||
+          members.length === 0
+        ) {
+          return;
+        }
+
+        const notifications =
+          members
+            .filter(function(member) {
+              return (
+                member.user_id !==
+                currentUsername
+              );
+            })
+            .map(function(member) {
+
+              return {
+                user_id:
+                  member.user_id,
+
+                type:
+                  "group",
+
+                title:
+                  "👥 グループに新しいメッセージ",
+
+                message:
+                  currentUsername +
+                  "さんが「" +
+                  groupTitle +
+                  "」にメッセージを送信しました",
+
+                link:
+                  "group_chat.html?id=" +
+                  encodeURIComponent(groupId),
+
+                is_read:
+                  false
+              };
+
+            });
+
+        if (
+          notifications.length === 0
+        ) {
+          return;
+        }
+
+        const {
+          error: insertError
+        } =
+          await supabaseClient
+            .from("notifications")
+            .insert(notifications);
+
+        if (insertError) {
+          console.error(
+            "グループ通知作成エラー:",
+            insertError
+          );
+        }
+
+      } catch (error) {
 
         console.error(
-          "グループメンバー取得エラー:",
-          membersError
+          "グループ通知処理エラー:",
+          error
         );
 
-        return;
       }
 
-
-      if (
-        !members ||
-        members.length === 0
-      ) {
-        return;
-      }
+    }
 
 
-      const notifications =
-        members
-          .filter(function(member) {
+    /* =========================
+       返信通知
+    ========================= */
 
-            return (
-              member.user_id !==
-              currentUsername
-            );
+    async function createGroupReplyNotification(
+      message
+    ) {
 
-          })
-          .map(function(member) {
+      try {
 
-            return {
+        if (
+          !message ||
+          !currentUsername
+        ) {
+          return;
+        }
+
+        // 自分のメッセージに自分で返信した場合は通知しない
+        if (
+          message.sender_id ===
+          currentUsername
+        ) {
+          return;
+        }
+
+        const {
+          error
+        } =
+          await supabaseClient
+            .from("notifications")
+            .insert({
 
               user_id:
-                member.user_id,
+                message.sender_id,
 
               type:
-                "group",
+                "group_reply",
 
               title:
-                "👥 グループに新しいメッセージ",
+                "↩️ グループで返信がありました",
 
               message:
                 currentUsername +
-                "さんが「" +
-                groupTitle +
-                "」にメッセージを送信しました",
+                "さんがあなたのメッセージに返信しました",
 
               link:
                 "group_chat.html?id=" +
-                encodeURIComponent(
-                  groupId
-                ),
+                encodeURIComponent(groupId),
 
               is_read:
                 false
 
-            };
+            });
 
-          });
+        if (error) {
 
-
-      if (
-        notifications.length === 0
-      ) {
-        return;
-      }
-
-
-      const {
-        error: insertError
-      } =
-        await supabaseClient
-          .from("notifications")
-          .insert(
-            notifications
+          console.error(
+            "返信通知エラー:",
+            error
           );
 
+        }
 
-      if (insertError) {
+      } catch (error) {
 
         console.error(
-          "グループ通知作成エラー:",
-          insertError
+          "返信通知処理エラー:",
+          error
         );
 
       }
@@ -967,13 +975,11 @@
         return;
       }
 
-
       const {
         data,
         error
       } =
         await supabaseClient.auth.getSession();
-
 
       if (
         error ||
@@ -986,11 +992,9 @@
         return;
       }
 
-
       currentUsername =
         data.session.user
           .user_metadata?.username || "";
-
 
       await getProfile(
         currentUsername
@@ -999,6 +1003,7 @@
       await loadGroup();
 
       await loadMessages();
+
     }
 
 
@@ -1015,12 +1020,8 @@
         await supabaseClient
           .from("groups")
           .select("name")
-          .eq(
-            "id",
-            groupId
-          )
+          .eq("id", groupId)
           .single();
-
 
       if (
         error ||
@@ -1035,9 +1036,9 @@
         return;
       }
 
-
       groupName.textContent =
         data.name;
+
     }
 
 
@@ -1054,17 +1055,13 @@
         await supabaseClient
           .from("group_messages")
           .select("*")
-          .eq(
-            "group_id",
-            Number(groupId)
-          )
+          .eq("group_id", Number(groupId))
           .order(
             "created_at",
             {
               ascending: true
             }
           );
-
 
       if (error) {
 
@@ -1076,14 +1073,11 @@
         return;
       }
 
-
       messages.innerHTML =
         "";
 
-
       for (
-        const message
-        of data || []
+        const message of data || []
       ) {
 
         await addMessage(
@@ -1091,6 +1085,7 @@
         );
 
       }
+
     }
 
 
@@ -1105,43 +1100,28 @@
           message.sender_id
         );
 
-
       const row =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       row.className =
         "message-row";
 
-
-      const avatar =
-        createAvatar(
-          profile
-        );
-
       row.appendChild(
-        avatar
+        createAvatar(profile)
       );
 
-
       const box =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       box.className =
         "message";
 
 
       const sender =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       sender.className =
         "sender";
-
 
       sender.textContent =
         message.sender_id ===
@@ -1149,7 +1129,6 @@
           ? "あなた"
           : "@" +
             message.sender_id;
-
 
       box.appendChild(
         sender
@@ -1171,16 +1150,13 @@
               3600
             );
 
-
         if (
           !signedError &&
           signedData?.signedUrl
         ) {
 
           const image =
-            document.createElement(
-              "img"
-            );
+            document.createElement("img");
 
           image.className =
             "chat-image";
@@ -1194,16 +1170,16 @@
           image.addEventListener(
             "click",
             function(event) {
-
               event.stopPropagation();
-
             }
           );
 
           box.appendChild(
             image
           );
+
         }
+
       }
 
 
@@ -1212,9 +1188,7 @@
       if (message.content) {
 
         const content =
-          document.createElement(
-            "div"
-          );
+          document.createElement("div");
 
         content.className =
           "content";
@@ -1225,13 +1199,15 @@
         box.appendChild(
           content
         );
+
       }
 
 
-      /* 返信 */
+      /* 返信一覧 */
 
       const {
-        data: replies
+        data: replies,
+        error: repliesError
       } =
         await supabaseClient
           .from("group_replies")
@@ -1247,36 +1223,36 @@
             }
           );
 
+      if (repliesError) {
+
+        console.error(
+          "返信読み込みエラー:",
+          repliesError
+        );
+
+      }
 
       for (
-        const reply
-        of replies || []
+        const reply of replies || []
       ) {
 
         const replyBox =
-          document.createElement(
-            "div"
-          );
+          document.createElement("div");
 
         replyBox.className =
           "reply-preview";
 
-
         const replySender =
-          document.createElement(
-            "strong"
-          );
+          document.createElement("strong");
 
         replySender.textContent =
           "@" +
           reply.sender_id +
           "：";
 
-
         replyBox.appendChild(
           replySender
         );
-
 
         replyBox.appendChild(
           document.createTextNode(
@@ -1285,10 +1261,10 @@
           )
         );
 
-
         box.appendChild(
           replyBox
         );
+
       }
 
 
@@ -1305,27 +1281,21 @@
             message.id
           );
 
-
       if (
         reactions &&
         reactions.length > 0
       ) {
 
         const reactionArea =
-          document.createElement(
-            "div"
-          );
+          document.createElement("div");
 
         reactionArea.className =
           "reactions";
 
-
         const counts = {};
 
-
         for (
-          const reaction
-          of reactions
+          const reaction of reactions
         ) {
 
           counts[
@@ -1336,56 +1306,48 @@
                 reaction.reaction
               ] || 0
             ) + 1;
+
         }
 
-
         for (
-          const emoji
-          of Object.keys(counts)
+          const emoji of Object.keys(counts)
         ) {
 
           const reactionItem =
-            document.createElement(
-              "div"
-            );
+            document.createElement("div");
 
           reactionItem.className =
             "reaction-item";
-
 
           reactionItem.textContent =
             emoji +
             " " +
             counts[emoji];
 
-
           reactionArea.appendChild(
             reactionItem
           );
-        }
 
+        }
 
         box.appendChild(
           reactionArea
         );
+
       }
 
 
       /* メニュー */
 
       const menu =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       menu.className =
         "message-menu";
 
 
       const reactionButton =
-        document.createElement(
-          "button"
-        );
+        document.createElement("button");
 
       reactionButton.type =
         "button";
@@ -1395,9 +1357,7 @@
 
 
       const replyButton =
-        document.createElement(
-          "button"
-        );
+        document.createElement("button");
 
       replyButton.type =
         "button";
@@ -1418,9 +1378,7 @@
       /* リアクション選択 */
 
       const picker =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       picker.className =
         "reaction-picker";
@@ -1436,21 +1394,17 @@
 
 
       for (
-        const emoji
-        of emojis
+        const emoji of emojis
       ) {
 
         const emojiButton =
-          document.createElement(
-            "button"
-          );
+          document.createElement("button");
 
         emojiButton.type =
           "button";
 
         emojiButton.textContent =
           emoji;
-
 
         emojiButton.addEventListener(
           "click",
@@ -1474,10 +1428,10 @@
           }
         );
 
-
         picker.appendChild(
           emojiButton
         );
+
       }
 
 
@@ -1523,11 +1477,8 @@
 
           event.stopPropagation();
 
-
           document
-            .querySelectorAll(
-              ".message-menu"
-            )
+            .querySelectorAll(".message-menu")
             .forEach(
               function(other) {
 
@@ -1537,16 +1488,14 @@
 
                   other.style.display =
                     "none";
+
                 }
 
               }
             );
 
-
           document
-            .querySelectorAll(
-              ".reaction-picker"
-            )
+            .querySelectorAll(".reaction-picker")
             .forEach(
               function(other) {
 
@@ -1556,18 +1505,16 @@
 
                   other.style.display =
                     "none";
+
                 }
 
               }
             );
 
-
           menu.style.display =
-            menu.style.display ===
-            "block"
+            menu.style.display === "block"
               ? "none"
               : "block";
-
 
           picker.style.display =
             "none";
@@ -1584,11 +1531,9 @@
         picker
       );
 
-
       row.appendChild(
         box
       );
-
 
       messages.appendChild(
         row
@@ -1598,7 +1543,7 @@
 
 
     /* =========================
-       リアクション追加
+       リアクション
     ========================= */
 
     async function addReaction(
@@ -1626,7 +1571,6 @@
           )
           .maybeSingle();
 
-
       if (existing) {
 
         await supabaseClient
@@ -1639,7 +1583,6 @@
 
         return;
       }
-
 
       const {
         error
@@ -1659,7 +1602,6 @@
 
           });
 
-
       if (error) {
 
         console.error(error);
@@ -1670,6 +1612,7 @@
         );
 
       }
+
     }
 
 
@@ -1682,16 +1625,11 @@
       replyingToMessage =
         message;
 
-
       replyText.innerHTML =
         "";
 
-
       const strong =
-        document.createElement(
-          "strong"
-        );
-
+        document.createElement("strong");
 
       strong.textContent =
         message.sender_id ===
@@ -1700,11 +1638,9 @@
           : "@" +
             message.sender_id;
 
-
       replyText.appendChild(
         strong
       );
-
 
       replyText.appendChild(
         document.createTextNode(
@@ -1716,14 +1652,11 @@
         )
       );
 
-
       replyArea.style.display =
         "block";
 
-
       messageInput.placeholder =
         "返信を入力...";
-
 
       messageInput.focus();
 
@@ -1754,121 +1687,6 @@
 
 
     /* =========================
-       返信通知
-    ========================= */
-
-    async function createGroupReplyNotification(
-      message
-    ) {
-
-      if (
-        !message ||
-        !currentUsername
-      ) {
-        return;
-      }
-
-
-      // 自分のメッセージへの返信なら
-      // 自分に通知する
-
-      if (
-        message.sender_id ===
-        currentUsername
-      ) {
-
-        const {
-          error
-        } =
-          await supabaseClient
-            .from("notifications")
-            .insert({
-
-              user_id:
-                currentUsername,
-
-              type:
-                "group_reply",
-
-              title:
-                "↩️ グループで返信がありました",
-
-              message:
-                "あなたのメッセージに" +
-                "@" +
-                currentUsername +
-                "さんから返信がありました",
-
-              link:
-                "group_chat.html?id=" +
-                encodeURIComponent(
-                  groupId
-                ),
-
-              is_read:
-                false
-
-            });
-
-
-        if (error) {
-
-          console.error(
-            "返信通知エラー:",
-            error
-          );
-
-        }
-
-        return;
-      }
-
-
-      const {
-        error
-      } =
-        await supabaseClient
-          .from("notifications")
-          .insert({
-
-            user_id:
-              message.sender_id,
-
-            type:
-              "group_reply",
-
-            title:
-              "↩️ グループで返信がありました",
-
-            message:
-              currentUsername +
-              "さんがあなたのメッセージに返信しました",
-
-            link:
-              "group_chat.html?id=" +
-              encodeURIComponent(
-                groupId
-              ),
-
-            is_read:
-              false
-
-          });
-
-
-      if (error) {
-
-        console.error(
-          "返信通知エラー:",
-          error
-        );
-
-      }
-
-    }
-
-
-    /* =========================
        テキスト送信
     ========================= */
 
@@ -1877,11 +1695,9 @@
       const text =
         messageInput.value.trim();
 
-
       if (!text) {
         return;
       }
-
 
       if (!currentUsername) {
 
@@ -1892,20 +1708,18 @@
         return;
       }
 
-
       sendButton.disabled =
         true;
 
 
-      /* 返信 */
+      /* =====================
+         返信
+      ===================== */
 
-      if (
-        replyingToMessage
-      ) {
+      if (replyingToMessage) {
 
         const targetMessage =
           replyingToMessage;
-
 
         const {
           error
@@ -1928,36 +1742,66 @@
 
         if (error) {
 
-          console.error(error);
+          console.error(
+            "返信送信エラー:",
+            error
+          );
 
           alert(
             "返信を送信できませんでした。\n" +
             error.message
           );
 
-        } else {
+          sendButton.disabled =
+            false;
 
-          messageInput.value =
-            "";
+          messageInput.focus();
 
-          replyingToMessage =
-            null;
-
-          replyArea.style.display =
-            "none";
-
-          messageInput.placeholder =
-            "メッセージを入力...";
+          return;
+        }
 
 
-          await createGroupReplyNotification(
-            targetMessage
+        /*
+         * ここが重要。
+         *
+         * 返信保存が成功したら、
+         * 通知処理を待たずに
+         * すぐ画面を更新する。
+         */
+
+        messageInput.value =
+          "";
+
+        replyingToMessage =
+          null;
+
+        replyArea.style.display =
+          "none";
+
+        messageInput.placeholder =
+          "メッセージを入力...";
+
+
+        await loadMessages();
+
+
+        /*
+         * 通知は後から処理。
+         *
+         * 通知に失敗しても
+         * 返信には影響しない。
+         */
+
+        createGroupReplyNotification(
+          targetMessage
+        ).catch(function(error) {
+
+          console.error(
+            "返信通知処理エラー:",
+            error
           );
 
-
-          await loadMessages();
-
-        }
+        });
 
 
         sendButton.disabled =
@@ -1969,7 +1813,9 @@
       }
 
 
-      /* 通常メッセージ */
+      /* =====================
+         通常メッセージ
+      ===================== */
 
       const {
         error
@@ -2009,9 +1855,20 @@
 
         await loadMessages();
 
-        // グループメンバーへ通知
 
-        await createGroupNotifications();
+        /*
+         * 通知は後処理。
+         */
+
+        createGroupNotifications()
+          .catch(function(error) {
+
+            console.error(
+              "グループ通知処理エラー:",
+              error
+            );
+
+          });
 
       }
 
@@ -2049,11 +1906,9 @@
         const file =
           imageInput.files?.[0];
 
-
         if (!file) {
           return;
         }
-
 
         if (
           !file.type.startsWith("image/")
@@ -2068,7 +1923,6 @@
 
           return;
         }
-
 
         if (
           !currentUsername ||
@@ -2085,7 +1939,6 @@
           return;
         }
 
-
         imageButton.disabled =
           true;
 
@@ -2098,7 +1951,6 @@
           const extension =
             file.name.split(".").pop() ||
             "jpg";
-
 
           const filePath =
             "groups/" +
@@ -2189,9 +2041,21 @@
 
           await loadMessages();
 
-          // 画像送信も通知
 
-          await createGroupNotifications();
+          /*
+           * 画像通知も後処理。
+           */
+
+          createGroupNotifications()
+            .catch(function(error) {
+
+              console.error(
+                "画像通知処理エラー:",
+                error
+              );
+
+            });
+
 
         } finally {
 
@@ -2263,8 +2127,7 @@
 
 
       for (
-        const member
-        of members
+        const member of members
       ) {
 
         const profile =
@@ -2274,18 +2137,14 @@
 
 
         const item =
-          document.createElement(
-            "div"
-          );
+          document.createElement("div");
 
         item.className =
           "member-item";
 
 
         const icon =
-          document.createElement(
-            "div"
-          );
+          document.createElement("div");
 
         icon.className =
           "member-icon";
@@ -2297,9 +2156,7 @@
         ) {
 
           const img =
-            document.createElement(
-              "img"
-            );
+            document.createElement("img");
 
           img.src =
             profile.avatar_url;
@@ -2329,18 +2186,14 @@
 
 
         const info =
-          document.createElement(
-            "div"
-          );
+          document.createElement("div");
 
         info.className =
           "member-info";
 
 
         const name =
-          document.createElement(
-            "div"
-          );
+          document.createElement("div");
 
         name.className =
           "member-name";
@@ -2351,9 +2204,7 @@
 
 
         const id =
-          document.createElement(
-            "div"
-          );
+          document.createElement("div");
 
         id.className =
           "member-id";
@@ -2433,9 +2284,7 @@
       } =
         await supabaseClient
           .from("profiles")
-          .select(
-            "user_id, name"
-          )
+          .select("user_id, name")
           .eq(
             "user_id",
             friendId
@@ -2679,9 +2528,7 @@
       function() {
 
         document
-          .querySelectorAll(
-            ".message-menu"
-          )
+          .querySelectorAll(".message-menu")
           .forEach(
             function(menu) {
 
@@ -2693,9 +2540,7 @@
 
 
         document
-          .querySelectorAll(
-            ".reaction-picker"
-          )
+          .querySelectorAll(".reaction-picker")
           .forEach(
             function(picker) {
 
