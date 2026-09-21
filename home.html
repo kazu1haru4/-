@@ -157,11 +157,25 @@
       background: #fff7e8;
     }
 
+    .direct-chat {
+      background: #eeeaff;
+    }
+
     .footer {
       text-align: center;
       margin-top: 25px;
       color: #aaa;
       font-size: 12px;
+    }
+
+    @media (max-width: 380px) {
+      .menu {
+        grid-template-columns: 1fr;
+      }
+
+      .menu-button {
+        min-height: 125px;
+      }
     }
   </style>
 </head>
@@ -211,6 +225,26 @@
 
     <section class="menu">
 
+      <!-- 個別チャット -->
+      <a
+        href="chats.html"
+        class="menu-button direct-chat"
+      >
+        <div class="icon">
+          💬
+        </div>
+
+        <div class="title">
+          個別チャット
+        </div>
+
+        <div class="description">
+          友達とのチャット
+        </div>
+      </a>
+
+
+      <!-- グループ -->
       <a
         href="groups.html"
         class="menu-button groups"
@@ -229,6 +263,7 @@
       </a>
 
 
+      <!-- プロフィール -->
       <a
         href="profile.html"
         class="menu-button profile"
@@ -247,6 +282,7 @@
       </a>
 
 
+      <!-- フレンド -->
       <a
         href="friends.html"
         class="menu-button friends"
@@ -265,6 +301,7 @@
       </a>
 
 
+      <!-- 掲示板 -->
       <a
         href="board.html"
         class="menu-button board"
@@ -310,11 +347,8 @@
       );
 
 
-    // 現在のユーザー名
     let currentUsername = "";
 
-
-    // リアルタイム通知チャンネル
     let notificationChannel = null;
 
 
@@ -362,14 +396,14 @@
           data: profile,
           error: profileError
         } =
-          await supabaseClient
-            .from("profiles")
-            .select("name")
-            .eq(
-              "user_id",
-              currentUsername
-            )
-            .maybeSingle();
+        await supabaseClient
+          .from("profiles")
+          .select("name")
+          .eq(
+            "user_id",
+            currentUsername
+          )
+          .maybeSingle();
 
 
         if (
@@ -485,10 +519,6 @@
       }
 
 
-      // =====================
-      // 未読あり
-      // =====================
-
       if (
         count &&
         count > 0
@@ -502,13 +532,7 @@
         badge.style.display =
           "flex";
 
-      }
-
-      // =====================
-      // 未読なし
-      // =====================
-
-      else {
+      } else {
 
         badge.style.display =
           "none";
@@ -531,7 +555,6 @@
       }
 
 
-      // すでにチャンネルがある場合は解除
       if (notificationChannel) {
 
         supabaseClient
@@ -567,9 +590,6 @@
                 payload
               );
 
-
-              // 通知が追加・既読・削除されたら
-              // 最新の未読件数を取得
               await loadNotificationCount(
                 currentUsername
               );
@@ -588,6 +608,29 @@
           );
 
     }
+
+
+    // =========================
+    // ページ終了時
+    // =========================
+
+    window.addEventListener(
+      "pagehide",
+      function() {
+
+        if (notificationChannel) {
+
+          supabaseClient
+            .removeChannel(
+              notificationChannel
+            );
+
+          notificationChannel = null;
+
+        }
+
+      }
+    );
 
 
     // =========================
