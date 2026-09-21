@@ -13,6 +13,13 @@
       box-sizing: border-box;
     }
 
+    html,
+    body {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
     body {
       margin: 0;
       font-family:
@@ -27,6 +34,7 @@
 
     .container {
       width: min(92%, 500px);
+      max-width: 100%;
       margin: 0 auto;
       padding: 24px 0 40px;
     }
@@ -36,6 +44,7 @@
       align-items: center;
       justify-content: space-between;
       margin-bottom: 20px;
+      gap: 10px;
     }
 
     .back {
@@ -46,15 +55,18 @@
       font-size: 14px;
       cursor: pointer;
       box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+      flex-shrink: 0;
     }
 
     h1 {
       margin: 0;
       font-size: 25px;
+      white-space: nowrap;
     }
 
     .add-button {
       width: 100%;
+      max-width: 100%;
       border: none;
       border-radius: 18px;
       padding: 15px;
@@ -68,11 +80,14 @@
 
     .form {
       display: none;
+      width: 100%;
+      max-width: 100%;
       background: white;
       border-radius: 20px;
       padding: 20px;
       margin-bottom: 20px;
       box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+      overflow: hidden;
     }
 
     .form.show {
@@ -91,12 +106,25 @@
     textarea,
     select {
       width: 100%;
+      max-width: 100%;
+      min-width: 0;
       border: 1px solid #ddd;
       border-radius: 12px;
       padding: 12px;
       font-size: 15px;
       font-family: inherit;
       background: white;
+    }
+
+    input[type="date"],
+    input[type="time"] {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      height: 46px;
+      -webkit-appearance: none;
+      appearance: none;
     }
 
     textarea {
@@ -106,6 +134,8 @@
 
     .friend-list {
       display: none;
+      width: 100%;
+      max-width: 100%;
       margin-top: 10px;
       padding: 10px;
       background: #f8f7ff;
@@ -128,11 +158,15 @@
       border-bottom: none;
     }
 
-    .friend-item input {
+    .friend-item input[type="checkbox"] {
       width: 20px;
       height: 20px;
+      min-width: 20px;
       margin: 0;
+      padding: 0;
       flex-shrink: 0;
+      -webkit-appearance: auto;
+      appearance: auto;
     }
 
     .friend-name {
@@ -155,6 +189,7 @@
 
     .save-button {
       width: 100%;
+      max-width: 100%;
       border: none;
       border-radius: 14px;
       padding: 13px;
@@ -173,6 +208,7 @@
 
     .cancel-button {
       width: 100%;
+      max-width: 100%;
       border: none;
       background: #f1f1f1;
       border-radius: 14px;
@@ -182,6 +218,8 @@
     }
 
     .schedule {
+      width: 100%;
+      max-width: 100%;
       background: white;
       border-radius: 20px;
       padding: 18px;
@@ -200,12 +238,14 @@
       font-size: 19px;
       font-weight: bold;
       margin-bottom: 10px;
+      overflow-wrap: anywhere;
     }
 
     .schedule-info {
       color: #666;
       font-size: 14px;
       line-height: 1.7;
+      overflow-wrap: anywhere;
     }
 
     .visibility {
@@ -240,6 +280,24 @@
       color: #888;
       padding: 30px;
     }
+
+    @media (max-width: 380px) {
+      .container {
+        width: 94%;
+      }
+
+      .form {
+        padding: 16px;
+      }
+
+      h1 {
+        font-size: 22px;
+      }
+
+      .back {
+        padding: 9px 11px;
+      }
+    }
   </style>
 </head>
 
@@ -248,56 +306,82 @@
 <div class="container">
 
   <div class="header">
-    <button class="back" id="backButton">
+
+    <button
+      class="back"
+      id="backButton"
+      type="button"
+    >
       ← ホーム
     </button>
 
     <h1>📅 予定</h1>
 
     <div style="width:78px;"></div>
+
   </div>
 
-  <button class="add-button" id="addButton">
+
+  <button
+    class="add-button"
+    id="addButton"
+    type="button"
+  >
     ＋ 新しい予定
   </button>
 
-  <div class="form" id="form">
+
+  <div
+    class="form"
+    id="form"
+  >
 
     <label>予定名</label>
+
     <input
       type="text"
       id="title"
       placeholder="例：友達と遊ぶ"
     >
 
+
     <label>日付</label>
+
     <input
       type="date"
       id="date"
     >
 
+
     <label>時間</label>
+
     <input
       type="time"
       id="time"
     >
 
+
     <label>場所</label>
+
     <input
       type="text"
       id="place"
       placeholder="例：渋谷駅"
     >
 
+
     <label>メモ</label>
+
     <textarea
       id="memo"
       placeholder="予定についてのメモ"
     ></textarea>
 
+
     <label>誰に見せる？</label>
 
     <select id="visibility">
+
       <option value="private">
         🔒 自分だけ
       </option>
@@ -305,12 +389,15 @@
       <option value="friend">
         👤 フレンドに見せる
       </option>
+
     </select>
+
 
     <div
       class="friend-list"
       id="friendList"
     ></div>
+
 
     <button
       class="save-button"
@@ -319,6 +406,7 @@
     >
       💾 予定を保存
     </button>
+
 
     <button
       class="cancel-button"
@@ -330,13 +418,17 @@
 
   </div>
 
+
   <div id="scheduleList">
+
     <div class="loading">
       予定を読み込んでいます…
     </div>
+
   </div>
 
 </div>
+
 
 <script>
 
@@ -362,6 +454,7 @@
   // =========================
 
   let currentUsername = "";
+
   let friendsData = [];
 
 
@@ -433,6 +526,7 @@
 
       form.classList.add("show");
 
+
       if (!dateInput.value) {
 
         const today =
@@ -453,7 +547,9 @@
 
         dateInput.value =
           `${yyyy}-${mm}-${dd}`;
+
       }
+
 
       await loadFriends();
 
@@ -481,7 +577,7 @@
 
         await loadFriends();
 
-        renderFriends();
+        await renderFriends();
 
       } else {
 
@@ -516,9 +612,13 @@
     );
 
     titleInput.value = "";
+
     dateInput.value = "";
+
     timeInput.value = "";
+
     placeInput.value = "";
+
     memoInput.value = "";
 
     visibility.value =
@@ -557,6 +657,7 @@
         "index.html";
 
       return false;
+
     }
 
 
@@ -573,6 +674,7 @@
       );
 
       return false;
+
     }
 
 
@@ -936,6 +1038,7 @@
             schedule.user_id === currentUsername
               ? `
                 <br>
+
                 <button
                   class="delete-button"
                   type="button"
@@ -981,7 +1084,7 @@
 
 
   // =========================
-  // ★ 保存ボタン
+  // 保存ボタン
   // =========================
 
   saveButton.addEventListener(
@@ -1027,10 +1130,6 @@
       );
 
 
-    // -------------------------
-    // 入力チェック
-    // -------------------------
-
     if (!title) {
 
       alert(
@@ -1071,10 +1170,6 @@
     }
 
 
-    // -------------------------
-    // 保存中
-    // -------------------------
-
     saveButton.disabled =
       true;
 
@@ -1085,7 +1180,7 @@
     try {
 
       // =======================
-      // 予定本体を保存
+      // 予定本体
       // =======================
 
       const {
@@ -1095,6 +1190,7 @@
         await supabaseClient
           .from("schedules")
           .insert({
+
             user_id:
               currentUsername,
 
@@ -1177,7 +1273,6 @@
           );
 
 
-          // 作成した予定を削除
           await supabaseClient
             .from("schedules")
             .delete()
@@ -1202,10 +1297,6 @@
 
       }
 
-
-      // =======================
-      // 成功
-      // =======================
 
       alert(
         "予定を保存しました！📅"
@@ -1421,10 +1512,6 @@
 
   }
 
-
-  // =========================
-  // スタート
-  // =========================
 
   start();
 
