@@ -20,6 +20,18 @@
       padding: 20px;
     }
 
+    .home-button {
+      display: inline-block;
+      margin-bottom: 14px;
+      padding: 10px 15px;
+      border-radius: 14px;
+      background: white;
+      color: #6556d8;
+      text-decoration: none;
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+
     .container {
       width: 100%;
       max-width: 500px;
@@ -63,6 +75,7 @@
       color: white;
       font-size: 16px;
       font-weight: bold;
+      cursor: pointer;
     }
 
     .friend {
@@ -88,14 +101,23 @@
       justify-content: center;
       font-size: 24px;
       flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .info {
       flex: 1;
+      min-width: 0;
     }
 
     .name {
       font-weight: bold;
+      word-break: break-word;
     }
 
     .user-id {
@@ -127,6 +149,10 @@
 
   <main class="container">
 
+    <a href="home.html" class="home-button">
+      🏠 ホーム
+    </a>
+
     <section class="header">
       <h1>👥 フレンド</h1>
     </section>
@@ -143,6 +169,7 @@
       <button
         class="add-button"
         id="addButton"
+        type="button"
       >
         フレンド追加
       </button>
@@ -179,6 +206,7 @@
         SUPABASE_KEY
       );
 
+
     const userIdInput =
       document.getElementById("userIdInput");
 
@@ -191,8 +219,13 @@
     const message =
       document.getElementById("message");
 
+
     let currentUsername = "";
 
+
+    // =========================
+    // 開始
+    // =========================
 
     async function start() {
 
@@ -202,6 +235,7 @@
       } =
         await supabaseClient.auth.getSession();
 
+
       if (error || !data.session) {
 
         alert("ログインしてください。");
@@ -209,20 +243,29 @@
         return;
       }
 
+
       currentUsername =
         data.session.user.user_metadata?.username || "";
 
+
       if (!currentUsername) {
 
-        alert("ユーザーIDを取得できませんでした。");
+        alert(
+          "ユーザーIDを取得できませんでした。"
+        );
 
         return;
       }
+
 
       await loadFriends();
 
     }
 
+
+    // =========================
+    // フレンド一覧
+    // =========================
 
     async function loadFriends() {
 
@@ -233,7 +276,11 @@
         await supabaseClient
           .from("friends")
           .select("*")
-          .eq("user_id", currentUsername);
+          .eq(
+            "user_id",
+            currentUsername
+          );
+
 
       if (error) {
 
@@ -245,6 +292,7 @@
         return;
       }
 
+
       if (!data || data.length === 0) {
 
         friendList.innerHTML =
@@ -253,34 +301,86 @@
         return;
       }
 
+
       friendList.innerHTML = "";
 
+
       for (const friend of data) {
+
+        // =========================
+        // プロフィール取得
+        // =========================
 
         const {
           data: profile
         } =
           await supabaseClient
             .from("profiles")
-            .select("name, avatar_url")
-            .eq("user_id", friend.friend_id)
+            .select(
+              "name, avatar_url"
+            )
+            .eq(
+              "user_id",
+              friend.friend_id
+            )
             .maybeSingle();
+
+
+        // =========================
+        // フレンド表示
+        // =========================
 
         const div =
           document.createElement("div");
 
         div.className = "friend";
 
+
+        // アバター
+
         const avatar =
           document.createElement("div");
 
         avatar.className = "avatar";
-        avatar.textContent = "👤";
+
+
+        if (profile?.avatar_url) {
+
+          const img =
+            document.createElement("img");
+
+          img.src =
+            profile.avatar_url;
+
+          img.alt =
+            "プロフィール画像";
+
+
+          // 画像が読み込めなかった場合
+
+          img.onerror = function() {
+
+            avatar.innerHTML = "👤";
+
+          };
+
+
+          avatar.appendChild(img);
+
+        } else {
+
+          avatar.textContent = "👤";
+
+        }
+
+
+        // 情報
 
         const info =
           document.createElement("div");
 
         info.className = "info";
+
 
         const name =
           document.createElement("div");
@@ -288,7 +388,9 @@
         name.className = "name";
 
         name.textContent =
-          profile?.name || friend.friend_id;
+          profile?.name ||
+          friend.friend_id;
+
 
         const userId =
           document.createElement("div");
@@ -298,28 +400,48 @@
         userId.textContent =
           "@" + friend.friend_id;
 
+
+        info.appendChild(name);
+
+        info.appendChild(userId);
+
+
+        // 矢印
+
         const arrow =
           document.createElement("div");
 
         arrow.className = "arrow";
+
         arrow.textContent = "›";
 
-        info.appendChild(name);
-        info.appendChild(userId);
+
+        // 追加
 
         div.appendChild(avatar);
+
         div.appendChild(info);
+
         div.appendChild(arrow);
 
 
-        // フレンドをタップするとチャットへ
-        div.addEventListener("click", () => {
+        // =========================
+        // タップでチャット
+        // =========================
 
-          window.location.href =
-            "chat.html?user=" +
-            encodeURIComponent(friend.friend_id);
+        div.addEventListener(
+          "click",
+          () => {
 
-        });
+            window.location.href =
+              "chat.html?user=" +
+              encodeURIComponent(
+                friend.friend_id
+              );
+
+          }
+        );
+
 
         friendList.appendChild(div);
 
@@ -328,16 +450,25 @@
     }
 
 
+    // =========================
+    // フレンド追加ボタン
+    // =========================
+
     addButton.addEventListener(
       "click",
       addFriend
     );
 
 
+    // =========================
+    // フレンド追加
+    // =========================
+
     async function addFriend() {
 
       const friendId =
         userIdInput.value.trim();
+
 
       message.textContent = "";
 
@@ -360,14 +491,23 @@
       }
 
 
+      // =========================
+      // 相手のプロフィール確認
+      // =========================
+
       const {
         data: profile,
         error: profileError
       } =
         await supabaseClient
           .from("profiles")
-          .select("user_id, name")
-          .eq("user_id", friendId)
+          .select(
+            "user_id, name"
+          )
+          .eq(
+            "user_id",
+            friendId
+          )
           .maybeSingle();
 
 
@@ -382,14 +522,24 @@
       }
 
 
+      // =========================
+      // 重複チェック
+      // =========================
+
       const {
         data: existing
       } =
         await supabaseClient
           .from("friends")
           .select("id")
-          .eq("user_id", currentUsername)
-          .eq("friend_id", friendId)
+          .eq(
+            "user_id",
+            currentUsername
+          )
+          .eq(
+            "friend_id",
+            friendId
+          )
           .maybeSingle();
 
 
@@ -401,6 +551,10 @@
         return;
       }
 
+
+      // =========================
+      // 追加
+      // =========================
 
       const {
         error
@@ -433,12 +587,18 @@
         profile.name +
         " さんをフレンドに追加しました！";
 
+
       userIdInput.value = "";
+
 
       await loadFriends();
 
     }
 
+
+    // =========================
+    // 起動
+    // =========================
 
     start();
 
