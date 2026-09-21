@@ -1,4 +1,4 @@
-とりまchat.htmlは<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -324,8 +324,9 @@
     friendId =
       params.get("user") || "";
 
+
     // =========================
-    // プロフィール画像を作る
+    // プロフィール画像
     // =========================
 
     function createAvatar(url, fallback) {
@@ -346,9 +347,7 @@
         img.alt = "プロフィール画像";
 
         img.onerror = function() {
-
           avatar.innerHTML = fallback;
-
         };
 
         avatar.appendChild(img);
@@ -363,6 +362,50 @@
       return avatar;
 
     }
+
+
+    // =========================
+    // 通知を作成
+    // =========================
+
+    async function createNotification() {
+
+      if (
+        !currentUsername ||
+        !friendId
+      ) {
+        return;
+      }
+
+      const {
+        error
+      } =
+        await supabaseClient
+          .from("notifications")
+          .insert({
+            user_id: friendId,
+            type: "chat",
+            title: "💬 新しいメッセージ",
+            message:
+              currentUsername +
+              "さんからメッセージが届きました",
+            link:
+              "chat.html?user=" +
+              encodeURIComponent(currentUsername),
+            is_read: false
+          });
+
+      if (error) {
+
+        console.error(
+          "通知作成エラー:",
+          error
+        );
+
+      }
+
+    }
+
 
     // =========================
     // 開始
@@ -390,7 +433,10 @@
       } =
         await supabaseClient.auth.getSession();
 
-      if (error || !data.session) {
+      if (
+        error ||
+        !data.session
+      ) {
 
         alert("ログインしてください。");
 
@@ -398,6 +444,7 @@
           "index.html";
 
         return;
+
       }
 
       currentUsername =
@@ -410,10 +457,12 @@
         );
 
         return;
+
       }
 
+
       // =========================
-      // 相手のプロフィール
+      // 相手プロフィール
       // =========================
 
       const {
@@ -435,8 +484,6 @@
         "💬 " +
         (friendProfile?.name || friendId);
 
-      // ヘッダー画像
-
       if (friendAvatarUrl) {
 
         headerAvatar.innerHTML =
@@ -444,8 +491,9 @@
 
       }
 
+
       // =========================
-      // 自分のプロフィール
+      // 自分プロフィール
       // =========================
 
       const {
@@ -463,11 +511,13 @@
       myAvatarUrl =
         myProfile?.avatar_url || "";
 
+
       await loadMessages();
 
       startRealtime();
 
     }
+
 
     // =========================
     // メッセージ読み込み
@@ -503,19 +553,26 @@
           '<div class="empty">メッセージを読み込めませんでした</div>';
 
         return;
+
       }
 
       messagesElement.innerHTML = "";
 
-      if (!data || data.length === 0) {
+      if (
+        !data ||
+        data.length === 0
+      ) {
 
         messagesElement.innerHTML =
           '<div class="empty">まだメッセージがありません</div>';
 
         return;
+
       }
 
-      for (const message of data) {
+      for (
+        const message of data
+      ) {
 
         await addMessageToScreen(
           message
@@ -527,11 +584,14 @@
 
     }
 
+
     // =========================
     // メッセージ表示
     // =========================
 
-    async function addMessageToScreen(message) {
+    async function addMessageToScreen(
+      message
+    ) {
 
       const wrapper =
         document.createElement("div");
@@ -549,7 +609,6 @@
 
       }
 
-      // 相手の画像
 
       if (!isMine) {
 
@@ -565,7 +624,6 @@
 
       }
 
-      // 吹き出し
 
       const bubble =
         document.createElement("div");
@@ -573,7 +631,8 @@
       bubble.className =
         "bubble";
 
-      // 画像メッセージ
+
+      // 画像
 
       if (message.image_url) {
 
@@ -597,7 +656,10 @@
               3600
             );
 
-        if (!error && data?.signedUrl) {
+        if (
+          !error &&
+          data?.signedUrl
+        ) {
 
           image.src =
             data.signedUrl;
@@ -609,6 +671,7 @@
         }
 
       }
+
 
       // テキスト
 
@@ -625,6 +688,7 @@
         );
 
       }
+
 
       // 時刻
 
@@ -656,7 +720,6 @@
         bubble
       );
 
-      // 自分の画像
 
       if (isMine) {
 
@@ -678,8 +741,9 @@
 
     }
 
+
     // =========================
-    // 一番下へ
+    // 一番下
     // =========================
 
     function scrollToBottom() {
@@ -689,6 +753,7 @@
 
     }
 
+
     // =========================
     // リアルタイム
     // =========================
@@ -696,9 +761,7 @@
     function startRealtime() {
 
       if (realtimeChannel) {
-
         return;
-
       }
 
       realtimeChannel =
@@ -736,19 +799,19 @@
                 );
 
               if (!isThisChat) {
-
                 return;
-
               }
+
+
+              // 自分が送ったメッセージは通知しない
 
               if (
                 message.sender_id ===
                 currentUsername
               ) {
-
                 return;
-
               }
+
 
               await addMessageToScreen(
                 message
@@ -761,6 +824,7 @@
           .subscribe();
 
     }
+
 
     // =========================
     // テキスト送信
@@ -776,9 +840,7 @@
           messageInput.value.trim();
 
         if (!text) {
-
           return;
-
         }
 
         if (
@@ -804,7 +866,6 @@
           await supabaseClient
             .from("messages")
             .insert({
-
               sender_id:
                 currentUsername,
 
@@ -816,7 +877,6 @@
 
               image_url:
                 ""
-
             })
             .select()
             .single();
@@ -840,6 +900,7 @@
 
         }
 
+
         messageInput.value =
           "";
 
@@ -849,8 +910,14 @@
 
         scrollToBottom();
 
+
+        // 通知を作成
+
+        await createNotification();
+
       }
     );
+
 
     // =========================
     // 画像ボタン
@@ -865,6 +932,7 @@
       }
     );
 
+
     // =========================
     // 画像送信
     // =========================
@@ -877,9 +945,7 @@
           imageInput.files?.[0];
 
         if (!file) {
-
           return;
-
         }
 
         if (
@@ -938,6 +1004,7 @@
             "." +
             extension;
 
+
           const {
             error: uploadError
           } =
@@ -955,6 +1022,7 @@
                 }
               );
 
+
           if (uploadError) {
 
             console.error(
@@ -971,6 +1039,7 @@
 
           }
 
+
           const {
             data,
             error
@@ -978,7 +1047,6 @@
             await supabaseClient
               .from("messages")
               .insert({
-
                 sender_id:
                   currentUsername,
 
@@ -990,10 +1058,10 @@
 
                 image_url:
                   filePath
-
               })
               .select()
               .single();
+
 
           if (error) {
 
@@ -1011,11 +1079,17 @@
 
           }
 
+
           await addMessageToScreen(
             data
           );
 
           scrollToBottom();
+
+
+          // 画像でも通知を作成
+
+          await createNotification();
 
         } finally {
 
@@ -1033,6 +1107,7 @@
       }
     );
 
+
     // =========================
     // 起動
     // =========================
@@ -1043,4 +1118,3 @@
 
 </body>
 </html>
-に戻しとくね
