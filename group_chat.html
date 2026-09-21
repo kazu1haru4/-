@@ -470,6 +470,69 @@ body{
   cursor:pointer
 }
 
+/* =========================
+   発言禁止表示
+========================= */
+
+.mute-banner{
+  display:none;
+  background:#fff0f0;
+  color:#c94b4b;
+  border-top:1px solid #ffd1d1;
+  border-bottom:1px solid #ffd1d1;
+  padding:8px 12px;
+  text-align:center;
+  font-size:12px;
+  font-weight:bold;
+  z-index:66
+}
+
+.mute-banner.show{
+  display:block
+}
+
+.member-mute-status{
+  margin-top:5px;
+  padding:4px 7px;
+  border-radius:8px;
+  background:#fff0f0;
+  color:#c94b4b;
+  font-size:11px;
+  font-weight:bold;
+  display:inline-block
+}
+
+.mute-control{
+  margin-top:7px;
+  width:100%;
+  padding:7px 8px;
+  border:1px solid #ddd;
+  border-radius:9px;
+  background:white;
+  font-size:12px;
+  color:#555;
+  outline:none
+}
+
+.mute-control:focus{
+  border-color:var(--theme)
+}
+
+.mute-clear-button{
+  margin-top:6px;
+  width:100%;
+  padding:7px 8px;
+  border:none;
+  border-radius:9px;
+  background:#ffe8e8;
+  color:#c94b4b;
+  font-size:12px;
+  font-weight:bold;
+  cursor:pointer
+}
+
+/* ========================= */
+
 .modal{
   display:none;
   position:fixed;
@@ -488,7 +551,7 @@ body{
   border-radius:20px;
   padding:22px;
   box-shadow:0 8px 30px rgba(0,0,0,.18);
-  max-height:80vh;
+  max-height:85vh;
   overflow-y:auto
 }
 
@@ -516,7 +579,7 @@ body{
 
 .member-item{
   display:flex;
-  align-items:center;
+  align-items:flex-start;
   gap:10px;
   background:var(--theme-light);
   border-radius:12px;
@@ -667,6 +730,13 @@ body{
   background:#eee;
   color:#555
 }
+
+.add-section-title{
+  font-size:14px;
+  font-weight:bold;
+  color:#555;
+  margin-bottom:8px
+}
 </style>
 </head>
 
@@ -684,6 +754,7 @@ body{
 
 <div>
 <div class="title">👥 グループチャット</div>
+
 <div id="groupName" class="group-name">
 読み込み中...
 </div>
@@ -700,6 +771,8 @@ body{
 </button>
 
 </div>
+
+<div id="muteBanner" class="mute-banner"></div>
 
 <div id="replyArea" class="reply-area">
 
@@ -751,13 +824,15 @@ accept="image/*"
 </div>
 
 <div id="adminNote" class="admin-note" style="display:none">
-👑 管理者です。メンバーの副管理者設定ができます。
+👑 管理者です。メンバーの副管理者設定と発言禁止設定ができます。
 </div>
 
 <div id="memberList" class="member-list">
+
 <div class="member-loading">
 読み込み中...
 </div>
+
 </div>
 
 <div class="add-section">
@@ -805,7 +880,7 @@ SUPABASE_KEY
 );
 
 /* =========================
-   テーマカラー
+   テーマ
 ========================= */
 
 const themes = {
@@ -940,6 +1015,9 @@ document.getElementById("mentionList");
 const adminNote =
 document.getElementById("adminNote");
 
+const muteBanner =
+document.getElementById("muteBanner");
+
 let currentUsername = "";
 
 let replyingToMessage = null;
@@ -950,15 +1028,19 @@ let groupMembersCache = [];
 
 let presenceTimer = null;
 
-/* 管理者情報 */
-
 let groupOwnerId = "";
 
 let currentGroupRole = "member";
 
 let isGroupAdmin = false;
 
-/* ========================= */
+/* 発言禁止 */
+
+let groupMutesCache = [];
+
+let currentMute = null;
+
+let muteTimer = null;
 
 const profileCache = {};
 
@@ -977,15 +1059,15 @@ currentGroupRole === "admin";
 if(adminNote){
 
 adminNote.style.display =
-currentUsername === groupOwnerId
-  ? "block"
-  : "none";
+isGroupAdmin
+? "block"
+: "none";
 }
 
 }
 
 /* =========================
-   オンライン判定
+   オンライン
 ========================= */
 
 function isOnline(lastSeen){
@@ -1001,10 +1083,6 @@ return false;
 
 return Date.now() - time <= 60000;
 }
-
-/* =========================
-   最終オンライン
-========================= */
 
 function formatLastOnline(lastSeen){
 
@@ -1098,6 +1176,7 @@ console.error(
 error
 );
 }
+
 }
 
 /* =========================
@@ -1166,7 +1245,7 @@ return avatar;
 }
 
 /* =========================
-   グループ取得
+   グループ
 ========================= */
 
 async function loadGroup(){
@@ -1204,7 +1283,7 @@ updateGroupAdminState();
 }
 
 /* =========================
-   メンバー取得
+   メンバー
 ========================= */
 
 async function getGroupMembers(){
@@ -1231,8 +1310,6 @@ return [];
 groupMembersCache =
 data || [];
 
-/* 自分の役割 */
-
 const me =
 groupMembersCache.find(
 member =>
@@ -1257,18 +1334,386 @@ return groupMembersCache;
 }
 
 /* =========================
-   副管理者設定
+   発言禁止読み込み
 ========================= */
 
-async function setDeputyAdmin(
-userId,
-makeAdmin
+async function loadGroupMutes(){
+
+const {data,error} =
+await supabaseClient
+.from("group_mutes")
+.select(
+"id,group_id,user_id,muted_until,created_by,created_at"
+)
+.eq(
+"group_id",
+Number(groupId)
+);
+
+if(error){
+
+console.error(
+"発言禁止情報取得エラー:",
+error
+);
+
+groupMutesCache = [];
+
+currentMute = null;
+
+updateMuteUI();
+
+return;
+}
+
+groupMutesCache =
+data || [];
+
+updateCurrentMute();
+
+}
+
+/* =========================
+   現在の発言禁止状態
+========================= */
+
+function updateCurrentMute(){
+
+const now =
+Date.now();
+
+const active =
+groupMutesCache.find(
+mute =>
+mute.user_id ===
+currentUsername &&
+new Date(
+mute.muted_until
+).getTime() > now
+);
+
+currentMute =
+active || null;
+
+updateMuteUI();
+
+}
+
+/* =========================
+   発言禁止中か
+========================= */
+
+function isCurrentUserMuted(){
+
+if(!currentMute){
+return false;
+}
+
+const until =
+new Date(
+currentMute.muted_until
+).getTime();
+
+if(Number.isNaN(until)){
+return false;
+}
+
+if(until <= Date.now()){
+
+currentMute = null;
+
+updateMuteUI();
+
+return false;
+}
+
+return true;
+}
+
+/* =========================
+   残り時間
+========================= */
+
+function formatMuteRemaining(
+mutedUntil
 ){
 
+const until =
+new Date(
+mutedUntil
+).getTime();
+
+if(Number.isNaN(until)){
+return "";
+}
+
+let diff =
+until - Date.now();
+
+if(diff <= 0){
+return "";
+}
+
+const minutes =
+Math.ceil(
+diff / 60000
+);
+
+if(minutes < 60){
+
+return minutes +
+"分";
+}
+
+const hours =
+Math.floor(
+minutes / 60
+);
+
+const remainMinutes =
+minutes % 60;
+
+if(hours < 24){
+
+if(remainMinutes > 0){
+
+return hours +
+"時間" +
+remainMinutes +
+"分";
+
+}
+
+return hours +
+"時間";
+}
+
+const days =
+Math.floor(
+hours / 24
+);
+
+const remainHours =
+hours % 24;
+
+if(remainHours > 0){
+
+return days +
+"日" +
+remainHours +
+"時間";
+}
+
+return days +
+"日";
+}
+
+/* =========================
+   発言禁止UI
+========================= */
+
+function updateMuteUI(){
+
+if(!muteBanner){
+return;
+}
+
+if(isCurrentUserMuted()){
+
+const remaining =
+formatMuteRemaining(
+currentMute.muted_until
+);
+
+muteBanner.textContent =
+"🔇 現在発言禁止中です。" +
+(
+remaining
+? " あと " +
+remaining +
+" 発言できません。"
+: ""
+);
+
+muteBanner.classList.add(
+"show"
+);
+
+messageInput.disabled = true;
+sendButton.disabled = true;
+imageButton.disabled = true;
+
+messageInput.placeholder =
+"🔇 発言禁止中です";
+
+}else{
+
+muteBanner.textContent = "";
+
+muteBanner.classList.remove(
+"show"
+);
+
+messageInput.disabled = false;
+sendButton.disabled = false;
+imageButton.disabled = false;
+
+messageInput.placeholder =
+replyingToMessage
+? "返信を入力..."
+: "メッセージを入力...";
+}
+
+}
+
+/* =========================
+   発言禁止タイマー
+========================= */
+
+function restartMuteTimer(){
+
+if(muteTimer){
+
+clearInterval(
+muteTimer
+);
+
+muteTimer = null;
+}
+
+muteTimer =
+setInterval(
+() => {
+
+if(currentMute){
+
+const until =
+new Date(
+currentMute.muted_until
+).getTime();
+
 if(
-!groupOwnerId ||
-currentUsername !== groupOwnerId
+Number.isNaN(until) ||
+until <= Date.now()
 ){
+
+currentMute = null;
+
+loadGroupMutes();
+
+}else{
+
+updateMuteUI();
+}
+
+}
+
+},
+1000
+);
+
+}
+
+/* =========================
+   発言禁止設定
+========================= */
+
+async function setMute(
+userId,
+minutes
+){
+
+if(!isGroupAdmin){
+
+alert(
+"管理者のみ設定できます。"
+);
+
+return;
+}
+
+if(!userId){
+
+return;
+}
+
+if(userId === currentUsername){
+
+alert(
+"自分を発言禁止にはできません。"
+);
+
+return;
+}
+
+if(userId === groupOwnerId){
+
+alert(
+"グループ管理者は発言禁止にできません。"
+);
+
+return;
+}
+
+const until =
+new Date(
+Date.now() +
+minutes * 60000
+).toISOString();
+
+const {error} =
+await supabaseClient
+.from("group_mutes")
+.upsert(
+{
+group_id:
+Number(groupId),
+user_id:
+userId,
+muted_until:
+until,
+created_by:
+currentUsername
+},
+{
+onConflict:
+"group_id,user_id"
+}
+);
+
+if(error){
+
+console.error(
+"発言禁止設定エラー:",
+error
+);
+
+alert(
+"発言禁止の設定に失敗しました。\n\n" +
+error.message
+);
+
+await loadGroupMutes();
+await loadMembers();
+
+return;
+}
+
+await loadGroupMutes();
+
+await loadMembers();
+
+}
+
+/* =========================
+   発言禁止解除
+========================= */
+
+async function clearMute(
+userId
+){
+
+if(!isGroupAdmin){
 return;
 }
 
@@ -1278,13 +1723,8 @@ return;
 
 const {error} =
 await supabaseClient
-.from("group_members")
-.update({
-role:
-makeAdmin
-? "admin"
-: "member"
-})
+.from("group_mutes")
+.delete()
 .eq(
 "group_id",
 Number(groupId)
@@ -1297,21 +1737,22 @@ userId
 if(error){
 
 console.error(
-"副管理者設定エラー:",
+"発言禁止解除エラー:",
 error
 );
 
 alert(
-"副管理者の設定を変更できませんでした。\n\n" +
+"発言禁止を解除できませんでした。\n\n" +
 error.message
 );
 
 return;
 }
 
-await getGroupMembers();
+await loadGroupMutes();
 
 await loadMembers();
+
 }
 
 /* =========================
@@ -1365,7 +1806,9 @@ continue;
 }
 
 const id =
-String(read.group_message_id);
+String(
+read.group_message_id
+);
 
 if(!groupReadCounts[id]){
 groupReadCounts[id] =
@@ -1375,6 +1818,7 @@ new Set();
 groupReadCounts[id].add(
 read.user_id
 );
+
 }
 }
 
@@ -1404,8 +1848,10 @@ return;
 const rows =
 unreadMessages.map(
 message => ({
-group_message_id:message.id,
-user_id:currentUsername
+group_message_id:
+message.id,
+user_id:
+currentUsername
 })
 );
 
@@ -1422,11 +1868,14 @@ ignoreDuplicates:true
 );
 
 if(error){
+
 console.error(
 "グループ既読登録エラー:",
 error
 );
+
 }
+
 }
 
 /* =========================
@@ -1438,11 +1887,16 @@ smooth=false
 ){
 
 messages.scrollTo({
-top:messages.scrollHeight,
-behavior:smooth ? "smooth" : "auto"
+top:
+messages.scrollHeight,
+behavior:
+smooth
+? "smooth"
+: "auto"
 });
 
 updateLatestButton();
+
 }
 
 function updateLatestButton(){
@@ -1454,12 +1908,18 @@ messages.clientHeight;
 
 if(distance > 150){
 
-latestButton.classList.add("show");
+latestButton.classList.add(
+"show"
+);
 
 }else{
 
-latestButton.classList.remove("show");
+latestButton.classList.remove(
+"show"
+);
+
 }
+
 }
 
 messages.addEventListener(
@@ -1533,17 +1993,20 @@ messages.innerHTML = "";
 for(
 const message of messageData
 ){
+
 await addMessage(message);
+
 }
 
 requestAnimationFrame(
 () =>
 scrollToBottom(false)
 );
+
 }
 
 /* =========================
-   メンション表示
+   メンション
 ========================= */
 
 function appendMentionContent(
@@ -1582,8 +2045,11 @@ mention
 element.appendChild(
 document.createTextNode(part)
 );
+
 }
+
 }
+
 }
 
 /* =========================
@@ -1645,7 +2111,8 @@ supabaseClient
 .from("group_messages")
 .update({
 content:text,
-edited_at:new Date().toISOString()
+edited_at:
+new Date().toISOString()
 })
 .eq(
 "id",
@@ -1659,6 +2126,7 @@ query.eq(
 "sender_id",
 currentUsername
 );
+
 }
 
 const {error} =
@@ -1682,6 +2150,7 @@ return;
 await loadMessages();
 
 scrollToBottom(true);
+
 }
 
 /* =========================
@@ -1728,6 +2197,7 @@ return;
 await loadMessages();
 
 scrollToBottom(true);
+
 }
 
 /* =========================
@@ -1786,6 +2256,7 @@ edited.textContent =
 sender.appendChild(
 edited
 );
+
 }
 
 box.appendChild(sender);
@@ -1841,7 +2312,9 @@ event.stopPropagation()
 );
 
 box.appendChild(image);
+
 }
+
 }
 
 if(message.content){
@@ -1858,6 +2331,7 @@ message.content
 );
 
 box.appendChild(content);
+
 }
 
 if(
@@ -1891,7 +2365,9 @@ readCount +
 box.appendChild(
 readStatus
 );
+
 }
+
 }
 
 const {data:replies} =
@@ -1941,6 +2417,7 @@ reply.content
 box.appendChild(
 replyBox
 );
+
 }
 
 const {data:reactions} =
@@ -1974,6 +2451,7 @@ counts[
 reaction.reaction
 ] || 0
 ) + 1;
+
 }
 
 for(
@@ -1996,11 +2474,13 @@ counts[emoji];
 reactionArea.appendChild(
 item
 );
+
 }
 
 box.appendChild(
 reactionArea
 );
+
 }
 
 const menu =
@@ -2035,10 +2515,6 @@ menu.appendChild(
 replyButton
 );
 
-/* =========================
-   編集ボタン
-========================= */
-
 const canEdit =
 message.sender_id ===
 currentUsername ||
@@ -2061,7 +2537,8 @@ editButton.className =
 
 editButton.textContent =
 isGroupAdmin &&
-message.sender_id !== currentUsername
+message.sender_id !==
+currentUsername
 ? "✏️ 編集（管理者）"
 : "✏️ 編集";
 
@@ -2081,17 +2558,15 @@ picker.style.display =
 await editMessage(
 message
 );
+
 }
 );
 
 menu.appendChild(
 editButton
 );
-}
 
-/* =========================
-   取り消しは自分だけ
-========================= */
+}
 
 if(
 message.sender_id ===
@@ -2126,12 +2601,14 @@ picker.style.display =
 await deleteMessage(
 message.id
 );
+
 }
 );
 
 menu.appendChild(
 deleteButton
 );
+
 }
 
 const picker =
@@ -2177,12 +2654,14 @@ menu.style.display =
 "none";
 
 await loadMessages();
+
 }
 );
 
 picker.appendChild(
 button
 );
+
 }
 
 reactionButton.addEventListener(
@@ -2196,6 +2675,7 @@ menu.style.display =
 
 picker.style.display =
 "flex";
+
 }
 );
 
@@ -2206,6 +2686,15 @@ event => {
 event.preventDefault();
 event.stopPropagation();
 
+if(isCurrentUserMuted()){
+
+alert(
+"🔇 現在発言禁止中のため、返信できません。"
+);
+
+return;
+}
+
 startReply(message);
 
 menu.style.display =
@@ -2213,6 +2702,7 @@ menu.style.display =
 
 picker.style.display =
 "none";
+
 }
 );
 
@@ -2233,6 +2723,7 @@ if(other !== menu){
 other.style.display =
 "none";
 }
+
 }
 );
 
@@ -2247,6 +2738,7 @@ if(other !== picker){
 other.style.display =
 "none";
 }
+
 }
 );
 
@@ -2258,6 +2750,7 @@ menu.style.display ===
 "block"
 ? "none"
 : "block";
+
 }
 );
 
@@ -2268,6 +2761,7 @@ box.appendChild(picker);
 row.appendChild(box);
 
 messages.appendChild(row);
+
 }
 
 /* =========================
@@ -2328,7 +2822,9 @@ alert(
 "リアクションを追加できませんでした。\n" +
 error.message
 );
+
 }
+
 }
 
 /* =========================
@@ -2338,6 +2834,15 @@ error.message
 function startReply(
 message
 ){
+
+if(isCurrentUserMuted()){
+
+alert(
+"🔇 現在発言禁止中のため、返信できません。"
+);
+
+return;
+}
 
 editingMessage =
 null;
@@ -2379,6 +2884,7 @@ messageInput.placeholder =
 "返信を入力...";
 
 messageInput.focus();
+
 }
 
 cancelReplyButton.addEventListener(
@@ -2400,6 +2906,7 @@ messageInput.placeholder =
 "メッセージを入力...";
 
 messageInput.focus();
+
 }
 );
 
@@ -2437,6 +2944,7 @@ link:
 encodeURIComponent(groupId),
 is_read:false
 });
+
 }
 
 async function createGroupNotifications(){
@@ -2508,6 +3016,7 @@ await supabaseClient
 .insert(
 notifications
 );
+
 }
 
 /* =========================
@@ -2536,9 +3045,22 @@ beforeCursor.match(
 if(!match) return null;
 
 return match[1].toLowerCase();
+
 }
 
 async function showMentionSuggestions(){
+
+if(isCurrentUserMuted()){
+
+mentionList.classList.remove(
+"show"
+);
+
+mentionList.innerHTML =
+"";
+
+return;
+}
 
 const query =
 getMentionQuery();
@@ -2556,7 +3078,9 @@ return;
 }
 
 if(!groupMembersCache.length){
+
 await getGroupMembers();
+
 }
 
 const candidates =
@@ -2633,6 +3157,7 @@ avatar.appendChild(img);
 
 avatar.textContent =
 "👤";
+
 }
 
 const info =
@@ -2665,9 +3190,11 @@ id.textContent =
 member.user_id;
 
 info.appendChild(name);
+
 info.appendChild(id);
 
 button.appendChild(avatar);
+
 button.appendChild(info);
 
 button.addEventListener(
@@ -2680,17 +3207,20 @@ event.stopPropagation();
 insertMention(
 member.user_id
 );
+
 }
 );
 
 mentionList.appendChild(
 button
 );
+
 }
 
 mentionList.classList.add(
 "show"
 );
+
 }
 
 function insertMention(
@@ -2749,6 +3279,7 @@ mentionList.classList.remove(
 );
 
 messageInput.focus();
+
 }
 
 messageInput.addEventListener(
@@ -2775,6 +3306,7 @@ mention.slice(1)
 )
 )
 ];
+
 }
 
 async function createMentionNotifications(
@@ -2854,6 +3386,7 @@ await supabaseClient
 .insert(
 notifications
 );
+
 }
 
 /* =========================
@@ -2861,6 +3394,21 @@ notifications
 ========================= */
 
 async function sendMessage(){
+
+if(isCurrentUserMuted()){
+
+alert(
+"🔇 現在発言禁止中です。\nあと " +
+formatMuteRemaining(
+currentMute.muted_until
+) +
+" 発言できません。"
+);
+
+updateMuteUI();
+
+return;
+}
 
 const text =
 messageInput.value.trim();
@@ -2884,6 +3432,14 @@ mentionList.classList.remove(
 );
 
 if(replyingToMessage){
+
+if(isCurrentUserMuted()){
+
+sendButton.disabled =
+false;
+
+return;
+}
 
 const targetMessage =
 replyingToMessage;
@@ -2957,6 +3513,11 @@ is_deleted:false
 
 if(error){
 
+console.error(
+"グループメッセージ送信エラー:",
+error
+);
+
 alert(
 "送信できませんでした。\n\n" +
 error.message
@@ -2976,12 +3537,14 @@ createGroupNotifications();
 createMentionNotifications(
 text
 );
+
 }
 
 sendButton.disabled =
 false;
 
 messageInput.focus();
+
 }
 
 /* =========================
@@ -2990,13 +3553,37 @@ messageInput.focus();
 
 imageButton.addEventListener(
 "click",
-() =>
-imageInput.click()
+() => {
+
+if(isCurrentUserMuted()){
+
+alert(
+"🔇 現在発言禁止中のため、画像を送信できません。"
+);
+
+return;
+}
+
+imageInput.click();
+
+}
 );
 
 imageInput.addEventListener(
 "change",
 async () => {
+
+if(isCurrentUserMuted()){
+
+alert(
+"🔇 現在発言禁止中のため、画像を送信できません。"
+);
+
+imageInput.value =
+"";
+
+return;
+}
 
 const file =
 imageInput.files?.[0];
@@ -3108,7 +3695,11 @@ false;
 
 imageInput.value =
 "";
+
+updateMuteUI();
+
 }
+
 }
 );
 
@@ -3141,6 +3732,7 @@ async () => {
 await loadMessages();
 
 scrollToBottom(true);
+
 }
 )
 
@@ -3157,6 +3749,7 @@ groupId
 async () => {
 
 await loadMessages();
+
 }
 )
 
@@ -3204,12 +3797,15 @@ return;
 }
 
 const id =
-String(read.group_message_id);
+String(
+read.group_message_id
+);
 
 if(!groupReadCounts[id]){
 
 groupReadCounts[id] =
 new Set();
+
 }
 
 groupReadCounts[id].add(
@@ -3217,10 +3813,38 @@ read.user_id
 );
 
 await loadMessages();
+
+}
+)
+
+.on(
+"postgres_changes",
+{
+event:"*",
+schema:"public",
+table:"group_mutes",
+filter:
+"group_id=eq." +
+groupId
+},
+async () => {
+
+await loadGroupMutes();
+
+if(
+memberModal.style.display ===
+"flex"
+){
+
+await loadMembers();
+
+}
+
 }
 )
 
 .subscribe();
+
 }
 
 /* =========================
@@ -3238,7 +3862,9 @@ error
 } =
 await supabaseClient
 .from("group_members")
-.select("user_id,role")
+.select(
+"user_id,role"
+)
 .eq(
 "group_id",
 Number(groupId)
@@ -3260,8 +3886,6 @@ return;
 groupMembersCache =
 members || [];
 
-/* 自分の役割を更新 */
-
 const me =
 groupMembersCache.find(
 member =>
@@ -3278,6 +3902,7 @@ currentGroupRole =
 
 currentGroupRole =
 me?.role || "member";
+
 }
 
 updateGroupAdminState();
@@ -3319,6 +3944,7 @@ console.error(
 "オンライン状態取得エラー:",
 presenceError
 );
+
 }
 
 const presenceMap = {};
@@ -3332,6 +3958,7 @@ presenceMap[
 presence.user_id
 ] =
 presence.last_seen;
+
 }
 
 memberList.innerHTML =
@@ -3383,6 +4010,7 @@ icon.appendChild(img);
 
 icon.textContent =
 "👤";
+
 }
 
 const info =
@@ -3443,6 +4071,7 @@ status.classList.add("offline");
 
 status.textContent =
 "⚪ オフライン";
+
 }
 
 const lastOnline =
@@ -3464,6 +4093,7 @@ lastOnline.textContent =
 formatLastOnline(
 lastSeen
 );
+
 }
 
 info.appendChild(name);
@@ -3475,7 +4105,7 @@ info.appendChild(status);
 info.appendChild(lastOnline);
 
 /* =========================
-   役割表示
+   役割
 ========================= */
 
 const roleBadge =
@@ -3521,6 +4151,7 @@ roleBadge.classList.add(
 
 roleBadge.textContent =
 "👤 メンバー";
+
 }
 
 info.appendChild(
@@ -3528,7 +4159,44 @@ roleBadge
 );
 
 /* =========================
-   管理者だけ役割変更
+   現在の発言禁止
+========================= */
+
+const mute =
+groupMutesCache.find(
+item =>
+item.user_id ===
+member.user_id &&
+new Date(
+item.muted_until
+).getTime() >
+Date.now()
+);
+
+if(mute){
+
+const muteStatus =
+document.createElement(
+"div"
+);
+
+muteStatus.className =
+"member-mute-status";
+
+muteStatus.textContent =
+"🔇 発言禁止中・あと " +
+formatMuteRemaining(
+mute.muted_until
+);
+
+info.appendChild(
+muteStatus
+);
+
+}
+
+/* =========================
+   副管理者設定
 ========================= */
 
 if(
@@ -3598,12 +4266,174 @@ makeAdmin
 
 roleSelect.disabled =
 false;
+
 }
 );
 
 info.appendChild(
 roleSelect
 );
+
+}
+
+/* =========================
+   発言禁止設定
+========================= */
+
+if(
+isGroupAdmin &&
+!isOwner &&
+member.user_id !==
+currentUsername
+){
+
+const muteSelect =
+document.createElement(
+"select"
+);
+
+muteSelect.className =
+"mute-control";
+
+const defaultOption =
+document.createElement(
+"option"
+);
+
+defaultOption.value =
+"";
+
+defaultOption.textContent =
+"🔇 発言禁止を設定";
+
+muteSelect.appendChild(
+defaultOption
+);
+
+const durations = [
+{
+value:10,
+label:"10分"
+},
+{
+value:30,
+label:"30分"
+},
+{
+value:60,
+label:"1時間"
+},
+{
+value:180,
+label:"3時間"
+},
+{
+value:1440,
+label:"1日"
+},
+{
+value:10080,
+label:"7日"
+}
+];
+
+for(
+const duration of durations
+){
+
+const option =
+document.createElement(
+"option"
+);
+
+option.value =
+String(duration.value);
+
+option.textContent =
+"🔇 " +
+duration.label +
+" 発言禁止";
+
+muteSelect.appendChild(
+option
+);
+
+}
+
+muteSelect.addEventListener(
+"change",
+async () => {
+
+const minutes =
+Number(
+muteSelect.value
+);
+
+if(!minutes){
+return;
+}
+
+muteSelect.disabled =
+true;
+
+await setMute(
+member.user_id,
+minutes
+);
+
+muteSelect.value =
+"";
+
+muteSelect.disabled =
+false;
+
+}
+);
+
+info.appendChild(
+muteSelect
+);
+
+/* =========================
+   発言禁止解除
+========================= */
+
+if(mute){
+
+const clearButton =
+document.createElement(
+"button"
+);
+
+clearButton.type =
+"button";
+
+clearButton.className =
+"mute-clear-button";
+
+clearButton.textContent =
+"🔓 発言禁止を解除";
+
+clearButton.addEventListener(
+"click",
+async event => {
+
+event.preventDefault();
+event.stopPropagation();
+
+await clearMute(
+member.user_id
+);
+
+}
+);
+
+info.appendChild(
+clearButton
+);
+
+}
+
 }
 
 item.appendChild(icon);
@@ -3611,7 +4441,9 @@ item.appendChild(icon);
 item.appendChild(info);
 
 memberList.appendChild(item);
+
 }
+
 }
 
 /* =========================
@@ -3753,6 +4585,7 @@ false;
 await getGroupMembers();
 
 await loadMembers();
+
 }
 
 /* =========================
@@ -3770,9 +4603,12 @@ await updateMyPresence();
 
 await getGroupMembers();
 
+await loadGroupMutes();
+
 await loadMembers();
 
 memberInput.focus();
+
 }
 );
 
@@ -3782,6 +4618,7 @@ closeModalButton.addEventListener(
 
 memberModal.style.display =
 "none";
+
 }
 );
 
@@ -3796,7 +4633,9 @@ memberModal
 
 memberModal.style.display =
 "none";
+
 }
+
 }
 );
 
@@ -3814,7 +4653,9 @@ if(event.key === "Enter"){
 event.preventDefault();
 
 addMember();
+
 }
+
 }
 );
 
@@ -3836,7 +4677,9 @@ if(event.key === "Enter"){
 event.preventDefault();
 
 sendMessage();
+
 }
+
 }
 );
 
@@ -3857,6 +4700,7 @@ menu => {
 
 menu.style.display =
 "none";
+
 }
 );
 
@@ -3869,8 +4713,10 @@ picker => {
 
 picker.style.display =
 "none";
+
 }
 );
+
 }
 );
 
@@ -3926,6 +4772,10 @@ await loadGroup();
 
 await getGroupMembers();
 
+await loadGroupMutes();
+
+restartMuteTimer();
+
 await loadMessages();
 
 scrollToBottom(false);
@@ -3938,17 +4788,21 @@ async () => {
 
 await updateMyPresence();
 
+await loadGroupMutes();
+
 if(
 memberModal.style.display ===
 "flex"
 ){
 
 await loadMembers();
+
 }
 
 },
 30000
 );
+
 }
 
 window.addEventListener(
@@ -3963,7 +4817,20 @@ presenceTimer
 
 presenceTimer =
 null;
+
 }
+
+if(muteTimer){
+
+clearInterval(
+muteTimer
+);
+
+muteTimer =
+null;
+
+}
+
 }
 );
 
