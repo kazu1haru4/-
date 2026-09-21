@@ -52,6 +52,10 @@
       font-size: 25px;
     }
 
+    .notification-button:active {
+      transform: scale(0.94);
+    }
+
     .notification-badge {
       position: absolute;
       top: -4px;
@@ -67,6 +71,7 @@
       display: none;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 2px 6px rgba(255,77,103,0.3);
     }
 
     .logo {
@@ -173,6 +178,7 @@
         aria-label="通知"
       >
         🔔
+
         <span
           class="notification-badge"
           id="notificationBadge"
@@ -181,9 +187,16 @@
         </span>
       </a>
 
-      <div class="logo">💬</div>
 
-      <h1>フレンドチャット</h1>
+      <div class="logo">
+        💬
+      </div>
+
+
+      <h1>
+        フレンドチャット
+      </h1>
+
 
       <div
         class="welcome"
@@ -191,6 +204,7 @@
       >
         読み込み中...
       </div>
+
 
       <p class="subtitle">
         みんなと楽しくチャットしよう！
@@ -201,31 +215,75 @@
 
     <section class="menu">
 
-      <a href="groups.html" class="menu-button groups">
-        <div class="icon">👥</div>
-        <div class="title">グループ</div>
-        <div class="description">グループチャット</div>
+      <a
+        href="groups.html"
+        class="menu-button groups"
+      >
+        <div class="icon">
+          👥
+        </div>
+
+        <div class="title">
+          グループ
+        </div>
+
+        <div class="description">
+          グループチャット
+        </div>
       </a>
 
 
-      <a href="profile.html" class="menu-button profile">
-        <div class="icon">👤</div>
-        <div class="title">プロフィール</div>
-        <div class="description">自分のプロフィール</div>
+      <a
+        href="profile.html"
+        class="menu-button profile"
+      >
+        <div class="icon">
+          👤
+        </div>
+
+        <div class="title">
+          プロフィール
+        </div>
+
+        <div class="description">
+          自分のプロフィール
+        </div>
       </a>
 
 
-      <a href="friends.html" class="menu-button friends">
-        <div class="icon">👥</div>
-        <div class="title">フレンド</div>
-        <div class="description">友達を探す</div>
+      <a
+        href="friends.html"
+        class="menu-button friends"
+      >
+        <div class="icon">
+          👥
+        </div>
+
+        <div class="title">
+          フレンド
+        </div>
+
+        <div class="description">
+          友達を探す
+        </div>
       </a>
 
 
-      <a href="board.html" class="menu-button board">
-        <div class="icon">📢</div>
-        <div class="title">掲示板</div>
-        <div class="description">みんなの投稿を見る</div>
+      <a
+        href="board.html"
+        class="menu-button board"
+      >
+        <div class="icon">
+          📢
+        </div>
+
+        <div class="title">
+          掲示板
+        </div>
+
+        <div class="description">
+          みんなの投稿を見る
+        </div>
       </a>
 
     </section>
@@ -240,10 +298,12 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+
   <script>
 
     const SUPABASE_URL =
       "https://yxonmqdyekwenyzekjwj.supabase.co";
+
 
     const SUPABASE_KEY =
       "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
@@ -269,46 +329,81 @@
         await supabaseClient.auth.getUser();
 
 
-      if (error || !data.user) {
+      if (
+        error ||
+        !data.user
+      ) {
 
-        document.getElementById("welcome").textContent =
-          "ログイン情報を確認できません";
+        document
+          .getElementById("welcome")
+          .textContent =
+            "ログイン情報を確認できません";
 
         return;
+
       }
 
 
       const username =
-        data.user.user_metadata?.username || "";
+        data.user
+          .user_metadata
+          ?.username || "";
 
 
-      const {
-        data: profile
-      } =
-        await supabaseClient
-          .from("profiles")
-          .select("name")
-          .eq(
-            "user_id",
-            username
-          )
-          .maybeSingle();
+      // =====================
+      // プロフィール
+      // =====================
+
+      if (username) {
+
+        const {
+          data: profile,
+          error: profileError
+        } =
+          await supabaseClient
+            .from("profiles")
+            .select("name")
+            .eq(
+              "user_id",
+              username
+            )
+            .maybeSingle();
 
 
-      if (profile && profile.name) {
+        if (
+          !profileError &&
+          profile &&
+          profile.name
+        ) {
 
-        document.getElementById("welcome").textContent =
-          profile.name + " さん、こんにちは！";
+          document
+            .getElementById("welcome")
+            .textContent =
+              profile.name +
+              " さん、こんにちは！";
+
+        } else {
+
+          document
+            .getElementById("welcome")
+            .textContent =
+              "ログイン中です！";
+
+        }
 
       } else {
 
-        document.getElementById("welcome").textContent =
-          "ログイン中です！";
+        document
+          .getElementById("welcome")
+          .textContent =
+            "ログイン中です！";
 
       }
 
 
-      // 通知件数を読み込む
+      // =====================
+      // 未読通知件数
+      // =====================
 
       await loadNotificationCount(
         username
@@ -325,7 +420,16 @@
       username
     ) {
 
+      const badge =
+        document.getElementById(
+          "notificationBadge"
+        );
+
+
       if (!username) {
+
+        badge.style.display =
+          "none";
 
         return;
 
@@ -362,16 +466,17 @@
           error
         );
 
+        badge.style.display =
+          "none";
+
         return;
 
       }
 
 
-      const badge =
-        document.getElementById(
-          "notificationBadge"
-        );
-
+      // =====================
+      // 未読あり
+      // =====================
 
       if (
         count &&
@@ -386,7 +491,13 @@
         badge.style.display =
           "flex";
 
-      } else {
+      }
+
+      // =====================
+      // 未読なし
+      // =====================
+
+      else {
 
         badge.style.display =
           "none";
@@ -395,6 +506,10 @@
 
     }
 
+
+    // =========================
+    // 起動
+    // =========================
 
     start();
 
