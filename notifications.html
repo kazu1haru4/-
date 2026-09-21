@@ -29,7 +29,7 @@
     .header {
       position: relative;
       background: white;
-      padding: 18px 60px;
+      padding: 18px 150px 18px 60px;
       text-align: center;
       box-shadow: 0 3px 10px rgba(0,0,0,0.06);
     }
@@ -50,6 +50,33 @@
       border-radius: 12px;
       font-size: 13px;
       font-weight: bold;
+    }
+
+    /* =========================
+       すべて削除ボタン
+    ========================= */
+
+    .delete-all-button {
+      position: absolute;
+      right: 12px;
+      top: 12px;
+      border: none;
+      padding: 9px 11px;
+      background: #fff0f0;
+      color: #d9534f;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .delete-all-button:active {
+      transform: scale(0.96);
+    }
+
+    .delete-all-button:disabled {
+      background: #eee;
+      color: #aaa;
     }
 
     .notifications {
@@ -120,6 +147,14 @@
 
       <h1>🔔 通知</h1>
 
+      <button
+        id="deleteAllButton"
+        class="delete-all-button"
+        type="button"
+      >
+        🗑️ すべて削除
+      </button>
+
     </header>
 
     <section
@@ -157,6 +192,12 @@
       );
 
 
+    const deleteAllButton =
+      document.getElementById(
+        "deleteAllButton"
+      );
+
+
     let currentUsername = "";
 
 
@@ -179,6 +220,10 @@
           .eq(
             "id",
             notificationId
+          )
+          .eq(
+            "user_id",
+            currentUsername
           );
 
       if (error) {
@@ -201,8 +246,6 @@
       notification
     ) {
 
-      // まず既読にする
-
       if (
         !notification.is_read
       ) {
@@ -213,8 +256,6 @@
 
       }
 
-
-      // 移動先がある場合
 
       if (
         notification.link &&
@@ -229,12 +270,82 @@
       }
 
 
-      // 移動先がない場合
-
       console.log(
         "通知にリンクがありません:",
         notification
       );
+
+    }
+
+
+    // =========================
+    // すべての通知を削除
+    // =========================
+
+    async function deleteAllNotifications() {
+
+      if (!currentUsername) {
+
+        alert(
+          "ユーザー情報を取得できていません。"
+        );
+
+        return;
+      }
+
+
+      const confirmed =
+        window.confirm(
+          "すべての通知を削除しますか？\n\nこの操作は元に戻せません。"
+        );
+
+
+      if (!confirmed) {
+        return;
+      }
+
+
+      deleteAllButton.disabled =
+        true;
+
+
+      const {
+        error
+      } =
+        await supabaseClient
+          .from("notifications")
+          .delete()
+          .eq(
+            "user_id",
+            currentUsername
+          );
+
+
+      if (error) {
+
+        console.error(
+          "通知削除エラー:",
+          error
+        );
+
+        alert(
+          "通知を削除できませんでした。\n\n" +
+          error.message
+        );
+
+        deleteAllButton.disabled =
+          false;
+
+        return;
+      }
+
+
+      notificationsElement.innerHTML =
+        '<div class="empty">まだ通知はありません 🔔</div>';
+
+
+      deleteAllButton.disabled =
+        false;
 
     }
 
@@ -488,6 +599,16 @@
       );
 
     }
+
+
+    // =========================
+    // すべて削除ボタン
+    // =========================
+
+    deleteAllButton.addEventListener(
+      "click",
+      deleteAllNotifications
+    );
 
 
     // =========================
