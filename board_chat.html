@@ -71,9 +71,6 @@
       font-size: 12px;
     }
 
-    /*
-      メッセージ部分だけスクロール
-    */
     .messages-wrapper {
       position: relative;
       flex: 1 1 auto;
@@ -159,6 +156,7 @@
       display: flex;
       gap: 6px;
       margin-top: 6px;
+      flex-wrap: wrap;
     }
 
     .action-button {
@@ -168,6 +166,26 @@
       padding: 6px 10px;
       font-size: 12px;
       box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+      cursor: pointer;
+    }
+
+    .delete-button {
+      border: none;
+      background: #fff0f0;
+      color: #d55;
+      border-radius: 12px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: bold;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+      cursor: pointer;
+    }
+
+    .deleted-message {
+      color: #999 !important;
+      font-style: italic;
+      background: #f3f3f3 !important;
+      box-shadow: none !important;
     }
 
     .reaction-picker {
@@ -187,6 +205,7 @@
       height: 38px;
       border-radius: 12px;
       font-size: 20px;
+      cursor: pointer;
     }
 
     .reactions {
@@ -204,9 +223,6 @@
       box-shadow: 0 3px 8px rgba(0,0,0,0.07);
     }
 
-    /*
-      最新へボタン
-    */
     .latest-button {
       position: absolute;
       right: 18px;
@@ -232,6 +248,8 @@
       transition:
         opacity 0.2s,
         transform 0.2s;
+
+      cursor: pointer;
     }
 
     .latest-button.show {
@@ -276,6 +294,7 @@
       background: #eee;
       border-radius: 10px;
       padding: 7px 10px;
+      cursor: pointer;
     }
 
     .input-area {
@@ -305,6 +324,7 @@
       background: #f0edff;
       font-size: 21px;
       flex-shrink: 0;
+      cursor: pointer;
     }
 
     #messageInput {
@@ -327,6 +347,7 @@
       font-weight: bold;
       font-size: 14px;
       flex-shrink: 0;
+      cursor: pointer;
     }
 
     #sendButton:disabled {
@@ -568,7 +589,7 @@
 
 
     /*
-      「最新へ」ボタンの表示
+      最新へボタン
     */
     function updateLatestButton() {
 
@@ -611,6 +632,9 @@
     );
 
 
+    /*
+      開始
+    */
     async function start() {
 
       if (!boardId) {
@@ -717,6 +741,9 @@
     }
 
 
+    /*
+      メッセージ読み込み
+    */
     async function loadMessages() {
 
       const {
@@ -779,9 +806,6 @@
       }
 
 
-      /*
-        初回読み込み・更新時は一番下
-      */
       scrollToBottom();
 
       updateLatestButton();
@@ -789,6 +813,9 @@
     }
 
 
+    /*
+      メッセージ表示
+    */
     async function addMessage(
       message
     ) {
@@ -831,6 +858,63 @@
         "bubble";
 
 
+      /*
+        取り消し済みメッセージ
+      */
+      if (message.is_deleted) {
+
+        bubble.classList.add(
+          "deleted-message"
+        );
+
+        bubble.textContent =
+          "このメッセージは取り消されました";
+
+
+        const time =
+          document.createElement(
+            "div"
+          );
+
+        time.className =
+          "time";
+
+        time.textContent =
+          new Date(
+            message.created_at
+          ).toLocaleTimeString(
+            "ja-JP",
+            {
+              hour: "2-digit",
+              minute: "2-digit"
+            }
+          );
+
+
+        messageElement.appendChild(
+          sender
+        );
+
+        messageElement.appendChild(
+          bubble
+        );
+
+        messageElement.appendChild(
+          time
+        );
+
+        messagesElement.appendChild(
+          messageElement
+        );
+
+        return;
+
+      }
+
+
+      /*
+        画像
+      */
       if (message.image_url) {
 
         const {
@@ -872,6 +956,9 @@
       }
 
 
+      /*
+        本文
+      */
       if (message.content) {
 
         const text =
@@ -918,10 +1005,16 @@
         "message-actions";
 
 
+      /*
+        リアクション
+      */
       const reactionButton =
         document.createElement(
           "button"
         );
+
+      reactionButton.type =
+        "button";
 
       reactionButton.className =
         "action-button";
@@ -930,10 +1023,16 @@
         "❤️ リアクション";
 
 
+      /*
+        返信
+      */
       const replyButton =
         document.createElement(
           "button"
         );
+
+      replyButton.type =
+        "button";
 
       replyButton.className =
         "action-button";
@@ -942,6 +1041,72 @@
         "↩️ 返信";
 
 
+      /*
+        自分のメッセージだけ送信取り消し
+      */
+      if (
+        message.sender_id ===
+        currentUsername
+      ) {
+
+        const deleteButton =
+          document.createElement(
+            "button"
+          );
+
+        deleteButton.type =
+          "button";
+
+        deleteButton.className =
+          "delete-button";
+
+        deleteButton.textContent =
+          "🗑️ 送信取り消し";
+
+
+        deleteButton.addEventListener(
+          "click",
+          async event => {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+
+            const confirmed =
+              confirm(
+                "このメッセージを取り消しますか？"
+              );
+
+
+            if (!confirmed) {
+
+              return;
+
+            }
+
+
+            deleteButton.disabled =
+              true;
+
+
+            await deleteMessage(
+              message.id
+            );
+
+          }
+        );
+
+
+        actions.appendChild(
+          deleteButton
+        );
+
+      }
+
+
+      /*
+        リアクションピッカー
+      */
       const picker =
         document.createElement(
           "div"
@@ -965,7 +1130,8 @@
               "button"
             );
 
-          button.type = "button";
+          button.type =
+            "button";
 
           button.textContent =
             reaction;
@@ -1011,6 +1177,9 @@
       );
 
 
+      /*
+        返信ボタン
+      */
       replyButton.addEventListener(
         "click",
         () => {
@@ -1036,15 +1205,20 @@
       );
 
 
-      actions.appendChild(
-        reactionButton
+      actions.insertBefore(
+        reactionButton,
+        actions.firstChild
       );
 
-      actions.appendChild(
-        replyButton
+      actions.insertBefore(
+        replyButton,
+        actions.children[1]
       );
 
 
+      /*
+        リアクション表示
+      */
       const reactions =
         document.createElement(
           "div"
@@ -1155,6 +1329,66 @@
     }
 
 
+    /*
+      送信取り消し
+    */
+    async function deleteMessage(
+      messageId
+    ) {
+
+      if (!currentUsername) {
+
+        return;
+
+      }
+
+
+      const {
+        error
+      } =
+        await supabaseClient
+          .from("board_messages")
+          .update({
+            is_deleted:
+              true
+          })
+          .eq(
+            "id",
+            messageId
+          )
+          .eq(
+            "sender_id",
+            currentUsername
+          );
+
+
+      if (error) {
+
+        console.error(
+          "送信取り消しエラー:",
+          error
+        );
+
+        alert(
+          "送信取り消しに失敗しました。\n\n" +
+          error.message
+        );
+
+        return;
+
+      }
+
+
+      await loadMessages();
+
+      scrollToBottom(true);
+
+    }
+
+
+    /*
+      返信読み込み
+    */
     async function loadReplies(
       messageId,
       messageElement
@@ -1228,6 +1462,9 @@
     }
 
 
+    /*
+      リアクション
+    */
     async function toggleReaction(
       messageId,
       reaction
@@ -1271,8 +1508,10 @@
           .insert({
             board_message_id:
               messageId,
+
             user_id:
               currentUsername,
+
             reaction:
               reaction
           });
@@ -1282,6 +1521,9 @@
     }
 
 
+    /*
+      メッセージ送信
+    */
     async function sendMessage() {
 
       const content =
@@ -1303,7 +1545,8 @@
       }
 
 
-      sendButton.disabled = true;
+      sendButton.disabled =
+        true;
 
 
       /*
@@ -1328,7 +1571,8 @@
             });
 
 
-        sendButton.disabled = false;
+        sendButton.disabled =
+          false;
 
 
         if (error) {
@@ -1344,15 +1588,13 @@
         }
 
 
-        messageInput.value = "";
+        messageInput.value =
+          "";
 
         cancelReplyMode();
 
         await loadMessages();
 
-        /*
-          返信送信後も一番下
-        */
         scrollToBottom();
 
         return;
@@ -1379,11 +1621,15 @@
               content,
 
             image_url:
-              ""
+              "",
+
+            is_deleted:
+              false
           });
 
 
-      sendButton.disabled = false;
+      sendButton.disabled =
+        false;
 
 
       if (error) {
@@ -1399,14 +1645,12 @@
       }
 
 
-      messageInput.value = "";
+      messageInput.value =
+        "";
 
       messageInput.focus();
 
 
-      /*
-        送信後に一番下
-      */
       await loadMessages();
 
       scrollToBottom();
@@ -1414,6 +1658,9 @@
     }
 
 
+    /*
+      画像アップロード
+    */
     async function uploadImage(
       file
     ) {
@@ -1504,7 +1751,10 @@
               "",
 
             image_url:
-              filePath
+              filePath,
+
+            is_deleted:
+              false
           });
 
 
@@ -1525,12 +1775,10 @@
       }
 
 
-      imageInput.value = "";
+      imageInput.value =
+        "";
 
 
-      /*
-        画像送信後に一番下
-      */
       await loadMessages();
 
       scrollToBottom();
@@ -1538,6 +1786,9 @@
     }
 
 
+    /*
+      返信モード解除
+    */
     function cancelReplyMode() {
 
       replyMessage =
@@ -1554,6 +1805,9 @@
     }
 
 
+    /*
+      リアルタイム
+    */
     function startRealtime() {
 
       supabaseClient
@@ -1561,32 +1815,69 @@
           "board-chat-" +
           boardId
         )
+
+        /*
+          新規メッセージ
+        */
         .on(
           "postgres_changes",
           {
-            event: "INSERT",
-            schema: "public",
-            table: "board_messages",
+            event:
+              "INSERT",
+
+            schema:
+              "public",
+
+            table:
+              "board_messages",
+
             filter:
               "board_id=eq." +
               boardId
           },
-          async payload => {
+          async () => {
 
             await loadMessages();
 
-            /*
-              新着メッセージが来たら一番下
-            */
             scrollToBottom();
 
           }
         )
+
+        /*
+          送信取り消し
+        */
+        .on(
+          "postgres_changes",
+          {
+            event:
+              "UPDATE",
+
+            schema:
+              "public",
+
+            table:
+              "board_messages",
+
+            filter:
+              "board_id=eq." +
+              boardId
+          },
+          async () => {
+
+            await loadMessages();
+
+          }
+        )
+
         .subscribe();
 
     }
 
 
+    /*
+      画像ボタン
+    */
     imageButton.addEventListener(
       "click",
       () => {
@@ -1597,6 +1888,9 @@
     );
 
 
+    /*
+      画像選択
+    */
     imageInput.addEventListener(
       "change",
       async () => {
@@ -1612,12 +1906,18 @@
     );
 
 
+    /*
+      送信
+    */
     sendButton.addEventListener(
       "click",
       sendMessage
     );
 
 
+    /*
+      Enter送信
+    */
     messageInput.addEventListener(
       "keydown",
       event => {
@@ -1636,12 +1936,18 @@
     );
 
 
+    /*
+      返信キャンセル
+    */
     cancelReply.addEventListener(
       "click",
       cancelReplyMode
     );
 
 
+    /*
+      開始
+    */
     start();
 
   </script>
