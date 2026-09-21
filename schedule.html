@@ -168,6 +168,7 @@
 
     .save-button:disabled {
       opacity: 0.6;
+      cursor: wait;
     }
 
     .cancel-button {
@@ -239,13 +240,6 @@
       color: #888;
       padding: 30px;
     }
-
-    .section-title {
-      font-size: 13px;
-      font-weight: bold;
-      margin-top: 16px;
-      margin-bottom: 7px;
-    }
   </style>
 </head>
 
@@ -254,8 +248,12 @@
 <div class="container">
 
   <div class="header">
-    <button class="back" id="backButton">← ホーム</button>
+    <button class="back" id="backButton">
+      ← ホーム
+    </button>
+
     <h1>📅 予定</h1>
+
     <div style="width:78px;"></div>
   </div>
 
@@ -300,8 +298,13 @@
     <label>誰に見せる？</label>
 
     <select id="visibility">
-      <option value="private">🔒 自分だけ</option>
-      <option value="friend">👤 フレンドに見せる</option>
+      <option value="private">
+        🔒 自分だけ
+      </option>
+
+      <option value="friend">
+        👤 フレンドに見せる
+      </option>
     </select>
 
     <div
@@ -312,6 +315,7 @@
     <button
       class="save-button"
       id="saveButton"
+      type="button"
     >
       💾 予定を保存
     </button>
@@ -319,6 +323,7 @@
     <button
       class="cancel-button"
       id="cancelButton"
+      type="button"
     >
       キャンセル
     </button>
@@ -352,8 +357,11 @@
     );
 
 
-  let currentUsername = "";
+  // =========================
+  // 変数
+  // =========================
 
+  let currentUsername = "";
   let friendsData = [];
 
 
@@ -404,12 +412,15 @@
 
   document
     .getElementById("backButton")
-    .addEventListener("click", function() {
+    .addEventListener(
+      "click",
+      function() {
 
-      window.location.href =
-        "home.html";
+        window.location.href =
+          "home.html";
 
-    });
+      }
+    );
 
 
   // =========================
@@ -453,12 +464,12 @@
 
 
   // =========================
-  // 公開設定変更
+  // 公開設定
   // =========================
 
   visibility.addEventListener(
     "change",
-    function() {
+    async function() {
 
       if (
         visibility.value === "friend"
@@ -467,6 +478,8 @@
         friendList.classList.add(
           "show"
         );
+
+        await loadFriends();
 
         renderFriends();
 
@@ -521,7 +534,7 @@
 
 
   // =========================
-  // ログインユーザー
+  // ログインユーザー取得
   // =========================
 
   async function getCurrentUser() {
@@ -564,6 +577,7 @@
 
 
     return true;
+
   }
 
 
@@ -603,6 +617,7 @@
         '<div class="no-friends">フレンドを読み込めませんでした。</div>';
 
       return;
+
     }
 
 
@@ -610,7 +625,13 @@
       data || [];
 
 
-    renderFriends();
+    if (
+      visibility.value === "friend"
+    ) {
+
+      await renderFriends();
+
+    }
 
   }
 
@@ -624,7 +645,9 @@
     if (
       visibility.value !== "friend"
     ) {
+
       return;
+
     }
 
 
@@ -636,12 +659,14 @@
         '<div class="no-friends">まだフレンドがいません。</div>';
 
       return;
+
     }
 
 
     const ids =
       friendsData.map(
-        friend => friend.friend_id
+        friend =>
+          friend.friend_id
       );
 
 
@@ -671,10 +696,12 @@
         '<div class="no-friends">フレンド情報を取得できませんでした。</div>';
 
       return;
+
     }
 
 
     const profileMap = {};
+
 
     (profiles || []).forEach(
       profile => {
@@ -729,6 +756,7 @@
             "div"
           );
 
+
         const name =
           profile &&
           profile.name
@@ -741,6 +769,7 @@
           <span class="friend-name">
             ${escapeHtml(name)}
           </span>
+
           <span class="friend-id">
             @${escapeHtml(id)}
           </span>
@@ -804,9 +833,16 @@
       );
 
       scheduleList.innerHTML =
-        '<div class="empty">予定を読み込めませんでした。</div>';
+        `
+        <div class="empty">
+          予定を読み込めませんでした。
+          <br><br>
+          ${escapeHtml(error.message)}
+        </div>
+        `;
 
       return;
+
     }
 
 
@@ -819,6 +855,7 @@
         '<div class="empty">📅 まだ予定はありません</div>';
 
       return;
+
     }
 
 
@@ -899,7 +936,10 @@
             schedule.user_id === currentUsername
               ? `
                 <br>
-                <button class="delete-button">
+                <button
+                  class="delete-button"
+                  type="button"
+                >
                   🗑️ 削除
                 </button>
               `
@@ -941,6 +981,20 @@
 
 
   // =========================
+  // ★ 保存ボタン
+  // =========================
+
+  saveButton.addEventListener(
+    "click",
+    async function() {
+
+      await saveSchedule();
+
+    }
+  );
+
+
+  // =========================
   // 予定保存
   // =========================
 
@@ -961,6 +1015,7 @@
     const memo =
       memoInput.value.trim() || null;
 
+
     const selectedFriends =
       Array.from(
         document.querySelectorAll(
@@ -972,6 +1027,10 @@
       );
 
 
+    // -------------------------
+    // 入力チェック
+    // -------------------------
+
     if (!title) {
 
       alert(
@@ -981,6 +1040,7 @@
       titleInput.focus();
 
       return;
+
     }
 
 
@@ -993,6 +1053,7 @@
       dateInput.focus();
 
       return;
+
     }
 
 
@@ -1006,8 +1067,13 @@
       );
 
       return;
+
     }
 
+
+    // -------------------------
+    // 保存中
+    // -------------------------
 
     saveButton.disabled =
       true;
@@ -1016,53 +1082,153 @@
       "保存中…";
 
 
-    // -------------------------
-    // 予定本体
-    // -------------------------
+    try {
 
-    const {
-      data: schedule,
-      error
-    } =
-      await supabaseClient
-        .from("schedules")
-        .insert({
-          user_id:
-            currentUsername,
+      // =======================
+      // 予定本体を保存
+      // =======================
 
-          title:
-            title,
+      const {
+        data: schedule,
+        error
+      } =
+        await supabaseClient
+          .from("schedules")
+          .insert({
+            user_id:
+              currentUsername,
 
-          date:
-            date,
+            title:
+              title,
 
-          time:
-            time,
+            date:
+              date,
 
-          place:
-            place,
+            time:
+              time,
 
-          memo:
-            memo,
+            place:
+              place,
 
-          visibility:
-            visibility.value
-        })
-        .select()
-        .single();
+            memo:
+              memo,
+
+            visibility:
+              visibility.value
+
+          })
+          .select()
+          .single();
 
 
-    if (error) {
+      if (error) {
+
+        console.error(
+          "予定保存エラー:",
+          error
+        );
+
+        alert(
+          "予定を保存できませんでした。\n\n" +
+          error.message
+        );
+
+        return;
+
+      }
+
+
+      // =======================
+      // フレンド共有
+      // =======================
+
+      if (
+        visibility.value === "friend" &&
+        selectedFriends.length > 0
+      ) {
+
+        const rows =
+          selectedFriends.map(
+            userId => ({
+
+              schedule_id:
+                schedule.id,
+
+              user_id:
+                userId
+
+            })
+          );
+
+
+        const {
+          error: shareError
+        } =
+          await supabaseClient
+            .from("schedule_shares")
+            .insert(rows);
+
+
+        if (shareError) {
+
+          console.error(
+            "予定共有設定エラー:",
+            shareError
+          );
+
+
+          // 作成した予定を削除
+          await supabaseClient
+            .from("schedules")
+            .delete()
+            .eq(
+              "id",
+              schedule.id
+            )
+            .eq(
+              "user_id",
+              currentUsername
+            );
+
+
+          alert(
+            "予定の共有設定に失敗しました。\n\n" +
+            shareError.message
+          );
+
+          return;
+
+        }
+
+      }
+
+
+      // =======================
+      // 成功
+      // =======================
+
+      alert(
+        "予定を保存しました！📅"
+      );
+
+
+      closeForm();
+
+      await loadSchedules();
+
+    } catch (error) {
 
       console.error(
-        "予定保存エラー:",
+        "予定保存中のエラー:",
         error
       );
 
       alert(
         "予定を保存できませんでした。\n\n" +
-        error.message
+        (error.message || error)
       );
+
+    } finally {
 
       saveButton.disabled =
         false;
@@ -1070,90 +1236,7 @@
       saveButton.textContent =
         "💾 予定を保存";
 
-      return;
     }
-
-
-    // -------------------------
-    // フレンド共有
-    // -------------------------
-
-    if (
-      visibility.value === "friend" &&
-      selectedFriends.length > 0
-    ) {
-
-      const rows =
-        selectedFriends.map(
-          userId => ({
-            schedule_id:
-              schedule.id,
-
-            user_id:
-              userId
-          })
-        );
-
-
-      const {
-        error: shareError
-      } =
-        await supabaseClient
-          .from("schedule_shares")
-          .insert(rows);
-
-
-      if (shareError) {
-
-        console.error(
-          "予定共有設定エラー:",
-          shareError
-        );
-
-
-        // 共有設定だけ失敗した場合、
-        // 作成した予定を削除して元に戻す
-        await supabaseClient
-          .from("schedules")
-          .delete()
-          .eq(
-            "id",
-            schedule.id
-          )
-          .eq(
-            "user_id",
-            currentUsername
-          );
-
-
-        alert(
-          "予定の共有設定に失敗しました。\n\n" +
-          shareError.message
-        );
-
-
-        saveButton.disabled =
-          false;
-
-        saveButton.textContent =
-          "💾 予定を保存";
-
-        return;
-      }
-
-    }
-
-
-    closeForm();
-
-    await loadSchedules();
-
-
-    saveButton.disabled =
-      false;
-
-    saveButton.textContent =
-      "💾 予定を保存";
 
   }
 
@@ -1173,7 +1256,9 @@
 
 
     if (!confirmed) {
+
       return;
+
     }
 
 
@@ -1206,6 +1291,7 @@
       );
 
       return;
+
     }
 
 
@@ -1222,6 +1308,13 @@
     dateString
   ) {
 
+    if (!dateString) {
+
+      return "";
+
+    }
+
+
     const parts =
       dateString.split("-");
 
@@ -1229,7 +1322,9 @@
     if (
       parts.length !== 3
     ) {
+
       return dateString;
+
     }
 
 
@@ -1316,7 +1411,9 @@
 
 
     if (!ok) {
+
       return;
+
     }
 
 
@@ -1324,6 +1421,10 @@
 
   }
 
+
+  // =========================
+  // スタート
+  // =========================
 
   start();
 
