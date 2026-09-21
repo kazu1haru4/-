@@ -1,787 +1,315 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>グループチャット</title>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      font-family: sans-serif;
-      background: linear-gradient(135deg, #eef7ff, #f7efff);
-    }
-
-    body {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .header {
-      position: relative;
-      flex: 0 0 auto;
-      background: white;
-      padding: 14px 120px 14px 60px;
-      text-align: center;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 40;
-    }
-
-    .home-button {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      padding: 9px 12px;
-      background: white;
-      color: #555;
-      text-decoration: none;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: bold;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-    }
-
-    .member-button {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      border: none;
-      padding: 9px 12px;
-      background: #6aa9ff;
-      color: white;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .title {
-      font-size: 22px;
-      font-weight: bold;
-      color: #444;
-    }
-
-    .group-name {
-      font-size: 14px;
-      color: #888;
-      margin-top: 4px;
-    }
-
-    .messages-wrapper {
-      position: relative;
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow: hidden;
-    }
-
-    .messages {
-      width: 100%;
-      height: 100%;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      padding: 15px;
-      padding-bottom: 25px;
-      max-width: 700px;
-      margin: auto;
-    }
-
-    #latestButton {
-      position: absolute;
-      right: 18px;
-      bottom: 18px;
-      border: none;
-      background: #6aa9ff;
-      color: white;
-      border-radius: 50px;
-      padding: 11px 15px;
-      font-size: 14px;
-      font-weight: bold;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.18);
-      cursor: pointer;
-      display: none;
-      z-index: 30;
-    }
-
-    #latestButton.show {
-      display: block;
-    }
-
-    .message-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-
-    .message-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: #dceaff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 21px;
-      flex-shrink: 0;
-      overflow: hidden;
-    }
-
-    .message-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .message {
-      position: relative;
-      background: white;
-      border-radius: 15px;
-      padding: 10px 13px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-      cursor: pointer;
-      min-width: 0;
-      flex: 1;
-    }
-
-    .sender {
-      font-size: 12px;
-      color: #777;
-      margin-bottom: 4px;
-      font-weight: bold;
-    }
-
-    .content {
-      font-size: 16px;
-      color: #333;
-      word-break: break-word;
-      white-space: pre-wrap;
-    }
-
-    .mention {
-      color: #4d8fe8;
-      background: #eaf3ff;
-      border-radius: 5px;
-      padding: 1px 3px;
-      font-weight: bold;
-    }
-
-    .chat-image {
-      display: block;
-      max-width: 250px;
-      max-height: 320px;
-      border-radius: 14px;
-      margin-top: 5px;
-      object-fit: contain;
-    }
-
-    .deleted-message {
-      color: #999;
-      font-style: italic;
-      font-size: 14px;
-      padding: 4px 0;
-    }
-
-    /* =========================
-       既読
-    ========================= */
-
-    .read-status {
-      margin-top: 5px;
-      color: #8a63d2;
-      font-size: 11px;
-      font-weight: bold;
-      text-align: right;
-    }
-
-    .reply-preview {
-      background: #f0f5ff;
-      border-left: 4px solid #6aa9ff;
-      border-radius: 8px;
-      padding: 7px 9px;
-      margin-top: 8px;
-      font-size: 12px;
-      color: #666;
-    }
-
-    .reply-preview strong {
-      color: #5588cc;
-    }
-
-    .reactions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      margin-top: 7px;
-    }
-
-    .reaction-item {
-      background: #f2f5fa;
-      border-radius: 20px;
-      padding: 4px 8px;
-      font-size: 14px;
-    }
-
-    .message-menu {
-      display: none;
-      position: absolute;
-      top: calc(100% + 5px);
-      left: 10px;
-      z-index: 100;
-      background: white;
-      border-radius: 14px;
-      padding: 7px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.18);
-      min-width: 200px;
-    }
-
-    .message-menu button {
-      display: block;
-      width: 100%;
-      border: none;
-      background: white;
-      text-align: left;
-      padding: 11px 12px;
-      border-radius: 9px;
-      font-size: 15px;
-      cursor: pointer;
-    }
-
-    .message-menu button:hover,
-    .message-menu button:active {
-      background: #f0f5ff;
-    }
-
-    .delete-button {
-      color: #d9534f !important;
-    }
-
-    .reaction-picker {
-      display: none;
-      position: absolute;
-      top: calc(100% + 5px);
-      left: 10px;
-      z-index: 110;
-      background: white;
-      border-radius: 15px;
-      padding: 8px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.18);
-      gap: 5px;
-    }
-
-    .reaction-picker button {
-      border: none;
-      background: #f5f7fb;
-      border-radius: 10px;
-      width: 42px;
-      height: 42px;
-      font-size: 21px;
-      cursor: pointer;
-    }
-
-    .mention-list {
-      display: none;
-      position: fixed;
-      left: 10px;
-      right: 10px;
-      bottom: 65px;
-      max-width: 500px;
-      margin: auto;
-      background: white;
-      border-radius: 14px;
-      box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
-      padding: 7px;
-      max-height: 220px;
-      overflow-y: auto;
-      z-index: 80;
-    }
-
-    .mention-list.show {
-      display: block;
-    }
-
-    .mention-item {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      width: 100%;
-      border: none;
-      background: white;
-      border-radius: 10px;
-      padding: 10px;
-      cursor: pointer;
-      text-align: left;
-    }
-
-    .mention-item:hover,
-    .mention-item:active {
-      background: #f0f5ff;
-    }
-
-    .mention-avatar {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      background: #dceaff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-
-    .mention-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .mention-name {
-      font-size: 14px;
-      font-weight: bold;
-      color: #444;
-    }
-
-    .mention-id {
-      font-size: 12px;
-      color: #888;
-    }
-
-    .input-area {
-      position: relative;
-      flex: 0 0 auto;
-      background: white;
-      padding: 10px;
-      display: flex;
-      gap: 8px;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
-      z-index: 70;
-    }
-
-    #messageInput {
-      flex: 1;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      font-size: 16px;
-      min-width: 0;
-      outline: none;
-    }
-
-    #messageInput:focus {
-      border-color: #6aa9ff;
-    }
-
-    #imageButton {
-      width: 48px;
-      border: none;
-      background: #f0f5ff;
-      color: #5588cc;
-      border-radius: 12px;
-      font-size: 21px;
-      cursor: pointer;
-    }
-
-    #sendButton {
-      border: none;
-      background: #6aa9ff;
-      color: white;
-      border-radius: 12px;
-      padding: 0 18px;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 15px;
-    }
-
-    #sendButton:disabled,
-    #imageButton:disabled {
-      background: #bbb;
-    }
-
-    #imageInput {
-      display: none;
-    }
-
-    .error {
-      text-align: center;
-      color: #d55;
-      padding: 20px;
-    }
-
-    .reply-area {
-      display: none;
-      flex: 0 0 auto;
-      background: white;
-      border-top: 1px solid #ddd;
-      padding: 8px 10px;
-      z-index: 65;
-    }
-
-    .reply-info {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      background: #f0f5ff;
-      border-left: 4px solid #6aa9ff;
-      border-radius: 8px;
-      padding: 8px 10px;
-    }
-
-    .reply-text {
-      font-size: 12px;
-      color: #666;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      min-width: 0;
-    }
-
-    .reply-text strong {
-      color: #5588cc;
-    }
-
-    #cancelReplyButton {
-      border: none;
-      background: transparent;
-      color: #777;
-      font-size: 18px;
-      cursor: pointer;
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.35);
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      z-index: 200;
-    }
-
-    .modal-box {
-      width: 100%;
-      max-width: 360px;
-      background: white;
-      border-radius: 20px;
-      padding: 22px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.18);
-      max-height: 80vh;
-      overflow-y: auto;
-    }
-
-    .modal-title {
-      font-size: 20px;
-      font-weight: bold;
-      color: #444;
-      text-align: center;
-      margin-bottom: 15px;
-    }
-
-    .member-list {
-      margin-bottom: 15px;
-    }
-
-    .member-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: #f5f8ff;
-      border-radius: 12px;
-      padding: 10px;
-      margin-bottom: 8px;
-    }
-
-    .member-icon {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: #dceaff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      flex-shrink: 0;
-      overflow: hidden;
-    }
-
-    .member-info {
-      min-width: 0;
-    }
-
-    .member-name {
-      font-size: 14px;
-      font-weight: bold;
-      color: #444;
-      word-break: break-word;
-    }
-
-    .member-id {
-      font-size: 12px;
-      color: #888;
-      word-break: break-word;
-    }
-
-    .member-loading,
-    .member-empty {
-      text-align: center;
-      color: #888;
-      padding: 15px 5px;
-      font-size: 14px;
-    }
-
-    #memberInput {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      font-size: 16px;
-      margin-bottom: 10px;
-    }
-
-    .modal-buttons {
-      display: flex;
-      gap: 8px;
-    }
-
-    .modal-buttons button {
-      flex: 1;
-      border: none;
-      border-radius: 12px;
-      padding: 12px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    #addMemberButton {
-      background: #6aa9ff;
-      color: white;
-    }
-
-    #closeModalButton {
-      background: #eee;
-      color: #555;
-    }
-
-    .add-section {
-      border-top: 1px solid #eee;
-      margin-top: 15px;
-      padding-top: 15px;
-    }
-
-    .add-section-title {
-      font-size: 14px;
-      font-weight: bold;
-      color: #555;
-      margin-bottom: 8px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>グループチャット</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:sans-serif;background:linear-gradient(135deg,#eef7ff,#f7efff)}
+body{display:flex;flex-direction:column}
+
+.header{position:relative;flex:0 0 auto;background:white;padding:14px 120px 14px 60px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.08);display:flex;align-items:center;justify-content:center;z-index:40}
+.home-button{position:absolute;top:12px;left:12px;padding:9px 12px;background:white;color:#555;text-decoration:none;border-radius:12px;font-size:13px;font-weight:bold;box-shadow:0 3px 10px rgba(0,0,0,.08)}
+.member-button{position:absolute;top:12px;right:12px;border:none;padding:9px 12px;background:#6aa9ff;color:white;border-radius:12px;font-size:13px;font-weight:bold;cursor:pointer}
+.title{font-size:22px;font-weight:bold;color:#444}
+.group-name{font-size:14px;color:#888;margin-top:4px}
+
+.messages-wrapper{position:relative;flex:1 1 auto;min-height:0;overflow:hidden}
+.messages{width:100%;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:15px;padding-bottom:25px;max-width:700px;margin:auto}
+
+#latestButton{position:absolute;right:18px;bottom:18px;border:none;background:#6aa9ff;color:white;border-radius:50px;padding:11px 15px;font-size:14px;font-weight:bold;box-shadow:0 4px 14px rgba(0,0,0,.18);cursor:pointer;display:none;z-index:30}
+#latestButton.show{display:block}
+
+.message-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:10px}
+.message-avatar{width:40px;height:40px;border-radius:50%;background:#dceaff;display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0;overflow:hidden}
+.message-avatar img{width:100%;height:100%;object-fit:cover}
+
+.message{position:relative;background:white;border-radius:15px;padding:10px 13px;box-shadow:0 2px 8px rgba(0,0,0,.06);cursor:pointer;min-width:0;flex:1}
+.sender{font-size:12px;color:#777;margin-bottom:4px;font-weight:bold}
+.content{font-size:16px;color:#333;word-break:break-word;white-space:pre-wrap}
+.mention{color:#4d8fe8;background:#eaf3ff;border-radius:5px;padding:1px 3px;font-weight:bold}
+.chat-image{display:block;max-width:250px;max-height:320px;border-radius:14px;margin-top:5px;object-fit:contain}
+.deleted-message{color:#999;font-style:italic;font-size:14px;padding:4px 0}
+
+.read-status{margin-top:5px;color:#8a63d2;font-size:11px;font-weight:bold;text-align:right}
+.reply-preview{background:#f0f5ff;border-left:4px solid #6aa9ff;border-radius:8px;padding:7px 9px;margin-top:8px;font-size:12px;color:#666}
+.reply-preview strong{color:#5588cc}
+.reactions{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.reaction-item{background:#f2f5fa;border-radius:20px;padding:4px 8px;font-size:14px}
+
+.message-menu{display:none;position:absolute;top:calc(100% + 5px);left:10px;z-index:100;background:white;border-radius:14px;padding:7px;box-shadow:0 6px 20px rgba(0,0,0,.18);min-width:200px}
+.message-menu button{display:block;width:100%;border:none;background:white;text-align:left;padding:11px 12px;border-radius:9px;font-size:15px;cursor:pointer}
+.message-menu button:hover,.message-menu button:active{background:#f0f5ff}
+.delete-button{color:#d9534f!important}
+
+.reaction-picker{display:none;position:absolute;top:calc(100% + 5px);left:10px;z-index:110;background:white;border-radius:15px;padding:8px;box-shadow:0 6px 20px rgba(0,0,0,.18);gap:5px}
+.reaction-picker button{border:none;background:#f5f7fb;border-radius:10px;width:42px;height:42px;font-size:21px;cursor:pointer}
+
+.mention-list{display:none;position:fixed;left:10px;right:10px;bottom:65px;max-width:500px;margin:auto;background:white;border-radius:14px;box-shadow:0 -4px 20px rgba(0,0,0,.15);padding:7px;max-height:220px;overflow-y:auto;z-index:80}
+.mention-list.show{display:block}
+.mention-item{display:flex;align-items:center;gap:9px;width:100%;border:none;background:white;border-radius:10px;padding:10px;cursor:pointer;text-align:left}
+.mention-item:hover,.mention-item:active{background:#f0f5ff}
+.mention-avatar{width:34px;height:34px;border-radius:50%;background:#dceaff;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+.mention-avatar img{width:100%;height:100%;object-fit:cover}
+.mention-name{font-size:14px;font-weight:bold;color:#444}
+.mention-id{font-size:12px;color:#888}
+
+.input-area{position:relative;flex:0 0 auto;background:white;padding:10px;display:flex;gap:8px;box-shadow:0 -2px 10px rgba(0,0,0,.08);z-index:70}
+#messageInput{flex:1;padding:12px;border:1px solid #ddd;border-radius:12px;font-size:16px;min-width:0;outline:none}
+#messageInput:focus{border-color:#6aa9ff}
+#imageButton{width:48px;border:none;background:#f0f5ff;color:#5588cc;border-radius:12px;font-size:21px;cursor:pointer}
+#sendButton{border:none;background:#6aa9ff;color:white;border-radius:12px;padding:0 18px;font-weight:bold;cursor:pointer;font-size:15px}
+#sendButton:disabled,#imageButton:disabled{background:#bbb}
+#imageInput{display:none}
+.error{text-align:center;color:#d55;padding:20px}
+
+.reply-area{display:none;flex:0 0 auto;background:white;border-top:1px solid #ddd;padding:8px 10px;z-index:65}
+.reply-info{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#f0f5ff;border-left:4px solid #6aa9ff;border-radius:8px;padding:8px 10px}
+.reply-text{font-size:12px;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.reply-text strong{color:#5588cc}
+#cancelReplyButton{border:none;background:transparent;color:#777;font-size:18px;cursor:pointer}
+
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);align-items:center;justify-content:center;padding:20px;z-index:200}
+.modal-box{width:100%;max-width:360px;background:white;border-radius:20px;padding:22px;box-shadow:0 8px 30px rgba(0,0,0,.18);max-height:80vh;overflow-y:auto}
+.modal-title{font-size:20px;font-weight:bold;color:#444;text-align:center;margin-bottom:15px}
+.member-list{margin-bottom:15px}
+
+.member-item{display:flex;align-items:center;gap:10px;background:#f5f8ff;border-radius:12px;padding:10px;margin-bottom:8px}
+.member-icon{width:38px;height:38px;border-radius:50%;background:#dceaff;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden}
+.member-icon img{width:100%;height:100%;object-fit:cover}
+.member-info{min-width:0;flex:1}
+.member-name{font-size:14px;font-weight:bold;color:#444;word-break:break-word}
+.member-id{font-size:12px;color:#888;word-break:break-word}
+
+.member-status{font-size:12px;font-weight:bold;margin-top:3px}
+.member-status.online{color:#22a447}
+.member-status.offline{color:#999}
+
+.member-loading,.member-empty{text-align:center;color:#888;padding:15px 5px;font-size:14px}
+
+#memberInput{width:100%;padding:12px;border:1px solid #ddd;border-radius:12px;font-size:16px;margin-bottom:10px}
+.modal-buttons{display:flex;gap:8px}
+.modal-buttons button{flex:1;border:none;border-radius:12px;padding:12px;font-weight:bold;cursor:pointer}
+#addMemberButton{background:#6aa9ff;color:white}
+#closeModalButton{background:#eee;color:#555}
+
+.add-section{border-top:1px solid #eee;margin-top:15px;padding-top:15px}
+.add-section-title{font-size:14px;font-weight:bold;color:#555;margin-bottom:8px}
+</style>
 </head>
 
 <body>
 
-  <div class="header">
-    <a href="home.html" class="home-button">🏠 ホーム</a>
+<div class="header">
+<a href="home.html" class="home-button">🏠 ホーム</a>
 
-    <button id="memberButton" class="member-button" type="button">
-      👥 メンバー
-    </button>
+<button id="memberButton" class="member-button" type="button">
+👥 メンバー
+</button>
 
-    <div>
-      <div class="title">👥 グループチャット</div>
-      <div id="groupName" class="group-name">読み込み中...</div>
-    </div>
-  </div>
+<div>
+<div class="title">👥 グループチャット</div>
+<div id="groupName" class="group-name">読み込み中...</div>
+</div>
+</div>
 
-  <div class="messages-wrapper">
-    <div id="messages" class="messages"></div>
+<div class="messages-wrapper">
+<div id="messages" class="messages"></div>
 
-    <button id="latestButton" type="button">
-      ⬇️ 最新へ
-    </button>
-  </div>
+<button id="latestButton" type="button">
+⬇️ 最新へ
+</button>
+</div>
 
-  <div id="replyArea" class="reply-area">
-    <div class="reply-info">
-      <div id="replyText" class="reply-text"></div>
+<div id="replyArea" class="reply-area">
+<div class="reply-info">
+<div id="replyText" class="reply-text"></div>
+<button id="cancelReplyButton" type="button">✕</button>
+</div>
+</div>
 
-      <button id="cancelReplyButton" type="button">
-        ✕
-      </button>
-    </div>
-  </div>
+<div class="input-area">
 
-  <div class="input-area">
+<input
+id="messageInput"
+type="text"
+placeholder="メッセージを入力..."
+autocomplete="off"
+>
 
-    <input
-      id="messageInput"
-      type="text"
-      placeholder="メッセージを入力..."
-      autocomplete="off"
-    >
+<button id="imageButton" type="button">🖼️</button>
 
-    <button id="imageButton" type="button">
-      🖼️
-    </button>
+<button id="sendButton" type="button">送信</button>
 
-    <button id="sendButton" type="button">
-      送信
-    </button>
+</div>
 
-  </div>
+<div id="mentionList" class="mention-list"></div>
 
-  <div id="mentionList" class="mention-list"></div>
+<input id="imageInput" type="file" accept="image/*">
 
-  <input
-    id="imageInput"
-    type="file"
-    accept="image/*"
-  >
+<div id="memberModal" class="modal">
 
-  <div id="memberModal" class="modal">
+<div class="modal-box">
 
-    <div class="modal-box">
+<div class="modal-title">
+👥 グループメンバー
+</div>
 
-      <div class="modal-title">
-        👥 グループメンバー
-      </div>
+<div id="memberList" class="member-list">
+<div class="member-loading">読み込み中...</div>
+</div>
 
-      <div id="memberList" class="member-list">
-        <div class="member-loading">
-          読み込み中...
-        </div>
-      </div>
+<div class="add-section">
 
-      <div class="add-section">
+<div class="add-section-title">
+➕ メンバーを追加
+</div>
 
-        <div class="add-section-title">
-          ➕ メンバーを追加
-        </div>
+<input
+id="memberInput"
+type="text"
+placeholder="追加するユーザーID"
+autocomplete="off"
+>
 
-        <input
-          id="memberInput"
-          type="text"
-          placeholder="追加するユーザーID"
-          autocomplete="off"
-        >
+<div class="modal-buttons">
 
-        <div class="modal-buttons">
+<button id="closeModalButton" type="button">
+閉じる
+</button>
 
-          <button id="closeModalButton" type="button">
-            閉じる
-          </button>
+<button id="addMemberButton" type="button">
+追加
+</button>
 
-          <button id="addMemberButton" type="button">
-            追加
-          </button>
+</div>
+</div>
 
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
+</div>
+</div>
 
 <script>
 
 const SUPABASE_URL =
-  "https://yxonmqdyekwenyzekjwj.supabase.co";
+"https://yxonmqdyekwenyzekjwj.supabase.co";
 
 const SUPABASE_KEY =
-  "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+"sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 
 const supabaseClient =
-  window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-  );
+window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+);
 
 const params =
-  new URLSearchParams(
-    window.location.search
-  );
+new URLSearchParams(window.location.search);
 
 const groupId =
-  params.get("id");
+params.get("id");
 
 const groupName =
-  document.getElementById("groupName");
+document.getElementById("groupName");
 
 const messages =
-  document.getElementById("messages");
+document.getElementById("messages");
 
 const latestButton =
-  document.getElementById("latestButton");
+document.getElementById("latestButton");
 
 const messageInput =
-  document.getElementById("messageInput");
+document.getElementById("messageInput");
 
 const sendButton =
-  document.getElementById("sendButton");
+document.getElementById("sendButton");
 
 const imageButton =
-  document.getElementById("imageButton");
+document.getElementById("imageButton");
 
 const imageInput =
-  document.getElementById("imageInput");
+document.getElementById("imageInput");
 
 const memberButton =
-  document.getElementById("memberButton");
+document.getElementById("memberButton");
 
 const memberModal =
-  document.getElementById("memberModal");
+document.getElementById("memberModal");
 
 const memberList =
-  document.getElementById("memberList");
+document.getElementById("memberList");
 
 const memberInput =
-  document.getElementById("memberInput");
+document.getElementById("memberInput");
 
 const addMemberButton =
-  document.getElementById("addMemberButton");
+document.getElementById("addMemberButton");
 
 const closeModalButton =
-  document.getElementById("closeModalButton");
+document.getElementById("closeModalButton");
 
 const replyArea =
-  document.getElementById("replyArea");
+document.getElementById("replyArea");
 
 const replyText =
-  document.getElementById("replyText");
+document.getElementById("replyText");
 
 const cancelReplyButton =
-  document.getElementById("cancelReplyButton");
+document.getElementById("cancelReplyButton");
 
 const mentionList =
-  document.getElementById("mentionList");
+document.getElementById("mentionList");
 
 let currentUsername = "";
 let replyingToMessage = null;
+let groupMembersCache = [];
+let presenceTimer = null;
 
 const profileCache = {};
-
-let groupMembersCache = [];
-
-/* =========================
-   既読管理
-========================= */
-
 const groupReadCounts = {};
 
+function isOnline(lastSeen) {
+
+if (!lastSeen) return false;
+
+const time =
+new Date(lastSeen).getTime();
+
+if (Number.isNaN(time)) return false;
+
+return Date.now() - time <= 60000;
+}
+
+/* =========================
+   自分のオンライン状態
+========================= */
+
+async function updateMyPresence() {
+
+if (!currentUsername) return;
+
+const { error } =
+await supabaseClient
+.from("user_presence")
+.upsert(
+{
+user_id: currentUsername,
+last_seen: new Date().toISOString()
+},
+{
+onConflict: "user_id"
+}
+);
+
+if (error) {
+console.error(
+"オンライン状態更新エラー:",
+error
+);
+}
+}
 
 /* =========================
    プロフィール
@@ -789,107 +317,89 @@ const groupReadCounts = {};
 
 async function getProfile(username) {
 
-  if (!username) {
-    return null;
-  }
+if (!username) return null;
 
-  if (
-    Object.prototype.hasOwnProperty.call(
-      profileCache,
-      username
-    )
-  ) {
-    return profileCache[username];
-  }
-
-  const {
-    data
-  } =
-    await supabaseClient
-      .from("profiles")
-      .select("user_id, name, avatar_url")
-      .eq("user_id", username)
-      .maybeSingle();
-
-  profileCache[username] =
-    data || null;
-
-  return data || null;
+if (
+Object.prototype.hasOwnProperty.call(
+profileCache,
+username
+)
+) {
+return profileCache[username];
 }
 
+const { data } =
+await supabaseClient
+.from("profiles")
+.select("user_id,name,avatar_url")
+.eq("user_id",username)
+.maybeSingle();
 
-/* =========================
-   アバター
-========================= */
+profileCache[username] =
+data || null;
+
+return data || null;
+}
 
 function createAvatar(profile) {
 
-  const avatar =
-    document.createElement("div");
+const avatar =
+document.createElement("div");
 
-  avatar.className =
-    "message-avatar";
+avatar.className =
+"message-avatar";
 
-  if (
-    profile &&
-    profile.avatar_url
-  ) {
+if (profile?.avatar_url) {
 
-    const img =
-      document.createElement("img");
+const img =
+document.createElement("img");
 
-    img.src =
-      profile.avatar_url;
+img.src =
+profile.avatar_url;
 
-    img.alt =
-      "プロフィール画像";
+img.alt =
+"プロフィール画像";
 
-    avatar.appendChild(img);
+avatar.appendChild(img);
 
-  } else {
+} else {
 
-    avatar.textContent =
-      "👤";
+avatar.textContent = "👤";
 
-  }
-
-  return avatar;
 }
 
+return avatar;
+}
 
 /* =========================
-   グループ名
+   グループ
 ========================= */
 
 async function loadGroup() {
 
-  const {
-    data,
-    error
-  } =
-    await supabaseClient
-      .from("groups")
-      .select("name")
-      .eq("id", Number(groupId))
-      .single();
+const { data,error } =
+await supabaseClient
+.from("groups")
+.select("name")
+.eq("id",Number(groupId))
+.single();
 
-  if (error || !data) {
+if (error || !data) {
 
-    console.error(
-      "グループ取得エラー:",
-      error
-    );
+console.error(
+"グループ取得エラー:",
+error
+);
 
-    groupName.textContent =
-      "グループが見つかりません";
+groupName.textContent =
+"グループが見つかりません";
 
-    return;
-  }
-
-  groupName.textContent =
-    data.name;
+return;
 }
 
+groupName.textContent =
+data.name;
+}
 
 /* =========================
    メンバー取得
@@ -897,235 +407,152 @@ async function loadGroup() {
 
 async function getGroupMembers() {
 
-  const {
-    data,
-    error
-  } =
-    await supabaseClient
-      .from("group_members")
-      .select("user_id")
-      .eq(
-        "group_id",
-        Number(groupId)
-      );
+const { data,error } =
+await supabaseClient
+.from("group_members")
+.select("user_id")
+.eq("group_id",Number(groupId));
 
-  if (error) {
+if (error) {
 
-    console.error(
-      "メンバー取得エラー:",
-      error
-    );
+console.error(
+"メンバー取得エラー:",
+error
+);
 
-    return [];
-  }
-
-  groupMembersCache =
-    data || [];
-
-  return groupMembersCache;
+return [];
 }
 
+groupMembersCache =
+data || [];
+
+return groupMembersCache;
+}
 
 /* =========================
-   既読数を取得
+   既読
 ========================= */
 
-async function loadGroupReadCounts(
-  messageIds
-) {
+async function loadGroupReadCounts(messageIds) {
 
-  for (
-    const key of Object.keys(groupReadCounts)
-  ) {
-    delete groupReadCounts[key];
-  }
-
-  if (
-    !messageIds ||
-    !messageIds.length
-  ) {
-    return;
-  }
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient
-      .from("group_message_reads")
-      .select(
-        "group_message_id, user_id"
-      )
-      .in(
-        "group_message_id",
-        messageIds
-      );
-
-  if (error) {
-
-    console.error(
-      "グループ既読取得エラー:",
-      error
-    );
-
-    return;
-  }
-
-  for (
-    const read of data || []
-  ) {
-
-    if (
-      read.user_id ===
-      currentUsername
-    ) {
-      continue;
-    }
-
-    const id =
-      String(
-        read.group_message_id
-      );
-
-    if (
-      !groupReadCounts[id]
-    ) {
-      groupReadCounts[id] =
-        new Set();
-    }
-
-    groupReadCounts[id].add(
-      read.user_id
-    );
-  }
+for (const key of Object.keys(groupReadCounts)) {
+delete groupReadCounts[key];
 }
 
+if (!messageIds?.length) return;
 
-/* =========================
-   自分以外のメッセージを既読
-========================= */
+const { data,error } =
+await supabaseClient
+.from("group_message_reads")
+.select("group_message_id,user_id")
+.in("group_message_id",messageIds);
 
-async function markGroupMessagesAsRead(
-  messagesData
-) {
+if (error) {
 
-  if (
-    !currentUsername ||
-    !messagesData ||
-    !messagesData.length
-  ) {
-    return;
-  }
+console.error(
+"グループ既読取得エラー:",
+error
+);
 
-  const unreadMessages =
-    messagesData.filter(
-      message =>
-        !message.is_deleted &&
-        message.sender_id !==
-          currentUsername
-    );
-
-  if (
-    !unreadMessages.length
-  ) {
-    return;
-  }
-
-  const rows =
-    unreadMessages.map(
-      message => ({
-        group_message_id:
-          message.id,
-
-        user_id:
-          currentUsername
-      })
-    );
-
-  const {
-    error
-  } =
-    await supabaseClient
-      .from("group_message_reads")
-      .upsert(
-        rows,
-        {
-          onConflict:
-            "group_message_id,user_id",
-          ignoreDuplicates:
-            true
-        }
-      );
-
-  if (error) {
-
-    console.error(
-      "グループ既読登録エラー:",
-      error
-    );
-
-  }
+return;
 }
 
+for (const read of data || []) {
+
+if (read.user_id === currentUsername) continue;
+
+const id =
+String(read.group_message_id);
+
+if (!groupReadCounts[id]) {
+groupReadCounts[id] = new Set();
+}
+
+groupReadCounts[id].add(
+read.user_id
+);
+}
+}
+
+async function markGroupMessagesAsRead(messagesData) {
+
+if (!currentUsername || !messagesData?.length) {
+return;
+}
+
+const unreadMessages =
+messagesData.filter(
+message =>
+!message.is_deleted &&
+message.sender_id !== currentUsername
+);
+
+if (!unreadMessages.length) return;
+
+const rows =
+unreadMessages.map(
+message => ({
+group_message_id: message.id,
+user_id: currentUsername
+})
+);
+
+const { error } =
+await supabaseClient
+.from("group_message_reads")
+.upsert(
+rows,
+{
+onConflict:"group_message_id,user_id",
+ignoreDuplicates:true
+}
+);
+
+if (error) {
+console.error(
+"グループ既読登録エラー:",
+error
+);
+}
+}
 
 /* =========================
    最新へ
 ========================= */
 
-function scrollToBottom(smooth = false) {
+function scrollToBottom(smooth=false) {
 
-  messages.scrollTo({
-    top: messages.scrollHeight,
-    behavior:
-      smooth
-        ? "smooth"
-        : "auto"
-  });
+messages.scrollTo({
+top:messages.scrollHeight,
+behavior:smooth ? "smooth" : "auto"
+});
 
-  updateLatestButton();
+updateLatestButton();
 }
-
 
 function updateLatestButton() {
 
-  const distanceFromBottom =
-    messages.scrollHeight -
-    messages.scrollTop -
-    messages.clientHeight;
+const distance =
+messages.scrollHeight -
+messages.scrollTop -
+messages.clientHeight;
 
-  if (
-    distanceFromBottom > 150
-  ) {
-
-    latestButton.classList.add(
-      "show"
-    );
-
-  } else {
-
-    latestButton.classList.remove(
-      "show"
-    );
-
-  }
+if (distance > 150) {
+latestButton.classList.add("show");
+} else {
+latestButton.classList.remove("show");
+}
 }
 
-
 messages.addEventListener(
-  "scroll",
-  updateLatestButton
+"scroll",
+updateLatestButton
 );
-
 
 latestButton.addEventListener(
-  "click",
-  function() {
-
-    scrollToBottom(true);
-
-  }
+"click",
+() => scrollToBottom(true)
 );
-
 
 /* =========================
    メッセージ読み込み
@@ -1133,1884 +560,1092 @@ latestButton.addEventListener(
 
 async function loadMessages() {
 
-  const {
-    data,
-    error
-  } =
-    await supabaseClient
-      .from("group_messages")
-      .select("*")
-      .eq(
-        "group_id",
-        Number(groupId)
-      )
-      .order(
-        "created_at",
-        {
-          ascending: true
-        }
-      );
+const { data,error } =
+await supabaseClient
+.from("group_messages")
+.select("*")
+.eq("group_id",Number(groupId))
+.order("created_at",{ascending:true});
 
-  if (error) {
+if (error) {
 
-    console.error(
-      "メッセージ読み込みエラー:",
-      error
-    );
+console.error(
+"メッセージ読み込みエラー:",
+error
+);
 
-    messages.innerHTML =
-      '<div class="error">メッセージを読み込めませんでした。</div>';
+messages.innerHTML =
+'<div class="error">メッセージを読み込めませんでした。</div>';
 
-    return;
-  }
-
-  const messageData =
-    data || [];
-
-  const messageIds =
-    messageData.map(
-      message =>
-        message.id
-    );
-
-  /*
-    まず既読情報を取得
-  */
-  await loadGroupReadCounts(
-    messageIds
-  );
-
-  /*
-    この画面を開いたユーザーが
-    自分以外のメッセージを既読にする
-  */
-  await markGroupMessagesAsRead(
-    messageData
-  );
-
-  /*
-    自分が既読にした分も
-    自分の画面側で反映
-  */
-  await loadGroupReadCounts(
-    messageIds
-  );
-
-  messages.innerHTML =
-    "";
-
-  for (
-    const message of messageData
-  ) {
-
-    await addMessage(
-      message
-    );
-
-  }
-
-  requestAnimationFrame(
-    function() {
-      scrollToBottom(false);
-    }
-  );
+return;
 }
 
+const messageData =
+data || [];
+
+const messageIds =
+messageData.map(message => message.id);
+
+await loadGroupReadCounts(messageIds);
+
+await markGroupMessagesAsRead(messageData);
+
+await loadGroupReadCounts(messageIds);
+
+messages.innerHTML = "";
+
+for (const message of messageData) {
+await addMessage(message);
+}
+
+requestAnimationFrame(
+() => scrollToBottom(false)
+);
+}
 
 /* =========================
    メンション表示
 ========================= */
 
-function appendMentionContent(
-  element,
-  text
-) {
+function appendMentionContent(element,text) {
 
-  const parts =
-    text.split(
-      /(@[A-Za-z0-9_]+)/g
-    );
+const parts =
+text.split(/(@[A-Za-z0-9_]+)/g);
 
-  for (
-    const part of parts
-  ) {
+for (const part of parts) {
 
-    if (
-      /^@[A-Za-z0-9_]+$/.test(part)
-    ) {
+if (/^@[A-Za-z0-9_]+$/.test(part)) {
 
-      const mention =
-        document.createElement("span");
+const mention =
+document.createElement("span");
 
-      mention.className =
-        "mention";
+mention.className = "mention";
+mention.textContent = part;
 
-      mention.textContent =
-        part;
+element.appendChild(mention);
 
-      element.appendChild(
-        mention
-      );
+} else {
 
-    } else {
-
-      element.appendChild(
-        document.createTextNode(part)
-      );
-
-    }
-
-  }
+element.appendChild(
+document.createTextNode(part)
+);
 }
-
+}
+}
 
 /* =========================
    送信取り消し
 ========================= */
 
-async function deleteMessage(
-  messageId
+async function deleteMessage(messageId) {
+
+if (
+!window.confirm(
+"このメッセージを取り消しますか？"
+)
 ) {
-
-  const confirmed =
-    window.confirm(
-      "このメッセージを取り消しますか？"
-    );
-
-  if (!confirmed) {
-    return;
-  }
-
-  const {
-    error
-  } =
-    await supabaseClient
-      .from("group_messages")
-      .update({
-        is_deleted: true
-      })
-      .eq(
-        "id",
-        messageId
-      )
-      .eq(
-        "sender_id",
-        currentUsername
-      );
-
-  if (error) {
-
-    console.error(
-      "送信取り消しエラー:",
-      error
-    );
-
-    alert(
-      "送信取り消しに失敗しました。\n\n" +
-      error.message
-    );
-
-    return;
-  }
-
-  await loadMessages();
-
-  scrollToBottom(true);
+return;
 }
 
+const { error } =
+await supabaseClient
+.from("group_messages")
+.update({is_deleted:true})
+.eq("id",messageId)
+.eq("sender_id",currentUsername);
+
+if (error) {
+
+alert(
+"送信取り消しに失敗しました。\n\n" +
+error.message
+);
+
+return;
+}
+
+await loadMessages();
+scrollToBottom(true);
+}
 
 /* =========================
    メッセージ表示
 ========================= */
 
-async function addMessage(
-  message
-) {
+async function addMessage(message) {
 
-  const profile =
-    await getProfile(
-      message.sender_id
-    );
+const profile =
+await getProfile(message.sender_id);
 
-  const row =
-    document.createElement("div");
+const row =
+document.createElement("div");
 
-  row.className =
-    "message-row";
+row.className = "message-row";
 
-  row.appendChild(
-    createAvatar(profile)
-  );
+row.appendChild(
+createAvatar(profile)
+);
 
-  const box =
-    document.createElement("div");
+const box =
+document.createElement("div");
 
-  box.className =
-    "message";
+box.className = "message";
 
-  const sender =
-    document.createElement("div");
+const sender =
+document.createElement("div");
 
-  sender.className =
-    "sender";
+sender.className = "sender";
 
-  sender.textContent =
-    message.sender_id ===
-    currentUsername
-      ? "あなた"
-      : "@" +
-        message.sender_id;
+sender.textContent =
+message.sender_id === currentUsername
+? "あなた"
+: "@" + message.sender_id;
 
-  box.appendChild(sender);
+box.appendChild(sender);
 
+if (message.is_deleted) {
 
-  /* =========================
-     取り消し済み
-  ========================= */
+const deleted =
+document.createElement("div");
 
-  if (message.is_deleted) {
+deleted.className =
+"deleted-message";
 
-    const deleted =
-      document.createElement("div");
+deleted.textContent =
+"このメッセージは取り消されました";
 
-    deleted.className =
-      "deleted-message";
+box.appendChild(deleted);
 
-    deleted.textContent =
-      "このメッセージは取り消されました";
+row.appendChild(box);
+messages.appendChild(row);
 
-    box.appendChild(
-      deleted
-    );
-
-    row.appendChild(
-      box
-    );
-
-    messages.appendChild(
-      row
-    );
-
-    return;
-  }
-
-
-  /* =========================
-     画像
-  ========================= */
-
-  if (message.image_url) {
-
-    const {
-      data: signedData
-    } =
-      await supabaseClient.storage
-        .from("chat-images")
-        .createSignedUrl(
-          message.image_url,
-          3600
-        );
-
-    if (
-      signedData?.signedUrl
-    ) {
-
-      const image =
-        document.createElement("img");
-
-      image.className =
-        "chat-image";
-
-      image.src =
-        signedData.signedUrl;
-
-      image.alt =
-        "送信された画像";
-
-      image.addEventListener(
-        "click",
-        function(event) {
-          event.stopPropagation();
-        }
-      );
-
-      box.appendChild(
-        image
-      );
-
-    }
-  }
-
-
-  /* =========================
-     テキスト
-  ========================= */
-
-  if (message.content) {
-
-    const content =
-      document.createElement("div");
-
-    content.className =
-      "content";
-
-    appendMentionContent(
-      content,
-      message.content
-    );
-
-    box.appendChild(
-      content
-    );
-
-  }
-
-
-  /* =========================
-     既読
-  ========================= */
-
-  if (
-    message.sender_id ===
-    currentUsername
-  ) {
-
-    const readSet =
-      groupReadCounts[
-        String(message.id)
-      ];
-
-    const readCount =
-      readSet
-        ? readSet.size
-        : 0;
-
-    if (
-      readCount > 0
-    ) {
-
-      const readStatus =
-        document.createElement("div");
-
-      readStatus.className =
-        "read-status";
-
-      readStatus.textContent =
-        "既読 " +
-        readCount +
-        "人";
-
-      box.appendChild(
-        readStatus
-      );
-
-    }
-
-  }
-
-
-  /* =========================
-     返信
-  ========================= */
-
-  const {
-    data: replies,
-    error: repliesError
-  } =
-    await supabaseClient
-      .from("group_replies")
-      .select("*")
-      .eq(
-        "group_message_id",
-        message.id
-      )
-      .order(
-        "created_at",
-        {
-          ascending: true
-        }
-      );
-
-  if (repliesError) {
-
-    console.error(
-      "返信読み込みエラー:",
-      repliesError
-    );
-
-  }
-
-  for (
-    const reply of replies || []
-  ) {
-
-    const replyBox =
-      document.createElement("div");
-
-    replyBox.className =
-      "reply-preview";
-
-    const strong =
-      document.createElement("strong");
-
-    strong.textContent =
-      "@" +
-      reply.sender_id +
-      "：";
-
-    replyBox.appendChild(
-      strong
-    );
-
-    replyBox.appendChild(
-      document.createTextNode(
-        " " +
-        reply.content
-      )
-    );
-
-    box.appendChild(
-      replyBox
-    );
-
-  }
-
-
-  /* =========================
-     リアクション
-  ========================= */
-
-  const {
-    data: reactions
-  } =
-    await supabaseClient
-      .from("group_reactions")
-      .select("*")
-      .eq(
-        "group_message_id",
-        message.id
-      );
-
-  if (
-    reactions &&
-    reactions.length
-  ) {
-
-    const reactionArea =
-      document.createElement("div");
-
-    reactionArea.className =
-      "reactions";
-
-    const counts = {};
-
-    for (
-      const reaction of reactions
-    ) {
-
-      counts[
-        reaction.reaction
-      ] =
-        (
-          counts[
-            reaction.reaction
-          ] || 0
-        ) + 1;
-
-    }
-
-    for (
-      const emoji of Object.keys(
-        counts
-      )
-    ) {
-
-      const item =
-        document.createElement("div");
-
-      item.className =
-        "reaction-item";
-
-      item.textContent =
-        emoji +
-        " " +
-        counts[emoji];
-
-      reactionArea.appendChild(
-        item
-      );
-
-    }
-
-    box.appendChild(
-      reactionArea
-    );
-
-  }
-
-
-  /* =========================
-     メニュー
-  ========================= */
-
-  const menu =
-    document.createElement("div");
-
-  menu.className =
-    "message-menu";
-
-
-  const reactionButton =
-    document.createElement("button");
-
-  reactionButton.type =
-    "button";
-
-  reactionButton.textContent =
-    "❤️ リアクション";
-
-
-  const replyButton =
-    document.createElement("button");
-
-  replyButton.type =
-    "button";
-
-  replyButton.textContent =
-    "↩️ 返信";
-
-
-  menu.appendChild(
-    reactionButton
-  );
-
-  menu.appendChild(
-    replyButton
-  );
-
-
-  /* =========================
-     自分のメッセージだけ
-     送信取り消し
-  ========================= */
-
-  if (
-    message.sender_id ===
-    currentUsername
-  ) {
-
-    const deleteButton =
-      document.createElement("button");
-
-    deleteButton.type =
-      "button";
-
-    deleteButton.className =
-      "delete-button";
-
-    deleteButton.textContent =
-      "🗑️ 送信取り消し";
-
-    deleteButton.addEventListener(
-      "click",
-      async function(event) {
-
-        event.preventDefault();
-        event.stopPropagation();
-
-        menu.style.display =
-          "none";
-
-        picker.style.display =
-          "none";
-
-        await deleteMessage(
-          message.id
-        );
-
-      }
-    );
-
-    menu.appendChild(
-      deleteButton
-    );
-
-  }
-
-
-  /* =========================
-     リアクション選択
-  ========================= */
-
-  const picker =
-    document.createElement("div");
-
-  picker.className =
-    "reaction-picker";
-
-  const emojis = [
-    "❤️",
-    "😂",
-    "👍",
-    "😮",
-    "😢"
-  ];
-
-  for (
-    const emoji of emojis
-  ) {
-
-    const button =
-      document.createElement("button");
-
-    button.type =
-      "button";
-
-    button.textContent =
-      emoji;
-
-    button.addEventListener(
-      "click",
-      async function(event) {
-
-        event.stopPropagation();
-
-        await addReaction(
-          message.id,
-          emoji
-        );
-
-        picker.style.display =
-          "none";
-
-        menu.style.display =
-          "none";
-
-        await loadMessages();
-
-      }
-    );
-
-    picker.appendChild(
-      button
-    );
-
-  }
-
-
-  reactionButton.addEventListener(
-    "click",
-    function(event) {
-
-      event.stopPropagation();
-
-      menu.style.display =
-        "none";
-
-      picker.style.display =
-        "flex";
-
-    }
-  );
-
-
-  /* =========================
-     返信
-  ========================= */
-
-  replyButton.addEventListener(
-    "click",
-    function(event) {
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      startReply(
-        message
-      );
-
-      menu.style.display =
-        "none";
-
-      picker.style.display =
-        "none";
-
-    }
-  );
-
-
-  /* =========================
-     メッセージクリック
-  ========================= */
-
-  box.addEventListener(
-    "click",
-    function(event) {
-
-      event.stopPropagation();
-
-      document
-        .querySelectorAll(
-          ".message-menu"
-        )
-        .forEach(
-          function(other) {
-
-            if (
-              other !== menu
-            ) {
-
-              other.style.display =
-                "none";
-
-            }
-
-          }
-        );
-
-      document
-        .querySelectorAll(
-          ".reaction-picker"
-        )
-        .forEach(
-          function(other) {
-
-            if (
-              other !== picker
-            ) {
-
-              other.style.display =
-                "none";
-
-            }
-
-          }
-        );
-
-      picker.style.display =
-        "none";
-
-      menu.style.display =
-        menu.style.display ===
-        "block"
-          ? "none"
-          : "block";
-
-    }
-  );
-
-
-  box.appendChild(
-    menu
-  );
-
-  box.appendChild(
-    picker
-  );
-
-  row.appendChild(
-    box
-  );
-
-  messages.appendChild(
-    row
-  );
+return;
 }
 
+if (message.image_url) {
+
+const { data:signedData } =
+await supabaseClient.storage
+.from("chat-images")
+.createSignedUrl(
+message.image_url,
+3600
+);
+
+if (signedData?.signedUrl) {
+
+const image =
+document.createElement("img");
+
+image.className = "chat-image";
+image.src = signedData.signedUrl;
+image.alt = "送信された画像";
+
+image.addEventListener(
+"click",
+event => event.stopPropagation()
+);
+
+box.appendChild(image);
+}
+}
+
+if (message.content) {
+
+const content =
+document.createElement("div");
+
+content.className = "content";
+
+appendMentionContent(
+content,
+message.content
+);
+
+box.appendChild(content);
+}
+
+/* 既読 */
+
+if (message.sender_id === currentUsername) {
+
+const readSet =
+groupReadCounts[String(message.id)];
+
+const readCount =
+readSet ? readSet.size : 0;
+
+if (readCount > 0) {
+
+const readStatus =
+document.createElement("div");
+
+readStatus.className =
+"read-status";
+
+readStatus.textContent =
+"既読 " + readCount + "人";
+
+box.appendChild(readStatus);
+}
+}
+
+/* 返信 */
+
+const { data:replies } =
+await supabaseClient
+.from("group_replies")
+.select("*")
+.eq("group_message_id",message.id)
+.order("created_at",{ascending:true});
+
+for (const reply of replies || []) {
+
+const replyBox =
+document.createElement("div");
+
+replyBox.className =
+"reply-preview";
+
+const strong =
+document.createElement("strong");
+
+strong.textContent =
+"@" + reply.sender_id + "：";
+
+replyBox.appendChild(strong);
+
+replyBox.appendChild(
+document.createTextNode(
+" " + reply.content
+)
+);
+
+box.appendChild(replyBox);
+}
+
+/* リアクション */
+
+const { data:reactions } =
+await supabaseClient
+.from("group_reactions")
+.select("*")
+.eq("group_message_id",message.id);
+
+if (reactions?.length) {
+
+const reactionArea =
+document.createElement("div");
+
+reactionArea.className =
+"reactions";
+
+const counts = {};
+
+for (const reaction of reactions) {
+
+counts[reaction.reaction] =
+(counts[reaction.reaction] || 0) + 1;
+}
+
+for (const emoji of Object.keys(counts)) {
+
+const item =
+document.createElement("div");
+
+item.className =
+"reaction-item";
+
+item.textContent =
+emoji + " " + counts[emoji];
+
+reactionArea.appendChild(item);
+}
+
+box.appendChild(reactionArea);
+}
+
+/* メニュー */
+
+const menu =
+document.createElement("div");
+
+menu.className =
+"message-menu";
+
+const reactionButton =
+document.createElement("button");
+
+reactionButton.type = "button";
+reactionButton.textContent =
+"❤️ リアクション";
+
+const replyButton =
+document.createElement("button");
+
+replyButton.type = "button";
+replyButton.textContent =
+"↩️ 返信";
+
+menu.appendChild(reactionButton);
+menu.appendChild(replyButton);
+
+/* 削除 */
+
+if (message.sender_id === currentUsername) {
+
+const deleteButton =
+document.createElement("button");
+
+deleteButton.type = "button";
+deleteButton.className =
+"delete-button";
+
+deleteButton.textContent =
+"🗑️ 送信取り消し";
+
+deleteButton.addEventListener(
+"click",
+async event => {
+
+event.preventDefault();
+event.stopPropagation();
+
+menu.style.display = "none";
+picker.style.display = "none";
+
+await deleteMessage(message.id);
+}
+);
+
+menu.appendChild(deleteButton);
+}
+
+/* リアクション */
+
+const picker =
+document.createElement("div");
+
+picker.className =
+"reaction-picker";
+
+for (const emoji of [
+"❤️","😂","👍","😮","😢"
+]) {
+
+const button =
+document.createElement("button");
+
+button.type = "button";
+button.textContent = emoji;
+
+button.addEventListener(
+"click",
+async event => {
+
+event.stopPropagation();
+
+await addReaction(
+message.id,
+emoji
+);
+
+picker.style.display = "none";
+menu.style.display = "none";
+
+await loadMessages();
+}
+);
+
+picker.appendChild(button);
+}
+
+reactionButton.addEventListener(
+"click",
+event => {
+
+event.stopPropagation();
+
+menu.style.display = "none";
+picker.style.display = "flex";
+}
+);
+
+replyButton.addEventListener(
+"click",
+event => {
+
+event.preventDefault();
+event.stopPropagation();
+
+startReply(message);
+
+menu.style.display = "none";
+picker.style.display = "none";
+}
+);
+
+box.addEventListener(
+"click",
+event => {
+
+event.stopPropagation();
+
+document.querySelectorAll(
+".message-menu"
+).forEach(
+other => {
+if (other !== menu)
+other.style.display = "none";
+}
+);
+
+document.querySelectorAll(
+".reaction-picker"
+).forEach(
+other => {
+if (other !== picker)
+other.style.display = "none";
+}
+);
+
+picker.style.display = "none";
+
+menu.style.display =
+menu.style.display === "block"
+? "none"
+: "block";
+}
+);
+
+box.appendChild(menu);
+box.appendChild(picker);
+
+row.appendChild(box);
+messages.appendChild(row);
+}
 
 /* =========================
    リアクション
 ========================= */
 
-async function addReaction(
-  messageId,
-  emoji
-) {
+async function addReaction(messageId,emoji) {
 
-  const {
-    data: existing
-  } =
-    await supabaseClient
-      .from("group_reactions")
-      .select("id")
-      .eq(
-        "group_message_id",
-        messageId
-      )
-      .eq(
-        "user_id",
-        currentUsername
-      )
-      .eq(
-        "reaction",
-        emoji
-      )
-      .maybeSingle();
+const { data:existing } =
+await supabaseClient
+.from("group_reactions")
+.select("id")
+.eq("group_message_id",messageId)
+.eq("user_id",currentUsername)
+.eq("reaction",emoji)
+.maybeSingle();
 
-  if (existing) {
+if (existing) {
 
-    await supabaseClient
-      .from("group_reactions")
-      .delete()
-      .eq(
-        "id",
-        existing.id
-      );
+await supabaseClient
+.from("group_reactions")
+.delete()
+.eq("id",existing.id);
 
-    return;
-  }
-
-  const {
-    error
-  } =
-    await supabaseClient
-      .from("group_reactions")
-      .insert({
-        group_message_id:
-          messageId,
-
-        user_id:
-          currentUsername,
-
-        reaction:
-          emoji
-      });
-
-  if (error) {
-
-    alert(
-      "リアクションを追加できませんでした。\n" +
-      error.message
-    );
-
-  }
+return;
 }
 
+const { error } =
+await supabaseClient
+.from("group_reactions")
+.insert({
+group_message_id:messageId,
+user_id:currentUsername,
+reaction:emoji
+});
 
-/* =========================
-   返信開始
-========================= */
-
-function startReply(
-  message
-) {
-
-  replyingToMessage =
-    message;
-
-  replyText.innerHTML =
-    "";
-
-  const strong =
-    document.createElement("strong");
-
-  strong.textContent =
-    message.sender_id ===
-    currentUsername
-      ? "あなた"
-      : "@" +
-        message.sender_id;
-
-  replyText.appendChild(
-    strong
-  );
-
-  replyText.appendChild(
-    document.createTextNode(
-      " に返信： " +
-      (
-        message.content ||
-        "画像"
-      )
-    )
-  );
-
-  replyArea.style.display =
-    "block";
-
-  messageInput.placeholder =
-    "返信を入力...";
-
-  messageInput.focus();
+if (error) {
+alert(
+"リアクションを追加できませんでした。\n" +
+error.message
+);
+}
 }
 
-
 /* =========================
-   返信キャンセル
+   返信
 ========================= */
 
-cancelReplyButton.addEventListener(
-  "click",
-  function(event) {
+function startReply(message) {
 
-    event.preventDefault();
+replyingToMessage = message;
 
-    replyingToMessage =
-      null;
+replyText.innerHTML = "";
 
-    replyArea.style.display =
-      "none";
+const strong =
+document.createElement("strong");
 
-    messageInput.placeholder =
-      "メッセージを入力...";
+strong.textContent =
+message.sender_id === currentUsername
+? "あなた"
+: "@" + message.sender_id;
 
-    messageInput.focus();
+replyText.appendChild(strong);
 
-  }
+replyText.appendChild(
+document.createTextNode(
+" に返信： " +
+(message.content || "画像")
+)
 );
 
-
-/* =========================
-   返信通知
-========================= */
-
-async function createGroupReplyNotification(
-  message
-) {
-
-  try {
-
-    if (
-      !message ||
-      !currentUsername
-    ) {
-      return;
-    }
-
-    if (
-      message.sender_id ===
-      currentUsername
-    ) {
-      return;
-    }
-
-    const {
-      error
-    } =
-      await supabaseClient
-        .from("notifications")
-        .insert({
-          user_id:
-            message.sender_id,
-
-          type:
-            "group_reply",
-
-          title:
-            "↩️ グループで返信がありました",
-
-          message:
-            currentUsername +
-            "さんがあなたのメッセージに返信しました",
-
-          link:
-            "group_chat.html?id=" +
-            encodeURIComponent(
-              groupId
-            ),
-
-          is_read:
-            false
-        });
-
-    if (error) {
-
-      console.error(
-        "返信通知エラー:",
-        error
-      );
-
-    }
-
-  } catch (error) {
-
-    console.error(
-      "返信通知処理エラー:",
-      error
-    );
-
-  }
+replyArea.style.display = "block";
+messageInput.placeholder =
+"返信を入力...";
+messageInput.focus();
 }
 
+cancelReplyButton.addEventListener(
+"click",
+event => {
+
+event.preventDefault();
+
+replyingToMessage = null;
+replyArea.style.display = "none";
+messageInput.placeholder =
+"メッセージを入力...";
+messageInput.focus();
+}
+);
 
 /* =========================
-   グループ通知
+   通知
 ========================= */
+
+async function createGroupReplyNotification(message) {
+
+if (
+!message ||
+!currentUsername ||
+message.sender_id === currentUsername
+) return;
+
+await supabaseClient
+.from("notifications")
+.insert({
+user_id:message.sender_id,
+type:"group_reply",
+title:"↩️ グループで返信がありました",
+message:
+currentUsername +
+"さんがあなたのメッセージに返信しました",
+link:
+"group_chat.html?id=" +
+encodeURIComponent(groupId),
+is_read:false
+});
+}
 
 async function createGroupNotifications() {
 
-  try {
+if (!currentUsername || !groupId) return;
 
-    if (
-      !currentUsername ||
-      !groupId
-    ) {
-      return;
-    }
+const { data:group } =
+await supabaseClient
+.from("groups")
+.select("name")
+.eq("id",Number(groupId))
+.maybeSingle();
 
-    const {
-      data: group
-    } =
-      await supabaseClient
-        .from("groups")
-        .select("name")
-        .eq(
-          "id",
-          Number(groupId)
-        )
-        .maybeSingle();
+const { data:members } =
+await supabaseClient
+.from("group_members")
+.select("user_id")
+.eq("group_id",Number(groupId));
 
-    const {
-      data: members
-    } =
-      await supabaseClient
-        .from("group_members")
-        .select("user_id")
-        .eq(
-          "group_id",
-          Number(groupId)
-        );
+if (!members) return;
 
-    if (!members) {
-      return;
-    }
+const notifications =
+members
+.filter(
+member =>
+member.user_id !== currentUsername
+)
+.map(
+member => ({
+user_id:member.user_id,
+type:"group",
+title:"👥 グループに新しいメッセージ",
+message:
+currentUsername +
+"さんが「" +
+(group?.name || "グループ") +
+"」にメッセージを送信しました",
+link:
+"group_chat.html?id=" +
+encodeURIComponent(groupId),
+is_read:false
+})
+);
 
-    const notifications =
-      members
-        .filter(
-          member =>
-            member.user_id !==
-            currentUsername
-        )
-        .map(
-          member => ({
-            user_id:
-              member.user_id,
+if (!notifications.length) return;
 
-            type:
-              "group",
-
-            title:
-              "👥 グループに新しいメッセージ",
-
-            message:
-              currentUsername +
-              "さんが「" +
-              (
-                group?.name ||
-                "グループ"
-              ) +
-              "」にメッセージを送信しました",
-
-            link:
-              "group_chat.html?id=" +
-              encodeURIComponent(
-                groupId
-              ),
-
-            is_read:
-              false
-          })
-        );
-
-    if (
-      !notifications.length
-    ) {
-      return;
-    }
-
-    const {
-      error
-    } =
-      await supabaseClient
-        .from("notifications")
-        .insert(
-          notifications
-        );
-
-    if (error) {
-
-      console.error(
-        "グループ通知エラー:",
-        error
-      );
-
-    }
-
-  } catch (error) {
-
-    console.error(
-      "グループ通知処理エラー:",
-      error
-    );
-
-  }
+await supabaseClient
+.from("notifications")
+.insert(notifications);
 }
 
-
 /* =========================
-   メンション候補
+   メンション
 ========================= */
 
 function getMentionQuery() {
 
-  const text =
-    messageInput.value;
+const text = messageInput.value;
+const cursor = messageInput.selectionStart;
 
-  const cursor =
-    messageInput.selectionStart;
+const beforeCursor =
+text.slice(0,cursor);
 
-  const beforeCursor =
-    text.slice(
-      0,
-      cursor
-    );
+const match =
+beforeCursor.match(
+/(?:^|\s)@([A-Za-z0-9_]*)$/
+);
 
-  const match =
-    beforeCursor.match(
-      /(?:^|\s)@([A-Za-z0-9_]*)$/
-    );
+if (!match) return null;
 
-  if (!match) {
-    return null;
-  }
-
-  return match[1].toLowerCase();
+return match[1].toLowerCase();
 }
-
 
 async function showMentionSuggestions() {
 
-  const query =
-    getMentionQuery();
+const query = getMentionQuery();
 
-  if (
-    query === null
-  ) {
+if (query === null) {
 
-    mentionList.classList.remove(
-      "show"
-    );
-
-    mentionList.innerHTML =
-      "";
-
-    return;
-  }
-
-  if (
-    !groupMembersCache.length
-  ) {
-
-    await getGroupMembers();
-
-  }
-
-  const candidates =
-    groupMembersCache
-      .filter(
-        member =>
-          member.user_id !==
-          currentUsername
-      )
-      .filter(
-        member =>
-          member.user_id
-            .toLowerCase()
-            .startsWith(query)
-      )
-      .slice(
-        0,
-        8
-      );
-
-  mentionList.innerHTML =
-    "";
-
-  if (
-    !candidates.length
-  ) {
-
-    mentionList.classList.remove(
-      "show"
-    );
-
-    return;
-  }
-
-  for (
-    const member of candidates
-  ) {
-
-    const profile =
-      await getProfile(
-        member.user_id
-      );
-
-    const button =
-      document.createElement("button");
-
-    button.type =
-      "button";
-
-    button.className =
-      "mention-item";
-
-    const avatar =
-      document.createElement("div");
-
-    avatar.className =
-      "mention-avatar";
-
-    if (
-      profile &&
-      profile.avatar_url
-    ) {
-
-      const img =
-        document.createElement("img");
-
-      img.src =
-        profile.avatar_url;
-
-      img.alt =
-        "プロフィール画像";
-
-      avatar.appendChild(
-        img
-      );
-
-    } else {
-
-      avatar.textContent =
-        "👤";
-
-    }
-
-    const info =
-      document.createElement("div");
-
-    const name =
-      document.createElement("div");
-
-    name.className =
-      "mention-name";
-
-    name.textContent =
-      profile?.name ||
-      member.user_id;
-
-    const id =
-      document.createElement("div");
-
-    id.className =
-      "mention-id";
-
-    id.textContent =
-      "@" +
-      member.user_id;
-
-    info.appendChild(
-      name
-    );
-
-    info.appendChild(
-      id
-    );
-
-    button.appendChild(
-      avatar
-    );
-
-    button.appendChild(
-      info
-    );
-
-    button.addEventListener(
-      "click",
-      function(event) {
-
-        event.preventDefault();
-        event.stopPropagation();
-
-        insertMention(
-          member.user_id
-        );
-
-      }
-    );
-
-    mentionList.appendChild(
-      button
-    );
-  }
-
-  mentionList.classList.add(
-    "show"
-  );
+mentionList.classList.remove("show");
+mentionList.innerHTML = "";
+return;
 }
 
-
-function insertMention(
-  username
-) {
-
-  const cursor =
-    messageInput.selectionStart;
-
-  const text =
-    messageInput.value;
-
-  const before =
-    text.slice(
-      0,
-      cursor
-    );
-
-  const after =
-    text.slice(
-      cursor
-    );
-
-  const match =
-    before.match(
-      /(?:^|\s)@([A-Za-z0-9_]*)$/
-    );
-
-  if (!match) {
-    return;
-  }
-
-  const start =
-    match.index +
-    (
-      match[0].startsWith(" ")
-        ? 1
-        : 0
-    );
-
-  const newText =
-    text.slice(
-      0,
-      start
-    ) +
-    "@" +
-    username +
-    " " +
-    after;
-
-  messageInput.value =
-    newText;
-
-  const newCursor =
-    start +
-    username.length +
-    2;
-
-  messageInput.setSelectionRange(
-    newCursor,
-    newCursor
-  );
-
-  mentionList.classList.remove(
-    "show"
-  );
-
-  messageInput.focus();
+if (!groupMembersCache.length) {
+await getGroupMembers();
 }
 
+const candidates =
+groupMembersCache
+.filter(
+member =>
+member.user_id !== currentUsername
+)
+.filter(
+member =>
+member.user_id
+.toLowerCase()
+.startsWith(query)
+)
+.slice(0,8);
 
-messageInput.addEventListener(
-  "input",
-  showMentionSuggestions
+mentionList.innerHTML = "";
+
+if (!candidates.length) {
+
+mentionList.classList.remove("show");
+return;
+}
+
+for (const member of candidates) {
+
+const profile =
+await getProfile(member.user_id);
+
+const button =
+document.createElement("button");
+
+button.type = "button";
+button.className = "mention-item";
+
+const avatar =
+document.createElement("div");
+
+avatar.className = "mention-avatar";
+
+if (profile?.avatar_url) {
+
+const img =
+document.createElement("img");
+
+img.src = profile.avatar_url;
+img.alt = "プロフィール画像";
+
+avatar.appendChild(img);
+
+} else {
+
+avatar.textContent = "👤";
+}
+
+const info =
+document.createElement("div");
+
+const name =
+document.createElement("div");
+
+name.className = "mention-name";
+name.textContent =
+profile?.name || member.user_id;
+
+const id =
+document.createElement("div");
+
+id.className = "mention-id";
+id.textContent =
+"@" + member.user_id;
+
+info.appendChild(name);
+info.appendChild(id);
+
+button.appendChild(avatar);
+button.appendChild(info);
+
+button.addEventListener(
+"click",
+event => {
+
+event.preventDefault();
+event.stopPropagation();
+
+insertMention(member.user_id);
+}
 );
 
-
-/* =========================
-   メンション通知
-========================= */
-
-function extractMentionUsernames(
-  text
-) {
-
-  if (!text) {
-    return [];
-  }
-
-  const matches =
-    text.match(
-      /@[A-Za-z0-9_]+/g
-    ) || [];
-
-  const usernames =
-    matches.map(
-      mention =>
-        mention.slice(1)
-    );
-
-  return [
-    ...new Set(
-      usernames
-    )
-  ];
+mentionList.appendChild(button);
 }
 
-
-async function createMentionNotifications(
-  text
-) {
-
-  try {
-
-    const mentioned =
-      extractMentionUsernames(
-        text
-      );
-
-    if (
-      !mentioned.length
-    ) {
-      return;
-    }
-
-    const validMembers =
-      groupMembersCache.length
-        ? groupMembersCache
-        : await getGroupMembers();
-
-    const memberIds =
-      new Set(
-        validMembers.map(
-          member =>
-            member.user_id
-        )
-      );
-
-    const targets =
-      mentioned.filter(
-        username =>
-          username !==
-            currentUsername &&
-          memberIds.has(
-            username
-          )
-      );
-
-    if (
-      !targets.length
-    ) {
-      return;
-    }
-
-    const {
-      data: group
-    } =
-      await supabaseClient
-        .from("groups")
-        .select("name")
-        .eq(
-          "id",
-          Number(groupId)
-        )
-        .maybeSingle();
-
-    const notifications =
-      targets.map(
-        username => ({
-          user_id:
-            username,
-
-          type:
-            "group_mention",
-
-          title:
-            "🔔 グループでメンションされました",
-
-          message:
-            currentUsername +
-            "さんが「" +
-            (
-              group?.name ||
-              "グループ"
-            ) +
-            "」であなたをメンションしました",
-
-          link:
-            "group_chat.html?id=" +
-            encodeURIComponent(
-              groupId
-            ),
-
-          is_read:
-            false
-        })
-      );
-
-    const {
-      error
-    } =
-      await supabaseClient
-        .from("notifications")
-        .insert(
-          notifications
-        );
-
-    if (error) {
-
-      console.error(
-        "メンション通知エラー:",
-        error
-      );
-
-    }
-
-  } catch (error) {
-
-    console.error(
-      "メンション通知処理エラー:",
-      error
-    );
-
-  }
+mentionList.classList.add("show");
 }
 
+function insertMention(username) {
+
+const cursor =
+messageInput.selectionStart;
+
+const text =
+messageInput.value;
+
+const before =
+text.slice(0,cursor);
+
+const after =
+text.slice(cursor);
+
+const match =
+before.match(
+/(?:^|\s)@([A-Za-z0-9_]*)$/
+);
+
+if (!match) return;
+
+const start =
+match.index +
+(match[0].startsWith(" ") ? 1 : 0);
+
+messageInput.value =
+text.slice(0,start) +
+"@" +
+username +
+" " +
+after;
+
+const newCursor =
+start + username.length + 2;
+
+messageInput.setSelectionRange(
+newCursor,
+newCursor
+);
+
+mentionList.classList.remove("show");
+messageInput.focus();
+}
+
+messageInput.addEventListener(
+"input",
+showMentionSuggestions
+);
+
+function extractMentionUsernames(text) {
+
+if (!text) return [];
+
+const matches =
+text.match(/@[A-Za-z0-9_]+/g) || [];
+
+return [
+...new Set(
+matches.map(
+mention => mention.slice(1)
+)
+)
+];
+}
+
+async function createMentionNotifications(text) {
+
+const mentioned =
+extractMentionUsernames(text);
+
+if (!mentioned.length) return;
+
+const members =
+groupMembersCache.length
+? groupMembersCache
+: await getGroupMembers();
+
+const memberIds =
+new Set(
+members.map(
+member => member.user_id
+)
+);
+
+const targets =
+mentioned.filter(
+username =>
+username !== currentUsername &&
+memberIds.has(username)
+);
+
+if (!targets.length) return;
+
+const { data:group } =
+await supabaseClient
+.from("groups")
+.select("name")
+.eq("id",Number(groupId))
+.maybeSingle();
+
+const notifications =
+targets.map(
+username => ({
+user_id:username,
+type:"group_mention",
+title:"🔔 グループでメンションされました",
+message:
+currentUsername +
+"さんが「" +
+(group?.name || "グループ") +
+"」であなたをメンションしました",
+link:
+"group_chat.html?id=" +
+encodeURIComponent(groupId),
+is_read:false
+})
+);
+
+await supabaseClient
+.from("notifications")
+.insert(notifications);
+}
 
 /* =========================
-   テキスト送信
+   送信
 ========================= */
 
 async function sendMessage() {
 
-  const text =
-    messageInput.value.trim();
+const text =
+messageInput.value.trim();
 
-  if (!text) {
-    return;
-  }
+if (!text) return;
 
-  if (!currentUsername) {
+if (!currentUsername) {
 
-    alert(
-      "ユーザー情報を取得できていません。"
-    );
+alert(
+"ユーザー情報を取得できていません。"
+);
 
-    return;
-  }
-
-  sendButton.disabled =
-    true;
-
-  mentionList.classList.remove(
-    "show"
-  );
-
-
-  if (
-    replyingToMessage
-  ) {
-
-    const targetMessage =
-      replyingToMessage;
-
-    const {
-      error
-    } =
-      await supabaseClient
-        .from("group_replies")
-        .insert({
-          group_message_id:
-            targetMessage.id,
-
-          sender_id:
-            currentUsername,
-
-          content:
-            text
-        });
-
-    if (error) {
-
-      console.error(
-        "返信送信エラー:",
-        error
-      );
-
-      alert(
-        "返信を送信できませんでした。\n\n" +
-        error.message
-      );
-
-      sendButton.disabled =
-        false;
-
-      return;
-    }
-
-    messageInput.value =
-      "";
-
-    replyingToMessage =
-      null;
-
-    replyArea.style.display =
-      "none";
-
-    messageInput.placeholder =
-      "メッセージを入力...";
-
-    await loadMessages();
-
-    scrollToBottom(true);
-
-    createGroupReplyNotification(
-      targetMessage
-    ).catch(
-      error =>
-        console.error(
-          "通知エラー:",
-          error
-        )
-    );
-
-    sendButton.disabled =
-      false;
-
-    messageInput.focus();
-
-    return;
-  }
-
-
-  const {
-    error
-  } =
-    await supabaseClient
-      .from("group_messages")
-      .insert({
-        group_id:
-          Number(groupId),
-
-        sender_id:
-          currentUsername,
-
-        content:
-          text,
-
-        image_url:
-          "",
-
-        is_deleted:
-          false
-      });
-
-  if (error) {
-
-    console.error(
-      "メッセージ送信エラー:",
-      error
-    );
-
-    alert(
-      "送信できませんでした。\n\n" +
-      error.message
-    );
-
-  } else {
-
-    messageInput.value =
-      "";
-
-    await loadMessages();
-
-    scrollToBottom(true);
-
-    createGroupNotifications()
-      .catch(
-        error =>
-          console.error(
-            "通知エラー:",
-            error
-          )
-      );
-
-    createMentionNotifications(
-      text
-    ).catch(
-      error =>
-        console.error(
-          "メンション通知エラー:",
-          error
-        )
-      );
-  }
-
-  sendButton.disabled =
-    false;
-
-  messageInput.focus();
+return;
 }
 
+sendButton.disabled = true;
+
+mentionList.classList.remove("show");
+
+if (replyingToMessage) {
+
+const targetMessage =
+replyingToMessage;
+
+const { error } =
+await supabaseClient
+.from("group_replies")
+.insert({
+group_message_id:targetMessage.id,
+sender_id:currentUsername,
+content:text
+});
+
+if (error) {
+
+alert(
+"返信を送信できませんでした。\n\n" +
+error.message
+);
+
+sendButton.disabled = false;
+return;
+}
+
+messageInput.value = "";
+replyingToMessage = null;
+replyArea.style.display = "none";
+messageInput.placeholder =
+"メッセージを入力...";
+
+await loadMessages();
+scrollToBottom(true);
+
+createGroupReplyNotification(
+targetMessage
+);
+
+sendButton.disabled = false;
+messageInput.focus();
+
+return;
+}
+
+const { error } =
+await supabaseClient
+.from("group_messages")
+.insert({
+group_id:Number(groupId),
+sender_id:currentUsername,
+content:text,
+image_url:"",
+is_deleted:false
+});
+
+if (error) {
+
+alert(
+"送信できませんでした。\n\n" +
+error.message
+);
+
+} else {
+
+messageInput.value = "";
+
+await loadMessages();
+scrollToBottom(true);
+
+createGroupNotifications();
+createMentionNotifications(text);
+}
+
+sendButton.disabled = false;
+messageInput.focus();
+}
 
 /* =========================
-   画像ボタン
+   画像
 ========================= */
 
 imageButton.addEventListener(
-  "click",
-  function() {
-
-    imageInput.click();
-
-  }
+"click",
+() => imageInput.click()
 );
-
-
-/* =========================
-   画像送信
-========================= */
 
 imageInput.addEventListener(
-  "change",
-  async function() {
+"change",
+async () => {
 
-    const file =
-      imageInput.files?.[0];
+const file =
+imageInput.files?.[0];
 
-    if (!file) {
-      return;
-    }
+if (!file) return;
 
-    if (
-      !file.type.startsWith(
-        "image/"
-      )
-    ) {
+if (!file.type.startsWith("image/")) {
 
-      alert(
-        "画像ファイルを選んでください。"
-      );
+alert("画像ファイルを選んでください。");
+imageInput.value = "";
+return;
+}
 
-      imageInput.value =
-        "";
+imageButton.disabled = true;
+sendButton.disabled = true;
 
-      return;
-    }
+try {
 
-    imageButton.disabled =
-      true;
+const extension =
+file.name.split(".").pop() || "jpg";
 
-    sendButton.disabled =
-      true;
+const filePath =
+"groups/" +
+groupId +
+"/" +
+currentUsername +
+"/" +
+Date.now() +
+"_" +
+Math.random().toString(36).slice(2) +
+"." +
+extension;
 
-    try {
-
-      const extension =
-        file.name.split(".").pop() ||
-        "jpg";
-
-      const filePath =
-        "groups/" +
-        groupId +
-        "/" +
-        currentUsername +
-        "/" +
-        Date.now() +
-        "_" +
-        Math.random()
-          .toString(36)
-          .slice(2) +
-        "." +
-        extension;
-
-      const {
-        error: uploadError
-      } =
-        await supabaseClient.storage
-          .from("chat-images")
-          .upload(
-            filePath,
-            file,
-            {
-              contentType:
-                file.type,
-
-              upsert:
-                false
-            }
-          );
-
-      if (uploadError) {
-
-        alert(
-          "画像をアップロードできませんでした。\n\n" +
-          uploadError.message
-        );
-
-        return;
-      }
-
-      const {
-        error
-      } =
-        await supabaseClient
-          .from("group_messages")
-          .insert({
-            group_id:
-              Number(groupId),
-
-            sender_id:
-              currentUsername,
-
-            content:
-              "",
-
-            image_url:
-              filePath,
-
-            is_deleted:
-              false
-          });
-
-      if (error) {
-
-        alert(
-          "画像メッセージを保存できませんでした。\n\n" +
-          error.message
-        );
-
-        return;
-      }
-
-      await loadMessages();
-
-      scrollToBottom(true);
-
-      createGroupNotifications()
-        .catch(
-          error =>
-            console.error(
-              "通知エラー:",
-              error
-            )
-        );
-
-    } finally {
-
-      imageButton.disabled =
-        false;
-
-      sendButton.disabled =
-        false;
-
-      imageInput.value =
-        "";
-
-    }
-
-  }
+const { error:uploadError } =
+await supabaseClient.storage
+.from("chat-images")
+.upload(
+filePath,
+file,
+{
+contentType:file.type,
+upsert:false
+}
 );
 
+if (uploadError) {
+
+alert(
+"画像をアップロードできませんでした。\n\n" +
+uploadError.message
+);
+
+return;
+}
+
+const { error } =
+await supabaseClient
+.from("group_messages")
+.insert({
+group_id:Number(groupId),
+sender_id:currentUsername,
+content:"",
+image_url:filePath,
+is_deleted:false
+});
+
+if (error) {
+
+alert(
+"画像メッセージを保存できませんでした。\n\n" +
+error.message
+);
+
+return;
+}
+
+await loadMessages();
+scrollToBottom(true);
+
+createGroupNotifications();
+
+} finally {
+
+imageButton.disabled = false;
+sendButton.disabled = false;
+imageInput.value = "";
+}
+}
+);
 
 /* =========================
    リアルタイム
@@ -3018,305 +1653,244 @@ imageInput.addEventListener(
 
 function startRealtime() {
 
-  supabaseClient
-    .channel(
-      "group-chat-" +
-      groupId +
-      "-" +
-      Date.now()
-    )
+supabaseClient
+.channel(
+"group-chat-" +
+groupId +
+"-" +
+Date.now()
+)
 
-    /* 新しいメッセージ */
-    .on(
-      "postgres_changes",
-      {
-        event:
-          "INSERT",
+.on(
+"postgres_changes",
+{
+event:"INSERT",
+schema:"public",
+table:"group_messages",
+filter:"group_id=eq." + groupId
+},
+async () => {
 
-        schema:
-          "public",
+await loadMessages();
+scrollToBottom(true);
+}
+)
 
-        table:
-          "group_messages",
+.on(
+"postgres_changes",
+{
+event:"UPDATE",
+schema:"public",
+table:"group_messages",
+filter:"group_id=eq." + groupId
+},
+async () => {
 
-        filter:
-          "group_id=eq." +
-          groupId
-      },
-      async function() {
+await loadMessages();
+}
+)
 
-        await loadMessages();
+.on(
+"postgres_changes",
+{
+event:"INSERT",
+schema:"public",
+table:"group_message_reads"
+},
+async payload => {
 
-        scrollToBottom(true);
+const read = payload.new;
 
-      }
-    )
+if (!read) return;
 
-    /* メッセージ取り消し */
-    .on(
-      "postgres_changes",
-      {
-        event:
-          "UPDATE",
+const { data:message } =
+await supabaseClient
+.from("group_messages")
+.select("id,group_id,sender_id")
+.eq("id",read.group_message_id)
+.maybeSingle();
 
-        schema:
-          "public",
+if (
+!message ||
+String(message.group_id) !==
+String(groupId)
+) return;
 
-        table:
-          "group_messages",
+if (
+message.sender_id !== currentUsername ||
+read.user_id === currentUsername
+) return;
 
-        filter:
-          "group_id=eq." +
-          groupId
-      },
-      async function() {
+const id =
+String(read.group_message_id);
 
-        await loadMessages();
-
-      }
-    )
-
-    /* =========================
-       グループ既読
-    ========================= */
-
-    .on(
-      "postgres_changes",
-      {
-        event:
-          "INSERT",
-
-        schema:
-          "public",
-
-        table:
-          "group_message_reads"
-      },
-      async function(payload) {
-
-        const read =
-          payload.new;
-
-        if (!read) {
-          return;
-        }
-
-        const {
-          data: message
-        } =
-          await supabaseClient
-            .from("group_messages")
-            .select(
-              "id, group_id, sender_id"
-            )
-            .eq(
-              "id",
-              read.group_message_id
-            )
-            .maybeSingle();
-
-        if (
-          !message ||
-          String(message.group_id) !==
-            String(groupId)
-        ) {
-          return;
-        }
-
-        /*
-          自分が送ったメッセージの
-          既読だけを画面に反映
-        */
-        if (
-          message.sender_id !==
-          currentUsername
-        ) {
-          return;
-        }
-
-        if (
-          read.user_id ===
-          currentUsername
-        ) {
-          return;
-        }
-
-        const id =
-          String(
-            read.group_message_id
-          );
-
-        if (
-          !groupReadCounts[id]
-        ) {
-
-          groupReadCounts[id] =
-            new Set();
-
-        }
-
-        groupReadCounts[id].add(
-          read.user_id
-        );
-
-        /*
-          画面を再描画
-        */
-        await loadMessages();
-
-      }
-    )
-
-    .subscribe();
+if (!groupReadCounts[id]) {
+groupReadCounts[id] = new Set();
 }
 
+groupReadCounts[id].add(
+read.user_id
+);
+
+await loadMessages();
+}
+)
+
+.subscribe();
+}
 
 /* =========================
    メンバー一覧
+   ★オンライン表示追加
 ========================= */
 
 async function loadMembers() {
 
-  memberList.innerHTML =
-    '<div class="member-loading">読み込み中...</div>';
+memberList.innerHTML =
+'<div class="member-loading">読み込み中...</div>';
 
-  const {
-    data: members,
-    error
-  } =
-    await supabaseClient
-      .from("group_members")
-      .select("user_id")
-      .eq(
-        "group_id",
-        Number(groupId)
-      );
+const { data:members,error } =
+await supabaseClient
+.from("group_members")
+.select("user_id")
+.eq("group_id",Number(groupId));
 
-  if (error) {
+if (error) {
 
-    memberList.innerHTML =
-      '<div class="member-empty">メンバーを読み込めませんでした。</div>';
+memberList.innerHTML =
+'<div class="member-empty">メンバーを読み込めませんでした。</div>';
 
-    return;
-  }
-
-  groupMembersCache =
-    members || [];
-
-  if (
-    !members ||
-    !members.length
-  ) {
-
-    memberList.innerHTML =
-      '<div class="member-empty">まだメンバーがいません。</div>';
-
-    return;
-  }
-
-  memberList.innerHTML =
-    "";
-
-  for (
-    const member of members
-  ) {
-
-    const profile =
-      await getProfile(
-        member.user_id
-      );
-
-    const item =
-      document.createElement("div");
-
-    item.className =
-      "member-item";
-
-    const icon =
-      document.createElement("div");
-
-    icon.className =
-      "member-icon";
-
-    if (
-      profile &&
-      profile.avatar_url
-    ) {
-
-      const img =
-        document.createElement("img");
-
-      img.src =
-        profile.avatar_url;
-
-      img.style.width =
-        "100%";
-
-      img.style.height =
-        "100%";
-
-      img.style.objectFit =
-        "cover";
-
-      icon.appendChild(
-        img
-      );
-
-    } else {
-
-      icon.textContent =
-        "👤";
-
-    }
-
-    const info =
-      document.createElement("div");
-
-    info.className =
-      "member-info";
-
-    const name =
-      document.createElement("div");
-
-    name.className =
-      "member-name";
-
-    name.textContent =
-      profile?.name ||
-      member.user_id;
-
-    const id =
-      document.createElement("div");
-
-    id.className =
-      "member-id";
-
-    id.textContent =
-      "@" +
-      member.user_id;
-
-    info.appendChild(
-      name
-    );
-
-    info.appendChild(
-      id
-    );
-
-    item.appendChild(
-      icon
-    );
-
-    item.appendChild(
-      info
-    );
-
-    memberList.appendChild(
-      item
-    );
-  }
+return;
 }
 
+groupMembersCache =
+members || [];
+
+if (!members?.length) {
+
+memberList.innerHTML =
+'<div class="member-empty">まだメンバーがいません。</div>';
+
+return;
+}
+
+/*
+  メンバーのプロフィール
+  ＋オンライン状態をまとめて取得
+*/
+
+const memberIds =
+members.map(member => member.user_id);
+
+const { data:presenceData } =
+await supabaseClient
+.from("user_presence")
+.select("user_id,last_seen")
+.in("user_id",memberIds);
+
+const presenceMap = {};
+
+for (const presence of presenceData || []) {
+
+presenceMap[presence.user_id] =
+presence.last_seen;
+}
+
+memberList.innerHTML = "";
+
+for (const member of members) {
+
+const profile =
+await getProfile(member.user_id);
+
+const item =
+document.createElement("div");
+
+item.className =
+"member-item";
+
+const icon =
+document.createElement("div");
+
+icon.className =
+"member-icon";
+
+if (profile?.avatar_url) {
+
+const img =
+document.createElement("img");
+
+img.src =
+profile.avatar_url;
+
+img.alt =
+"プロフィール画像";
+
+icon.appendChild(img);
+
+} else {
+
+icon.textContent = "👤";
+}
+
+const info =
+document.createElement("div");
+
+info.className = "member-info";
+
+const name =
+document.createElement("div");
+
+name.className = "member-name";
+
+name.textContent =
+profile?.name || member.user_id;
+
+const id =
+document.createElement("div");
+
+id.className = "member-id";
+
+id.textContent =
+"@" + member.user_id;
+
+/*
+  ★ここがオンライン表示
+*/
+
+const status =
+document.createElement("div");
+
+status.className =
+"member-status";
+
+if (
+isOnline(
+presenceMap[member.user_id]
+)
+) {
+
+status.classList.add("online");
+status.textContent =
+"🟢 オンライン";
+
+} else {
+
+status.classList.add("offline");
+status.textContent =
+"⚪ オフライン";
+}
+
+info.appendChild(name);
+info.appendChild(id);
+info.appendChild(status);
+
+item.appendChild(icon);
+item.appendChild(info);
+
+memberList.appendChild(item);
+}
+}
 
 /* =========================
    メンバー追加
@@ -3324,273 +1898,204 @@ async function loadMembers() {
 
 async function addMember() {
 
-  const friendId =
-    memberInput.value.trim();
+const friendId =
+memberInput.value.trim();
 
-  if (!friendId) {
+if (!friendId) {
 
-    alert(
-      "追加するユーザーIDを入力してね。"
-    );
+alert(
+"追加するユーザーIDを入力してね。"
+);
 
-    return;
-  }
-
-  if (
-    friendId ===
-    currentUsername
-  ) {
-
-    alert(
-      "自分はすでにメンバーだよ。"
-    );
-
-    return;
-  }
-
-  addMemberButton.disabled =
-    true;
-
-  const {
-    data: profile,
-    error: profileError
-  } =
-    await supabaseClient
-      .from("profiles")
-      .select(
-        "user_id, name"
-      )
-      .eq(
-        "user_id",
-        friendId
-      )
-      .maybeSingle();
-
-  if (profileError) {
-
-    alert(
-      "ユーザーを確認できませんでした。\n" +
-      profileError.message
-    );
-
-    addMemberButton.disabled =
-      false;
-
-    return;
-  }
-
-  if (!profile) {
-
-    alert(
-      "そのユーザーIDは見つかりません。"
-    );
-
-    addMemberButton.disabled =
-      false;
-
-    return;
-  }
-
-  const {
-    data: existing
-  } =
-    await supabaseClient
-      .from("group_members")
-      .select("id")
-      .eq(
-        "group_id",
-        Number(groupId)
-      )
-      .eq(
-        "user_id",
-        friendId
-      )
-      .maybeSingle();
-
-  if (existing) {
-
-    alert(
-      "そのユーザーはすでにメンバーだよ。"
-    );
-
-    addMemberButton.disabled =
-      false;
-
-    return;
-  }
-
-  const {
-    error
-  } =
-    await supabaseClient
-      .from("group_members")
-      .insert({
-        group_id:
-          Number(groupId),
-
-        user_id:
-          friendId
-      });
-
-  if (error) {
-
-    alert(
-      "メンバーを追加できませんでした。\n" +
-      error.message
-    );
-
-    addMemberButton.disabled =
-      false;
-
-    return;
-  }
-
-  alert(
-    "@" +
-    friendId +
-    " をグループに追加したよ！"
-  );
-
-  memberInput.value =
-    "";
-
-  addMemberButton.disabled =
-    false;
-
-  await loadMembers();
+return;
 }
 
+if (friendId === currentUsername) {
+
+alert(
+"自分はすでにメンバーだよ。"
+);
+
+return;
+}
+
+addMemberButton.disabled = true;
+
+const { data:profile,error:profileError } =
+await supabaseClient
+.from("profiles")
+.select("user_id,name")
+.eq("user_id",friendId)
+.maybeSingle();
+
+if (profileError) {
+
+alert(
+"ユーザーを確認できませんでした。\n" +
+profileError.message
+);
+
+addMemberButton.disabled = false;
+return;
+}
+
+if (!profile) {
+
+alert(
+"そのユーザーIDは見つかりません。"
+);
+
+addMemberButton.disabled = false;
+return;
+}
+
+const { data:existing } =
+await supabaseClient
+.from("group_members")
+.select("id")
+.eq("group_id",Number(groupId))
+.eq("user_id",friendId)
+.maybeSingle();
+
+if (existing) {
+
+alert(
+"そのユーザーはすでにメンバーだよ。"
+);
+
+addMemberButton.disabled = false;
+return;
+}
+
+const { error } =
+await supabaseClient
+.from("group_members")
+.insert({
+group_id:Number(groupId),
+user_id:friendId
+});
+
+if (error) {
+
+alert(
+"メンバーを追加できませんでした。\n" +
+error.message
+);
+
+addMemberButton.disabled = false;
+return;
+}
+
+alert(
+"@" +
+friendId +
+" をグループに追加したよ！"
+);
+
+memberInput.value = "";
+addMemberButton.disabled = false;
+
+await getGroupMembers();
+await loadMembers();
+}
 
 /* =========================
    メンバー画面
 ========================= */
 
 memberButton.addEventListener(
-  "click",
-  async function() {
+"click",
+async () => {
 
-    memberModal.style.display =
-      "flex";
+memberModal.style.display = "flex";
 
-    await loadMembers();
+await updateMyPresence();
+await loadMembers();
 
-    memberInput.focus();
-
-  }
+memberInput.focus();
+}
 );
 
 closeModalButton.addEventListener(
-  "click",
-  function() {
-
-    memberModal.style.display =
-      "none";
-
-  }
+"click",
+() => {
+memberModal.style.display = "none";
+}
 );
 
 memberModal.addEventListener(
-  "click",
-  function(event) {
+"click",
+event => {
 
-    if (
-      event.target ===
-      memberModal
-    ) {
-
-      memberModal.style.display =
-        "none";
-
-    }
-
-  }
+if (event.target === memberModal) {
+memberModal.style.display = "none";
+}
+}
 );
 
 addMemberButton.addEventListener(
-  "click",
-  addMember
+"click",
+addMember
 );
 
 memberInput.addEventListener(
-  "keydown",
-  function(event) {
+"keydown",
+event => {
 
-    if (
-      event.key ===
-      "Enter"
-    ) {
+if (event.key === "Enter") {
 
-      event.preventDefault();
-
-      addMember();
-
-    }
-
-  }
+event.preventDefault();
+addMember();
+}
+}
 );
-
 
 /* =========================
    送信
 ========================= */
 
 sendButton.addEventListener(
-  "click",
-  sendMessage
+"click",
+sendMessage
 );
 
 messageInput.addEventListener(
-  "keydown",
-  function(event) {
+"keydown",
+event => {
 
-    if (
-      event.key ===
-      "Enter"
-    ) {
+if (event.key === "Enter") {
 
-      event.preventDefault();
-
-      sendMessage();
-
-    }
-
-  }
+event.preventDefault();
+sendMessage();
+}
+}
 );
-
 
 /* =========================
    画面外タップ
 ========================= */
 
 document.addEventListener(
-  "click",
-  function() {
+"click",
+() => {
 
-    document
-      .querySelectorAll(
-        ".message-menu"
-      )
-      .forEach(
-        menu => {
-          menu.style.display =
-            "none";
-        }
-      );
-
-    document
-      .querySelectorAll(
-        ".reaction-picker"
-      )
-      .forEach(
-        picker => {
-          picker.style.display =
-            "none";
-        }
-      );
-
-  }
+document.querySelectorAll(
+".message-menu"
+).forEach(
+menu => {
+menu.style.display = "none";
+}
 );
 
+document.querySelectorAll(
+".reaction-picker"
+).forEach(
+picker => {
+picker.style.display = "none";
+}
+);
+}
+);
 
 /* =========================
    起動
@@ -3598,59 +2103,94 @@ document.addEventListener(
 
 async function start() {
 
-  if (!groupId) {
+if (!groupId) {
 
-    groupName.textContent =
-      "グループが見つかりません";
+groupName.textContent =
+"グループが見つかりません";
 
-    return;
-  }
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient.auth
-      .getSession();
-
-  if (
-    error ||
-    !data.session
-  ) {
-
-    window.location.href =
-      "index.html";
-
-    return;
-  }
-
-  currentUsername =
-    data.session.user
-      .user_metadata?.username ||
-      "";
-
-  if (!currentUsername) {
-
-    alert(
-      "ユーザー情報を取得できませんでした。"
-    );
-
-    return;
-  }
-
-  await loadGroup();
-
-  await getGroupMembers();
-
-  await loadMessages();
-
-  scrollToBottom(false);
-
-  startRealtime();
+return;
 }
 
+const { data,error } =
+await supabaseClient.auth.getSession();
 
-/* 開始 */
+if (error || !data.session) {
+
+window.location.href =
+"index.html";
+
+return;
+}
+
+currentUsername =
+data.session.user
+.user_metadata?.username || "";
+
+if (!currentUsername) {
+
+alert(
+"ユーザー情報を取得できませんでした。"
+);
+
+return;
+}
+
+/*
+  自分をオンラインにする
+*/
+
+await updateMyPresence();
+
+await loadGroup();
+
+await getGroupMembers();
+
+await loadMessages();
+
+scrollToBottom(false);
+
+startRealtime();
+
+/*
+  30秒ごとに自分のオンライン状態を更新
+  ＋メンバー一覧を更新
+*/
+
+presenceTimer =
+setInterval(
+async () => {
+
+await updateMyPresence();
+
+if (
+memberModal.style.display === "flex"
+) {
+
+await loadMembers();
+
+}
+
+},
+30000
+);
+}
+
+/*
+  ページを離れたらタイマー停止
+*/
+
+window.addEventListener(
+"pagehide",
+() => {
+
+if (presenceTimer) {
+
+clearInterval(presenceTimer);
+presenceTimer = null;
+
+}
+}
+);
 
 start();
 
