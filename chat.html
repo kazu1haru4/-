@@ -16,18 +16,7 @@
       height: 100%;
       margin: 0;
       padding: 0;
-
-      /*
-        ★重要
-        ページ全体をスクロールさせない
-      */
       overflow: hidden;
-
-      overscroll-behavior: none;
-    }
-
-    html {
-      scroll-behavior: auto;
     }
 
     body {
@@ -42,19 +31,11 @@
         sans-serif;
 
       background:
-        linear-gradient(
-          135deg,
-          #fff3fb,
-          #eef5ff
-        );
+        linear-gradient(135deg, #fff3fb, #eef5ff);
 
       color: #333;
     }
 
-    /*
-      ★重要
-      画面全体を100dvhに固定
-    */
     .container {
       width: 100%;
       max-width: 600px;
@@ -70,6 +51,10 @@
       overflow: hidden;
     }
 
+    /* =========================
+       ヘッダー
+    ========================= */
+
     .header {
       position: relative;
 
@@ -77,8 +62,7 @@
 
       background: white;
 
-      padding:
-        12px 18px;
+      padding: 12px 18px;
 
       padding-top:
         max(12px, env(safe-area-inset-top));
@@ -115,8 +99,6 @@
 
       font-size: 13px;
       font-weight: bold;
-
-      z-index: 2;
     }
 
     .profile-header {
@@ -155,45 +137,37 @@
       object-fit: cover;
     }
 
-    /*
-      ★ここが唯一のスクロール場所
-    */
-    .messages {
+    /* =========================
+       メッセージエリア
+    ========================= */
+
+    .messages-wrapper {
+      position: relative;
+
       flex: 1 1 auto;
 
-      /*
-        ★重要
-        flexの中で正しく縮むために必要
-      */
       min-height: 0;
 
+      overflow: hidden;
+    }
+
+    .messages {
       width: 100%;
+      height: 100%;
 
       padding: 18px;
 
       overflow-y: auto;
       overflow-x: hidden;
 
-      /*
-        iPhoneでのスクロール
-      */
       -webkit-overflow-scrolling: touch;
 
       overscroll-behavior-y: contain;
-
-      /*
-        ブラウザの自動アンカーをOFF
-      */
-      overflow-anchor: none;
-
-      /*
-        スクロールバー
-      */
-      scrollbar-width: thin;
     }
 
     .empty {
       text-align: center;
+
       color: #999;
 
       margin-top: 40px;
@@ -201,16 +175,12 @@
 
     .message {
       display: flex;
+
       align-items: flex-end;
 
       gap: 7px;
 
       margin-bottom: 12px;
-
-      /*
-        メッセージが勝手に縮まない
-      */
-      flex-shrink: 0;
     }
 
     .message.mine {
@@ -246,8 +216,7 @@
     .bubble {
       max-width: 75%;
 
-      padding:
-        10px 14px;
+      padding: 10px 14px;
 
       border-radius: 18px;
 
@@ -291,10 +260,67 @@
       color: #eee;
     }
 
-    /*
-      ★入力欄
-      ここも固定
-    */
+    /* =========================
+       一番下へボタン
+    ========================= */
+
+    .latest-button {
+      position: absolute;
+
+      right: 16px;
+      bottom: 16px;
+
+      border: none;
+
+      background: #8f7cff;
+
+      color: white;
+
+      padding: 11px 16px;
+
+      border-radius: 999px;
+
+      font-size: 13px;
+
+      font-weight: bold;
+
+      box-shadow:
+        0 4px 14px rgba(0,0,0,0.18);
+
+      cursor: pointer;
+
+      z-index: 10;
+
+      opacity: 0;
+
+      transform:
+        translateY(10px);
+
+      pointer-events: none;
+
+      transition:
+        opacity 0.2s,
+        transform 0.2s;
+    }
+
+    .latest-button.show {
+      opacity: 1;
+
+      transform:
+        translateY(0);
+
+      pointer-events: auto;
+    }
+
+    .latest-button:active {
+      transform:
+        scale(0.95);
+    }
+
+    /* =========================
+       入力欄
+    ========================= */
+
     .input-area {
       flex-shrink: 0;
 
@@ -302,8 +328,7 @@
 
       background: white;
 
-      padding:
-        12px;
+      padding: 12px;
 
       padding-bottom:
         max(12px, env(safe-area-inset-bottom));
@@ -359,8 +384,7 @@
 
       border-radius: 18px;
 
-      padding:
-        0 18px;
+      padding: 0 18px;
 
       background: #8f7cff;
 
@@ -374,7 +398,6 @@
     .send-button:disabled,
     .image-button:disabled {
       opacity: 0.5;
-      cursor: default;
     }
 
     #imageInput {
@@ -386,6 +409,10 @@
 <body>
 
   <main class="container">
+
+    <!-- =========================
+         ヘッダー
+    ========================== -->
 
     <header class="header">
 
@@ -414,20 +441,40 @@
     </header>
 
 
-    <!--
-      ★ここだけがスクロールする
-    -->
-    <section
-      class="messages"
-      id="messages"
-    >
+    <!-- =========================
+         メッセージ
+    ========================== -->
 
-      <div class="empty">
-        メッセージを読み込み中...
-      </div>
+    <div class="messages-wrapper">
 
-    </section>
+      <section
+        class="messages"
+        id="messages"
+      >
 
+        <div class="empty">
+          メッセージを読み込み中...
+        </div>
+
+      </section>
+
+
+      <!-- 一番下へボタン -->
+
+      <button
+        id="latestButton"
+        class="latest-button"
+        type="button"
+      >
+        ⬇️ 最新へ
+      </button>
+
+    </div>
+
+
+    <!-- =========================
+         入力
+    ========================== -->
 
     <form
       class="input-area"
@@ -519,19 +566,23 @@
     const headerAvatar =
       document.getElementById("headerAvatar");
 
+    const latestButton =
+      document.getElementById("latestButton");
+
 
     /* =========================================
        基本変数
     ========================================= */
 
     let currentUsername = "";
+
     let friendId = "";
+
     let realtimeChannel = null;
 
     let myAvatarUrl = "";
-    let friendAvatarUrl = "";
 
-    let restoringPosition = false;
+    let friendAvatarUrl = "";
 
 
     const params =
@@ -541,57 +592,6 @@
 
     friendId =
       params.get("user") || "";
-
-
-    /*
-      相手ごとにスクロール位置を保存
-    */
-
-    const chatPositionKey =
-      "chat-position-" +
-      friendId;
-
-
-    /*
-      ★ブラウザのページスクロール復元をOFF
-    */
-
-    if (
-      "scrollRestoration" in history
-    ) {
-
-      history.scrollRestoration =
-        "manual";
-
-    }
-
-
-    /* =========================================
-       ページ全体を上に戻す
-       メッセージ欄には影響しない
-    ========================================= */
-
-    function resetPageScroll() {
-
-      window.scrollTo(
-        0,
-        0
-      );
-
-      document.documentElement.scrollTop =
-        0;
-
-      document.body.scrollTop =
-        0;
-
-    }
-
-
-    /*
-      起動直後にも実行
-    */
-
-    resetPageScroll();
 
 
     /* =========================================
@@ -713,143 +713,57 @@
 
 
     /* =========================================
-       スクロール位置保存
+       一番下へ移動
     ========================================= */
 
-    function saveChatPosition() {
+    function scrollToBottom(
+      smooth = false
+    ) {
 
-      if (
-        restoringPosition ||
-        !messagesElement
-      ) {
+      messagesElement.scrollTo({
 
-        return;
+        top:
+          messagesElement.scrollHeight,
 
-      }
+        behavior:
+          smooth
+            ? "smooth"
+            : "auto"
 
+      });
 
-      const messageElements =
-        messagesElement.querySelectorAll(
-          ".message[data-message-id]"
-        );
-
-
-      if (
-        !messageElements.length
-      ) {
-
-        /*
-          メッセージがない場合でも
-          scrollTopだけ保存
-        */
-
-        try {
-
-          sessionStorage.setItem(
-            chatPositionKey,
-            JSON.stringify({
-
-              messageId: null,
-
-              offset: 0,
-
-              scrollTop:
-                messagesElement.scrollTop
-
-            })
-          );
-
-        } catch (error) {
-
-          console.error(
-            "位置保存エラー:",
-            error
-          );
-
-        }
-
-        return;
-
-      }
+    }
 
 
-      const containerRect =
-        messagesElement.getBoundingClientRect();
+    /* =========================================
+       最新ボタン表示
+    ========================================= */
 
+    function updateLatestButton() {
 
-      let target = null;
+      const distanceFromBottom =
+        messagesElement.scrollHeight -
+        messagesElement.scrollTop -
+        messagesElement.clientHeight;
 
 
       /*
-        現在見えている最初のメッセージ
+        150px以上上にいる場合
+        ボタンを表示
       */
 
-      for (
-        const element of messageElements
+      if (
+        distanceFromBottom > 150
       ) {
 
-        const rect =
-          element.getBoundingClientRect();
-
-
-        if (
-          rect.bottom >
-          containerRect.top + 5
-        ) {
-
-          target =
-            element;
-
-          break;
-
-        }
-
-      }
-
-
-      if (!target) {
-
-        target =
-          messageElements[
-            messageElements.length - 1
-          ];
-
-      }
-
-
-      const rect =
-        target.getBoundingClientRect();
-
-
-      const position = {
-
-        messageId:
-          target.dataset.messageId,
-
-        offset:
-          rect.top -
-          containerRect.top,
-
-        scrollTop:
-          messagesElement.scrollTop
-
-      };
-
-
-      try {
-
-        sessionStorage.setItem(
-          chatPositionKey,
-          JSON.stringify(
-            position
-          )
+        latestButton.classList.add(
+          "show"
         );
 
-      } catch (error) {
+      } else {
 
-        console.error(
-          "スクロール位置保存エラー:",
-          error
+        latestButton.classList.remove(
+          "show"
         );
 
       }
@@ -858,23 +772,14 @@
 
 
     /* =========================================
-       スクロール中に保存
+       スクロール
     ========================================= */
 
     messagesElement.addEventListener(
       "scroll",
       function() {
 
-        if (
-          restoringPosition
-        ) {
-
-          return;
-
-        }
-
-
-        saveChatPosition();
+        updateLatestButton();
 
       },
       {
@@ -884,473 +789,17 @@
 
 
     /* =========================================
-       ページを離れる前に保存
+       最新へボタン
     ========================================= */
 
-    window.addEventListener(
-      "pagehide",
+    latestButton.addEventListener(
+      "click",
       function() {
 
-        saveChatPosition();
+        scrollToBottom(true);
 
       }
     );
-
-
-    window.addEventListener(
-      "beforeunload",
-      function() {
-
-        saveChatPosition();
-
-      }
-    );
-
-
-    document.addEventListener(
-      "visibilitychange",
-      function() {
-
-        if (
-          document.visibilityState ===
-          "hidden"
-        ) {
-
-          saveChatPosition();
-
-        }
-
-      }
-    );
-
-
-    /* =========================================
-       画像読み込み待ち
-    ========================================= */
-
-    async function waitForImages() {
-
-      const images =
-        Array.from(
-          messagesElement.querySelectorAll(
-            "img.chat-image"
-          )
-        );
-
-
-      if (!images.length) {
-
-        return;
-
-      }
-
-
-      await Promise.all(
-
-        images.map(
-          function(img) {
-
-            if (
-              img.complete
-            ) {
-
-              return Promise.resolve();
-
-            }
-
-
-            return new Promise(
-              function(resolve) {
-
-                let finished =
-                  false;
-
-
-                function done() {
-
-                  if (
-                    finished
-                  ) {
-
-                    return;
-
-                  }
-
-
-                  finished =
-                    true;
-
-                  resolve();
-
-                }
-
-
-                img.addEventListener(
-                  "load",
-                  done,
-                  {
-                    once: true
-                  }
-                );
-
-
-                img.addEventListener(
-                  "error",
-                  done,
-                  {
-                    once: true
-                  }
-                );
-
-
-                setTimeout(
-                  done,
-                  3000
-                );
-
-              }
-            );
-
-          }
-        )
-
-      );
-
-    }
-
-
-    /* =========================================
-       保存位置を復元
-    ========================================= */
-
-    async function restoreChatPosition() {
-
-      let saved = null;
-
-
-      try {
-
-        saved =
-          JSON.parse(
-            sessionStorage.getItem(
-              chatPositionKey
-            ) || "null"
-          );
-
-      } catch (error) {
-
-        saved =
-          null;
-
-      }
-
-
-      /*
-        保存位置がなければ一番下
-      */
-
-      if (
-        !saved
-      ) {
-
-        scrollToBottom();
-
-        return;
-
-      }
-
-
-      /*
-        scrollTopだけ保存されている場合
-      */
-
-      if (
-        !saved.messageId
-      ) {
-
-        restoringPosition =
-          true;
-
-
-        messagesElement.scrollTop =
-          Number(
-            saved.scrollTop || 0
-          );
-
-
-        requestAnimationFrame(
-          function() {
-
-            messagesElement.scrollTop =
-              Number(
-                saved.scrollTop || 0
-              );
-
-
-            restoringPosition =
-              false;
-
-          }
-        );
-
-        return;
-
-      }
-
-
-      restoringPosition =
-        true;
-
-
-      await waitForImages();
-
-
-      function findTarget() {
-
-        const all =
-          messagesElement.querySelectorAll(
-            ".message[data-message-id]"
-          );
-
-
-        for (
-          const element of all
-        ) {
-
-          if (
-            String(
-              element.dataset.messageId
-            ) ===
-            String(
-              saved.messageId
-            )
-          ) {
-
-            return element;
-
-          }
-
-        }
-
-
-        return null;
-
-      }
-
-
-      let target =
-        findTarget();
-
-
-      /*
-        見つからない場合は保存していた
-        scrollTopを使用
-      */
-
-      if (!target) {
-
-        messagesElement.scrollTop =
-          Number(
-            saved.scrollTop || 0
-          );
-
-      } else {
-
-        const containerRect =
-          messagesElement.getBoundingClientRect();
-
-
-        const targetRect =
-          target.getBoundingClientRect();
-
-
-        const currentOffset =
-          targetRect.top -
-          containerRect.top;
-
-
-        const difference =
-          currentOffset -
-          Number(
-            saved.offset || 0
-          );
-
-
-        messagesElement.scrollTop =
-          messagesElement.scrollTop +
-          difference;
-
-      }
-
-
-      /*
-        レイアウト確定後に何度か確認
-      */
-
-      const correctPosition =
-        function() {
-
-          target =
-            findTarget();
-
-
-          if (!target) {
-
-            return;
-
-          }
-
-
-          const containerRect =
-            messagesElement.getBoundingClientRect();
-
-
-          const targetRect =
-            target.getBoundingClientRect();
-
-
-          const currentOffset =
-            targetRect.top -
-            containerRect.top;
-
-
-          const difference =
-            currentOffset -
-            Number(
-              saved.offset || 0
-            );
-
-
-          if (
-            Math.abs(
-              difference
-            ) > 1
-          ) {
-
-            messagesElement.scrollTop =
-              messagesElement.scrollTop +
-              difference;
-
-          }
-
-        };
-
-
-      requestAnimationFrame(
-        function() {
-
-          correctPosition();
-
-
-          requestAnimationFrame(
-            function() {
-
-              correctPosition();
-
-
-              setTimeout(
-                correctPosition,
-                100
-              );
-
-
-              setTimeout(
-                correctPosition,
-                300
-              );
-
-
-              setTimeout(
-                correctPosition,
-                600
-              );
-
-
-              setTimeout(
-                function() {
-
-                  correctPosition();
-
-                  restoringPosition =
-                    false;
-
-                },
-                900
-              );
-
-            }
-          );
-
-        }
-      );
-
-    }
-
-
-    /* =========================================
-       一番下へ
-    ========================================= */
-
-    function scrollToBottom() {
-
-      restoringPosition =
-        true;
-
-
-      function move() {
-
-        messagesElement.scrollTop =
-          messagesElement.scrollHeight;
-
-      }
-
-
-      move();
-
-
-      requestAnimationFrame(
-        function() {
-
-          move();
-
-
-          requestAnimationFrame(
-            function() {
-
-              move();
-
-
-              setTimeout(
-                move,
-                100
-              );
-
-
-              setTimeout(
-                move,
-                300
-              );
-
-
-              setTimeout(
-                function() {
-
-                  move();
-
-                  restoringPosition =
-                    false;
-
-                },
-                500
-              );
-
-            }
-          );
-
-        }
-      );
-
-    }
 
 
     /* =========================================
@@ -1358,13 +807,6 @@
     ========================================= */
 
     async function start() {
-
-      /*
-        ★ページ全体は必ずトップ
-      */
-
-      resetPageScroll();
-
 
       if (!friendId) {
 
@@ -1429,7 +871,9 @@
       }
 
 
-      /* 相手プロフィール */
+      /* =========================
+         相手プロフィール
+      ========================== */
 
       const {
         data: friendProfile
@@ -1467,7 +911,9 @@
       }
 
 
-      /* 自分プロフィール */
+      /* =========================
+         自分プロフィール
+      ========================== */
 
       const {
         data: myProfile
@@ -1552,6 +998,8 @@
           '<div class="empty">まだメッセージがありません</div>';
 
 
+        updateLatestButton();
+
         return;
 
       }
@@ -1569,10 +1017,13 @@
 
 
       /*
-        保存位置を復元
+        最初に開いたときは一番下
       */
 
-      await restoreChatPosition();
+      scrollToBottom();
+
+
+      updateLatestButton();
 
     }
 
@@ -1595,16 +1046,6 @@
         "message";
 
 
-      /*
-        ★メッセージID
-      */
-
-      wrapper.dataset.messageId =
-        String(
-          message.id
-        );
-
-
       const isMine =
         message.sender_id ===
         currentUsername;
@@ -1618,6 +1059,10 @@
 
       }
 
+
+      /* =========================
+         相手のアイコン
+      ========================== */
 
       if (!isMine) {
 
@@ -1635,6 +1080,10 @@
       }
 
 
+      /* =========================
+         吹き出し
+      ========================== */
+
       const bubble =
         document.createElement(
           "div"
@@ -1645,7 +1094,9 @@
         "bubble";
 
 
-      /* 画像 */
+      /* =========================
+         画像
+      ========================== */
 
       if (message.image_url) {
 
@@ -1695,7 +1146,9 @@
       }
 
 
-      /* テキスト */
+      /* =========================
+         テキスト
+      ========================== */
 
       if (message.content) {
 
@@ -1716,7 +1169,9 @@
       }
 
 
-      /* 時刻 */
+      /* =========================
+         時刻
+      ========================== */
 
       const time =
         document.createElement(
@@ -1756,6 +1211,10 @@
         bubble
       );
 
+
+      /* =========================
+         自分のアイコン
+      ========================== */
 
       if (isMine) {
 
@@ -1862,10 +1321,14 @@
 
 
               /*
-                相手から来たら一番下
+                相手から来たら
+                自動的に最新へ
               */
 
               scrollToBottom();
+
+
+              updateLatestButton();
 
             }
           )
@@ -1973,10 +1436,13 @@
 
 
         /*
-          ★送信時は一番下
+          送信したら一番下
         */
 
         scrollToBottom();
+
+
+        updateLatestButton();
 
 
         await createNotification();
@@ -2175,10 +1641,13 @@
 
 
           /*
-            ★画像送信後も一番下
+            画像送信後も最新へ
           */
 
           scrollToBottom();
+
+
+          updateLatestButton();
 
 
           await createNotification();
