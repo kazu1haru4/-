@@ -7,15 +7,29 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box
+}
+
+:root{
+  --theme:#8f7cff;
+  --theme-light:#f0edff;
+  --theme-text:#5e50c9;
+}
+
 html,body{
   margin:0;
   width:100%;
   height:100%;
   overflow:hidden;
   font-family:sans-serif;
-  background:linear-gradient(135deg,#eef7ff,#f7efff)
+  background:linear-gradient(
+    135deg,
+    var(--theme-light),
+    #f7efff
+  )
 }
+
 body{
   display:flex;
   flex-direction:column
@@ -54,7 +68,7 @@ body{
   right:12px;
   border:none;
   padding:9px 12px;
-  background:#6aa9ff;
+  background:var(--theme);
   color:white;
   border-radius:12px;
   font-size:13px;
@@ -97,7 +111,7 @@ body{
   right:18px;
   bottom:18px;
   border:none;
-  background:#6aa9ff;
+  background:var(--theme);
   color:white;
   border-radius:50px;
   padding:11px 15px;
@@ -124,7 +138,7 @@ body{
   width:40px;
   height:40px;
   border-radius:50%;
-  background:#dceaff;
+  background:var(--theme-light);
   display:flex;
   align-items:center;
   justify-content:center;
@@ -164,9 +178,16 @@ body{
   white-space:pre-wrap
 }
 
+.edited-label{
+  color:#999;
+  font-size:10px;
+  margin-left:5px;
+  font-weight:normal
+}
+
 .mention{
-  color:#4d8fe8;
-  background:#eaf3ff;
+  color:var(--theme-text);
+  background:var(--theme-light);
   border-radius:5px;
   padding:1px 3px;
   font-weight:bold
@@ -190,15 +211,15 @@ body{
 
 .read-status{
   margin-top:5px;
-  color:#8a63d2;
+  color:var(--theme-text);
   font-size:11px;
   font-weight:bold;
   text-align:right
 }
 
 .reply-preview{
-  background:#f0f5ff;
-  border-left:4px solid #6aa9ff;
+  background:var(--theme-light);
+  border-left:4px solid var(--theme);
   border-radius:8px;
   padding:7px 9px;
   margin-top:8px;
@@ -207,7 +228,7 @@ body{
 }
 
 .reply-preview strong{
-  color:#5588cc
+  color:var(--theme-text)
 }
 
 .reactions{
@@ -234,7 +255,7 @@ body{
   border-radius:14px;
   padding:7px;
   box-shadow:0 6px 20px rgba(0,0,0,.18);
-  min-width:200px
+  min-width:210px
 }
 
 .message-menu button{
@@ -251,11 +272,15 @@ body{
 
 .message-menu button:hover,
 .message-menu button:active{
-  background:#f0f5ff
+  background:var(--theme-light)
 }
 
 .delete-button{
   color:#d9534f!important
+}
+
+.edit-button{
+  color:var(--theme-text)!important
 }
 
 .reaction-picker{
@@ -317,14 +342,14 @@ body{
 
 .mention-item:hover,
 .mention-item:active{
-  background:#f0f5ff
+  background:var(--theme-light)
 }
 
 .mention-avatar{
   width:34px;
   height:34px;
   border-radius:50%;
-  background:#dceaff;
+  background:var(--theme-light);
   display:flex;
   align-items:center;
   justify-content:center;
@@ -371,14 +396,14 @@ body{
 }
 
 #messageInput:focus{
-  border-color:#6aa9ff
+  border-color:var(--theme)
 }
 
 #imageButton{
   width:48px;
   border:none;
-  background:#f0f5ff;
-  color:#5588cc;
+  background:var(--theme-light);
+  color:var(--theme-text);
   border-radius:12px;
   font-size:21px;
   cursor:pointer
@@ -386,7 +411,7 @@ body{
 
 #sendButton{
   border:none;
-  background:#6aa9ff;
+  background:var(--theme);
   color:white;
   border-radius:12px;
   padding:0 18px;
@@ -424,8 +449,8 @@ body{
   align-items:center;
   justify-content:space-between;
   gap:10px;
-  background:#f0f5ff;
-  border-left:4px solid #6aa9ff;
+  background:var(--theme-light);
+  border-left:4px solid var(--theme);
   border-radius:8px;
   padding:8px 10px
 }
@@ -440,7 +465,7 @@ body{
 }
 
 .reply-text strong{
-  color:#5588cc
+  color:var(--theme-text)
 }
 
 #cancelReplyButton{
@@ -489,7 +514,7 @@ body{
   display:flex;
   align-items:center;
   gap:10px;
-  background:#f5f8ff;
+  background:var(--theme-light);
   border-radius:12px;
   padding:10px;
   margin-bottom:8px
@@ -499,7 +524,7 @@ body{
   width:38px;
   height:38px;
   border-radius:50%;
-  background:#dceaff;
+  background:var(--theme-light);
   display:flex;
   align-items:center;
   justify-content:center;
@@ -546,7 +571,6 @@ body{
   color:#999
 }
 
-/* ★ 最終オンライン */
 .last-online{
   font-size:11px;
   color:#999;
@@ -571,6 +595,11 @@ body{
   margin-bottom:10px
 }
 
+#memberInput:focus{
+  outline:none;
+  border-color:var(--theme)
+}
+
 .modal-buttons{
   display:flex;
   gap:8px
@@ -586,26 +615,13 @@ body{
 }
 
 #addMemberButton{
-  background:#6aa9ff;
+  background:var(--theme);
   color:white
 }
 
 #closeModalButton{
   background:#eee;
   color:#555
-}
-
-.add-section{
-  border-top:1px solid #eee;
-  margin-top:15px;
-  padding-top:15px
-}
-
-.add-section-title{
-  font-size:14px;
-  font-weight:bold;
-  color:#555;
-  margin-bottom:8px
 }
 </style>
 </head>
@@ -740,6 +756,80 @@ SUPABASE_URL,
 SUPABASE_KEY
 );
 
+/* =========================
+   テーマカラー
+========================= */
+
+const themes = {
+
+  pink:{
+    main:"#ff82b2",
+    light:"#fff0f7",
+    text:"#e34f85"
+  },
+
+  purple:{
+    main:"#8f7cff",
+    light:"#f0edff",
+    text:"#5e50c9"
+  },
+
+  blue:{
+    main:"#5c9eff",
+    light:"#eef5ff",
+    text:"#397bd8"
+  },
+
+  green:{
+    main:"#48c78e",
+    light:"#eef9f3",
+    text:"#279b68"
+  },
+
+  orange:{
+    main:"#ff9b52",
+    light:"#fff4e8",
+    text:"#df7628"
+  },
+
+  cyan:{
+    main:"#36c9d8",
+    light:"#eafcff",
+    text:"#1599a8"
+  }
+
+};
+
+function applyTheme(themeName){
+
+  const theme =
+    themes[themeName] ||
+    themes.purple;
+
+  document.documentElement.style.setProperty(
+    "--theme",
+    theme.main
+  );
+
+  document.documentElement.style.setProperty(
+    "--theme-light",
+    theme.light
+  );
+
+  document.documentElement.style.setProperty(
+    "--theme-text",
+    theme.text
+  );
+}
+
+applyTheme(
+  localStorage.getItem(
+    "friendChatTheme"
+  ) || "purple"
+);
+
+/* ========================= */
+
 const params =
 new URLSearchParams(
 window.location.search
@@ -801,6 +891,7 @@ document.getElementById("mentionList");
 
 let currentUsername = "";
 let replyingToMessage = null;
+let editingMessage = null;
 let groupMembersCache = [];
 let presenceTimer = null;
 
@@ -811,14 +902,14 @@ const groupReadCounts = {};
    オンライン判定
 ========================= */
 
-function isOnline(lastSeen) {
+function isOnline(lastSeen){
 
   if (!lastSeen) return false;
 
   const time =
     new Date(lastSeen).getTime();
 
-  if (Number.isNaN(time)) {
+  if (Number.isNaN(time)){
     return false;
   }
 
@@ -828,40 +919,40 @@ function isOnline(lastSeen) {
 }
 
 /* =========================
-   最終オンライン表示
+   最終オンライン
 ========================= */
 
-function formatLastOnline(lastSeen) {
+function formatLastOnline(lastSeen){
 
-  if (!lastSeen) {
+  if (!lastSeen){
     return "最終オンライン：不明";
   }
 
   const time =
     new Date(lastSeen).getTime();
 
-  if (Number.isNaN(time)) {
+  if (Number.isNaN(time)){
     return "最終オンライン：不明";
   }
 
   const diff =
     Date.now() - time;
 
-  if (diff < 0) {
+  if (diff < 0){
     return "最終オンライン：たった今";
   }
 
   const seconds =
     Math.floor(diff / 1000);
 
-  if (seconds < 60) {
+  if (seconds < 60){
     return "最終オンライン：たった今";
   }
 
   const minutes =
     Math.floor(seconds / 60);
 
-  if (minutes < 60) {
+  if (minutes < 60){
     return (
       "最終オンライン：" +
       minutes +
@@ -872,7 +963,7 @@ function formatLastOnline(lastSeen) {
   const hours =
     Math.floor(minutes / 60);
 
-  if (hours < 24) {
+  if (hours < 24){
     return (
       "最終オンライン：" +
       hours +
@@ -883,7 +974,7 @@ function formatLastOnline(lastSeen) {
   const days =
     Math.floor(hours / 24);
 
-  if (days < 30) {
+  if (days < 30){
     return (
       "最終オンライン：" +
       days +
@@ -899,7 +990,7 @@ function formatLastOnline(lastSeen) {
     date.getFullYear() +
     "/" +
     String(
-      date.getMonth() + 1
+      date.getMonth()+1
     ).padStart(2,"0") +
     "/" +
     String(
@@ -912,7 +1003,7 @@ function formatLastOnline(lastSeen) {
    自分のオンライン状態
 ========================= */
 
-async function updateMyPresence() {
+async function updateMyPresence(){
 
   if (!currentUsername) return;
 
@@ -921,7 +1012,7 @@ async function updateMyPresence() {
       .from("user_presence")
       .upsert(
         {
-          user_id: currentUsername,
+          user_id:currentUsername,
           last_seen:
             new Date().toISOString()
         },
@@ -930,8 +1021,7 @@ async function updateMyPresence() {
         }
       );
 
-  if (error) {
-
+  if (error){
     console.error(
       "オンライン状態更新エラー:",
       error
@@ -943,7 +1033,7 @@ async function updateMyPresence() {
    プロフィール
 ========================= */
 
-async function getProfile(username) {
+async function getProfile(username){
 
   if (!username) return null;
 
@@ -952,7 +1042,7 @@ async function getProfile(username) {
       profileCache,
       username
     )
-  ) {
+  ){
     return profileCache[username];
   }
 
@@ -962,7 +1052,10 @@ async function getProfile(username) {
       .select(
         "user_id,name,avatar_url"
       )
-      .eq("user_id",username)
+      .eq(
+        "user_id",
+        username
+      )
       .maybeSingle();
 
   profileCache[username] =
@@ -971,7 +1064,7 @@ async function getProfile(username) {
   return data || null;
 }
 
-function createAvatar(profile) {
+function createAvatar(profile){
 
   const avatar =
     document.createElement("div");
@@ -979,7 +1072,7 @@ function createAvatar(profile) {
   avatar.className =
     "message-avatar";
 
-  if (profile?.avatar_url) {
+  if (profile?.avatar_url){
 
     const img =
       document.createElement("img");
@@ -992,9 +1085,10 @@ function createAvatar(profile) {
 
     avatar.appendChild(img);
 
-  } else {
+  }else{
 
-    avatar.textContent = "👤";
+    avatar.textContent =
+      "👤";
   }
 
   return avatar;
@@ -1004,16 +1098,19 @@ function createAvatar(profile) {
    グループ
 ========================= */
 
-async function loadGroup() {
+async function loadGroup(){
 
   const { data,error } =
     await supabaseClient
       .from("groups")
       .select("name")
-      .eq("id",Number(groupId))
+      .eq(
+        "id",
+        Number(groupId)
+      )
       .single();
 
-  if (error || !data) {
+  if (error || !data){
 
     console.error(
       "グループ取得エラー:",
@@ -1031,18 +1128,21 @@ async function loadGroup() {
 }
 
 /* =========================
-   メンバー取得
+   メンバー
 ========================= */
 
-async function getGroupMembers() {
+async function getGroupMembers(){
 
   const { data,error } =
     await supabaseClient
       .from("group_members")
       .select("user_id")
-      .eq("group_id",Number(groupId));
+      .eq(
+        "group_id",
+        Number(groupId)
+      );
 
-  if (error) {
+  if (error){
 
     console.error(
       "メンバー取得エラー:",
@@ -1064,13 +1164,13 @@ async function getGroupMembers() {
 
 async function loadGroupReadCounts(
   messageIds
-) {
+){
 
   for (
     const key of Object.keys(
       groupReadCounts
     )
-  ) {
+  ){
     delete groupReadCounts[key];
   }
 
@@ -1087,7 +1187,7 @@ async function loadGroupReadCounts(
         messageIds
       );
 
-  if (error) {
+  if (error){
 
     console.error(
       "グループ既読取得エラー:",
@@ -1097,12 +1197,14 @@ async function loadGroupReadCounts(
     return;
   }
 
-  for (const read of data || []) {
+  for (
+    const read of data || []
+  ){
 
     if (
       read.user_id ===
       currentUsername
-    ) {
+    ){
       continue;
     }
 
@@ -1111,8 +1213,7 @@ async function loadGroupReadCounts(
         read.group_message_id
       );
 
-    if (!groupReadCounts[id]) {
-
+    if (!groupReadCounts[id]){
       groupReadCounts[id] =
         new Set();
     }
@@ -1125,12 +1226,12 @@ async function loadGroupReadCounts(
 
 async function markGroupMessagesAsRead(
   messagesData
-) {
+){
 
   if (
     !currentUsername ||
     !messagesData?.length
-  ) {
+  ){
     return;
   }
 
@@ -1142,7 +1243,7 @@ async function markGroupMessagesAsRead(
           currentUsername
     );
 
-  if (!unreadMessages.length) {
+  if (!unreadMessages.length){
     return;
   }
 
@@ -1168,8 +1269,7 @@ async function markGroupMessagesAsRead(
         }
       );
 
-  if (error) {
-
+  if (error){
     console.error(
       "グループ既読登録エラー:",
       error
@@ -1183,7 +1283,7 @@ async function markGroupMessagesAsRead(
 
 function scrollToBottom(
   smooth=false
-) {
+){
 
   messages.scrollTo({
     top:
@@ -1197,20 +1297,20 @@ function scrollToBottom(
   updateLatestButton();
 }
 
-function updateLatestButton() {
+function updateLatestButton(){
 
   const distance =
     messages.scrollHeight -
     messages.scrollTop -
     messages.clientHeight;
 
-  if (distance > 150) {
+  if (distance > 150){
 
     latestButton.classList.add(
       "show"
     );
 
-  } else {
+  }else{
 
     latestButton.classList.remove(
       "show"
@@ -1233,19 +1333,24 @@ latestButton.addEventListener(
    メッセージ読み込み
 ========================= */
 
-async function loadMessages() {
+async function loadMessages(){
 
   const { data,error } =
     await supabaseClient
       .from("group_messages")
       .select("*")
-      .eq("group_id",Number(groupId))
+      .eq(
+        "group_id",
+        Number(groupId)
+      )
       .order(
         "created_at",
-        {ascending:true}
+        {
+          ascending:true
+        }
       );
 
-  if (error) {
+  if (error){
 
     console.error(
       "メッセージ読み込みエラー:",
@@ -1263,7 +1368,8 @@ async function loadMessages() {
 
   const messageIds =
     messageData.map(
-      message => message.id
+      message =>
+        message.id
     );
 
   await loadGroupReadCounts(
@@ -1282,7 +1388,7 @@ async function loadMessages() {
 
   for (
     const message of messageData
-  ) {
+  ){
     await addMessage(message);
   }
 
@@ -1293,24 +1399,26 @@ async function loadMessages() {
 }
 
 /* =========================
-   メンション
+   メンション表示
 ========================= */
 
 function appendMentionContent(
   element,
   text
-) {
+){
 
   const parts =
     text.split(
       /(@[A-Za-z0-9_]+)/g
     );
 
-  for (const part of parts) {
+  for (
+    const part of parts
+  ){
 
     if (
       /^@[A-Za-z0-9_]+$/.test(part)
-    ) {
+    ){
 
       const mention =
         document.createElement("span");
@@ -1325,7 +1433,7 @@ function appendMentionContent(
         mention
       );
 
-    } else {
+    }else{
 
       element.appendChild(
         document.createTextNode(part)
@@ -1335,18 +1443,104 @@ function appendMentionContent(
 }
 
 /* =========================
+   編集
+========================= */
+
+async function editMessage(
+  message
+){
+
+  if (
+    !message ||
+    message.sender_id !==
+      currentUsername
+  ){
+    return;
+  }
+
+  if (
+    message.is_deleted ||
+    !message.content
+  ){
+    return;
+  }
+
+  const newText =
+    window.prompt(
+      "メッセージを編集してください。",
+      message.content
+    );
+
+  if (newText === null){
+    return;
+  }
+
+  const text =
+    newText.trim();
+
+  if (!text){
+
+    alert(
+      "メッセージを空にはできません。"
+    );
+
+    return;
+  }
+
+  if (text === message.content){
+    return;
+  }
+
+  const { error } =
+    await supabaseClient
+      .from("group_messages")
+      .update({
+        content:text,
+        edited_at:
+          new Date().toISOString()
+      })
+      .eq(
+        "id",
+        message.id
+      )
+      .eq(
+        "sender_id",
+        currentUsername
+      );
+
+  if (error){
+
+    console.error(
+      "メッセージ編集エラー:",
+      error
+    );
+
+    alert(
+      "メッセージを編集できませんでした。\n\n" +
+      error.message
+    );
+
+    return;
+  }
+
+  await loadMessages();
+
+  scrollToBottom(true);
+}
+
+/* =========================
    送信取り消し
 ========================= */
 
 async function deleteMessage(
   messageId
-) {
+){
 
   if (
     !window.confirm(
       "このメッセージを取り消しますか？"
     )
-  ) {
+  ){
     return;
   }
 
@@ -1356,13 +1550,16 @@ async function deleteMessage(
       .update({
         is_deleted:true
       })
-      .eq("id",messageId)
+      .eq(
+        "id",
+        messageId
+      )
       .eq(
         "sender_id",
         currentUsername
       );
 
-  if (error) {
+  if (error){
 
     alert(
       "送信取り消しに失敗しました。\n\n" +
@@ -1373,6 +1570,7 @@ async function deleteMessage(
   }
 
   await loadMessages();
+
   scrollToBottom(true);
 }
 
@@ -1380,7 +1578,9 @@ async function deleteMessage(
    メッセージ表示
 ========================= */
 
-async function addMessage(message) {
+async function addMessage(
+  message
+){
 
   const profile =
     await getProfile(
@@ -1416,9 +1616,27 @@ async function addMessage(message) {
       : "@" +
         message.sender_id;
 
+  if (
+    message.edited_at
+  ){
+
+    const edited =
+      document.createElement("span");
+
+    edited.className =
+      "edited-label";
+
+    edited.textContent =
+      "（編集済み）";
+
+    sender.appendChild(
+      edited
+    );
+  }
+
   box.appendChild(sender);
 
-  if (message.is_deleted) {
+  if (message.is_deleted){
 
     const deleted =
       document.createElement("div");
@@ -1438,7 +1656,7 @@ async function addMessage(message) {
     return;
   }
 
-  if (message.image_url) {
+  if (message.image_url){
 
     const {
       data:signedData
@@ -1450,7 +1668,7 @@ async function addMessage(message) {
           3600
         );
 
-    if (signedData?.signedUrl) {
+    if (signedData?.signedUrl){
 
       const image =
         document.createElement("img");
@@ -1474,7 +1692,7 @@ async function addMessage(message) {
     }
   }
 
-  if (message.content) {
+  if (message.content){
 
     const content =
       document.createElement("div");
@@ -1493,7 +1711,7 @@ async function addMessage(message) {
   if (
     message.sender_id ===
     currentUsername
-  ) {
+  ){
 
     const readSet =
       groupReadCounts[
@@ -1505,7 +1723,7 @@ async function addMessage(message) {
         ? readSet.size
         : 0;
 
-    if (readCount > 0) {
+    if (readCount > 0){
 
       const readStatus =
         document.createElement("div");
@@ -1536,12 +1754,14 @@ async function addMessage(message) {
       )
       .order(
         "created_at",
-        {ascending:true}
+        {
+          ascending:true
+        }
       );
 
   for (
     const reply of replies || []
-  ) {
+  ){
 
     const replyBox =
       document.createElement("div");
@@ -1584,7 +1804,7 @@ async function addMessage(message) {
         message.id
       );
 
-  if (reactions?.length) {
+  if (reactions?.length){
 
     const reactionArea =
       document.createElement("div");
@@ -1596,7 +1816,7 @@ async function addMessage(message) {
 
     for (
       const reaction of reactions
-    ) {
+    ){
 
       counts[
         reaction.reaction
@@ -1612,7 +1832,7 @@ async function addMessage(message) {
       const emoji of Object.keys(
         counts
       )
-    ) {
+    ){
 
       const item =
         document.createElement("div");
@@ -1667,10 +1887,55 @@ async function addMessage(message) {
     replyButton
   );
 
+  /* 自分のメッセージだけ編集可能 */
+
+  if (
+    message.sender_id ===
+    currentUsername &&
+    !message.image_url &&
+    message.content
+  ){
+
+    const editButton =
+      document.createElement("button");
+
+    editButton.type =
+      "button";
+
+    editButton.className =
+      "edit-button";
+
+    editButton.textContent =
+      "✏️ 編集";
+
+    editButton.addEventListener(
+      "click",
+      async event => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        menu.style.display =
+          "none";
+
+        picker.style.display =
+          "none";
+
+        await editMessage(
+          message
+        );
+      }
+    );
+
+    menu.appendChild(
+      editButton
+    );
+  }
+
   if (
     message.sender_id ===
     currentUsername
-  ) {
+  ){
 
     const deleteButton =
       document.createElement("button");
@@ -1722,7 +1987,7 @@ async function addMessage(message) {
       "😮",
       "😢"
     ]
-  ) {
+  ){
 
     const button =
       document.createElement("button");
@@ -1803,7 +2068,7 @@ async function addMessage(message) {
         .forEach(
           other => {
 
-            if (other !== menu) {
+            if (other !== menu){
               other.style.display =
                 "none";
             }
@@ -1817,7 +2082,7 @@ async function addMessage(message) {
         .forEach(
           other => {
 
-            if (other !== picker) {
+            if (other !== picker){
               other.style.display =
                 "none";
             }
@@ -1850,7 +2115,7 @@ async function addMessage(message) {
 async function addReaction(
   messageId,
   emoji
-) {
+){
 
   const { data:existing } =
     await supabaseClient
@@ -1870,7 +2135,7 @@ async function addReaction(
       )
       .maybeSingle();
 
-  if (existing) {
+  if (existing){
 
     await supabaseClient
       .from("group_reactions")
@@ -1895,7 +2160,7 @@ async function addReaction(
           emoji
       });
 
-  if (error) {
+  if (error){
 
     alert(
       "リアクションを追加できませんでした。\n" +
@@ -1908,7 +2173,12 @@ async function addReaction(
    返信
 ========================= */
 
-function startReply(message) {
+function startReply(
+  message
+){
+
+  editingMessage =
+    null;
 
   replyingToMessage =
     message;
@@ -1958,6 +2228,9 @@ cancelReplyButton.addEventListener(
     replyingToMessage =
       null;
 
+    editingMessage =
+      null;
+
     replyArea.style.display =
       "none";
 
@@ -1974,14 +2247,14 @@ cancelReplyButton.addEventListener(
 
 async function createGroupReplyNotification(
   message
-) {
+){
 
   if (
     !message ||
     !currentUsername ||
     message.sender_id ===
       currentUsername
-  ) {
+  ){
     return;
   }
 
@@ -2006,12 +2279,12 @@ async function createGroupReplyNotification(
     });
 }
 
-async function createGroupNotifications() {
+async function createGroupNotifications(){
 
   if (
     !currentUsername ||
     !groupId
-  ) {
+  ){
     return;
   }
 
@@ -2019,7 +2292,10 @@ async function createGroupNotifications() {
     await supabaseClient
       .from("groups")
       .select("name")
-      .eq("id",Number(groupId))
+      .eq(
+        "id",
+        Number(groupId)
+      )
       .maybeSingle();
 
   const { data:members } =
@@ -2065,7 +2341,7 @@ async function createGroupNotifications() {
         })
       );
 
-  if (!notifications.length) {
+  if (!notifications.length){
     return;
   }
 
@@ -2080,7 +2356,7 @@ async function createGroupNotifications() {
    メンション
 ========================= */
 
-function getMentionQuery() {
+function getMentionQuery(){
 
   const text =
     messageInput.value;
@@ -2089,7 +2365,10 @@ function getMentionQuery() {
     messageInput.selectionStart;
 
   const beforeCursor =
-    text.slice(0,cursor);
+    text.slice(
+      0,
+      cursor
+    );
 
   const match =
     beforeCursor.match(
@@ -2101,12 +2380,12 @@ function getMentionQuery() {
   return match[1].toLowerCase();
 }
 
-async function showMentionSuggestions() {
+async function showMentionSuggestions(){
 
   const query =
     getMentionQuery();
 
-  if (query === null) {
+  if (query === null){
 
     mentionList.classList.remove(
       "show"
@@ -2118,7 +2397,7 @@ async function showMentionSuggestions() {
     return;
   }
 
-  if (!groupMembersCache.length) {
+  if (!groupMembersCache.length){
     await getGroupMembers();
   }
 
@@ -2140,7 +2419,7 @@ async function showMentionSuggestions() {
   mentionList.innerHTML =
     "";
 
-  if (!candidates.length) {
+  if (!candidates.length){
 
     mentionList.classList.remove(
       "show"
@@ -2151,7 +2430,7 @@ async function showMentionSuggestions() {
 
   for (
     const member of candidates
-  ) {
+  ){
 
     const profile =
       await getProfile(
@@ -2177,7 +2456,7 @@ async function showMentionSuggestions() {
     avatar.className =
       "mention-avatar";
 
-    if (profile?.avatar_url) {
+    if (profile?.avatar_url){
 
       const img =
         document.createElement(
@@ -2192,7 +2471,7 @@ async function showMentionSuggestions() {
 
       avatar.appendChild(img);
 
-    } else {
+    }else{
 
       avatar.textContent =
         "👤";
@@ -2258,7 +2537,7 @@ async function showMentionSuggestions() {
 
 function insertMention(
   username
-) {
+){
 
   const cursor =
     messageInput.selectionStart;
@@ -2267,7 +2546,10 @@ function insertMention(
     messageInput.value;
 
   const before =
-    text.slice(0,cursor);
+    text.slice(
+      0,
+      cursor
+    );
 
   const after =
     text.slice(cursor);
@@ -2318,7 +2600,7 @@ messageInput.addEventListener(
 
 function extractMentionUsernames(
   text
-) {
+){
 
   if (!text) return [];
 
@@ -2339,14 +2621,14 @@ function extractMentionUsernames(
 
 async function createMentionNotifications(
   text
-) {
+){
 
   const mentioned =
     extractMentionUsernames(
       text
     );
 
-  if (!mentioned.length) {
+  if (!mentioned.length){
     return;
   }
 
@@ -2371,7 +2653,7 @@ async function createMentionNotifications(
         memberIds.has(username)
     );
 
-  if (!targets.length) {
+  if (!targets.length){
     return;
   }
 
@@ -2379,7 +2661,10 @@ async function createMentionNotifications(
     await supabaseClient
       .from("groups")
       .select("name")
-      .eq("id",Number(groupId))
+      .eq(
+        "id",
+        Number(groupId)
+      )
       .maybeSingle();
 
   const notifications =
@@ -2419,14 +2704,14 @@ async function createMentionNotifications(
    送信
 ========================= */
 
-async function sendMessage() {
+async function sendMessage(){
 
   const text =
     messageInput.value.trim();
 
   if (!text) return;
 
-  if (!currentUsername) {
+  if (!currentUsername){
 
     alert(
       "ユーザー情報を取得できていません。"
@@ -2442,7 +2727,7 @@ async function sendMessage() {
     "show"
   );
 
-  if (replyingToMessage) {
+  if (replyingToMessage){
 
     const targetMessage =
       replyingToMessage;
@@ -2459,7 +2744,7 @@ async function sendMessage() {
             text
         });
 
-    if (error) {
+    if (error){
 
       alert(
         "返信を送信できませんでした。\n\n" +
@@ -2516,14 +2801,14 @@ async function sendMessage() {
           false
       });
 
-  if (error) {
+  if (error){
 
     alert(
       "送信できませんでした。\n\n" +
       error.message
     );
 
-  } else {
+  }else{
 
     messageInput.value =
       "";
@@ -2568,7 +2853,7 @@ imageInput.addEventListener(
       !file.type.startsWith(
         "image/"
       )
-    ) {
+    ){
 
       alert(
         "画像ファイルを選んでください。"
@@ -2586,7 +2871,7 @@ imageInput.addEventListener(
     sendButton.disabled =
       true;
 
-    try {
+    try{
 
       const extension =
         file.name.split(".").pop() ||
@@ -2621,7 +2906,7 @@ imageInput.addEventListener(
             }
           );
 
-      if (uploadError) {
+      if (uploadError){
 
         alert(
           "画像をアップロードできませんでした。\n\n" +
@@ -2645,7 +2930,7 @@ imageInput.addEventListener(
             is_deleted:false
           });
 
-      if (error) {
+      if (error){
 
         alert(
           "画像メッセージを保存できませんでした。\n\n" +
@@ -2661,7 +2946,7 @@ imageInput.addEventListener(
 
       createGroupNotifications();
 
-    } finally {
+    }finally{
 
       imageButton.disabled =
         false;
@@ -2679,7 +2964,7 @@ imageInput.addEventListener(
    リアルタイム
 ========================= */
 
-function startRealtime() {
+function startRealtime(){
 
   supabaseClient
     .channel(
@@ -2757,7 +3042,7 @@ function startRealtime() {
             message.group_id
           ) !==
             String(groupId)
-        ) {
+        ){
           return;
         }
 
@@ -2766,7 +3051,7 @@ function startRealtime() {
             currentUsername ||
           read.user_id ===
             currentUsername
-        ) {
+        ){
           return;
         }
 
@@ -2777,7 +3062,7 @@ function startRealtime() {
 
         if (
           !groupReadCounts[id]
-        ) {
+        ){
 
           groupReadCounts[id] =
             new Set();
@@ -2795,11 +3080,10 @@ function startRealtime() {
 }
 
 /* =========================
-   ★ メンバー一覧
-   オンライン＋最終オンライン
+   メンバー一覧
 ========================= */
 
-async function loadMembers() {
+async function loadMembers(){
 
   memberList.innerHTML =
     '<div class="member-loading">読み込み中...</div>';
@@ -2816,7 +3100,7 @@ async function loadMembers() {
         Number(groupId)
       );
 
-  if (error) {
+  if (error){
 
     console.error(
       "メンバー取得エラー:",
@@ -2835,7 +3119,7 @@ async function loadMembers() {
   if (
     !members ||
     !members.length
-  ) {
+  ){
 
     memberList.innerHTML =
       '<div class="member-empty">まだメンバーがいません。</div>';
@@ -2863,7 +3147,7 @@ async function loadMembers() {
         memberIds
       );
 
-  if (presenceError) {
+  if (presenceError){
 
     console.error(
       "オンライン状態取得エラー:",
@@ -2876,7 +3160,7 @@ async function loadMembers() {
   for (
     const presence of
       presenceData || []
-  ) {
+  ){
 
     presenceMap[
       presence.user_id
@@ -2889,7 +3173,7 @@ async function loadMembers() {
 
   for (
     const member of members
-  ) {
+  ){
 
     const profile =
       await getProfile(
@@ -2904,8 +3188,6 @@ async function loadMembers() {
     item.className =
       "member-item";
 
-    /* アイコン */
-
     const icon =
       document.createElement(
         "div"
@@ -2916,7 +3198,7 @@ async function loadMembers() {
 
     if (
       profile?.avatar_url
-    ) {
+    ){
 
       const img =
         document.createElement(
@@ -2931,13 +3213,11 @@ async function loadMembers() {
 
       icon.appendChild(img);
 
-    } else {
+    }else{
 
       icon.textContent =
         "👤";
     }
-
-    /* 名前・ID */
 
     const info =
       document.createElement(
@@ -2971,8 +3251,6 @@ async function loadMembers() {
       "@" +
       member.user_id;
 
-    /* オンライン状態 */
-
     const status =
       document.createElement(
         "div"
@@ -2988,7 +3266,7 @@ async function loadMembers() {
 
     if (
       isOnline(lastSeen)
-    ) {
+    ){
 
       status.classList.add(
         "online"
@@ -2997,7 +3275,7 @@ async function loadMembers() {
       status.textContent =
         "🟢 オンライン";
 
-    } else {
+    }else{
 
       status.classList.add(
         "offline"
@@ -3006,8 +3284,6 @@ async function loadMembers() {
       status.textContent =
         "⚪ オフライン";
     }
-
-    /* ★ 最終オンライン */
 
     const lastOnline =
       document.createElement(
@@ -3019,12 +3295,12 @@ async function loadMembers() {
 
     if (
       isOnline(lastSeen)
-    ) {
+    ){
 
       lastOnline.textContent =
         "最終オンライン：今";
 
-    } else {
+    }else{
 
       lastOnline.textContent =
         formatLastOnline(
@@ -3032,33 +3308,15 @@ async function loadMembers() {
         );
     }
 
-    info.appendChild(
-      name
-    );
+    info.appendChild(name);
+    info.appendChild(id);
+    info.appendChild(status);
+    info.appendChild(lastOnline);
 
-    info.appendChild(
-      id
-    );
+    item.appendChild(icon);
+    item.appendChild(info);
 
-    info.appendChild(
-      status
-    );
-
-    info.appendChild(
-      lastOnline
-    );
-
-    item.appendChild(
-      icon
-    );
-
-    item.appendChild(
-      info
-    );
-
-    memberList.appendChild(
-      item
-    );
+    memberList.appendChild(item);
   }
 }
 
@@ -3066,12 +3324,12 @@ async function loadMembers() {
    メンバー追加
 ========================= */
 
-async function addMember() {
+async function addMember(){
 
   const friendId =
     memberInput.value.trim();
 
-  if (!friendId) {
+  if (!friendId){
 
     alert(
       "追加するユーザーIDを入力してね。"
@@ -3083,7 +3341,7 @@ async function addMember() {
   if (
     friendId ===
     currentUsername
-  ) {
+  ){
 
     alert(
       "自分はすでにメンバーだよ。"
@@ -3110,7 +3368,7 @@ async function addMember() {
       )
       .maybeSingle();
 
-  if (profileError) {
+  if (profileError){
 
     alert(
       "ユーザーを確認できませんでした。\n" +
@@ -3123,7 +3381,7 @@ async function addMember() {
     return;
   }
 
-  if (!profile) {
+  if (!profile){
 
     alert(
       "そのユーザーIDは見つかりません。"
@@ -3149,7 +3407,7 @@ async function addMember() {
       )
       .maybeSingle();
 
-  if (existing) {
+  if (existing){
 
     alert(
       "そのユーザーはすでにメンバーだよ。"
@@ -3171,7 +3429,7 @@ async function addMember() {
           friendId
       });
 
-  if (error) {
+  if (error){
 
     alert(
       "メンバーを追加できませんでした。\n" +
@@ -3235,7 +3493,7 @@ memberModal.addEventListener(
     if (
       event.target ===
       memberModal
-    ) {
+    ){
 
       memberModal.style.display =
         "none";
@@ -3252,7 +3510,7 @@ memberInput.addEventListener(
   "keydown",
   event => {
 
-    if (event.key === "Enter") {
+    if (event.key === "Enter"){
 
       event.preventDefault();
 
@@ -3274,7 +3532,7 @@ messageInput.addEventListener(
   "keydown",
   event => {
 
-    if (event.key === "Enter") {
+    if (event.key === "Enter"){
 
       event.preventDefault();
 
@@ -3321,9 +3579,9 @@ document.addEventListener(
    起動
 ========================= */
 
-async function start() {
+async function start(){
 
-  if (!groupId) {
+  if (!groupId){
 
     groupName.textContent =
       "グループが見つかりません";
@@ -3341,7 +3599,7 @@ async function start() {
   if (
     error ||
     !data.session
-  ) {
+  ){
 
     window.location.href =
       "index.html";
@@ -3354,7 +3612,7 @@ async function start() {
       .user_metadata
       ?.username || "";
 
-  if (!currentUsername) {
+  if (!currentUsername){
 
     alert(
       "ユーザー情報を取得できませんでした。"
@@ -3375,25 +3633,16 @@ async function start() {
 
   startRealtime();
 
-  /*
-    30秒ごとにオンライン更新
-  */
-
   presenceTimer =
     setInterval(
       async () => {
 
         await updateMyPresence();
 
-        /*
-          メンバー一覧を開いているときだけ
-          最終オンラインも更新
-        */
-
         if (
           memberModal.style.display ===
           "flex"
-        ) {
+        ){
 
           await loadMembers();
         }
@@ -3407,7 +3656,7 @@ window.addEventListener(
   "pagehide",
   () => {
 
-    if (presenceTimer) {
+    if (presenceTimer){
 
       clearInterval(
         presenceTimer
