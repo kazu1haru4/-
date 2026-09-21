@@ -21,7 +21,6 @@
 
     body {
       min-height: 100dvh;
-
       font-family:
         -apple-system,
         BlinkMacSystemFont,
@@ -29,25 +28,18 @@
         "Hiragino Kaku Gothic ProN",
         "Yu Gothic",
         sans-serif;
-
-      background:
-        linear-gradient(135deg, #fff3fb, #eef5ff);
-
+      background: linear-gradient(135deg, #fff3fb, #eef5ff);
       color: #333;
     }
 
     .container {
       width: 100%;
       max-width: 600px;
-
       height: 100dvh;
       min-height: 0;
-
       margin: 0 auto;
-
       display: flex;
       flex-direction: column;
-
       overflow: hidden;
     }
 
@@ -57,21 +49,12 @@
 
     .header {
       position: relative;
-
       flex-shrink: 0;
-
       background: white;
-
       padding: 12px 18px;
-
-      padding-top:
-        max(12px, env(safe-area-inset-top));
-
+      padding-top: max(12px, env(safe-area-inset-top));
       text-align: center;
-
-      box-shadow:
-        0 3px 10px rgba(0,0,0,0.06);
-
+      box-shadow: 0 3px 10px rgba(0,0,0,0.06);
       z-index: 5;
     }
 
@@ -82,104 +65,75 @@
 
     .home-button {
       position: absolute;
-
-      top:
-        max(12px, env(safe-area-inset-top));
-
+      top: max(12px, env(safe-area-inset-top));
       left: 12px;
-
       padding: 9px 12px;
-
       background: #f5f5f5;
       color: #555;
-
       text-decoration: none;
-
       border-radius: 12px;
-
       font-size: 13px;
       font-weight: bold;
     }
 
     .profile-header {
       margin-top: 8px;
-
       display: flex;
       justify-content: center;
       align-items: center;
-
       gap: 9px;
     }
 
     .header-avatar {
       width: 38px;
       height: 38px;
-
       border-radius: 50%;
-
       background: #eee8ff;
-
       display: flex;
       align-items: center;
       justify-content: center;
-
       overflow: hidden;
-
       font-size: 20px;
-
       flex-shrink: 0;
     }
 
     .header-avatar img {
       width: 100%;
       height: 100%;
-
       object-fit: cover;
     }
 
     /* =========================
-       メッセージエリア
+       メッセージ
     ========================= */
 
     .messages-wrapper {
       position: relative;
-
       flex: 1 1 auto;
-
       min-height: 0;
-
       overflow: hidden;
     }
 
     .messages {
       width: 100%;
       height: 100%;
-
       padding: 18px;
-
       overflow-y: auto;
       overflow-x: hidden;
-
       -webkit-overflow-scrolling: touch;
-
       overscroll-behavior-y: contain;
     }
 
     .empty {
       text-align: center;
-
       color: #999;
-
       margin-top: 40px;
     }
 
     .message {
       display: flex;
-
       align-items: flex-end;
-
       gap: 7px;
-
       margin-bottom: 12px;
     }
 
@@ -190,41 +144,35 @@
     .message-avatar {
       width: 34px;
       height: 34px;
-
       border-radius: 50%;
-
       background: #eee8ff;
-
       display: flex;
       align-items: center;
       justify-content: center;
-
       overflow: hidden;
-
       flex-shrink: 0;
-
       font-size: 18px;
     }
 
     .message-avatar img {
       width: 100%;
       height: 100%;
-
       object-fit: cover;
     }
 
-    .bubble {
+    .message-content-box {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
       max-width: 75%;
+    }
 
+    .bubble {
+      max-width: 100%;
       padding: 10px 14px;
-
       border-radius: 18px;
-
       background: white;
-
-      box-shadow:
-        0 3px 8px rgba(0,0,0,0.05);
-
+      box-shadow: 0 3px 8px rgba(0,0,0,0.05);
       word-break: break-word;
     }
 
@@ -235,24 +183,17 @@
 
     .chat-image {
       display: block;
-
       max-width: 220px;
       max-height: 300px;
-
       border-radius: 14px;
-
       margin-bottom: 5px;
-
       object-fit: contain;
     }
 
     .time {
       font-size: 10px;
-
       color: #999;
-
       margin-top: 4px;
-
       text-align: right;
     }
 
@@ -261,36 +202,25 @@
     }
 
     /* =========================
-       取り消しメッセージ
+       取り消し
     ========================= */
 
     .deleted-message {
       color: #999 !important;
-
       background: #f1f1f1 !important;
-
       box-shadow: none !important;
-
       font-size: 13px;
-
       font-style: italic;
     }
 
     .delete-button {
       border: none;
-
       background: rgba(255,255,255,0.9);
-
       color: #777;
-
       border-radius: 10px;
-
       padding: 5px 8px;
-
       margin-top: 5px;
-
       font-size: 11px;
-
       cursor: pointer;
     }
 
@@ -299,43 +229,26 @@
     }
 
     /* =========================
-       一番下へ
+       最新へ
     ========================= */
 
     .latest-button {
       position: absolute;
-
       right: 16px;
       bottom: 16px;
-
       border: none;
-
       background: #8f7cff;
-
       color: white;
-
       padding: 11px 16px;
-
       border-radius: 999px;
-
       font-size: 13px;
-
       font-weight: bold;
-
-      box-shadow:
-        0 4px 14px rgba(0,0,0,0.18);
-
+      box-shadow: 0 4px 14px rgba(0,0,0,0.18);
       cursor: pointer;
-
       z-index: 10;
-
       opacity: 0;
-
-      transform:
-        translateY(10px);
-
+      transform: translateY(10px);
       pointer-events: none;
-
       transition:
         opacity 0.2s,
         transform 0.2s;
@@ -343,58 +256,37 @@
 
     .latest-button.show {
       opacity: 1;
-
-      transform:
-        translateY(0);
-
+      transform: translateY(0);
       pointer-events: auto;
     }
 
     .latest-button:active {
-      transform:
-        scale(0.95);
+      transform: scale(0.95);
     }
 
     /* =========================
-       入力欄
+       入力
     ========================= */
 
     .input-area {
       flex-shrink: 0;
-
       width: 100%;
-
       background: white;
-
       padding: 12px;
-
-      padding-bottom:
-        max(12px, env(safe-area-inset-bottom));
-
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
       display: flex;
-
       gap: 8px;
-
-      border-top:
-        1px solid #eee;
-
+      border-top: 1px solid #eee;
       z-index: 5;
     }
 
     .input-area input[type="text"] {
       flex: 1;
-
       min-width: 0;
-
       padding: 12px;
-
-      border:
-        1px solid #ddd;
-
+      border: 1px solid #ddd;
       border-radius: 18px;
-
       font-size: 16px;
-
       outline: none;
     }
 
@@ -405,31 +297,20 @@
     .image-button {
       width: 46px;
       min-width: 46px;
-
       border: none;
-
       border-radius: 18px;
-
       background: #f1efff;
-
       font-size: 21px;
-
       cursor: pointer;
     }
 
     .send-button {
       border: none;
-
       border-radius: 18px;
-
       padding: 0 18px;
-
       background: #8f7cff;
-
       color: white;
-
       font-weight: bold;
-
       cursor: pointer;
     }
 
@@ -449,7 +330,6 @@
   <main class="container">
 
     <!-- ヘッダー -->
-
     <header class="header">
 
       <a
@@ -478,7 +358,6 @@
 
 
     <!-- メッセージ -->
-
     <div class="messages-wrapper">
 
       <section
@@ -492,7 +371,6 @@
 
       </section>
 
-
       <button
         id="latestButton"
         class="latest-button"
@@ -505,7 +383,6 @@
 
 
     <!-- 入力 -->
-
     <form
       class="input-area"
       id="messageForm"
@@ -536,7 +413,6 @@
       </button>
 
     </form>
-
 
     <input
       id="imageInput"
@@ -573,49 +449,31 @@
     ========================================= */
 
     const messagesElement =
-      document.getElementById(
-        "messages"
-      );
+      document.getElementById("messages");
 
     const messageInput =
-      document.getElementById(
-        "messageInput"
-      );
+      document.getElementById("messageInput");
 
     const messageForm =
-      document.getElementById(
-        "messageForm"
-      );
+      document.getElementById("messageForm");
 
     const sendButton =
-      document.getElementById(
-        "sendButton"
-      );
+      document.getElementById("sendButton");
 
     const imageButton =
-      document.getElementById(
-        "imageButton"
-      );
+      document.getElementById("imageButton");
 
     const imageInput =
-      document.getElementById(
-        "imageInput"
-      );
+      document.getElementById("imageInput");
 
     const chatTitle =
-      document.getElementById(
-        "chatTitle"
-      );
+      document.getElementById("chatTitle");
 
     const headerAvatar =
-      document.getElementById(
-        "headerAvatar"
-      );
+      document.getElementById("headerAvatar");
 
     const latestButton =
-      document.getElementById(
-        "latestButton"
-      );
+      document.getElementById("latestButton");
 
 
     /* =========================================
@@ -623,13 +481,10 @@
     ========================================= */
 
     let currentUsername = "";
-
     let friendId = "";
-
     let realtimeChannel = null;
 
     let myAvatarUrl = "";
-
     let friendAvatarUrl = "";
 
 
@@ -643,7 +498,7 @@
 
 
     /* =========================================
-       プロフィール画像
+       アバター
     ========================================= */
 
     function createAvatar(
@@ -652,9 +507,7 @@
     ) {
 
       const avatar =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       avatar.className =
         "message-avatar";
@@ -663,37 +516,25 @@
       if (url) {
 
         const img =
-          document.createElement(
-            "img"
-          );
+          document.createElement("img");
 
-        img.src =
-          url;
-
-        img.alt =
-          "プロフィール画像";
-
+        img.src = url;
+        img.alt = "プロフィール画像";
 
         img.onerror =
           function() {
 
-            avatar.innerHTML =
-              fallback;
+            avatar.innerHTML = fallback;
 
           };
 
-
-        avatar.appendChild(
-          img
-        );
+        avatar.appendChild(img);
 
       } else {
 
-        avatar.textContent =
-          fallback;
+        avatar.textContent = fallback;
 
       }
-
 
       return avatar;
 
@@ -710,11 +551,8 @@
         !currentUsername ||
         !friendId
       ) {
-
         return;
-
       }
-
 
       const {
         error
@@ -799,15 +637,11 @@
         distanceFromBottom > 150
       ) {
 
-        latestButton.classList.add(
-          "show"
-        );
+        latestButton.classList.add("show");
 
       } else {
 
-        latestButton.classList.remove(
-          "show"
-        );
+        latestButton.classList.remove("show");
 
       }
 
@@ -852,9 +686,7 @@
 
 
       if (!ok) {
-
         return;
-
       }
 
 
@@ -883,12 +715,10 @@
           error
         );
 
-
         alert(
           "送信取り消しに失敗しました。\n\n" +
           error.message
         );
-
 
         return;
 
@@ -913,14 +743,11 @@
         chatTitle.textContent =
           "💬 相手が選ばれていません";
 
-
         messageForm.style.display =
           "none";
 
-
         messagesElement.innerHTML =
           '<div class="empty">フレンドから相手を選んでね</div>';
-
 
         return;
 
@@ -943,10 +770,8 @@
           "ログインしてください。"
         );
 
-
         window.location.href =
           "index.html";
-
 
         return;
 
@@ -964,7 +789,6 @@
         alert(
           "ログイン中のユーザーIDを取得できませんでした。"
         );
-
 
         return;
 
@@ -989,8 +813,7 @@
 
 
       friendAvatarUrl =
-        friendProfile?.avatar_url ||
-        "";
+        friendProfile?.avatar_url || "";
 
 
       chatTitle.textContent =
@@ -1027,8 +850,7 @@
 
 
       myAvatarUrl =
-        myProfile?.avatar_url ||
-        "";
+        myProfile?.avatar_url || "";
 
 
       await loadMessages();
@@ -1040,58 +862,130 @@
 
     /* =========================================
        メッセージ読み込み
+       
+       ここを変更！
+       自分→相手、相手→自分を
+       別々に取得して最後に合体
     ========================================= */
 
     async function loadMessages() {
 
-      const {
-        data,
-        error
-      } =
-        await supabaseClient
-          .from("messages")
-          .select("*")
-          .or(
-            `and(sender_id.eq.${currentUsername},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${currentUsername})`
-          )
-          .order(
-            "created_at",
-            {
-              ascending:
-                true
-            }
-          );
+      messagesElement.innerHTML =
+        '<div class="empty">メッセージを読み込み中...</div>';
 
 
-      if (error) {
-
-        console.error(
-          "読み込みエラー:",
-          error
-        );
-
+      if (
+        !currentUsername ||
+        !friendId
+      ) {
 
         messagesElement.innerHTML =
-          '<div class="empty">メッセージを読み込めませんでした</div>';
-
+          '<div class="empty">ユーザー情報を取得できませんでした</div>';
 
         return;
 
       }
 
 
-      messagesElement.innerHTML =
-        "";
+      /* 自分 → 相手 */
+
+      const {
+        data: sentMessages,
+        error: sentError
+      } =
+        await supabaseClient
+          .from("messages")
+          .select("*")
+          .eq(
+            "sender_id",
+            currentUsername
+          )
+          .eq(
+            "receiver_id",
+            friendId
+          );
+
+
+      if (sentError) {
+
+        console.error(
+          "自分からのメッセージ取得エラー:",
+          sentError
+        );
+
+        messagesElement.innerHTML =
+          '<div class="empty">メッセージを読み込めませんでした</div>';
+
+        return;
+
+      }
+
+
+      /* 相手 → 自分 */
+
+      const {
+        data: receivedMessages,
+        error: receivedError
+      } =
+        await supabaseClient
+          .from("messages")
+          .select("*")
+          .eq(
+            "sender_id",
+            friendId
+          )
+          .eq(
+            "receiver_id",
+            currentUsername
+          );
+
+
+      if (receivedError) {
+
+        console.error(
+          "相手からのメッセージ取得エラー:",
+          receivedError
+        );
+
+        messagesElement.innerHTML =
+          '<div class="empty">メッセージを読み込めませんでした</div>';
+
+        return;
+
+      }
+
+
+      /* 2つを合体 */
+
+      const messages = [
+        ...(sentMessages || []),
+        ...(receivedMessages || [])
+      ];
+
+
+      /* 時刻順 */
+
+      messages.sort(
+        function(a, b) {
+
+          return (
+            new Date(a.created_at) -
+            new Date(b.created_at)
+          );
+
+        }
+      );
+
+
+      messagesElement.innerHTML = "";
 
 
       if (
-        !data ||
-        data.length === 0
+        messages.length === 0
       ) {
 
         messagesElement.innerHTML =
           '<div class="empty">まだメッセージがありません</div>';
-
 
         updateLatestButton();
 
@@ -1101,7 +995,7 @@
 
 
       for (
-        const message of data
+        const message of messages
       ) {
 
         await addMessageToScreen(
@@ -1127,9 +1021,7 @@
     ) {
 
       const wrapper =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
 
       wrapper.className =
@@ -1143,9 +1035,7 @@
 
       if (isMine) {
 
-        wrapper.classList.add(
-          "mine"
-        );
+        wrapper.classList.add("mine");
 
       }
 
@@ -1160,7 +1050,6 @@
             "👤"
           );
 
-
         wrapper.appendChild(
           avatar
         );
@@ -1168,22 +1057,23 @@
       }
 
 
-      /* 吹き出し */
+      /* メッセージ内容 */
+
+      const messageContentBox =
+        document.createElement("div");
+
+      messageContentBox.className =
+        "message-content-box";
+
 
       const bubble =
-        document.createElement(
-          "div"
-        );
-
+        document.createElement("div");
 
       bubble.className =
         "bubble";
 
 
-      /*
-        取り消し済みなら
-        中身を表示しない
-      */
+      /* 取り消し済み */
 
       if (message.is_deleted) {
 
@@ -1191,10 +1081,8 @@
           "deleted-message"
         );
 
-
         bubble.textContent =
           "このメッセージは取り消されました";
-
 
       } else {
 
@@ -1203,14 +1091,10 @@
         if (message.image_url) {
 
           const image =
-            document.createElement(
-              "img"
-            );
-
+            document.createElement("img");
 
           image.className =
             "chat-image";
-
 
           image.alt =
             "送信された画像";
@@ -1221,9 +1105,7 @@
             error
           } =
             await supabaseClient.storage
-              .from(
-                "chat-images"
-              )
+              .from("chat-images")
               .createSignedUrl(
                 message.image_url,
                 3600
@@ -1237,7 +1119,6 @@
 
             image.src =
               data.signedUrl;
-
 
             bubble.appendChild(
               image
@@ -1253,14 +1134,10 @@
         if (message.content) {
 
           const text =
-            document.createElement(
-              "div"
-            );
-
+            document.createElement("div");
 
           text.textContent =
             message.content;
-
 
           bubble.appendChild(
             text
@@ -1274,10 +1151,7 @@
       /* 時刻 */
 
       const time =
-        document.createElement(
-          "div"
-        );
-
+        document.createElement("div");
 
       time.className =
         "time";
@@ -1293,11 +1167,8 @@
         date.toLocaleTimeString(
           "ja-JP",
           {
-            hour:
-              "2-digit",
-
-            minute:
-              "2-digit"
+            hour: "2-digit",
+            minute: "2-digit"
           }
         );
 
@@ -1307,33 +1178,12 @@
       );
 
 
-      wrapper.appendChild(
+      messageContentBox.appendChild(
         bubble
       );
 
 
-      /* 自分のアイコン */
-
-      if (isMine) {
-
-        const avatar =
-          createAvatar(
-            myAvatarUrl,
-            "😊"
-          );
-
-
-        wrapper.appendChild(
-          avatar
-        );
-
-      }
-
-
-      /*
-        自分の未取り消しメッセージなら
-        取り消しボタン
-      */
+      /* 取り消しボタン */
 
       if (
         isMine &&
@@ -1341,18 +1191,13 @@
       ) {
 
         const deleteButton =
-          document.createElement(
-            "button"
-          );
-
+          document.createElement("button");
 
         deleteButton.type =
           "button";
 
-
         deleteButton.className =
           "delete-button";
-
 
         deleteButton.textContent =
           "🗑️ 送信取り消し";
@@ -1363,9 +1208,7 @@
           async function(event) {
 
             event.preventDefault();
-
             event.stopPropagation();
-
 
             await deleteMessage(
               message.id
@@ -1375,47 +1218,30 @@
         );
 
 
-        /*
-          吹き出しの下に配置
-        */
-
-        const messageBox =
-          document.createElement(
-            "div"
-          );
-
-
-        messageBox.style.display =
-          "flex";
-
-        messageBox.style.flexDirection =
-          "column";
-
-        messageBox.style.alignItems =
-          "flex-end";
-
-
-        messageBox.appendChild(
-          bubble
-        );
-
-        messageBox.appendChild(
+        messageContentBox.appendChild(
           deleteButton
         );
 
+      }
 
-        /*
-          すでにbubbleを追加しているので
-          いったん入れ替える
-        */
 
-        wrapper.removeChild(
-          bubble
-        );
+      wrapper.appendChild(
+        messageContentBox
+      );
 
-        wrapper.insertBefore(
-          messageBox,
-          wrapper.lastChild
+
+      /* 自分アイコン */
+
+      if (isMine) {
+
+        const avatar =
+          createAvatar(
+            myAvatarUrl,
+            "😊"
+          );
+
+        wrapper.appendChild(
+          avatar
         );
 
       }
@@ -1435,9 +1261,7 @@
     function startRealtime() {
 
       if (realtimeChannel) {
-
         return;
-
       }
 
 
@@ -1450,21 +1274,15 @@
             friendId
           )
 
-          /*
-            新規メッセージ
-          */
+
+          /* 新規メッセージ */
 
           .on(
             "postgres_changes",
             {
-              event:
-                "INSERT",
-
-              schema:
-                "public",
-
-              table:
-                "messages"
+              event: "INSERT",
+              schema: "public",
+              table: "messages"
             },
             async function(payload) {
 
@@ -1488,15 +1306,13 @@
 
 
               if (!isThisChat) {
-
                 return;
-
               }
 
 
               /*
                 自分のメッセージは
-                送信処理ですでに表示
+                送信処理側ですでに表示
               */
 
               if (
@@ -1513,7 +1329,6 @@
                 message
               );
 
-
               scrollToBottom();
 
               updateLatestButton();
@@ -1521,21 +1336,15 @@
             }
           )
 
-          /*
-            送信取り消し
-          */
+
+          /* 送信取り消し */
 
           .on(
             "postgres_changes",
             {
-              event:
-                "UPDATE",
-
-              schema:
-                "public",
-
-              table:
-                "messages"
+              event: "UPDATE",
+              schema: "public",
+              table: "messages"
             },
             async function(payload) {
 
@@ -1559,9 +1368,7 @@
 
 
               if (!isThisChat) {
-
                 return;
-
               }
 
 
@@ -1573,6 +1380,7 @@
 
             }
           )
+
 
           .subscribe();
 
@@ -1595,9 +1403,7 @@
 
 
         if (!text) {
-
           return;
-
         }
 
 
@@ -1609,7 +1415,6 @@
           alert(
             "ログイン情報または相手の情報を取得できません。"
           );
-
 
           return;
 
@@ -1659,12 +1464,10 @@
             error
           );
 
-
           alert(
             "メッセージを送信できませんでした。\n\n" +
             error.message
           );
-
 
           return;
 
@@ -1718,9 +1521,7 @@
 
 
         if (!file) {
-
           return;
-
         }
 
 
@@ -1733,10 +1534,8 @@
             "ログイン情報または相手の情報を取得できません。"
           );
 
-
           imageInput.value =
             "";
-
 
           return;
 
@@ -1744,19 +1543,15 @@
 
 
         if (
-          !file.type.startsWith(
-            "image/"
-          )
+          !file.type.startsWith("image/")
         ) {
 
           alert(
             "画像ファイルを選んでください。"
           );
 
-
           imageInput.value =
             "";
-
 
           return;
 
@@ -1791,14 +1586,14 @@
             extension;
 
 
+          /* アップロード */
+
           const {
             error:
               uploadError
           } =
             await supabaseClient.storage
-              .from(
-                "chat-images"
-              )
+              .from("chat-images")
               .upload(
                 filePath,
                 file,
@@ -1819,17 +1614,17 @@
               uploadError
             );
 
-
             alert(
               "画像をアップロードできませんでした。\n\n" +
               uploadError.message
             );
 
-
             return;
 
           }
 
+
+          /* メッセージ保存 */
 
           const {
             data,
@@ -1866,12 +1661,10 @@
               error
             );
 
-
             alert(
               "画像メッセージを保存できませんでした。\n\n" +
               error.message
             );
-
 
             return;
 
@@ -1895,10 +1688,8 @@
           imageButton.disabled =
             false;
 
-
           sendButton.disabled =
             false;
-
 
           imageInput.value =
             "";
