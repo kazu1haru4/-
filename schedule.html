@@ -227,6 +227,11 @@
       box-shadow: 0 5px 18px rgba(0,0,0,0.07);
     }
 
+    .schedule.highlight {
+      border: 3px solid #8f7cff;
+      box-shadow: 0 8px 25px rgba(143,124,255,0.25);
+    }
+
     .schedule-date {
       color: #8f7cff;
       font-size: 14px;
@@ -497,6 +502,19 @@
 
   const memoInput =
     document.getElementById("memo");
+
+
+  // =========================
+  // 通知から開かれた予定ID
+  // =========================
+
+  const urlParams =
+    new URLSearchParams(
+      window.location.search
+    );
+
+  const targetScheduleId =
+    urlParams.get("schedule");
 
 
   // =========================
@@ -964,6 +982,9 @@
     scheduleList.innerHTML = "";
 
 
+    let targetElement = null;
+
+
     data.forEach(
       schedule => {
 
@@ -974,6 +995,22 @@
 
         element.className =
           "schedule";
+
+
+        if (
+          targetScheduleId &&
+          String(schedule.id) ===
+            String(targetScheduleId)
+        ) {
+
+          element.classList.add(
+            "highlight"
+          );
+
+          targetElement =
+            element;
+
+        }
 
 
         const dateText =
@@ -1079,6 +1116,24 @@
 
       }
     );
+
+
+    // 通知から来た場合、その予定まで移動
+    if (targetElement) {
+
+      setTimeout(
+        function() {
+
+          targetElement.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+          });
+
+        },
+        200
+      );
+
+    }
 
   }
 
@@ -1306,9 +1361,11 @@
         // 通知作成
         // =======================
 
-        let notificationSuccessCount = 0;
+        let notificationSuccessCount =
+          0;
 
-        let notificationErrorMessages = [];
+        let notificationErrorMessages =
+          [];
 
 
         for (
@@ -1343,7 +1400,13 @@
                   `「${title}」があなたに共有されました。`,
 
                 link:
-                  "schedule.html",
+                  "schedule.html?schedule=" +
+                  encodeURIComponent(
+                    String(schedule.id)
+                  ),
+
+                schedule_id:
+                  schedule.id,
 
                 is_read:
                   false
