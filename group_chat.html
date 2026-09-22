@@ -2218,6 +2218,8 @@ await refreshSingleMessage(
 messageId
 );
 
+} // ← ここが今回の重要な修正
+
 
 /* =========================
    メッセージデータ取得
@@ -2897,10 +2899,6 @@ scrollToBottom
 );
 }
 
-/*
-  既読登録は画面描画後に一括。
-  表示を待たせない。
-*/
 if(unreadIds.length){
 
 void markMessagesRead(
@@ -3124,10 +3122,6 @@ return;
 }
 }
 
-/*
-  全件再読み込みをやめて
-  対象メッセージだけ更新。
-*/
 await refreshSingleMessage(
 messageId
 );
@@ -3491,18 +3485,11 @@ replyError
 }
 }
 
-/*
-  通知は画面表示を待たせない。
-*/
 void sendMentionNotifications(
 value,
 data.id
 );
 
-/*
-  Realtimeで入るので
-  全件再読み込みしない。
-*/
 const exists =
 messages.querySelector(
 `[data-message-id="${data.id}"]`
@@ -4406,11 +4393,6 @@ supabaseClient
 groupId
 );
 
-
-/*
-  新着メッセージ
-  → 全件再読み込みしない。
-*/
 channel.on(
 "postgres_changes",
 {
@@ -4475,11 +4457,6 @@ error
 );
 });
 
-
-/*
-  編集・削除
-  → 対象1件だけ更新。
-*/
 channel.on(
 "postgres_changes",
 {
@@ -4536,11 +4513,6 @@ error
 );
 });
 
-
-/*
-  既読
-  → 150ms以内の連続更新をまとめる。
-*/
 channel.on(
 "postgres_changes",
 {
@@ -4564,13 +4536,8 @@ table:"group_message_reads"
 ()=>{
 
 scheduleReadRefresh();
-}
-);
+});
 
-
-/*
-  発言禁止
-*/
 channel.on(
 "postgres_changes",
 {
@@ -4583,8 +4550,7 @@ groupId
 },
 async ()=>{
 await loadGroupMutes();
-}
-);
+});
 
 channel.on(
 "postgres_changes",
@@ -4598,8 +4564,7 @@ groupId
 },
 async ()=>{
 await loadGroupMutes();
-}
-);
+});
 
 channel.on(
 "postgres_changes",
@@ -4613,8 +4578,7 @@ groupId
 },
 async ()=>{
 await loadGroupMutes();
-}
-);
+});
 
 channel.subscribe();
 }
@@ -4669,10 +4633,6 @@ location.href =
 return;
 }
 
-
-/*
-  最初の読み込みを可能な限り並列化。
-*/
 await Promise.all([
 updateMyPresence(),
 loadGroup()
