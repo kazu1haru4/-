@@ -76,6 +76,23 @@
       transition: .25s;
     }
 
+    /* 👑 管理者枠 */
+    .avatar-frame.admin-frame {
+      background:
+        linear-gradient(
+          135deg,
+          #fff4a8,
+          #ffd700,
+          #fff7bd,
+          #e8ad00,
+          #fff4a8
+        );
+      box-shadow:
+        0 5px 18px rgba(218,165,0,.30),
+        0 0 0 3px rgba(255,255,255,.95),
+        0 0 18px rgba(255,215,0,.45);
+    }
+
     .avatar-image {
       width: 100%;
       height: 100%;
@@ -171,6 +188,19 @@
       border: 2px solid #eee;
       padding: 10px 7px;
       text-align: center;
+    }
+
+    /* 👑 管理者アイテムカード */
+    .item-card.admin-item {
+      border-color: #ffd700;
+      background:
+        linear-gradient(
+          135deg,
+          #fffdf0,
+          #fff8cf
+        );
+      box-shadow:
+        0 3px 12px rgba(255,215,0,.20);
     }
 
     .item-icon {
@@ -377,6 +407,18 @@ const supabaseClient =
   );
 
 
+/* ================================
+   👑 管理者設定
+================================ */
+
+const ADMIN_USERNAMES = new Set([
+  "kazu1haru100",
+  "kazu1haru4sub"
+]);
+
+const ADMIN_ITEM_KEY = "admin";
+
+
 let currentUsername = "";
 let currentProfile = null;
 let ownedItems = [];
@@ -395,6 +437,18 @@ function showMessage(text, error = false) {
 
   el.style.color =
     error ? "#e05252" : "#7658d9";
+}
+
+
+// ================================
+// 管理者かどうか
+// ================================
+
+function isAdmin() {
+
+  return ADMIN_USERNAMES.has(
+    currentUsername
+  );
 }
 
 
@@ -593,6 +647,17 @@ function renderItems() {
     const frameColor =
       item.frame_color || "#ffd9ec";
 
+    const isAdminItem =
+      key === ADMIN_ITEM_KEY;
+
+    /*
+      👑 管理者アイテムは
+      管理者本人だけ表示・装備可能
+    */
+    if (isAdminItem && !isAdmin()) {
+      return;
+    }
+
     const isEquipped =
       equipped === key;
 
@@ -600,7 +665,8 @@ function renderItems() {
       document.createElement("div");
 
     card.className =
-      "item-card";
+      "item-card" +
+      (isAdminItem ? " admin-item" : "");
 
     card.innerHTML = `
 
@@ -642,22 +708,31 @@ function renderItems() {
     container.appendChild(card);
   });
 
-  document
-    .querySelectorAll(".equip-button")
-    .forEach(button => {
+  const buttons =
+    document.querySelectorAll(".equip-button");
 
-      button.addEventListener(
-        "click",
-        () => {
+  buttons.forEach(button => {
 
-          equipItem(
-            button.dataset.key
-          );
+    button.addEventListener(
+      "click",
+      () => {
 
-        }
-      );
+        equipItem(
+          button.dataset.key
+        );
 
-    });
+      }
+    );
+
+  });
+
+  if (!container.children.length) {
+
+    container.innerHTML =
+      `<div class="no-items">
+        まだ交換したアイテムはありません
+      </div>`;
+  }
 }
 
 
@@ -666,6 +741,51 @@ function renderItems() {
 // ================================
 
 async function equipItem(itemKey) {
+
+  /*
+    👑 管理者アイテムは
+    管理者2人以外は絶対に装備させない
+  */
+
+  if (
+    itemKey === ADMIN_ITEM_KEY &&
+    !isAdmin()
+  ) {
+
+    showMessage(
+      "管理者専用アイテムです。",
+      true
+    );
+
+    return;
+  }
+
+  /*
+    自分が所有しているアイテムか確認
+  */
+
+  const ownsItem =
+    ownedItems.some(row => {
+
+      const item =
+        row.coin_items;
+
+      return (
+        (item?.item_key || row.item_key) ===
+        itemKey
+      );
+
+    });
+
+  if (!ownsItem) {
+
+    showMessage(
+      "このアイテムは所有していません。",
+      true
+    );
+
+    return;
+  }
 
   showMessage("装備しています...");
 
@@ -717,6 +837,8 @@ function updateEquippedDisplay() {
   const badge =
     document.getElementById("equippedBadge");
 
+  frame.classList.remove("admin-frame");
+
   frame.style.background =
     "#ffd9ec";
 
@@ -747,6 +869,27 @@ function updateEquippedDisplay() {
     ownedRow.coin_items;
 
   if (!item) return;
+
+  /*
+    👑 管理者枠
+  */
+
+  if (
+    key === ADMIN_ITEM_KEY &&
+    isAdmin()
+  ) {
+
+    frame.classList.add("admin-frame");
+
+    badge.textContent = "👑";
+
+    badge.style.border =
+      "3px solid #ffd700";
+
+    badge.classList.add("show");
+
+    return;
+  }
 
   const icon =
     item.icon || "🎁";
