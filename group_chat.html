@@ -4,10 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>グループチャット</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+}
 
 :root{
   --theme:#8f7cff;
@@ -15,19 +18,28 @@
   --theme-text:#5e50c9;
 }
 
-html,body{
+html,
+body{
   margin:0;
   width:100%;
   height:100%;
   overflow:hidden;
   font-family:sans-serif;
-  background:linear-gradient(135deg,var(--theme-light),#f7efff)
+  background:linear-gradient(
+    135deg,
+    var(--theme-light),
+    #f7efff
+  );
 }
 
 body{
   display:flex;
-  flex-direction:column
+  flex-direction:column;
 }
+
+/* =========================
+   ヘッダー
+========================= */
 
 .header{
   position:relative;
@@ -39,7 +51,7 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
-  z-index:40
+  z-index:40;
 }
 
 .home-button{
@@ -53,7 +65,7 @@ body{
   border-radius:12px;
   font-size:13px;
   font-weight:bold;
-  box-shadow:0 3px 10px rgba(0,0,0,.08)
+  box-shadow:0 3px 10px rgba(0,0,0,.08);
 }
 
 .member-button{
@@ -67,26 +79,30 @@ body{
   border-radius:12px;
   font-size:13px;
   font-weight:bold;
-  cursor:pointer
+  cursor:pointer;
 }
 
 .title{
   font-size:22px;
   font-weight:bold;
-  color:#444
+  color:#444;
 }
 
 .group-name{
   font-size:14px;
   color:#888;
-  margin-top:4px
+  margin-top:4px;
 }
+
+/* =========================
+   メッセージ
+========================= */
 
 .messages-wrapper{
   position:relative;
   flex:1 1 auto;
   min-height:0;
-  overflow:hidden
+  overflow:hidden;
 }
 
 .messages{
@@ -97,7 +113,7 @@ body{
   padding:15px;
   padding-bottom:25px;
   max-width:700px;
-  margin:auto
+  margin:auto;
 }
 
 #latestButton{
@@ -114,19 +130,23 @@ body{
   box-shadow:0 4px 14px rgba(0,0,0,.18);
   cursor:pointer;
   display:none;
-  z-index:30
+  z-index:30;
 }
 
 #latestButton.show{
-  display:block
+  display:block;
 }
 
 .message-row{
   display:flex;
   align-items:flex-start;
   gap:8px;
-  margin-bottom:10px
+  margin-bottom:10px;
 }
+
+/* =========================
+   フレーム
+========================= */
 
 .message-avatar-frame{
   width:46px;
@@ -137,12 +157,13 @@ body{
   align-items:center;
   justify-content:center;
   flex-shrink:0;
-  position:relative
+  position:relative;
+  background:#eee8ff;
 }
 
 .message-avatar-frame .message-avatar{
   width:40px;
-  height:40px
+  height:40px;
 }
 
 .message-avatar{
@@ -152,14 +173,188 @@ body{
   align-items:center;
   justify-content:center;
   font-size:21px;
-  overflow:hidden
+  overflow:hidden;
 }
 
 .message-avatar img{
   width:100%;
   height:100%;
-  object-fit:cover
+  object-fit:cover;
+
+  /* 画像そのものには色を付けない */
+  filter:none !important;
+  mix-blend-mode:normal !important;
+  opacity:1 !important;
+
+  border-radius:50%;
+  display:block;
 }
+
+/* =========================
+   フレームデザイン
+========================= */
+
+.frame-sakura{
+  background:
+    radial-gradient(circle at 20% 20%,#fff 0 4%,transparent 5%),
+    radial-gradient(circle at 80% 25%,#ffd4e6 0 5%,transparent 6%),
+    linear-gradient(135deg,#ff8fbd,#ffc6dd,#ff75ad);
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,.8),
+    0 0 12px rgba(255,105,170,.35);
+}
+
+.frame-star{
+  background:
+    radial-gradient(circle at 20% 20%,#fff 0 3%,transparent 4%),
+    radial-gradient(circle at 75% 30%,#fff5a6 0 4%,transparent 5%),
+    linear-gradient(135deg,#f4bf3f,#ffe889,#e7a91f);
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,.8),
+    0 0 12px rgba(244,191,63,.4);
+}
+
+.frame-diamond{
+  background:
+    linear-gradient(
+      135deg,
+      #49c8ff,
+      #b8f1ff,
+      #4db9ee,
+      #d7f9ff
+    );
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,.8),
+    0 0 14px rgba(77,185,238,.45);
+}
+
+.frame-heart{
+  background:
+    linear-gradient(
+      135deg,
+      #ff719f,
+      #ffb0c9,
+      #ff4f91
+    );
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,.8),
+    0 0 13px rgba(255,80,145,.4);
+}
+
+.frame-rainbow{
+  background:
+    conic-gradient(
+      from 0deg,
+      #ff3b3b,
+      #ff9f1c,
+      #ffe600,
+      #43d17a,
+      #35bfff,
+      #7467ff,
+      #c64cff,
+      #ff3b9d,
+      #ff3b3b
+    );
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,.85),
+    0 0 14px rgba(120,100,255,.35);
+}
+
+.frame-flame{
+  background:
+    linear-gradient(
+      135deg,
+      #ff3d3d,
+      #ff761f,
+      #ffd23c,
+      #ff3d3d
+    );
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,.8),
+    0 0 14px rgba(255,90,20,.45);
+}
+
+.frame-sea{
+  background:
+    linear-gradient(
+      135deg,
+      #0077ff,
+      #38d9ff,
+      #8cf5ff,
+      #1685ff
+    );
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,.8),
+    0 0 14px rgba(40,190,255,.45);
+}
+
+.frame-space{
+  background:
+    radial-gradient(circle at 20% 20%,white 0 1px,transparent 2px),
+    radial-gradient(circle at 70% 30%,#bde9ff 0 1px,transparent 2px),
+    radial-gradient(circle at 40% 75%,#fff 0 1px,transparent 2px),
+    radial-gradient(circle at 85% 80%,#b7a8ff 0 1px,transparent 2px),
+    linear-gradient(
+      135deg,
+      #171338,
+      #34226e,
+      #101329
+    );
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,.7),
+    0 0 15px rgba(93,78,210,.45);
+}
+
+.frame-neon{
+  background:
+    linear-gradient(
+      135deg,
+      #00ff9d,
+      #00d9ff,
+      #8b5cff,
+      #ff38c7,
+      #00ff9d
+    );
+  background-size:250% 250%;
+  animation:neonFrame 3s linear infinite;
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,.85),
+    0 0 16px rgba(0,255,220,.55);
+}
+
+@keyframes neonFrame{
+  0%{
+    background-position:0% 50%;
+  }
+
+  50%{
+    background-position:100% 50%;
+  }
+
+  100%{
+    background-position:0% 50%;
+  }
+}
+
+/* 管理者 */
+.admin-frame{
+  background:
+    linear-gradient(
+      135deg,
+      #ffd700,
+      #fff2a0,
+      #e5a900,
+      #fff0a3,
+      #ffd700
+    );
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,.9),
+    0 0 16px rgba(255,200,0,.55);
+}
+
+/* =========================
+   アイコンバッジ
+========================= */
 
 .message-avatar-badge{
   display:none;
@@ -173,12 +368,17 @@ body{
   align-items:center;
   justify-content:center;
   font-size:12px;
-  box-shadow:0 2px 5px rgba(0,0,0,.15)
+  box-shadow:0 2px 5px rgba(0,0,0,.15);
+  z-index:3;
 }
 
 .message-avatar-badge.show{
-  display:flex
+  display:flex;
 }
+
+/* =========================
+   メッセージ本体
+========================= */
 
 .message{
   position:relative;
@@ -188,28 +388,28 @@ body{
   box-shadow:0 2px 8px rgba(0,0,0,.06);
   cursor:pointer;
   min-width:0;
-  flex:1
+  flex:1;
 }
 
 .sender{
   font-size:12px;
   color:#777;
   margin-bottom:4px;
-  font-weight:bold
+  font-weight:bold;
 }
 
 .content{
   font-size:16px;
   color:#333;
   word-break:break-word;
-  white-space:pre-wrap
+  white-space:pre-wrap;
 }
 
 .edited-label{
   color:#999;
   font-size:10px;
   margin-left:5px;
-  font-weight:normal
+  font-weight:normal;
 }
 
 .mention{
@@ -217,7 +417,7 @@ body{
   background:var(--theme-light);
   border-radius:5px;
   padding:1px 3px;
-  font-weight:bold
+  font-weight:bold;
 }
 
 .chat-image{
@@ -226,14 +426,14 @@ body{
   max-height:320px;
   border-radius:14px;
   margin-top:5px;
-  object-fit:contain
+  object-fit:contain;
 }
 
 .deleted-message{
   color:#999;
   font-style:italic;
   font-size:14px;
-  padding:4px 0
+  padding:4px 0;
 }
 
 .read-status{
@@ -241,7 +441,7 @@ body{
   color:var(--theme-text);
   font-size:11px;
   font-weight:bold;
-  text-align:right
+  text-align:right;
 }
 
 .reply-preview{
@@ -251,26 +451,30 @@ body{
   padding:7px 9px;
   margin-top:8px;
   font-size:12px;
-  color:#666
+  color:#666;
 }
 
 .reply-preview strong{
-  color:var(--theme-text)
+  color:var(--theme-text);
 }
 
 .reactions{
   display:flex;
   flex-wrap:wrap;
   gap:5px;
-  margin-top:7px
+  margin-top:7px;
 }
 
 .reaction-item{
   background:#f2f5fa;
   border-radius:20px;
   padding:4px 8px;
-  font-size:14px
+  font-size:14px;
 }
+
+/* =========================
+   メニュー
+========================= */
 
 .message-menu{
   display:none;
@@ -282,7 +486,7 @@ body{
   border-radius:14px;
   padding:7px;
   box-shadow:0 6px 20px rgba(0,0,0,.18);
-  min-width:210px
+  min-width:210px;
 }
 
 .message-menu button{
@@ -294,20 +498,20 @@ body{
   padding:11px 12px;
   border-radius:9px;
   font-size:15px;
-  cursor:pointer
+  cursor:pointer;
 }
 
 .message-menu button:hover,
 .message-menu button:active{
-  background:var(--theme-light)
+  background:var(--theme-light);
 }
 
 .delete-button{
-  color:#d9534f!important
+  color:#d9534f!important;
 }
 
 .edit-button{
-  color:var(--theme-text)!important
+  color:var(--theme-text)!important;
 }
 
 .reaction-picker{
@@ -320,7 +524,7 @@ body{
   border-radius:15px;
   padding:8px;
   box-shadow:0 6px 20px rgba(0,0,0,.18);
-  gap:5px
+  gap:5px;
 }
 
 .reaction-picker button{
@@ -330,8 +534,12 @@ body{
   width:42px;
   height:42px;
   font-size:21px;
-  cursor:pointer
+  cursor:pointer;
 }
+
+/* =========================
+   メンション
+========================= */
 
 .mention-list{
   display:none;
@@ -347,11 +555,11 @@ body{
   padding:7px;
   max-height:220px;
   overflow-y:auto;
-  z-index:80
+  z-index:80;
 }
 
 .mention-list.show{
-  display:block
+  display:block;
 }
 
 .mention-item{
@@ -364,12 +572,12 @@ body{
   border-radius:10px;
   padding:10px;
   cursor:pointer;
-  text-align:left
+  text-align:left;
 }
 
 .mention-item:hover,
 .mention-item:active{
-  background:var(--theme-light)
+  background:var(--theme-light);
 }
 
 .mention-avatar{
@@ -381,25 +589,29 @@ body{
   align-items:center;
   justify-content:center;
   overflow:hidden;
-  flex-shrink:0
+  flex-shrink:0;
 }
 
 .mention-avatar img{
   width:100%;
   height:100%;
-  object-fit:cover
+  object-fit:cover;
 }
 
 .mention-name{
   font-size:14px;
   font-weight:bold;
-  color:#444
+  color:#444;
 }
 
 .mention-id{
   font-size:12px;
-  color:#888
+  color:#888;
 }
+
+/* =========================
+   入力
+========================= */
 
 .input-area{
   position:relative;
@@ -409,7 +621,7 @@ body{
   display:flex;
   gap:8px;
   box-shadow:0 -2px 10px rgba(0,0,0,.08);
-  z-index:70
+  z-index:70;
 }
 
 #messageInput{
@@ -419,11 +631,11 @@ body{
   border-radius:12px;
   font-size:16px;
   min-width:0;
-  outline:none
+  outline:none;
 }
 
 #messageInput:focus{
-  border-color:var(--theme)
+  border-color:var(--theme);
 }
 
 #imageButton{
@@ -433,7 +645,7 @@ body{
   color:var(--theme-text);
   border-radius:12px;
   font-size:21px;
-  cursor:pointer
+  cursor:pointer;
 }
 
 #sendButton{
@@ -444,22 +656,26 @@ body{
   padding:0 18px;
   font-weight:bold;
   cursor:pointer;
-  font-size:15px
+  font-size:15px;
 }
 
 #sendButton:disabled,
 #imageButton:disabled{
-  background:#bbb
+  background:#bbb;
 }
 
 #imageInput{
-  display:none
+  display:none;
 }
+
+/* =========================
+   その他
+========================= */
 
 .error{
   text-align:center;
   color:#d55;
-  padding:20px
+  padding:20px;
 }
 
 .reply-area{
@@ -468,7 +684,7 @@ body{
   background:white;
   border-top:1px solid #ddd;
   padding:8px 10px;
-  z-index:65
+  z-index:65;
 }
 
 .reply-info{
@@ -479,7 +695,7 @@ body{
   background:var(--theme-light);
   border-left:4px solid var(--theme);
   border-radius:8px;
-  padding:8px 10px
+  padding:8px 10px;
 }
 
 .reply-text{
@@ -488,11 +704,11 @@ body{
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
-  min-width:0
+  min-width:0;
 }
 
 .reply-text strong{
-  color:var(--theme-text)
+  color:var(--theme-text);
 }
 
 #cancelReplyButton{
@@ -500,7 +716,7 @@ body{
   background:transparent;
   color:#777;
   font-size:18px;
-  cursor:pointer
+  cursor:pointer;
 }
 
 .mute-banner{
@@ -513,11 +729,11 @@ body{
   text-align:center;
   font-size:12px;
   font-weight:bold;
-  z-index:66
+  z-index:66;
 }
 
 .mute-banner.show{
-  display:block
+  display:block;
 }
 
 .member-mute-status{
@@ -528,7 +744,7 @@ body{
   color:#c94b4b;
   font-size:11px;
   font-weight:bold;
-  display:inline-block
+  display:inline-block;
 }
 
 .mute-control{
@@ -540,11 +756,11 @@ body{
   background:white;
   font-size:12px;
   color:#555;
-  outline:none
+  outline:none;
 }
 
 .mute-control:focus{
-  border-color:var(--theme)
+  border-color:var(--theme);
 }
 
 .mute-clear-button{
@@ -557,8 +773,12 @@ body{
   color:#c94b4b;
   font-size:12px;
   font-weight:bold;
-  cursor:pointer
+  cursor:pointer;
 }
+
+/* =========================
+   モーダル
+========================= */
 
 .modal{
   display:none;
@@ -568,7 +788,7 @@ body{
   align-items:center;
   justify-content:center;
   padding:20px;
-  z-index:200
+  z-index:200;
 }
 
 .modal-box{
@@ -579,7 +799,7 @@ body{
   padding:22px;
   box-shadow:0 8px 30px rgba(0,0,0,.18);
   max-height:85vh;
-  overflow-y:auto
+  overflow-y:auto;
 }
 
 .modal-title{
@@ -587,7 +807,7 @@ body{
   font-weight:bold;
   color:#444;
   text-align:center;
-  margin-bottom:15px
+  margin-bottom:15px;
 }
 
 .admin-note{
@@ -597,11 +817,11 @@ body{
   padding:9px 10px;
   font-size:12px;
   margin-bottom:12px;
-  text-align:center
+  text-align:center;
 }
 
 .member-list{
-  margin-bottom:15px
+  margin-bottom:15px;
 }
 
 .member-item{
@@ -611,8 +831,12 @@ body{
   background:var(--theme-light);
   border-radius:12px;
   padding:10px;
-  margin-bottom:8px
+  margin-bottom:8px;
 }
+
+/* =========================
+   メンバー用フレーム
+========================= */
 
 .member-icon-frame{
   width:44px;
@@ -623,12 +847,13 @@ body{
   align-items:center;
   justify-content:center;
   flex-shrink:0;
-  position:relative
+  position:relative;
+  background:#eee8ff;
 }
 
 .member-icon-frame .member-icon{
   width:38px;
-  height:38px
+  height:38px;
 }
 
 .member-icon{
@@ -638,13 +863,20 @@ body{
   align-items:center;
   justify-content:center;
   font-size:20px;
-  overflow:hidden
+  overflow:hidden;
 }
 
 .member-icon img{
   width:100%;
   height:100%;
-  object-fit:cover
+  object-fit:cover;
+
+  filter:none !important;
+  mix-blend-mode:normal !important;
+  opacity:1 !important;
+
+  border-radius:50%;
+  display:block;
 }
 
 .member-icon-badge{
@@ -659,50 +891,51 @@ body{
   align-items:center;
   justify-content:center;
   font-size:11px;
-  box-shadow:0 2px 5px rgba(0,0,0,.15)
+  box-shadow:0 2px 5px rgba(0,0,0,.15);
+  z-index:3;
 }
 
 .member-icon-badge.show{
-  display:flex
+  display:flex;
 }
 
 .member-info{
   min-width:0;
-  flex:1
+  flex:1;
 }
 
 .member-name{
   font-size:14px;
   font-weight:bold;
   color:#444;
-  word-break:break-word
+  word-break:break-word;
 }
 
 .member-id{
   font-size:12px;
   color:#888;
-  word-break:break-word
+  word-break:break-word;
 }
 
 .member-status{
   font-size:12px;
   font-weight:bold;
-  margin-top:3px
+  margin-top:3px;
 }
 
 .member-status.online{
-  color:#22a447
+  color:#22a447;
 }
 
 .member-status.offline{
-  color:#999
+  color:#999;
 }
 
 .last-online{
   font-size:11px;
   color:#999;
   margin-top:2px;
-  word-break:break-word
+  word-break:break-word;
 }
 
 .role-badge{
@@ -711,22 +944,22 @@ body{
   padding:3px 7px;
   border-radius:8px;
   font-size:11px;
-  font-weight:bold
+  font-weight:bold;
 }
 
 .role-owner{
   background:#fff0c2;
-  color:#a87800
+  color:#a87800;
 }
 
 .role-admin{
   background:#e8e1ff;
-  color:#5e50c9
+  color:#5e50c9;
 }
 
 .role-member{
   background:#eee;
-  color:#777
+  color:#777;
 }
 
 .role-control{
@@ -738,11 +971,11 @@ body{
   background:white;
   font-size:12px;
   color:#555;
-  outline:none
+  outline:none;
 }
 
 .role-control:focus{
-  border-color:var(--theme)
+  border-color:var(--theme);
 }
 
 .member-loading,
@@ -750,7 +983,7 @@ body{
   text-align:center;
   color:#888;
   padding:15px 5px;
-  font-size:14px
+  font-size:14px;
 }
 
 #memberInput{
@@ -759,17 +992,17 @@ body{
   border:1px solid #ddd;
   border-radius:12px;
   font-size:16px;
-  margin-bottom:10px
+  margin-bottom:10px;
 }
 
 #memberInput:focus{
   outline:none;
-  border-color:var(--theme)
+  border-color:var(--theme);
 }
 
 .modal-buttons{
   display:flex;
-  gap:8px
+  gap:8px;
 }
 
 .modal-buttons button{
@@ -778,24 +1011,24 @@ body{
   border-radius:12px;
   padding:12px;
   font-weight:bold;
-  cursor:pointer
+  cursor:pointer;
 }
 
 #addMemberButton{
   background:var(--theme);
-  color:white
+  color:white;
 }
 
 #closeModalButton{
   background:#eee;
-  color:#555
+  color:#555;
 }
 
 .add-section-title{
   font-size:14px;
   font-weight:bold;
   color:#555;
-  margin-bottom:8px
+  margin-bottom:8px;
 }
 </style>
 </head>
@@ -1091,8 +1324,13 @@ let readUpdateTimer = null;
 
 
 /* =========================
-   管理者状態
+   管理者
 ========================= */
+
+const ADMIN_USERNAMES = new Set([
+  "kazu1haru100",
+  "kazu1haru4sub"
+]);
 
 function updateGroupAdminState(){
 
@@ -1101,12 +1339,57 @@ currentUsername === groupOwnerId ||
 currentGroupRole === "admin";
 
 if(adminNote){
+
 adminNote.style.display =
 isGroupAdmin
 ? "block"
 : "none";
+
 }
 
+}
+
+
+/* =========================
+   フレーム
+========================= */
+
+function getFrameClass(itemKey,username){
+
+/*
+  管理者フレームは管理者IDだけ
+*/
+
+if(
+itemKey === "admin" &&
+ADMIN_USERNAMES.has(username)
+){
+return "admin-frame";
+}
+
+const map = {
+
+sakura:"frame-sakura",
+
+star:"frame-star",
+
+diamond:"frame-diamond",
+
+space:"frame-space",
+
+neon:"frame-neon",
+
+rainbow:"frame-rainbow",
+
+flame:"frame-flame",
+
+sea:"frame-sea",
+
+heart:"frame-heart"
+
+};
+
+return map[itemKey] || "";
 }
 
 
@@ -1116,7 +1399,9 @@ isGroupAdmin
 
 function isOnline(lastSeen){
 
-if(!lastSeen) return false;
+if(!lastSeen){
+return false;
+}
 
 const time =
 new Date(lastSeen).getTime();
@@ -1192,7 +1477,9 @@ String(date.getDate()).padStart(2,"0");
 
 async function updateMyPresence(){
 
-if(!currentUsername) return;
+if(!currentUsername){
+return;
+}
 
 const {error} =
 await supabaseClient
@@ -1208,10 +1495,12 @@ onConflict:"user_id"
 );
 
 if(error){
+
 console.error(
 "オンライン状態更新エラー:",
 error
 );
+
 }
 
 }
@@ -1271,29 +1560,40 @@ return;
 
 (data || []).forEach(
 profile=>{
+
 profileCache[
 profile.user_id
 ] = profile;
+
 }
 );
 
 missing.forEach(
 username=>{
+
 if(
 !Object.prototype.hasOwnProperty.call(
 profileCache,
 username
 )
 ){
-profileCache[username]=null;
+
+profileCache[
+username
+] = null;
+
 }
+
 }
 );
+
 }
 
 async function getProfile(username){
 
-if(!username) return null;
+if(!username){
+return null;
+}
 
 if(
 Object.prototype.hasOwnProperty.call(
@@ -1301,17 +1601,25 @@ profileCache,
 username
 )
 ){
-return profileCache[username];
+
+return profileCache[
+username
+];
+
 }
 
-await getProfiles([username]);
+await getProfiles([
+username
+]);
 
-return profileCache[username] || null;
+return profileCache[
+username
+] || null;
 }
 
 
 /* =========================
-   装備アイテム
+   アイテム
 ========================= */
 
 async function getItems(itemKeys){
@@ -1364,24 +1672,33 @@ return;
 
 (data || []).forEach(
 item=>{
+
 itemCache[
 item.item_key
 ] = item;
+
 }
 );
 
 missing.forEach(
 key=>{
+
 if(
 !Object.prototype.hasOwnProperty.call(
 itemCache,
 key
 )
 ){
-itemCache[key]=null;
+
+itemCache[
+key
+] = null;
+
 }
+
 }
 );
+
 }
 
 async function getEquippedItem(itemKey){
@@ -1396,12 +1713,20 @@ itemCache,
 itemKey
 )
 ){
-return itemCache[itemKey];
+
+return itemCache[
+itemKey
+];
+
 }
 
-await getItems([itemKey]);
+await getItems([
+itemKey
+]);
 
-return itemCache[itemKey] || null;
+return itemCache[
+itemKey
+] || null;
 }
 
 
@@ -1411,11 +1736,8 @@ return itemCache[itemKey] || null;
 
 function createAvatarSync(profile){
 
-const frame =
-document.createElement("div");
-
-frame.className =
-"message-avatar-frame";
+const username =
+profile?.user_id || "";
 
 const item =
 profile?.equipped_item_key
@@ -1424,9 +1746,36 @@ profile.equipped_item_key
 ]
 : null;
 
+const frame =
+document.createElement("div");
+
+frame.className =
+"message-avatar-frame";
+
+const frameClass =
+getFrameClass(
+profile?.equipped_item_key,
+username
+);
+
+if(frameClass){
+
+frame.classList.add(
+frameClass
+);
+
+}else{
+
+/*
+  新しい通常アイテムが追加された場合は
+  DBのframe_colorを使用
+*/
+
 frame.style.background =
 item?.frame_color ||
 "#eee8ff";
+
+}
 
 const avatar =
 document.createElement("div");
@@ -1445,15 +1794,20 @@ profile.avatar_url;
 img.alt =
 "プロフィール画像";
 
-avatar.appendChild(img);
+avatar.appendChild(
+img
+);
 
 }else{
 
 avatar.textContent =
 "👤";
+
 }
 
-frame.appendChild(avatar);
+frame.appendChild(
+avatar
+);
 
 if(item?.icon){
 
@@ -1473,7 +1827,10 @@ item.frame_color ||
 "#eee8ff"
 );
 
-frame.appendChild(badge);
+frame.appendChild(
+badge
+);
+
 }
 
 return frame;
@@ -1487,16 +1844,23 @@ return frame;
 async function loadGroup(){
 
 if(!groupId){
+
 groupName.textContent =
 "グループIDがありません";
+
 return;
 }
 
 const {data,error} =
 await supabaseClient
 .from("groups")
-.select("id,name,owner_id")
-.eq("id",groupId)
+.select(
+"id,name,owner_id"
+)
+.eq(
+"id",
+groupId
+)
 .maybeSingle();
 
 if(error){
@@ -1521,12 +1885,15 @@ return;
 }
 
 groupName.textContent =
-data.name || "グループ";
+data.name ||
+"グループ";
 
 groupOwnerId =
-data.owner_id || "";
+data.owner_id ||
+"";
 
 updateGroupAdminState();
+
 }
 
 
@@ -1548,7 +1915,9 @@ groupId
 )
 .order(
 "created_at",
-{ascending:true}
+{
+ascending:true
+}
 );
 
 if(error){
@@ -1570,7 +1939,9 @@ member =>
 member.user_id
 );
 
-await getProfiles(usernames);
+await getProfiles(
+usernames
+);
 
 const itemKeys =
 Object.values(profileCache)
@@ -1580,7 +1951,9 @@ profile =>
 profile.equipped_item_key
 );
 
-await getItems(itemKeys);
+await getItems(
+itemKeys
+);
 
 const me =
 groupMembersCache.find(
@@ -1590,9 +1963,11 @@ currentUsername
 );
 
 currentGroupRole =
-me?.role || "member";
+me?.role ||
+"member";
 
 updateGroupAdminState();
+
 }
 
 
@@ -1627,6 +2002,7 @@ groupMutesCache =
 data || [];
 
 updateCurrentMute();
+
 }
 
 function updateCurrentMute(){
@@ -1634,15 +2010,22 @@ function updateCurrentMute(){
 currentMute =
 groupMutesCache.find(
 mute =>
-mute.user_id === currentUsername &&
+mute.user_id ===
+currentUsername &&
 new Date(
 mute.muted_until
-).getTime() > Date.now()
+).getTime() >
+Date.now()
 ) || null;
 
 if(muteTimer){
-clearTimeout(muteTimer);
+
+clearTimeout(
+muteTimer
+);
+
 muteTimer=null;
+
 }
 
 if(currentMute){
@@ -1656,7 +2039,9 @@ muteBanner.textContent =
 "🔇 発言禁止中です。解除予定：" +
 until.toLocaleString("ja-JP");
 
-muteBanner.classList.add("show");
+muteBanner.classList.add(
+"show"
+);
 
 messageInput.disabled=true;
 sendButton.disabled=true;
@@ -1671,30 +2056,44 @@ if(remaining > 0){
 muteTimer =
 setTimeout(
 async ()=>{
+
 await loadGroupMutes();
+
 },
 Math.min(
 remaining + 500,
 2147483647
 )
 );
+
 }
 
 }else{
 
 muteBanner.textContent="";
-muteBanner.classList.remove("show");
+muteBanner.classList.remove(
+"show"
+);
 
 messageInput.disabled=false;
 sendButton.disabled=false;
 imageButton.disabled=false;
-}
+
 }
 
-async function setMute(username,minutes){
+}
+
+async function setMute(
+username,
+minutes
+){
 
 if(!isGroupAdmin){
-alert("管理者だけが設定できます");
+
+alert(
+"管理者だけが設定できます"
+);
+
 return;
 }
 
@@ -1702,7 +2101,11 @@ if(
 !username ||
 username === groupOwnerId
 ){
-alert("このユーザーには設定できません");
+
+alert(
+"このユーザーには設定できません"
+);
+
 return;
 }
 
@@ -1713,7 +2116,11 @@ if(
 !Number.isFinite(value) ||
 value <= 0
 ){
-alert("正しい時間を入力してください");
+
+alert(
+"正しい時間を入力してください"
+);
+
 return;
 }
 
@@ -1754,6 +2161,7 @@ await Promise.all([
 loadGroupMutes(),
 loadMembers()
 ]);
+
 }
 
 async function clearMute(username){
@@ -1790,6 +2198,7 @@ await Promise.all([
 loadGroupMutes(),
 loadMembers()
 ]);
+
 }
 
 
@@ -1803,7 +2212,8 @@ makeAdmin
 ){
 
 if(
-currentUsername !== groupOwnerId
+currentUsername !==
+groupOwnerId
 ){
 
 alert(
@@ -1813,7 +2223,11 @@ alert(
 return;
 }
 
-if(username === groupOwnerId){
+if(
+username ===
+groupOwnerId
+){
+
 return;
 }
 
@@ -1850,6 +2264,7 @@ return;
 
 await loadGroupMembers();
 await loadMembers();
+
 }
 
 
@@ -1920,10 +2335,12 @@ groupReadCounts[id]=0;
 }
 
 groupReadCounts[id]++;
+
 }
 );
 
 updateReadDisplays();
+
 }
 
 function updateReadDisplays(){
@@ -1955,8 +2372,11 @@ el.style.display =
 
 el.textContent="";
 el.style.display="none";
+
 }
+
 });
+
 }
 
 async function markMessagesRead(ids){
@@ -1965,6 +2385,7 @@ if(
 !currentUsername ||
 !ids?.length
 ){
+
 return;
 }
 
@@ -1985,10 +2406,15 @@ return;
 const rows =
 uniqueIds.map(
 id=>({
+
 group_message_id:id,
-user_id:currentUsername,
+
+user_id:
+currentUsername,
+
 read_at:
 new Date().toISOString()
+
 })
 );
 
@@ -2014,6 +2440,7 @@ return;
 }
 
 loadGroupReadCounts();
+
 }
 
 function scheduleReadRefresh(){
@@ -2025,11 +2452,15 @@ return;
 readUpdateTimer =
 setTimeout(
 ()=>{
+
 readUpdateTimer=null;
+
 loadGroupReadCounts();
+
 },
 150
 );
+
 }
 
 
@@ -2044,21 +2475,25 @@ messages.scrollHeight -
 messages.scrollTop -
 messages.clientHeight
 ) < 120;
+
 }
 
 function scrollToBottom(){
 
 messages.scrollTop =
 messages.scrollHeight;
+
 }
 
 messages.addEventListener(
 "scroll",
 ()=>{
+
 latestButton.classList.toggle(
 "show",
 !isNearBottom()
 );
+
 });
 
 latestButton.addEventListener(
@@ -2079,11 +2514,26 @@ return "";
 
 const escaped =
 String(text)
-.replaceAll("&","&amp;")
-.replaceAll("<","&lt;")
-.replaceAll(">","&gt;")
-.replaceAll('"',"&quot;")
-.replaceAll("'","&#039;");
+.replaceAll(
+"&",
+"&amp;"
+)
+.replaceAll(
+"<",
+"&lt;"
+)
+.replaceAll(
+">",
+"&gt;"
+)
+.replaceAll(
+'"',
+"&quot;"
+)
+.replaceAll(
+"'",
+"&#039;"
+);
 
 return escaped.replace(
 /@([a-zA-Z0-9_\-]+)/g,
@@ -2105,13 +2555,15 @@ return (
 match +
 "</span>"
 );
+
 }
 );
+
 }
 
 
 /* =========================
-   メッセージ編集
+   編集
 ========================= */
 
 async function editMessage(
@@ -2167,11 +2619,12 @@ return;
 await refreshSingleMessage(
 messageId
 );
+
 }
 
 
 /* =========================
-   メッセージ削除
+   削除
 ========================= */
 
 async function deleteMessage(
@@ -2218,22 +2671,24 @@ await refreshSingleMessage(
 messageId
 );
 
-} // ← ここが今回の重要な修正
+}
 
 
 /* =========================
-   メッセージデータ取得
+   メッセージ追加情報
 ========================= */
 
 async function fetchMessageExtras(list){
 
 if(!list.length){
+
 return {
 profiles:[],
 replies:[],
 reactions:[],
 signedUrls:{}
 };
+
 }
 
 const messageIds =
@@ -2260,7 +2715,9 @@ messageIds
 )
 .order(
 "created_at",
-{ascending:true}
+{
+ascending:true
+}
 );
 
 const {data:reactions} =
@@ -2295,7 +2752,9 @@ profile =>
 profile.equipped_item_key
 );
 
-await getItems(itemKeys);
+await getItems(
+itemKeys
+);
 
 const signedUrls = {};
 
@@ -2330,6 +2789,7 @@ signedUrls[
 message.id
 ] =
 data.signedUrl;
+
 }
 
 }catch(error){
@@ -2338,22 +2798,29 @@ console.error(
 "画像URL取得エラー:",
 error
 );
+
 }
+
 })
 );
 
 return {
+
 replies:
 replies || [],
+
 reactions:
 reactions || [],
+
 signedUrls
+
 };
+
 }
 
 
 /* =========================
-   メッセージDOM作成
+   メッセージDOM
 ========================= */
 
 function buildMessageElement(
@@ -2382,18 +2849,22 @@ createAvatarSync(profile)
 const box =
 document.createElement("div");
 
-box.className="message";
+box.className =
+"message";
 
 const sender =
 document.createElement("div");
 
-sender.className="sender";
+sender.className =
+"sender";
 
 sender.textContent =
 profile?.name ||
 message.sender_id;
 
-box.appendChild(sender);
+box.appendChild(
+sender
+);
 
 if(message.is_deleted){
 
@@ -2406,7 +2877,9 @@ deleted.className =
 deleted.textContent =
 "このメッセージは削除されました";
 
-box.appendChild(deleted);
+box.appendChild(
+deleted
+);
 
 }else{
 
@@ -2415,14 +2888,18 @@ if(message.content){
 const content =
 document.createElement("div");
 
-content.className="content";
+content.className =
+"content";
 
 content.innerHTML =
 renderMentions(
 message.content
 );
 
-box.appendChild(content);
+box.appendChild(
+content
+);
+
 }
 
 if(
@@ -2434,16 +2911,21 @@ message.id
 const img =
 document.createElement("img");
 
-img.className="chat-image";
+img.className =
+"chat-image";
 
 img.src =
 extras.signedUrls[
 message.id
 ];
 
-img.alt="送信画像";
+img.alt =
+"送信画像";
 
-box.appendChild(img);
+box.appendChild(
+img
+);
+
 }
 
 if(message.edited_at){
@@ -2460,7 +2942,9 @@ edited.textContent =
 sender.appendChild(
 edited
 );
+
 }
+
 }
 
 
@@ -2471,7 +2955,10 @@ extras.replies.filter(
 reply =>
 String(
 reply.group_message_id
-) === String(message.id)
+) ===
+String(
+message.id
+)
 );
 
 replies.forEach(
@@ -2502,13 +2989,17 @@ strong
 preview.appendChild(
 document.createTextNode(
 "：" +
-(reply.content || "")
+(
+reply.content ||
+""
+)
 )
 );
 
 box.appendChild(
 preview
 );
+
 });
 
 
@@ -2519,7 +3010,10 @@ extras.reactions.filter(
 reaction =>
 String(
 reaction.group_message_id
-) === String(message.id)
+) ===
+String(
+message.id
+)
 );
 
 if(reactionRows.length){
@@ -2538,13 +3032,14 @@ row.reaction
 reactionMap[
 row.reaction
 ]=0;
+
 }
 
 reactionMap[
 row.reaction
 ]++;
-}
-);
+
+});
 
 const reactions =
 document.createElement("div");
@@ -2571,12 +3066,13 @@ count;
 reactions.appendChild(
 item
 );
-}
-);
+
+});
 
 box.appendChild(
 reactions
 );
+
 }
 
 
@@ -2611,7 +3107,10 @@ count > 0
 ? "block"
 : "none";
 
-box.appendChild(read);
+box.appendChild(
+read
+);
+
 }
 
 
@@ -2626,7 +3125,8 @@ menu.className =
 const reactionButton =
 document.createElement("button");
 
-reactionButton.type="button";
+reactionButton.type =
+"button";
 
 reactionButton.textContent =
 "😀 リアクション";
@@ -2638,7 +3138,8 @@ reactionButton
 const replyButton =
 document.createElement("button");
 
-replyButton.type="button";
+replyButton.type =
+"button";
 
 replyButton.textContent =
 "↩️ 返信";
@@ -2656,7 +3157,8 @@ currentUsername &&
 const editButton =
 document.createElement("button");
 
-editButton.type="button";
+editButton.type =
+"button";
 
 editButton.className =
 "edit-button";
@@ -2670,12 +3172,15 @@ async event=>{
 
 event.stopPropagation();
 
-menu.style.display="none";
+menu.style.display =
+"none";
 
 await editMessage(
 message.id,
-message.content || ""
+message.content ||
+""
 );
+
 }
 );
 
@@ -2686,7 +3191,8 @@ editButton
 const deleteButton =
 document.createElement("button");
 
-deleteButton.type="button";
+deleteButton.type =
+"button";
 
 deleteButton.className =
 "delete-button";
@@ -2700,17 +3206,20 @@ async event=>{
 
 event.stopPropagation();
 
-menu.style.display="none";
+menu.style.display =
+"none";
 
 await deleteMessage(
 message.id
 );
+
 }
 );
 
 menu.appendChild(
 deleteButton
 );
+
 }
 
 
@@ -2735,7 +3244,8 @@ reaction=>{
 const button =
 document.createElement("button");
 
-button.type="button";
+button.type =
+"button";
 
 button.textContent =
 reaction;
@@ -2751,14 +3261,19 @@ message.id,
 reaction
 );
 
-picker.style.display="none";
-menu.style.display="none";
+picker.style.display =
+"none";
+
+menu.style.display =
+"none";
+
 }
 );
 
 picker.appendChild(
 button
 );
+
 });
 
 reactionButton.addEventListener(
@@ -2771,6 +3286,7 @@ picker.style.display =
 picker.style.display === "flex"
 ? "none"
 : "flex";
+
 });
 
 replyButton.addEventListener(
@@ -2779,14 +3295,25 @@ event=>{
 
 event.stopPropagation();
 
-startReply(message);
+startReply(
+message
+);
 
-menu.style.display="none";
-picker.style.display="none";
+menu.style.display =
+"none";
+
+picker.style.display =
+"none";
+
 });
 
-box.appendChild(menu);
-box.appendChild(picker);
+box.appendChild(
+menu
+);
+
+box.appendChild(
+picker
+);
 
 box.addEventListener(
 "click",
@@ -2800,7 +3327,9 @@ event.target.closest(
 ".reaction-picker"
 )
 ){
+
 return;
+
 }
 
 document
@@ -2809,9 +3338,12 @@ document
 )
 .forEach(
 el=>{
+
 if(el !== menu){
-el.style.display="none";
+el.style.display =
+"none";
 }
+
 });
 
 document
@@ -2820,25 +3352,31 @@ document
 )
 .forEach(
 el=>{
+
 if(el !== picker){
-el.style.display="none";
+el.style.display =
+"none";
 }
+
 });
 
 menu.style.display =
 menu.style.display === "block"
 ? "none"
 : "block";
+
 });
 
-row.appendChild(box);
+row.appendChild(
+box
+);
 
 return row;
 }
 
 
 /* =========================
-   高速メッセージ描画
+   メッセージ描画
 ========================= */
 
 async function renderMessages(
@@ -2873,7 +3411,9 @@ message,
 extras
 );
 
-fragment.appendChild(row);
+fragment.appendChild(
+row
+);
 
 if(
 message.sender_id !==
@@ -2883,11 +3423,13 @@ currentUsername
 unreadIds.push(
 message.id
 );
+
 }
-}
-);
+
+});
 
 messages.innerHTML="";
+
 messages.appendChild(
 fragment
 );
@@ -2897,6 +3439,7 @@ if(keepBottom){
 requestAnimationFrame(
 scrollToBottom
 );
+
 }
 
 if(unreadIds.length){
@@ -2904,12 +3447,14 @@ if(unreadIds.length){
 void markMessagesRead(
 unreadIds
 );
+
 }
+
 }
 
 
 /* =========================
-   メッセージ全体読み込み
+   メッセージ読み込み
 ========================= */
 
 async function loadMessages(){
@@ -2941,7 +3486,9 @@ groupId
 )
 .order(
 "created_at",
-{ascending:true}
+{
+ascending:true
+}
 );
 
 if(error){
@@ -2974,7 +3521,9 @@ error
 }finally{
 
 loadingMessages=false;
+
 }
+
 }
 
 
@@ -3008,6 +3557,7 @@ groupId
 if(error){
 
 console.error(error);
+
 return;
 }
 
@@ -3021,7 +3571,9 @@ messages.querySelector(
 );
 
 if(!old){
+
 await loadMessages();
+
 return;
 }
 
@@ -3041,10 +3593,13 @@ newRow
 );
 
 if(wasBottom){
+
 scrollToBottom();
+
 }
 
 await loadGroupReadCounts();
+
 }
 
 
@@ -3097,7 +3652,9 @@ existing.id
 );
 
 if(error){
+
 console.error(error);
+
 return;
 }
 
@@ -3118,13 +3675,16 @@ reaction
 if(error){
 
 console.error(error);
+
 return;
 }
+
 }
 
 await refreshSingleMessage(
 messageId
 );
+
 }
 
 
@@ -3160,6 +3720,7 @@ message.content ||
 );
 
 messageInput.focus();
+
 }
 
 cancelReplyButton.addEventListener(
@@ -3168,9 +3729,11 @@ cancelReplyButton.addEventListener(
 
 replyingToMessage=null;
 
-replyArea.style.display="none";
+replyArea.style.display =
+"none";
 
 replyText.textContent="";
+
 }
 );
 
@@ -3237,7 +3800,8 @@ member=>{
 const button =
 document.createElement("button");
 
-button.type="button";
+button.type =
+"button";
 
 button.className =
 "mention-item";
@@ -3264,11 +3828,15 @@ profile.avatar_url;
 img.alt =
 "プロフィール画像";
 
-avatar.appendChild(img);
+avatar.appendChild(
+img
+);
 
 }else{
 
-avatar.textContent="👤";
+avatar.textContent =
+"👤";
+
 }
 
 const info =
@@ -3294,11 +3862,21 @@ id.textContent =
 "@" +
 member.user_id;
 
-info.appendChild(name);
-info.appendChild(id);
+info.appendChild(
+name
+);
 
-button.appendChild(avatar);
-button.appendChild(info);
+info.appendChild(
+id
+);
+
+button.appendChild(
+avatar
+);
+
+button.appendChild(
+info
+);
 
 button.addEventListener(
 "click",
@@ -3333,18 +3911,21 @@ messageInput.setSelectionRange(
 newCursor,
 newCursor
 );
+
 }
 );
 
 mentionList.appendChild(
 button
 );
+
 }
 );
 
 mentionList.classList.add(
 "show"
 );
+
 }
 
 messageInput.addEventListener(
@@ -3376,6 +3957,7 @@ return;
 }
 
 imageInput.click();
+
 });
 
 imageInput.addEventListener(
@@ -3389,9 +3971,12 @@ if(!file){
 return;
 }
 
-await sendImage(file);
+await sendImage(
+file
+);
 
 imageInput.value="";
+
 }
 );
 
@@ -3431,10 +4016,13 @@ await supabaseClient
 .insert({
 group_id:
 Number(groupId),
+
 sender_id:
 currentUsername,
+
 content:
 value
+
 })
 .select(
 "id,group_id,sender_id,content,image_url,created_at,is_deleted,edited_at"
@@ -3459,7 +4047,9 @@ mentionList.classList.remove(
 );
 
 replyingToMessage=null;
-replyArea.style.display="none";
+
+replyArea.style.display =
+"none";
 
 if(replyTarget){
 
@@ -3467,13 +4057,17 @@ const {error:replyError} =
 await supabaseClient
 .from("group_replies")
 .insert({
+
 group_message_id:
 data.id,
+
 sender_id:
 currentUsername,
+
 content:
 replyTarget.content ||
 "画像"
+
 });
 
 if(replyError){
@@ -3482,7 +4076,9 @@ console.error(
 "返信保存エラー:",
 replyError
 );
+
 }
+
 }
 
 void sendMentionNotifications(
@@ -3508,7 +4104,10 @@ data,
 extras
 );
 
-messages.appendChild(row);
+messages.appendChild(
+row
+);
+
 }
 
 scrollToBottom();
@@ -3523,7 +4122,9 @@ error
 }finally{
 
 sendButton.disabled=false;
+
 }
+
 }
 
 
@@ -3603,13 +4204,18 @@ const {data,error} =
 await supabaseClient
 .from("group_messages")
 .insert({
+
 group_id:
 Number(groupId),
+
 sender_id:
 currentUsername,
+
 content:"",
+
 image_url:
 filePath
+
 })
 .select(
 "id,group_id,sender_id,content,image_url,created_at,is_deleted,edited_at"
@@ -3645,7 +4251,10 @@ data,
 extras
 );
 
-messages.appendChild(row);
+messages.appendChild(
+row
+);
+
 }
 
 scrollToBottom();
@@ -3660,7 +4269,9 @@ error
 }finally{
 
 imageButton.disabled=false;
+
 }
+
 }
 
 sendButton.addEventListener(
@@ -3680,7 +4291,9 @@ event.key === "Enter" &&
 event.preventDefault();
 
 sendMessage();
+
 }
+
 }
 );
 
@@ -3712,13 +4325,20 @@ if(
 username !== currentUsername &&
 groupMembersCache.some(
 member =>
-member.user_id === username
+member.user_id ===
+username
 ) &&
-!mentioned.includes(username)
+!mentioned.includes(
+username
+)
 ){
 
-mentioned.push(username);
+mentioned.push(
+username
+);
+
 }
+
 }
 
 if(!mentioned.length){
@@ -3744,16 +4364,21 @@ currentUsername +
 
 link:
 "group_chat.html?id=" +
-encodeURIComponent(groupId),
+encodeURIComponent(
+groupId
+),
 
 is_read:false
+
 })
 );
 
 const {error} =
 await supabaseClient
 .from("notifications")
-.insert(rows);
+.insert(
+rows
+);
 
 if(error){
 
@@ -3761,7 +4386,9 @@ console.error(
 "メンション通知エラー:",
 error
 );
+
 }
+
 }
 
 
@@ -3786,7 +4413,9 @@ groupId
 )
 .order(
 "created_at",
-{ascending:true}
+{
+ascending:true
+}
 );
 
 if(error){
@@ -3829,10 +4458,12 @@ const presenceMap={};
 (presenceData || [])
 .forEach(
 item=>{
+
 presenceMap[
 item.user_id
 ] =
 item.last_seen;
+
 }
 );
 
@@ -3848,7 +4479,9 @@ username
 ]?.equipped_item_key
 );
 
-await getItems(itemKeys);
+await getItems(
+itemKeys
+);
 
 const fragment =
 document.createDocumentFragment();
@@ -3874,15 +4507,37 @@ document.createElement("div");
 itemElement.className =
 "member-item";
 
+
+/* フレーム */
+
 const iconFrame =
 document.createElement("div");
 
 iconFrame.className =
 "member-icon-frame";
 
+const frameClass =
+getFrameClass(
+profile?.equipped_item_key,
+member.user_id
+);
+
+if(frameClass){
+
+iconFrame.classList.add(
+frameClass
+);
+
+}else{
+
 iconFrame.style.background =
 item?.frame_color ||
 "#eee8ff";
+
+}
+
+
+/* アイコン */
 
 const icon =
 document.createElement("div");
@@ -3901,14 +4556,23 @@ profile.avatar_url;
 img.alt =
 "プロフィール画像";
 
-icon.appendChild(img);
+icon.appendChild(
+img
+);
 
 }else{
 
-icon.textContent="👤";
+icon.textContent =
+"👤";
+
 }
 
-iconFrame.appendChild(icon);
+iconFrame.appendChild(
+icon
+);
+
+
+/* 装備バッジ */
 
 if(item?.icon){
 
@@ -3931,11 +4595,15 @@ item.frame_color ||
 iconFrame.appendChild(
 badge
 );
+
 }
 
 itemElement.appendChild(
 iconFrame
 );
+
+
+/* メンバー情報 */
 
 const info =
 document.createElement("div");
@@ -3953,7 +4621,9 @@ name.textContent =
 profile?.name ||
 member.user_id;
 
-info.appendChild(name);
+info.appendChild(
+name
+);
 
 const id =
 document.createElement("div");
@@ -3965,7 +4635,12 @@ id.textContent =
 "@" +
 member.user_id;
 
-info.appendChild(id);
+info.appendChild(
+id
+);
+
+
+/* オンライン */
 
 const lastSeen =
 presenceMap[
@@ -3973,7 +4648,9 @@ member.user_id
 ];
 
 const online =
-isOnline(lastSeen);
+isOnline(
+lastSeen
+);
 
 const status =
 document.createElement("div");
@@ -3991,7 +4668,9 @@ online
 ? "● オンライン"
 : "● オフライン";
 
-info.appendChild(status);
+info.appendChild(
+status
+);
 
 if(!online){
 
@@ -4006,8 +4685,14 @@ formatLastOnline(
 lastSeen
 );
 
-info.appendChild(last);
+info.appendChild(
+last
+);
+
 }
+
+
+/* 権限 */
 
 const roleBadge =
 document.createElement("div");
@@ -4046,11 +4731,15 @@ roleBadge.classList.add(
 
 roleBadge.textContent =
 "メンバー";
+
 }
 
 info.appendChild(
 roleBadge
 );
+
+
+/* 発言禁止表示 */
 
 const mute =
 groupMutesCache.find(
@@ -4077,10 +4766,11 @@ muteStatus.textContent =
 info.appendChild(
 muteStatus
 );
+
 }
 
 
-/* オーナーだけ副管理者変更 */
+/* 副管理者変更 */
 
 if(
 currentUsername ===
@@ -4129,21 +4819,24 @@ member.role === "admin"
 roleControl.addEventListener(
 "change",
 async ()=>{
+
 await setDeputyAdmin(
 member.user_id,
 roleControl.value ===
 "admin"
 );
+
 }
 );
 
 info.appendChild(
 roleControl
 );
+
 }
 
 
-/* 管理者の発言禁止 */
+/* 発言禁止 */
 
 if(
 isGroupAdmin &&
@@ -4156,9 +4849,11 @@ groupOwnerId
 const muteControl =
 document.createElement("input");
 
-muteControl.type="number";
+muteControl.type =
+"number";
 
-muteControl.min="1";
+muteControl.min =
+"1";
 
 muteControl.placeholder =
 "発言禁止（分）";
@@ -4173,7 +4868,8 @@ muteControl
 const muteButton =
 document.createElement("button");
 
-muteButton.type="button";
+muteButton.type =
+"button";
 
 muteButton.className =
 "mute-control";
@@ -4184,10 +4880,12 @@ muteButton.textContent =
 muteButton.addEventListener(
 "click",
 async ()=>{
+
 await setMute(
 member.user_id,
 muteControl.value
 );
+
 }
 );
 
@@ -4200,7 +4898,8 @@ if(mute){
 const clearButton =
 document.createElement("button");
 
-clearButton.type="button";
+clearButton.type =
+"button";
 
 clearButton.className =
 "mute-clear-button";
@@ -4211,16 +4910,20 @@ clearButton.textContent =
 clearButton.addEventListener(
 "click",
 async ()=>{
+
 await clearMute(
 member.user_id
 );
+
 }
 );
 
 info.appendChild(
 clearButton
 );
+
 }
+
 }
 
 itemElement.appendChild(
@@ -4230,12 +4933,15 @@ info
 fragment.appendChild(
 itemElement
 );
+
 });
 
 memberList.innerHTML="";
+
 memberList.appendChild(
 fragment
 );
+
 }
 
 
@@ -4276,7 +4982,9 @@ const {data:profile,error:
 profileError} =
 await supabaseClient
 .from("profiles")
-.select("user_id")
+.select(
+"user_id"
+)
 .eq(
 "user_id",
 username
@@ -4309,12 +5017,16 @@ const {error} =
 await supabaseClient
 .from("group_members")
 .insert({
+
 group_id:
 Number(groupId),
+
 user_id:
 username,
+
 role:
 "member"
+
 });
 
 if(error){
@@ -4332,6 +5044,7 @@ memberInput.value="";
 
 await loadGroupMembers();
 await loadMembers();
+
 }
 
 
@@ -4352,6 +5065,7 @@ memberModal.style.display =
 "flex";
 
 await loadMembers();
+
 }
 );
 
@@ -4361,6 +5075,7 @@ closeModalButton.addEventListener(
 
 memberModal.style.display =
 "none";
+
 }
 );
 
@@ -4375,7 +5090,9 @@ memberModal
 
 memberModal.style.display =
 "none";
+
 }
+
 }
 );
 
@@ -4417,7 +5134,9 @@ messages.querySelector(
 `[data-message-id="${message.id}"]`
 )
 ){
+
 return;
+
 }
 
 const wasBottom =
@@ -4434,10 +5153,14 @@ message,
 extras
 );
 
-messages.appendChild(row);
+messages.appendChild(
+row
+);
 
 if(wasBottom){
+
 scrollToBottom();
+
 }
 
 void markMessagesRead(
@@ -4446,15 +5169,19 @@ currentUsername
 ? [message.id]
 : []
 );
+
 }
 ).catch(
 error=>{
+
 console.error(
 "Realtime INSERT処理エラー:",
 error
 );
+
 }
 );
+
 });
 
 channel.on(
@@ -4482,8 +5209,11 @@ messages.querySelector(
 );
 
 if(!old){
+
 await loadMessages();
+
 return;
+
 }
 
 const extras =
@@ -4502,16 +5232,23 @@ newRow
 );
 
 await loadGroupReadCounts();
+
 }
 ).catch(
 error=>{
+
 console.error(
 "Realtime UPDATE処理エラー:",
 error
 );
+
 }
 );
+
 });
+
+
+/* 既読 */
 
 channel.on(
 "postgres_changes",
@@ -4523,6 +5260,7 @@ table:"group_message_reads"
 ()=>{
 
 scheduleReadRefresh();
+
 }
 );
 
@@ -4536,7 +5274,11 @@ table:"group_message_reads"
 ()=>{
 
 scheduleReadRefresh();
+
 });
+
+
+/* 発言禁止 */
 
 channel.on(
 "postgres_changes",
@@ -4549,8 +5291,11 @@ filter:
 groupId
 },
 async ()=>{
+
 await loadGroupMutes();
-});
+
+}
+);
 
 channel.on(
 "postgres_changes",
@@ -4563,8 +5308,11 @@ filter:
 groupId
 },
 async ()=>{
+
 await loadGroupMutes();
-});
+
+}
+);
 
 channel.on(
 "postgres_changes",
@@ -4577,10 +5325,14 @@ filter:
 groupId
 },
 async ()=>{
+
 await loadGroupMutes();
-});
+
+}
+);
 
 channel.subscribe();
+
 }
 
 
@@ -4651,6 +5403,7 @@ if(presenceTimer){
 clearInterval(
 presenceTimer
 );
+
 }
 
 presenceTimer =
@@ -4658,6 +5411,7 @@ setInterval(
 updateMyPresence,
 30000
 );
+
 }
 
 start();
