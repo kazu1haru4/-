@@ -82,6 +82,12 @@
       color: white;
       font-size: 17px;
       font-weight: bold;
+      cursor: pointer;
+    }
+
+    .create-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     .back-button {
@@ -93,6 +99,7 @@
       background: #f1f1f1;
       color: #555;
       font-size: 16px;
+      cursor: pointer;
     }
 
     .message {
@@ -155,6 +162,9 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <!-- BANチェック -->
+  <script src="ban-check.js"></script>
+
   <script>
 
     const SUPABASE_URL =
@@ -183,18 +193,61 @@
       document.getElementById("message");
 
 
+    /* =========================
+       初期BANチェック
+    ========================= */
+
+    async function checkPageAccess() {
+
+      const wasBanned =
+        await checkFriendChatBan();
+
+      if (wasBanned) {
+        return false;
+      }
+
+      return true;
+    }
+
+
+    /* =========================
+       戻る
+    ========================= */
+
     backButton.addEventListener(
       "click",
-      () => {
+      async () => {
+
+        const wasBanned =
+          await checkFriendChatBan();
+
+        if (wasBanned) {
+          return;
+        }
+
         window.location.href =
           "groups.html";
       }
     );
 
 
+    /* =========================
+       グループ作成
+    ========================= */
+
     createButton.addEventListener(
       "click",
       async () => {
+
+        /* BAN確認 */
+
+        const wasBanned =
+          await checkFriendChatBan();
+
+        if (wasBanned) {
+          return;
+        }
+
 
         const name =
           groupName.value.trim();
@@ -271,7 +324,8 @@
           console.error(groupError);
 
           message.textContent =
-  "エラー：" + groupError.message;
+            "エラー：" +
+            groupError.message;
 
           createButton.disabled = false;
 
@@ -317,7 +371,14 @@
       }
     );
 
+
+    /* =========================
+       ページ開始
+    ========================= */
+
+    checkPageAccess();
+
   </script>
 
 </body>
-    </html>
+</html>
