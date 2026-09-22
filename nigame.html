@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>ミニゲーム - フレンドチャット</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --main: #8f7cff;
+      --light: #f0edff;
+      --text: #5e50c9;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 20px;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        "Hiragino Kaku Gothic ProN",
+        "Yu Gothic",
+        sans-serif;
+      background:
+        linear-gradient(
+          135deg,
+          #fff3fb,
+          #eef5ff
+        );
+      color: #333;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .header {
+      position: relative;
+      background: white;
+      border-radius: 24px;
+      padding: 24px 20px;
+      text-align: center;
+      box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.07);
+      margin-bottom: 18px;
+    }
+
+    .back-button {
+      position: absolute;
+      left: 15px;
+      top: 15px;
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      background: var(--light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      font-size: 24px;
+    }
+
+    .back-button:active {
+      transform: scale(0.94);
+    }
+
+    .game-logo {
+      font-size: 52px;
+      margin-bottom: 4px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 25px;
+    }
+
+    .subtitle {
+      margin: 7px 0 0;
+      color: #888;
+      font-size: 14px;
+    }
+
+    .game-card {
+      background: white;
+      border-radius: 24px;
+      padding: 24px 20px;
+      box-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.06);
+      text-align: center;
+    }
+
+    .game-title {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .game-description {
+      color: #888;
+      font-size: 14px;
+      margin-bottom: 22px;
+    }
+
+    .score {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .score-box {
+      min-width: 100px;
+      padding: 12px;
+      border-radius: 16px;
+      background: var(--light);
+    }
+
+    .score-label {
+      display: block;
+      color: #888;
+      font-size: 12px;
+      margin-bottom: 3px;
+    }
+
+    .score-value {
+      font-size: 25px;
+      font-weight: bold;
+      color: var(--text);
+    }
+
+    .result {
+      min-height: 115px;
+      padding: 18px;
+      border-radius: 20px;
+      background: #fafafa;
+      margin-bottom: 20px;
+    }
+
+    .result-emoji {
+      font-size: 48px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .result-text {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .choices {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .choice {
+      border: none;
+      border-radius: 20px;
+      min-height: 105px;
+      background: var(--light);
+      font-size: 42px;
+      cursor: pointer;
+      transition:
+        transform 0.12s,
+        box-shadow 0.12s;
+    }
+
+    .choice span {
+      display: block;
+      margin-top: 6px;
+      font-size: 13px;
+      font-weight: bold;
+      color: var(--text);
+    }
+
+    .choice:active {
+      transform: scale(0.93);
+    }
+
+    .choice:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+
+    .reset-button {
+      width: 100%;
+      margin-top: 16px;
+      padding: 14px;
+      border: none;
+      border-radius: 16px;
+      background: #f3f3f3;
+      color: #555;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .reset-button:active {
+      transform: scale(0.97);
+    }
+
+    .home-button {
+      display: block;
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 16px;
+      background: var(--main);
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .footer {
+      text-align: center;
+      color: #aaa;
+      font-size: 12px;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 380px) {
+      body {
+        padding: 14px;
+      }
+
+      .choice {
+        min-height: 95px;
+        font-size: 36px;
+      }
+
+      .score-box {
+        min-width: 90px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="page">
+
+    <section class="header">
+
+      <a
+        href="home.html"
+        class="back-button"
+        aria-label="ホームに戻る"
+      >
+        ←
+      </a>
+
+      <div class="game-logo">
+        🎮
+      </div>
+
+      <h1>
+        ミニゲーム
+      </h1>
+
+      <p class="subtitle">
+        ちょっと遊んでいこう！
+      </p>
+
+    </section>
+
+
+    <section class="game-card">
+
+      <div class="game-title">
+        ✊✌️🖐️ じゃんけん
+      </div>
+
+      <div class="game-description">
+        コンピューターと勝負しよう！
+      </div>
+
+
+      <div class="score">
+
+        <div class="score-box">
+          <span class="score-label">
+            あなた
+          </span>
+
+          <span
+            class="score-value"
+            id="winScore"
+          >
+            0
+          </span>
+        </div>
+
+
+        <div class="score-box">
+          <span class="score-label">
+            コンピューター
+          </span>
+
+          <span
+            class="score-value"
+            id="loseScore"
+          >
+            0
+          </span>
+        </div>
+
+      </div>
+
+
+      <div class="result">
+
+        <div
+          class="result-emoji"
+          id="resultEmoji"
+        >
+          🎮
+        </div>
+
+        <div
+          class="result-text"
+          id="resultText"
+        >
+          手を選んでね！
+        </div>
+
+      </div>
+
+
+      <div class="choices">
+
+        <button
+          type="button"
+          class="choice"
+          data-choice="rock"
+        >
+          ✊
+          <span>グー</span>
+        </button>
+
+
+        <button
+          type="button"
+          class="choice"
+          data-choice="scissors"
+        >
+          ✌️
+          <span>チョキ</span>
+        </button>
+
+
+        <button
+          type="button"
+          class="choice"
+          data-choice="paper"
+        >
+          🖐️
+          <span>パー</span>
+        </button>
+
+      </div>
+
+
+      <button
+        type="button"
+        class="reset-button"
+        id="resetButton"
+      >
+        🔄 スコアをリセット
+      </button>
+
+
+      <a
+        href="home.html"
+        class="home-button"
+      >
+        🏠 ホームに戻る
+      </a>
+
+    </section>
+
+
+    <div class="footer">
+      Friend Chat
+    </div>
+
+  </main>
+
+
+  <script>
+
+    const choices = {
+      rock: {
+        emoji: "✊",
+        name: "グー"
+      },
+
+      scissors: {
+        emoji: "✌️",
+        name: "チョキ"
+      },
+
+      paper: {
+        emoji: "🖐️",
+        name: "パー"
+      }
+    };
+
+
+    let winScore = 0;
+    let loseScore = 0;
+
+
+    const choiceButtons =
+      document.querySelectorAll(".choice");
+
+    const resultEmoji =
+      document.getElementById("resultEmoji");
+
+    const resultText =
+      document.getElementById("resultText");
+
+    const winScoreElement =
+      document.getElementById("winScore");
+
+    const loseScoreElement =
+      document.getElementById("loseScore");
+
+    const resetButton =
+      document.getElementById("resetButton");
+
+
+    function getComputerChoice() {
+
+      const keys =
+        Object.keys(choices);
+
+      const randomIndex =
+        Math.floor(
+          Math.random() * keys.length
+        );
+
+      return keys[randomIndex];
+    }
+
+
+    function decideWinner(
+      playerChoice,
+      computerChoice
+    ) {
+
+      if (
+        playerChoice ===
+        computerChoice
+      ) {
+        return "draw";
+      }
+
+
+      if (
+        (
+          playerChoice === "rock" &&
+          computerChoice === "scissors"
+        ) ||
+        (
+          playerChoice === "scissors" &&
+          computerChoice === "paper"
+        ) ||
+        (
+          playerChoice === "paper" &&
+          computerChoice === "rock"
+        )
+      ) {
+        return "win";
+      }
+
+
+      return "lose";
+    }
+
+
+    function play(choice) {
+
+      const computerChoice =
+        getComputerChoice();
+
+      const result =
+        decideWinner(
+          choice,
+          computerChoice
+        );
+
+
+      const player =
+        choices[choice];
+
+      const computer =
+        choices[computerChoice];
+
+
+      if (result === "win") {
+
+        winScore++;
+
+        resultEmoji.textContent =
+          player.emoji +
+          " 🆚 " +
+          computer.emoji;
+
+        resultText.textContent =
+          "🎉 あなたの勝ち！";
+
+      } else if (result === "lose") {
+
+        loseScore++;
+
+        resultEmoji.textContent =
+          player.emoji +
+          " 🆚 " +
+          computer.emoji;
+
+        resultText.textContent =
+          "😣 コンピューターの勝ち！";
+
+      } else {
+
+        resultEmoji.textContent =
+          player.emoji +
+          " 🆚 " +
+          computer.emoji;
+
+        resultText.textContent =
+          "🤝 あいこ！";
+      }
+
+
+      updateScore();
+    }
+
+
+    function updateScore() {
+
+      winScoreElement.textContent =
+        winScore;
+
+      loseScoreElement.textContent =
+        loseScore;
+    }
+
+
+    function resetGame() {
+
+      winScore = 0;
+      loseScore = 0;
+
+      updateScore();
+
+      resultEmoji.textContent =
+        "🎮";
+
+      resultText.textContent =
+        "手を選んでね！";
+    }
+
+
+    choiceButtons.forEach(
+      function(button) {
+
+        button.addEventListener(
+          "click",
+          function() {
+
+            const choice =
+              button.dataset.choice;
+
+            play(choice);
+
+          }
+        );
+
+      }
+    );
+
+
+    resetButton.addEventListener(
+      "click",
+      resetGame
+    );
+
+  </script>
+
+</body>
+</html>
