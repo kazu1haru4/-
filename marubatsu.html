@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>○×ゲーム</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Hiragino Kaku Gothic ProN",
+        "Yu Gothic",
+        sans-serif;
+      background: linear-gradient(135deg, #fff4fb, #eef7ff);
+      min-height: 100vh;
+      color: #333;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 24px 18px 40px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .back-button {
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 14px;
+      background: white;
+      font-size: 22px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .title {
+      font-size: 25px;
+      font-weight: bold;
+    }
+
+    .turn {
+      background: white;
+      border-radius: 18px;
+      padding: 15px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.07);
+      margin-bottom: 18px;
+    }
+
+    .board {
+      width: min(90vw, 390px);
+      aspect-ratio: 1 / 1;
+      margin: 0 auto 22px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .cell {
+      border: none;
+      border-radius: 20px;
+      background: white;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+      font-size: clamp(45px, 15vw, 75px);
+      font-weight: bold;
+      cursor: pointer;
+      color: #333;
+    }
+
+    .cell:active {
+      transform: scale(0.96);
+    }
+
+    .cell.x {
+      color: #4b8cff;
+    }
+
+    .cell.o {
+      color: #ff5d8f;
+    }
+
+    .result {
+      min-height: 32px;
+      text-align: center;
+      font-size: 21px;
+      font-weight: bold;
+      margin-bottom: 18px;
+    }
+
+    .reset-button {
+      width: 100%;
+      border: none;
+      border-radius: 16px;
+      background: #eee;
+      padding: 14px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .note {
+      text-align: center;
+      color: #777;
+      font-size: 13px;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <div class="header">
+
+      <button
+        class="back-button"
+        type="button"
+        onclick="location.href='minigame.html'"
+      >
+        ←
+      </button>
+
+      <div class="title">
+        ⭕❌ ○×ゲーム
+      </div>
+
+    </div>
+
+
+    <div
+      class="turn"
+      id="turn"
+    >
+      ⭕の番です
+    </div>
+
+
+    <div
+      class="board"
+      id="board"
+    >
+
+      <button class="cell" data-index="0"></button>
+      <button class="cell" data-index="1"></button>
+      <button class="cell" data-index="2"></button>
+
+      <button class="cell" data-index="3"></button>
+      <button class="cell" data-index="4"></button>
+      <button class="cell" data-index="5"></button>
+
+      <button class="cell" data-index="6"></button>
+      <button class="cell" data-index="7"></button>
+      <button class="cell" data-index="8"></button>
+
+    </div>
+
+
+    <div
+      class="result"
+      id="result"
+    ></div>
+
+
+    <button
+      class="reset-button"
+      id="resetButton"
+      type="button"
+    >
+      🔄 もう一度遊ぶ
+    </button>
+
+
+    <div class="note">
+      2人で交互に○と×を置いて遊ぼう！
+    </div>
+
+  </div>
+
+
+  <script>
+
+    const cells =
+      document.querySelectorAll(".cell");
+
+    const turnElement =
+      document.getElementById("turn");
+
+    const resultElement =
+      document.getElementById("result");
+
+    const resetButton =
+      document.getElementById("resetButton");
+
+
+    let board = [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ];
+
+    let currentPlayer = "O";
+
+    let gameOver = false;
+
+
+    const winningPatterns = [
+
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+
+      [0, 4, 8],
+      [2, 4, 6]
+
+    ];
+
+
+    function updateTurn() {
+
+      if (currentPlayer === "O") {
+
+        turnElement.textContent =
+          "⭕の番です";
+
+      } else {
+
+        turnElement.textContent =
+          "❌の番です";
+
+      }
+
+    }
+
+
+    function checkWinner() {
+
+      for (
+        const pattern
+        of winningPatterns
+      ) {
+
+        const [a, b, c] =
+          pattern;
+
+        if (
+          board[a] &&
+          board[a] === board[b] &&
+          board[a] === board[c]
+        ) {
+
+          return board[a];
+
+        }
+
+      }
+
+      if (
+        board.every(
+          cell => cell !== ""
+        )
+      ) {
+
+        return "draw";
+
+      }
+
+      return null;
+    }
+
+
+    function handleCellClick(event) {
+
+      if (gameOver) {
+        return;
+      }
+
+
+      const index =
+        Number(
+          event.currentTarget.dataset.index
+        );
+
+
+      if (board[index] !== "") {
+        return;
+      }
+
+
+      board[index] =
+        currentPlayer;
+
+
+      event.currentTarget.textContent =
+        currentPlayer === "O"
+          ? "⭕"
+          : "❌";
+
+
+      event.currentTarget.classList.add(
+        currentPlayer === "O"
+          ? "o"
+          : "x"
+      );
+
+
+      const winner =
+        checkWinner();
+
+
+      if (winner === "O") {
+
+        gameOver = true;
+
+        resultElement.textContent =
+          "🎉 ⭕の勝ち！";
+
+        turnElement.textContent =
+          "ゲーム終了";
+
+        return;
+
+      }
+
+
+      if (winner === "X") {
+
+        gameOver = true;
+
+        resultElement.textContent =
+          "🎉 ❌の勝ち！";
+
+        turnElement.textContent =
+          "ゲーム終了";
+
+        return;
+
+      }
+
+
+      if (winner === "draw") {
+
+        gameOver = true;
+
+        resultElement.textContent =
+          "🤝 引き分け！";
+
+        turnElement.textContent =
+          "ゲーム終了";
+
+        return;
+
+      }
+
+
+      currentPlayer =
+        currentPlayer === "O"
+          ? "X"
+          : "O";
+
+
+      updateTurn();
+
+    }
+
+
+    function resetGame() {
+
+      board = [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ];
+
+      currentPlayer = "O";
+
+      gameOver = false;
+
+      resultElement.textContent = "";
+
+      cells.forEach(cell => {
+
+        cell.textContent = "";
+
+        cell.classList.remove(
+          "o",
+          "x"
+        );
+
+      });
+
+      updateTurn();
+
+    }
+
+
+    cells.forEach(cell => {
+
+      cell.addEventListener(
+        "click",
+        handleCellClick
+      );
+
+    });
+
+
+    resetButton.addEventListener(
+      "click",
+      resetGame
+    );
+
+
+    updateTurn();
+
+  </script>
+
+</body>
+</html>
