@@ -22,6 +22,7 @@ body {
     "Hiragino Kaku Gothic ProN",
     "Yu Gothic",
     sans-serif;
+
   background: linear-gradient(135deg, #fff4fb, #eef7ff);
   color: #333;
 }
@@ -170,10 +171,9 @@ textarea {
 }
 
 .hint {
-  color: #777;
-  font-size: 12px;
-  line-height: 1.5;
   margin-top: 5px;
+  color: #888;
+  font-size: 12px;
 }
 
 .actions {
@@ -238,17 +238,26 @@ textarea {
   line-height: 1.7;
 }
 
-.code-display {
-  display: inline-block;
-  margin-top: 8px;
-  padding: 9px 13px;
-  border-radius: 11px;
-  background: #eee9ff;
-  color: #604fd0;
+.reward-code-value {
+  background: #fff;
+  border: 2px dashed #8f7cff;
+  color: #6d5de7;
+  border-radius: 14px;
+  padding: 12px;
+  margin-top: 10px;
+  font-size: 18px;
   font-weight: bold;
-  font-family: monospace;
-  font-size: 16px;
   word-break: break-all;
+}
+
+.code-active {
+  color: #43a047;
+  font-weight: bold;
+}
+
+.code-inactive {
+  color: #e53935;
+  font-weight: bold;
 }
 
 .status {
@@ -297,21 +306,11 @@ textarea {
   margin-top: 0;
 }
 
-.reward-create {
-  background: linear-gradient(
-    135deg,
-    #fff7fc,
-    #f4f0ff
-  );
-  border: 2px solid #e8e0ff;
-  border-radius: 18px;
-  padding: 15px;
-}
-
 @media (max-width: 600px) {
 
   .user-card {
     align-items: flex-start;
+    flex-wrap: wrap;
   }
 
   .user-card .actions {
@@ -335,9 +334,7 @@ textarea {
 
 <header>
   <h1>👑 管理者パネル</h1>
-  <div id="adminName" class="admin-name">
-    確認中...
-  </div>
+  <div id="adminName" class="admin-name">確認中...</div>
 </header>
 
 <div id="status" class="status">
@@ -404,16 +401,12 @@ textarea {
 
   <div class="form-row">
     <label>開始日時</label>
-    <input
-      id="eventStart"
-      type="datetime-local">
+    <input id="eventStart" type="datetime-local">
   </div>
 
   <div class="form-row">
     <label>終了日時</label>
-    <input
-      id="eventEnd"
-      type="datetime-local">
+    <input id="eventEnd" type="datetime-local">
   </div>
 
   <div class="form-row">
@@ -465,93 +458,74 @@ textarea {
 
   <h2>🎁 配布コード管理</h2>
 
-  <div class="reward-create">
+  <p style="color:#777;font-size:14px;line-height:1.6;">
+    イベントとは関係なく、好きな配布コードを作成できます。
+    コインやフレームをユーザーに配布できます。
+  </p>
 
-    <p style="
-      margin-top:0;
-      color:#666;
-      line-height:1.6;
-      font-size:14px;
-    ">
-      イベントとは別の配布コードです。<br>
-      コインやフレームをユーザーに配布できます。
-    </p>
+  <div class="form-row">
 
+    <label>配布コード</label>
 
-    <div class="form-row">
-
-      <label>
-        🔑 配布コード
-      </label>
-
-      <input
-        id="rewardCode"
-        type="text"
-        maxlength="100"
-        autocomplete="off"
-        placeholder="例：WELCOME100">
-
-      <div class="hint">
-        大文字・小文字は区別されません。
-      </div>
-
-    </div>
-
-
-    <div class="form-row">
-
-      <label>
-        🪙 コイン報酬
-      </label>
-
-      <input
-        id="rewardCodeCoins"
-        type="number"
-        min="0"
-        step="1"
-        value="0">
-
-    </div>
-
-
-    <div class="form-row">
-
-      <label>
-        🖼️ フレーム報酬
-      </label>
-
-      <select id="rewardCodeItem">
-        <option value="">なし</option>
-      </select>
-
-    </div>
-
-
-    <div class="form-row">
-
-      <label>
-        👥 最大利用人数
-      </label>
-
-      <input
-        id="rewardCodeMaxUses"
-        type="number"
-        min="0"
-        step="1"
-        value="0">
-
-      <div class="hint">
-        0にすると利用人数の制限なし。
-      </div>
-
-    </div>
-
-
-    <button id="createRewardCodeButton">
-      🎁 配布コードを作成
-    </button>
+    <input
+      id="rewardCode"
+      type="text"
+      maxlength="100"
+      placeholder="例：WELCOME100">
 
   </div>
+
+
+  <div class="form-row">
+
+    <label>コイン報酬</label>
+
+    <input
+      id="rewardCodeCoins"
+      type="number"
+      min="0"
+      step="1"
+      value="0">
+
+  </div>
+
+
+  <div class="form-row">
+
+    <label>フレーム報酬</label>
+
+    <select id="rewardCodeItem">
+
+      <option value="">
+        なし
+      </option>
+
+    </select>
+
+  </div>
+
+
+  <div class="form-row">
+
+    <label>最大利用人数</label>
+
+    <input
+      id="rewardCodeMaxUses"
+      type="number"
+      min="0"
+      step="1"
+      value="0">
+
+    <div class="hint">
+      0なら無制限。
+    </div>
+
+  </div>
+
+
+  <button id="createRewardCodeButton">
+    🎁 コードを作成
+  </button>
 
 </section>
 
@@ -711,6 +685,17 @@ function escapeHtml(value) {
 }
 
 
+function escapeAttribute(value) {
+
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll("'", "&#039;");
+}
+
+
 function formatDate(value) {
 
   if (!value) return "";
@@ -758,23 +743,13 @@ async function init() {
           font-family:sans-serif;
         ">
           <h2>ログインが必要です</h2>
-          <p>
-            管理者アカウントでログインしてください。
-          </p>
+          <p>管理者アカウントでログインしてください。</p>
         </div>
       `;
 
       return;
     }
 
-
-    currentUsername =
-      session.user.user_metadata?.username || "";
-
-
-    /*
-     * BAN確認
-     */
 
     if (
       typeof checkFriendChatBan ===
@@ -790,9 +765,9 @@ async function init() {
     }
 
 
-    /*
-     * 管理者確認
-     */
+    currentUsername =
+      session.user.user_metadata?.username || "";
+
 
     if (
       !ADMIN_USERNAMES.has(
@@ -807,9 +782,7 @@ async function init() {
           font-family:sans-serif;
         ">
           <h2>🚫 アクセスできません</h2>
-          <p>
-            このページは管理者専用です。
-          </p>
+          <p>このページは管理者専用です。</p>
         </div>
       `;
 
@@ -972,13 +945,16 @@ async function loadUsers() {
 
 
       const ban =
-        banMap.get(username);
+        banMap.get(
+          username
+        );
 
 
       const card =
         document.createElement(
           "div"
         );
+
 
       card.className =
         "user-card";
@@ -993,14 +969,15 @@ async function loadUsers() {
 
         <img
           class="avatar"
-          src="${escapeHtml(avatar)}"
+          src="${escapeAttribute(avatar)}"
           alt="">
 
         <div class="user-info">
 
           <div class="user-name">
             ${escapeHtml(
-              profile.name || username
+              profile.name ||
+              username
             )}
           </div>
 
@@ -1047,7 +1024,9 @@ async function loadUsers() {
                 ? `
                   <button
                     class="success small"
-                    data-unban="${escapeHtml(username)}">
+                    data-unban="${escapeAttribute(
+                      username
+                    )}">
                     🔓 BAN解除
                   </button>
                 `
@@ -1055,7 +1034,9 @@ async function loadUsers() {
                 : `
                   <button
                     class="danger small"
-                    data-ban="${escapeHtml(username)}">
+                    data-ban="${escapeAttribute(
+                      username
+                    )}">
                     🚫 BAN
                   </button>
                 `
@@ -1126,11 +1107,9 @@ function openBanModal(username) {
   ).textContent =
     `対象ユーザー：${username}`;
 
-
   document.getElementById(
     "banReason"
   ).value = "";
-
 
   document.getElementById(
     "banModal"
@@ -1148,7 +1127,8 @@ function closeBanModal() {
     "hidden"
   );
 
-  banTargetUsername = "";
+  banTargetUsername =
+    "";
 }
 
 
@@ -1185,7 +1165,6 @@ async function banUser() {
     await supabase
       .from("user_bans")
       .insert({
-
         user_id:
           banTargetUsername,
 
@@ -1193,7 +1172,6 @@ async function banUser() {
 
         banned_by:
           currentUsername
-
       });
 
 
@@ -1364,7 +1342,9 @@ async function loadBoardMessages() {
 
         </div>
 
-        <div class="board-content">
+        <div
+          class="board-content"
+          data-content>
           ${escapeHtml(
             message.content
           )}
@@ -1438,11 +1418,9 @@ async function loadBoardMessages() {
 
 
           if (message) {
-
             openEditModal(
               message
             );
-
           }
 
         }
@@ -1484,7 +1462,6 @@ function openEditModal(message) {
   editTargetMessageId =
     message.id;
 
-
   document.getElementById(
     "editContent"
   ).value =
@@ -1507,14 +1484,16 @@ function closeEditModal() {
     "hidden"
   );
 
-  editTargetMessageId = null;
+  editTargetMessageId =
+    null;
 }
 
 
 async function saveBoardEdit() {
 
   if (
-    editTargetMessageId === null
+    editTargetMessageId ===
+    null
   ) {
     return;
   }
@@ -1569,10 +1548,6 @@ async function saveBoardEdit() {
 }
 
 
-/* =========================
-   掲示板削除
-========================= */
-
 async function deleteBoardMessage(id) {
 
   if (
@@ -1619,6 +1594,17 @@ async function deleteBoardMessage(id) {
 
 async function loadItems() {
 
+  const eventSelect =
+    document.getElementById(
+      "eventItem"
+    );
+
+  const rewardSelect =
+    document.getElementById(
+      "rewardCodeItem"
+    );
+
+
   const {
     data,
     error
@@ -1643,23 +1629,12 @@ async function loadItems() {
   if (error) {
 
     console.error(
-      "アイテム取得エラー:",
+      "アイテム取得エラー",
       error
     );
 
     return;
   }
-
-
-  const eventSelect =
-    document.getElementById(
-      "eventItem"
-    );
-
-  const rewardSelect =
-    document.getElementById(
-      "rewardCodeItem"
-    );
 
 
   eventSelect.innerHTML =
@@ -1783,8 +1758,12 @@ async function createEvent() {
 
 
   if (
-    Number.isNaN(start.getTime()) ||
-    Number.isNaN(end.getTime())
+    Number.isNaN(
+      start.getTime()
+    ) ||
+    Number.isNaN(
+      end.getTime()
+    )
   ) {
 
     alert(
@@ -2031,7 +2010,9 @@ async function loadEvents() {
           <br>
 
           🪙 コイン：
-          ${event.reward_coins || 0}
+          ${Number(
+            event.reward_coins || 0
+          )}
 
           ${
             itemName
@@ -2077,7 +2058,9 @@ async function loadEvents() {
       `;
 
 
-      list.appendChild(card);
+      list.appendChild(
+        card
+      );
 
     }
   );
@@ -2094,7 +2077,8 @@ async function loadEvents() {
 
           toggleEvent(
             Number(
-              button.dataset.toggleEvent
+              button.dataset
+                .toggleEvent
             )
           );
 
@@ -2116,7 +2100,8 @@ async function loadEvents() {
 
           deleteEvent(
             Number(
-              button.dataset.deleteEvent
+              button.dataset
+                .deleteEvent
             )
           );
 
@@ -2235,14 +2220,12 @@ async function deleteEvent(id) {
 
 async function createRewardCode() {
 
-  const rawCode =
+  const code =
     document.getElementById(
       "rewardCode"
-    ).value.trim();
-
-
-  const code =
-    rawCode.toUpperCase();
+    ).value
+      .trim()
+      .toUpperCase();
 
 
   const rewardCoins =
@@ -2285,7 +2268,20 @@ async function createRewardCode() {
   ) {
 
     alert(
-      "コイン報酬は0以上の整数にしてください。"
+      "コイン報酬が正しくありません。"
+    );
+
+    return;
+  }
+
+
+  if (
+    !rewardItem &&
+    rewardCoins <= 0
+  ) {
+
+    alert(
+      "コインまたはフレームのどちらかを設定してください。"
     );
 
     return;
@@ -2300,20 +2296,7 @@ async function createRewardCode() {
   ) {
 
     alert(
-      "最大利用人数は0以上の整数にしてください。"
-    );
-
-    return;
-  }
-
-
-  if (
-    rewardCoins === 0 &&
-    !rewardItem
-  ) {
-
-    alert(
-      "コインかフレームのどちらかを設定してください。"
+      "最大利用人数が正しくありません。"
     );
 
     return;
@@ -2324,25 +2307,19 @@ async function createRewardCode() {
     error
   } =
     await supabase
-      .from(
-        "coin_reward_codes"
-      )
+      .from("coin_reward_codes")
       .insert({
 
         code,
 
         reward_coins:
-          Math.floor(
-            rewardCoins
-          ),
+          rewardCoins,
 
         reward_item_key:
           rewardItem,
 
         max_uses:
-          Math.floor(
-            maxUses
-          ),
+          maxUses,
 
         is_active:
           true,
@@ -2375,7 +2352,6 @@ async function createRewardCode() {
         "配布コード作成に失敗しました：\n" +
         error.message
       );
-
     }
 
     return;
@@ -2401,9 +2377,8 @@ async function createRewardCode() {
 
   await loadRewardCodes();
 
-
   alert(
-    "🎁 配布コードを作成しました！"
+    `🎁 配布コード「${code}」を作成しました！`
   );
 }
 
@@ -2437,9 +2412,7 @@ async function loadRewardCodes() {
     error
   } =
     await supabase
-      .from(
-        "coin_reward_codes"
-      )
+      .from("coin_reward_codes")
       .select(`
         id,
         code,
@@ -2450,7 +2423,8 @@ async function loadRewardCodes() {
         created_by,
         created_at,
         coin_items(
-          name
+          name,
+          icon
         )
       `)
       .order(
@@ -2469,6 +2443,48 @@ async function loadRewardCodes() {
 
     return;
   }
+
+
+  const {
+    data: uses,
+    error: usesError
+  } =
+    await supabase
+      .from("coin_reward_code_uses")
+      .select(
+        "reward_code_id"
+      );
+
+
+  if (usesError) {
+
+    loading.textContent =
+      "利用数読み込みエラー：" +
+      usesError.message;
+
+    return;
+  }
+
+
+  const useCounts =
+    new Map();
+
+
+  (uses || []).forEach(
+    use => {
+
+      const id =
+        Number(
+          use.reward_code_id
+        );
+
+      useCounts.set(
+        id,
+        (useCounts.get(id) || 0) + 1
+      );
+
+    }
+  );
 
 
   loading.classList.add(
@@ -2490,96 +2506,71 @@ async function loadRewardCodes() {
   }
 
 
-  /*
-   * 使用人数
-   */
-
-  const ids =
-    data.map(
-      code =>
-        code.id
-    );
-
-
-  const {
-    data: uses,
-    error: usesError
-  } =
-    await supabase
-      .from(
-        "coin_reward_code_uses"
-      )
-      .select(
-        "reward_code_id"
-      )
-      .in(
-        "reward_code_id",
-        ids
-      );
-
-
-  if (usesError) {
-
-    console.error(
-      "配布コード使用数取得エラー:",
-      usesError
-    );
-
-  }
-
-
-  const counts =
-    new Map();
-
-
-  (uses || []).forEach(
-    row => {
-
-      const id =
-        Number(
-          row.reward_code_id
-        );
-
-
-      counts.set(
-        id,
-        (counts.get(id) || 0) + 1
-      );
-
-    }
-  );
-
-
   data.forEach(
-    reward => {
+    code => {
 
       const card =
         document.createElement(
           "div"
         );
 
-
       card.className =
         "reward-code-card";
 
 
-      const used =
-        counts.get(
-          Number(
-            reward.id
-          )
+      const count =
+        useCounts.get(
+          Number(code.id)
         ) || 0;
 
 
-      const maxUsesText =
-        reward.max_uses === 0
-          ? "無制限"
-          : `${reward.max_uses}人`;
+      const limit =
+        Number(
+          code.max_uses || 0
+        );
 
 
-      const itemName =
-        reward.coin_items?.name ||
+      const usageText =
+        limit > 0
+          ? `${count} / ${limit} 人`
+          : `${count} / 無制限`;
+
+
+      const frameName =
+        code.coin_items?.name ||
         "";
+
+
+      const frameIcon =
+        code.coin_items?.icon ||
+        "";
+
+
+      const rewardParts = [];
+
+
+      if (
+        Number(
+          code.reward_coins || 0
+        ) > 0
+      ) {
+
+        rewardParts.push(
+          `🪙 ${Number(
+            code.reward_coins
+          ).toLocaleString()} COIN`
+        );
+
+      }
+
+
+      if (frameName) {
+
+        rewardParts.push(
+          `🖼️ ${frameIcon} ${frameName}`
+        );
+
+      }
 
 
       card.innerHTML = `
@@ -2588,60 +2579,57 @@ async function loadRewardCodes() {
           🎁 配布コード
         </div>
 
-        <div class="code-display">
+        <div class="reward-code-value">
           ${escapeHtml(
-            reward.code
+            code.code
           )}
         </div>
 
         <div class="reward-code-info">
 
-          🪙 コイン報酬：
-          ${Number(
-            reward.reward_coins || 0
-          ).toLocaleString()}
-          COIN
-
-          ${
-            itemName
-              ? `
-                <br>
-                🖼️ フレーム：
-                ${escapeHtml(
-                  itemName
-                )}
-              `
-              : ""
-          }
-
-          <br>
-
-          👥 使用人数：
-          ${used} / ${maxUsesText}
-
-          <br>
-
-          ${
-            reward.is_active
-              ? "🟢 使用可能"
-              : "⚪ 無効"
-          }
-
-          <br>
-
-          作成者：
+          🎁 報酬：
           ${escapeHtml(
-            reward.created_by
+            rewardParts.join(" / ")
           )}
 
           <br>
 
-          作成日時：
+          👥 利用数：
+          ${escapeHtml(
+            usageText
+          )}
+
+          <br>
+
+          👤 作成者：
+          ${escapeHtml(
+            code.created_by
+          )}
+
+          <br>
+
+          📅 作成日：
           ${escapeHtml(
             formatDate(
-              reward.created_at
+              code.created_at
             )
           )}
+
+          <br>
+
+          ${
+            code.is_active
+              ? `
+                <span class="code-active">
+                  🟢 有効
+                </span>
+              `
+              : `
+                <span class="code-inactive">
+                  🔴 無効
+                </span>
+              `
+          }
 
         </div>
 
@@ -2649,10 +2637,9 @@ async function loadRewardCodes() {
 
           <button
             class="small"
-            data-toggle-code="${reward.id}"
-            data-active="${reward.is_active}">
+            data-toggle-code="${code.id}">
             ${
-              reward.is_active
+              code.is_active
                 ? "⏸️ 無効にする"
                 : "▶️ 有効にする"
             }
@@ -2660,7 +2647,7 @@ async function loadRewardCodes() {
 
           <button
             class="danger small"
-            data-delete-code="${reward.id}">
+            data-delete-code="${code.id}">
             🗑️ 削除
           </button>
 
@@ -2668,7 +2655,9 @@ async function loadRewardCodes() {
       `;
 
 
-      list.appendChild(card);
+      list.appendChild(
+        card
+      );
 
     }
   );
@@ -2685,9 +2674,9 @@ async function loadRewardCodes() {
 
           toggleRewardCode(
             Number(
-              button.dataset.toggleCode
-            ),
-            button.dataset.active === "true"
+              button.dataset
+                .toggleCode
+            )
           );
 
         }
@@ -2708,7 +2697,8 @@ async function loadRewardCodes() {
 
           deleteRewardCode(
             Number(
-              button.dataset.deleteCode
+              button.dataset
+                .deleteCode
             )
           );
 
@@ -2721,26 +2711,46 @@ async function loadRewardCodes() {
 
 
 /* =========================
-   配布コード有効/無効
+   配布コード有効・無効
 ========================= */
 
-async function toggleRewardCode(
-  id,
-  currentlyActive
-) {
+async function toggleRewardCode(id) {
+
+  const {
+    data,
+    error: getError
+  } =
+    await supabase
+      .from("coin_reward_codes")
+      .select(
+        "code,is_active"
+      )
+      .eq(
+        "id",
+        id
+      )
+      .single();
+
+
+  if (getError) {
+
+    alert(
+      "配布コード取得に失敗しました：\n" +
+      getError.message
+    );
+
+    return;
+  }
+
 
   const {
     error
   } =
     await supabase
-      .from(
-        "coin_reward_codes"
-      )
+      .from("coin_reward_codes")
       .update({
-
         is_active:
-          !currentlyActive
-
+          !data.is_active
       })
       .eq(
         "id",
@@ -2769,9 +2779,36 @@ async function toggleRewardCode(
 
 async function deleteRewardCode(id) {
 
+  const {
+    data,
+    error: getError
+  } =
+    await supabase
+      .from("coin_reward_codes")
+      .select(
+        "code"
+      )
+      .eq(
+        "id",
+        id
+      )
+      .single();
+
+
+  if (getError) {
+
+    alert(
+      "配布コード取得に失敗しました：\n" +
+      getError.message
+    );
+
+    return;
+  }
+
+
   if (
     !confirm(
-      "この配布コードを削除しますか？\n\n使用履歴も削除されます。"
+      `配布コード「${data.code}」を削除しますか？\n\n使用履歴も削除されます。`
     )
   ) {
     return;
@@ -2782,9 +2819,7 @@ async function deleteRewardCode(id) {
     error
   } =
     await supabase
-      .from(
-        "coin_reward_codes"
-      )
+      .from("coin_reward_codes")
       .delete()
       .eq(
         "id",
@@ -2795,7 +2830,7 @@ async function deleteRewardCode(id) {
   if (error) {
 
     alert(
-      "削除に失敗しました：\n" +
+      "配布コード削除に失敗しました：\n" +
       error.message
     );
 
@@ -2804,7 +2839,6 @@ async function deleteRewardCode(id) {
 
 
   await loadRewardCodes();
-
 
   alert(
     "配布コードを削除しました。"
