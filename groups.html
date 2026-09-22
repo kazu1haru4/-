@@ -132,6 +132,9 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <!-- BANチェック -->
+  <script src="ban-check.js"></script>
+
   <script>
 
     const SUPABASE_URL =
@@ -154,7 +157,21 @@
 
     let currentUsername = "";
 
+
+    // =========================
+    // 開始
+    // =========================
+
     async function start() {
+
+      // BAN確認
+      const wasBanned =
+        await checkFriendChatBan();
+
+      if (wasBanned) {
+        return;
+      }
+
 
       const {
         data,
@@ -162,9 +179,15 @@
       } =
         await supabaseClient.auth.getSession();
 
-      if (error || !data.session) {
 
-        alert("ログインしてください。");
+      if (
+        error ||
+        !data.session
+      ) {
+
+        alert(
+          "ログインしてください。"
+        );
 
         window.location.href =
           "index.html";
@@ -172,20 +195,40 @@
         return;
       }
 
+
       currentUsername =
-        data.session.user.user_metadata?.username || "";
+        data.session.user
+          .user_metadata?.username || "";
+
 
       if (!currentUsername) {
 
-        alert("ユーザーIDを取得できませんでした。");
+        alert(
+          "ユーザーIDを取得できませんでした。"
+        );
 
         return;
       }
 
+
       await loadGroups();
     }
 
+
+    // =========================
+    // グループ読み込み
+    // =========================
+
     async function loadGroups() {
+
+      // 更新時にもBAN確認
+      const wasBanned =
+        await checkFriendChatBan();
+
+      if (wasBanned) {
+        return;
+      }
+
 
       const {
         data: memberships,
@@ -199,6 +242,7 @@
             currentUsername
           );
 
+
       if (error) {
 
         console.error(error);
@@ -208,6 +252,7 @@
 
         return;
       }
+
 
       if (
         !memberships ||
@@ -220,70 +265,106 @@
         return;
       }
 
+
       groupList.innerHTML = "";
 
-      for (const member of memberships) {
+
+      for (
+        const member of memberships
+      ) {
 
         const {
           data: group
         } =
           await supabaseClient
             .from("groups")
-            .select("id, name, owner_id")
+            .select(
+              "id, name, owner_id"
+            )
             .eq(
               "id",
               member.group_id
             )
             .maybeSingle();
 
+
         if (!group) {
           continue;
         }
 
+
         const div =
           document.createElement("a");
+
 
         div.className =
           "group";
 
+
         div.href =
           "group_chat.html?id=" +
-          encodeURIComponent(group.id);
+          encodeURIComponent(
+            group.id
+          );
+
 
         const name =
           document.createElement("div");
 
+
         name.className =
           "group-name";
+
 
         name.textContent =
           "👥 " + group.name;
 
+
         const info =
           document.createElement("div");
+
 
         info.className =
           "group-info";
 
+
         info.textContent =
           "グループチャット";
 
+
         div.appendChild(name);
+
         div.appendChild(info);
 
         groupList.appendChild(div);
       }
     }
 
+
+    // =========================
+    // グループ作成
+    // =========================
+
     addButton.addEventListener(
       "click",
-      () => {
+      async () => {
+
+        const wasBanned =
+          await checkFriendChatBan();
+
+        if (wasBanned) {
+          return;
+        }
 
         window.location.href =
           "create_group.html";
-
       }
     );
+
+
+    // =========================
+    // 開始
+    // =========================
 
     start();
 
