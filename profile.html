@@ -7,6 +7,7 @@
   <title>プロフィール</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="ban-check.js"></script>
 
   <style>
     * {
@@ -63,10 +64,6 @@
       color: #7158cf;
     }
 
-    /* =========================
-       アバター
-    ========================= */
-
     .avatar-area {
       display: flex;
       justify-content: center;
@@ -75,14 +72,10 @@
 
     .avatar-frame {
       position: relative;
-
       width: 150px;
       height: 150px;
-
       border-radius: 50%;
-
       padding: 7px;
-
       background: #ffd9ec;
 
       box-shadow:
@@ -93,10 +86,6 @@
         background .3s ease,
         box-shadow .3s ease;
     }
-
-    /* =========================
-       🌸 桜フレーム
-    ========================= */
 
     .frame-sakura {
       background:
@@ -113,10 +102,6 @@
         0 0 18px rgba(255,100,180,.45);
     }
 
-    /* =========================
-       ⭐ 星フレーム
-    ========================= */
-
     .frame-star {
       background:
         linear-gradient(
@@ -131,10 +116,6 @@
         0 0 0 3px white,
         0 0 20px rgba(244,191,63,.45);
     }
-
-    /* =========================
-       💎 ダイヤフレーム
-    ========================= */
 
     .frame-diamond {
       background:
@@ -151,10 +132,6 @@
         0 0 20px rgba(50,190,255,.45);
     }
 
-    /* =========================
-       💖 ハートフレーム
-    ========================= */
-
     .frame-heart {
       background:
         linear-gradient(
@@ -169,11 +146,6 @@
         0 0 0 3px white,
         0 0 22px rgba(255,60,150,.45);
     }
-
-    /* =========================
-       🌈 虹フレーム
-       ※画像には適用しない
-    ========================= */
 
     .frame-rainbow {
       background:
@@ -195,10 +167,6 @@
         0 0 30px rgba(255,80,180,.35);
     }
 
-    /* =========================
-       🔥 炎フレーム
-    ========================= */
-
     .frame-flame {
       background:
         linear-gradient(
@@ -215,10 +183,6 @@
         0 0 20px rgba(255,80,0,.55);
     }
 
-    /* =========================
-       🌊 海フレーム
-    ========================= */
-
     .frame-sea {
       background:
         linear-gradient(
@@ -233,11 +197,6 @@
         0 0 0 3px white,
         0 0 20px rgba(0,170,255,.45);
     }
-
-    /* =========================
-       💡 ネオンフレーム
-       ※画像には適用しない
-    ========================= */
 
     .frame-neon {
       background:
@@ -276,10 +235,6 @@
       }
     }
 
-    /* =========================
-       🌌 宇宙フレーム
-    ========================= */
-
     .frame-space {
       background:
         radial-gradient(
@@ -316,10 +271,6 @@
         0 0 35px rgba(120,80,255,.35);
     }
 
-    /* =========================
-       👑 管理者
-    ========================= */
-
     .admin-frame {
       background:
         linear-gradient(
@@ -336,27 +287,13 @@
         0 0 18px rgba(255,215,0,.5);
     }
 
-    /* =========================
-       ★重要
-       画像そのものは必ず普通に表示
-    ========================= */
-
     .avatar-image {
       width: 100%;
       height: 100%;
-
       border-radius: 50%;
-
       object-fit: cover;
-
       display: block;
-
       border: 3px solid white;
-
-      /*
-        虹・ネオンなどが
-        画像に影響しないようにする
-      */
 
       filter: none !important;
       mix-blend-mode: normal !important;
@@ -366,42 +303,26 @@
     .avatar-placeholder {
       width: 100%;
       height: 100%;
-
       border-radius: 50%;
-
       background: #fff3f9;
-
       border: 3px solid white;
-
       display: flex;
       align-items: center;
       justify-content: center;
-
       font-size: 58px;
     }
 
-    /* =========================
-       装備バッジ
-    ========================= */
-
     .equipped-badge {
       position: absolute;
-
       top: -8px;
       right: -8px;
-
       width: 48px;
       height: 48px;
-
       border-radius: 50%;
-
       background: white;
-
       display: none;
-
       align-items: center;
       justify-content: center;
-
       font-size: 27px;
 
       box-shadow:
@@ -415,33 +336,18 @@
       display: flex;
     }
 
-    /* =========================
-       画像ボタン
-    ========================= */
-
     .image-button {
       display: block;
-
       width: 100%;
-
       padding: 14px;
-
       border: none;
-
       border-radius: 15px;
-
       background: #f0eaff;
-
       color: #7158cf;
-
       font-size: 16px;
-
       font-weight: bold;
-
       cursor: pointer;
-
       text-align: center;
-
       margin-bottom: 24px;
     }
 
@@ -453,19 +359,13 @@
       display: none;
     }
 
-    /* =========================
-       🎁 折りたたみ
-    ========================= */
-
     .items-section {
       margin-bottom: 25px;
     }
 
     .items-toggle {
       width: 100%;
-
       border: none;
-
       border-radius: 16px;
 
       background:
@@ -476,19 +376,12 @@
         );
 
       color: #555;
-
       padding: 15px 16px;
-
       font-size: 17px;
-
       font-weight: bold;
-
       display: flex;
-
       align-items: center;
-
       justify-content: space-between;
-
       cursor: pointer;
 
       box-shadow:
@@ -516,9 +409,7 @@
 
     .items-content {
       display: none;
-
       margin-top: 12px;
-
       padding: 5px 0 2px;
     }
 
@@ -528,29 +419,17 @@
 
     .items {
       display: flex;
-
       gap: 12px;
-
       flex-wrap: wrap;
     }
 
-    /* =========================
-       アイテムカード
-    ========================= */
-
     .item-card {
       width: 94px;
-
       min-height: 118px;
-
       border-radius: 18px;
-
       background: #fafafa;
-
       border: 2px solid #eee;
-
       padding: 10px 7px;
-
       text-align: center;
     }
 
@@ -570,21 +449,14 @@
 
     .item-icon {
       position: relative;
-
       width: 62px;
       height: 62px;
-
       margin: 0 auto 7px;
-
       border-radius: 16px;
-
       display: flex;
-
       align-items: center;
       justify-content: center;
-
       font-size: 35px;
-
       background: white;
     }
 
@@ -625,22 +497,15 @@
 
     .item-small-badge {
       position: absolute;
-
       top: -9px;
       right: -9px;
-
       width: 25px;
       height: 25px;
-
       border-radius: 50%;
-
       background: white;
-
       display: flex;
-
       align-items: center;
       justify-content: center;
-
       font-size: 15px;
 
       box-shadow:
@@ -649,33 +514,21 @@
 
     .item-name {
       font-size: 12px;
-
       margin-bottom: 6px;
-
       white-space: nowrap;
-
       overflow: hidden;
-
       text-overflow: ellipsis;
     }
 
     .equip-button {
       width: 100%;
-
       border: none;
-
       border-radius: 9px;
-
       padding: 6px 3px;
-
       background: #7658d9;
-
       color: white;
-
       font-size: 11px;
-
       font-weight: bold;
-
       cursor: pointer;
     }
 
@@ -685,44 +538,27 @@
 
     .no-items {
       color: #999;
-
       text-align: center;
-
       font-size: 14px;
-
       padding: 15px 0;
     }
 
-    /* =========================
-       入力
-    ========================= */
-
     label {
       display: block;
-
       font-weight: bold;
-
       margin: 18px 0 7px;
-
       color: #444;
     }
 
     input[type="text"],
     textarea {
       width: 100%;
-
       border: 2px solid #eee;
-
       border-radius: 14px;
-
       padding: 13px;
-
       font-size: 16px;
-
       font-family: inherit;
-
       outline: none;
-
       background: #fff;
     }
 
@@ -733,29 +569,19 @@
 
     textarea {
       min-height: 120px;
-
       resize: vertical;
     }
 
     .save-button {
       width: 100%;
-
       margin-top: 25px;
-
       border: none;
-
       border-radius: 16px;
-
       padding: 15px;
-
       background: #7658d9;
-
       color: white;
-
       font-size: 17px;
-
       font-weight: bold;
-
       cursor: pointer;
     }
 
@@ -765,13 +591,9 @@
 
     #message {
       text-align: center;
-
       margin-top: 15px;
-
       min-height: 22px;
-
       font-size: 14px;
-
       color: #7658d9;
     }
   </style>
@@ -791,10 +613,6 @@
   <h1>
     👤 プロフィール
   </h1>
-
-  <!-- =====================
-       アバター
-  ====================== -->
 
   <div class="avatar-area">
 
@@ -819,11 +637,6 @@
 
   </div>
 
-
-  <!-- =====================
-       🎁 アイテム折りたたみ
-  ====================== -->
-
   <div class="items-section">
 
     <button
@@ -845,7 +658,6 @@
 
     </button>
 
-
     <div
       id="itemsContent"
       class="items-content"
@@ -866,11 +678,6 @@
 
   </div>
 
-
-  <!-- =====================
-       画像
-  ====================== -->
-
   <label
     for="imageInput"
     class="image-button"
@@ -884,11 +691,6 @@
     accept="image/*"
   >
 
-
-  <!-- =====================
-       名前
-  ====================== -->
-
   <label for="name">
     名前
   </label>
@@ -900,11 +702,6 @@
     maxlength="30"
   >
 
-
-  <!-- =====================
-       自己紹介
-  ====================== -->
-
   <label for="bio">
     自己紹介
   </label>
@@ -914,11 +711,6 @@
     placeholder="自己紹介を書こう！"
     maxlength="300"
   ></textarea>
-
-
-  <!-- =====================
-       保存
-  ====================== -->
 
   <button
     id="saveButton"
@@ -931,7 +723,6 @@
   <div id="message"></div>
 
 </div>
-
 
 <script>
 
@@ -947,10 +738,6 @@ const supabaseClient =
     SUPABASE_KEY
   );
 
-
-/* =========================
-   管理者
-========================= */
 
 const ADMIN_USERNAMES =
   new Set([
@@ -1010,11 +797,20 @@ function isAdmin() {
 
 async function getCurrentUser() {
 
+  const wasBanned =
+    await checkFriendChatBan();
+
+  if (wasBanned) {
+    return null;
+  }
+
+
   const {
     data,
     error
   } =
     await supabaseClient.auth.getUser();
+
 
   if (
     error ||
@@ -1027,8 +823,10 @@ async function getCurrentUser() {
     return null;
   }
 
+
   currentUsername =
     data.user.user_metadata?.username || "";
+
 
   if (!currentUsername) {
 
@@ -1039,6 +837,7 @@ async function getCurrentUser() {
 
     return null;
   }
+
 
   return data.user;
 }
@@ -1063,6 +862,7 @@ async function loadProfile() {
       )
       .maybeSingle();
 
+
   if (error) {
 
     console.error(error);
@@ -1075,8 +875,10 @@ async function loadProfile() {
     return;
   }
 
+
   currentProfile =
     data;
+
 
   if (data) {
 
@@ -1095,6 +897,7 @@ async function loadProfile() {
     );
   }
 
+
   updateEquippedDisplay();
 }
 
@@ -1109,6 +912,7 @@ function displayAvatar(url) {
     document.getElementById(
       "avatarContent"
     );
+
 
   if (url) {
 
@@ -1161,6 +965,7 @@ async function loadItems() {
         currentUsername
       );
 
+
   if (error) {
 
     console.error(error);
@@ -1176,8 +981,10 @@ async function loadItems() {
     return;
   }
 
+
   ownedItems =
     data || [];
+
 
   renderItems();
 
@@ -1196,6 +1003,7 @@ function renderItems() {
       "items"
     );
 
+
   if (!ownedItems.length) {
 
     container.innerHTML = `
@@ -1207,10 +1015,13 @@ function renderItems() {
     return;
   }
 
+
   const equipped =
     currentProfile?.equipped_item_key || "";
 
+
   container.innerHTML = "";
+
 
   ownedItems.forEach(row => {
 
@@ -1219,22 +1030,25 @@ function renderItems() {
 
     if (!item) return;
 
+
     const key =
       item.item_key ||
       row.item_key;
+
 
     const icon =
       item.icon ||
       "🎁";
 
+
     const frameColor =
       item.frame_color ||
       "#ffd9ec";
 
+
     const isAdminItem =
       key === ADMIN_ITEM_KEY;
 
-    /* 管理者アイテム */
 
     if (
       isAdminItem &&
@@ -1243,13 +1057,16 @@ function renderItems() {
       return;
     }
 
+
     const isEquipped =
       equipped === key;
+
 
     const card =
       document.createElement(
         "div"
       );
+
 
     card.className =
       "item-card" +
@@ -1259,21 +1076,27 @@ function renderItems() {
           : ""
       );
 
+
     let specialClass = "";
+
 
     if (
       key === "rainbow"
     ) {
+
       specialClass =
         " rainbow-icon";
     }
 
+
     if (
       key === "neon"
     ) {
+
       specialClass =
         " neon-icon";
     }
+
 
     card.innerHTML = `
 
@@ -1322,6 +1145,7 @@ function renderItems() {
 
     `;
 
+
     container.appendChild(
       card
     );
@@ -1368,6 +1192,14 @@ function renderItems() {
 async function equipItem(
   itemKey
 ) {
+
+  const wasBanned =
+    await checkFriendChatBan();
+
+  if (wasBanned) {
+    return;
+  }
+
 
   if (
     itemKey === ADMIN_ITEM_KEY &&
@@ -1480,8 +1312,6 @@ function updateEquippedDisplay() {
     );
 
 
-  /* 初期化 */
-
   frame.className =
     "avatar-frame";
 
@@ -1541,10 +1371,6 @@ function updateEquippedDisplay() {
   if (!item) return;
 
 
-  /* =====================
-     👑 管理者
-  ===================== */
-
   if (
     key === ADMIN_ITEM_KEY &&
     isAdmin()
@@ -1567,10 +1393,6 @@ function updateEquippedDisplay() {
     return;
   }
 
-
-  /* =====================
-     フレーム種類
-  ===================== */
 
   const frameClassMap = {
 
@@ -1630,12 +1452,9 @@ function updateEquippedDisplay() {
   }
 
 
-  /* =====================
-     バッジ
-  ===================== */
-
   badge.textContent =
     item.icon || "🎁";
+
 
   badge.classList.add(
     "show"
@@ -1742,6 +1561,14 @@ document
   .addEventListener(
     "change",
     async function() {
+
+      const wasBanned =
+        await checkFriendChatBan();
+
+      if (wasBanned) {
+        return;
+      }
+
 
       const file =
         this.files?.[0];
@@ -1878,6 +1705,14 @@ document
 
 async function saveProfile() {
 
+  const wasBanned =
+    await checkFriendChatBan();
+
+  if (wasBanned) {
+    return;
+  }
+
+
   const name =
     document
       .getElementById("name")
@@ -1997,6 +1832,14 @@ function escapeHtml(
 ========================= */
 
 async function init() {
+
+  const wasBanned =
+    await checkFriendChatBan();
+
+  if (wasBanned) {
+    return;
+  }
+
 
   const user =
     await getCurrentUser();
