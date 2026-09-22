@@ -793,6 +793,7 @@ async function loadUsers() {
       </div>
 
       <div class="actions">
+        <button class="coin small" data-coin="${escapeAttribute(username)}" type="button">🪙 コイン変更</button>
         ${
           isAdmin
           ? ""
@@ -829,6 +830,76 @@ async function loadUsers() {
       unbanUser(button.dataset.unban);
     });
   });
+
+  list.querySelectorAll("[data-coin]").forEach(button => {
+    button.addEventListener("click", () => {
+      openCoinModal(button.dataset.coin);
+    });
+  });
+}
+
+async function openCoinModal(username) {
+  document.getElementById("coinTarget").textContent = `対象ユーザー：${username}`;
+  document.getElementById("coinCurrent").textContent = "🔄 現在の残高を読み込んでいます...";
+  document.getElementById("coinNewBalance").value = "0";
+  document.getElementById("coinModal").classList.remove("hidden");
+
+  const { data, error } = await supabaseClient.rpc("admin_get_user_coins", {
+    target_username: username
+  });
+
+  if (error) {
+    document.getElementById("coinCurrent").className = "frame-status error";
+    document.getElementById("coinCurrent").textContent = "❌ 残高取得に失敗しました：\n" + error.message;
+    return;
+  }
+
+  const balance = Number(data || 0);
+  document.getElementById("coinCurrent").className = "frame-status success";
+  document.getElementById("coinCurrent").textContent = `現在の残高：${balance.toLocaleString("ja-JP")} COIN`;
+  document.getElementById("coinNewBalance").value = String(balance);
+}
+
+function closeCoinModal() {
+  document.getElementById("coinModal").classList.add("hidden");
+}
+
+async function saveUserCoins() {
+  const usernameText = document.getElementById("coinTarget").textContent;
+  const username = usernameText.replace("対象ユーザー：", "").trim();
+  const newBalance = Number(document.getElementById("coinNewBalance").value);
+
+  if (!username) {
+    alert("ユーザーが指定されていません。");
+    return;
+  }
+
+  if (!Number.isInteger(newBalance) || newBalance < 0) {
+    alert("0以上の整数を入力してください。");
+    return;
+  }
+
+  const button = document.getElementById("confirmCoinButton");
+  button.disabled = true;
+  button.textContent = "⏳ 変更中...";
+
+  try {
+    const { data, error } = await supabaseClient.rpc("admin_set_user_coins", {
+      target_username: username,
+      new_balance: newBalance
+    });
+
+    if (error) throw error;
+
+    closeCoinModal();
+    setStatus(`✅ ${username} のコインを ${Number(data).toLocaleString("ja-JP")} COIN に変更しました。`, "success");
+    alert(`🪙 ${username} のコインを変更しました。\n\n${Number(data).toLocaleString("ja-JP")} COIN`);
+  } catch (error) {
+    alert("❌ コイン変更に失敗しました：\n" + error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "🪙 変更する";
+  }
 }
 
 function openBanModal(username) {
