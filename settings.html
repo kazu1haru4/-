@@ -6,6 +6,9 @@
 
   <title>設定 - フレンドチャット</title>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="ban-check.js"></script>
+
   <style>
     * {
       box-sizing: border-box;
@@ -20,9 +23,21 @@
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
-        "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
-      background: linear-gradient(135deg, #fff3fb, #eef5ff);
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        "Hiragino Kaku Gothic ProN",
+        "Yu Gothic",
+        sans-serif;
+
+      background:
+        linear-gradient(
+          135deg,
+          #fff3fb,
+          #eef5ff
+        );
+
       color: #333;
       padding: 20px;
     }
@@ -39,7 +54,8 @@
       border-radius: 24px;
       padding: 20px;
       text-align: center;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
+      box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.07);
       margin-bottom: 15px;
     }
 
@@ -80,7 +96,8 @@
       border-radius: 22px;
       padding: 20px;
       margin-bottom: 14px;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+      box-shadow:
+        0 6px 18px rgba(0, 0, 0, 0.05);
     }
 
     .section-title {
@@ -155,20 +172,55 @@
       margin-top: 15px;
     }
 
-    .reset-button {
+    .reset-button,
+    .logout-button,
+    .admin-button {
       width: 100%;
       border: none;
       border-radius: 16px;
       padding: 14px;
-      background: #f3f3f3;
-      color: #666;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: bold;
       cursor: pointer;
     }
 
-    .reset-button:active {
+    .reset-button {
+      background: #f3f3f3;
+      color: #666;
+    }
+
+    .reset-button:active,
+    .logout-button:active,
+    .admin-button:active {
       transform: scale(0.98);
+    }
+
+    .admin-button {
+      background:
+        linear-gradient(
+          135deg,
+          #fff4a8,
+          #ffd700
+        );
+
+      color: #705500;
+
+      box-shadow:
+        0 5px 15px rgba(255, 200, 0, .18);
+    }
+
+    .logout-button {
+      background:
+        linear-gradient(
+          135deg,
+          #ff8f8f,
+          #ff6262
+        );
+
+      color: white;
+
+      box-shadow:
+        0 5px 15px rgba(255, 80, 80, .15);
     }
 
     .saved {
@@ -185,6 +237,10 @@
       margin-top: 25px;
       color: #aaa;
       font-size: 12px;
+    }
+
+    .hidden {
+      display: none !important;
     }
   </style>
 </head>
@@ -217,6 +273,10 @@
 
     </section>
 
+
+    <!-- =========================
+         テーマ
+    ========================== -->
 
     <section class="section">
 
@@ -299,6 +359,10 @@
     </section>
 
 
+    <!-- =========================
+         設定リセット
+    ========================== -->
+
     <section class="section">
 
       <div class="section-title">
@@ -316,6 +380,56 @@
     </section>
 
 
+    <!-- =========================
+         管理者
+    ========================== -->
+
+    <section
+      class="section hidden"
+      id="adminSection"
+    >
+
+      <div class="section-title">
+        👑 管理者
+      </div>
+
+      <button
+        type="button"
+        class="admin-button"
+        id="adminButton"
+      >
+        👑 管理者パネルを開く
+      </button>
+
+    </section>
+
+
+    <!-- =========================
+         ログアウト
+    ========================== -->
+
+    <section class="section">
+
+      <div class="section-title">
+        🚪 アカウント
+      </div>
+
+      <button
+        type="button"
+        class="logout-button"
+        id="logoutButton"
+      >
+        🚪 ログアウト
+      </button>
+
+      <div
+        class="saved"
+        id="accountMessage"
+      ></div>
+
+    </section>
+
+
     <div class="footer">
       Friend Chat
     </div>
@@ -324,6 +438,41 @@
 
 
   <script>
+
+    /* =========================
+       Supabase
+    ========================= */
+
+    const SUPABASE_URL =
+      "https://yxonmqdyekwenyzekjwj.supabase.co";
+
+    const SUPABASE_KEY =
+      "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+
+    const supabaseClient =
+      supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
+
+    /* =========================
+       管理者
+    ========================= */
+
+    const ADMIN_USERNAMES =
+      new Set([
+        "kazu1haru100",
+        "kazu1haru4sub"
+      ]);
+
+
+    let currentUsername = "";
+
+
+    /* =========================
+       テーマ
+    ========================= */
 
     const themes = {
 
@@ -366,9 +515,9 @@
     };
 
 
-    // =========================
-    // テーマを適用
-    // =========================
+    /* =========================
+       テーマ適用
+    ========================= */
 
     function applyTheme(themeName) {
 
@@ -383,11 +532,13 @@
           theme.main
         );
 
+
       document.documentElement.style
         .setProperty(
           "--theme-light",
           theme.light
         );
+
 
       document.documentElement.style
         .setProperty(
@@ -397,7 +548,9 @@
 
 
       document
-        .querySelectorAll(".theme-button")
+        .querySelectorAll(
+          ".theme-button"
+        )
         .forEach(
           function(button) {
 
@@ -412,9 +565,9 @@
     }
 
 
-    // =========================
-    // 保存
-    // =========================
+    /* =========================
+       テーマ保存
+    ========================= */
 
     function saveTheme(themeName) {
 
@@ -423,7 +576,10 @@
         themeName
       );
 
-      applyTheme(themeName);
+
+      applyTheme(
+        themeName
+      );
 
 
       const savedMessage =
@@ -431,13 +587,16 @@
           "savedMessage"
         );
 
+
       savedMessage.textContent =
         "✓ テーマを保存しました";
 
 
       setTimeout(
         function() {
+
           savedMessage.textContent = "";
+
         },
         1500
       );
@@ -445,18 +604,28 @@
     }
 
 
-    // =========================
-    // 色変更ボタン
-    // =========================
+    /* =========================
+       テーマ変更
+    ========================= */
 
     document
-      .querySelectorAll(".theme-button")
+      .querySelectorAll(
+        ".theme-button"
+      )
       .forEach(
         function(button) {
 
           button.addEventListener(
             "click",
-            function() {
+            async function() {
+
+              const wasBanned =
+                await checkFriendChatBan();
+
+              if (wasBanned) {
+                return;
+              }
+
 
               saveTheme(
                 button.dataset.theme
@@ -469,21 +638,35 @@
       );
 
 
-    // =========================
-    // リセット
-    // =========================
+    /* =========================
+       リセット
+    ========================= */
 
     document
-      .getElementById("resetButton")
+      .getElementById(
+        "resetButton"
+      )
       .addEventListener(
         "click",
-        function() {
+        async function() {
+
+          const wasBanned =
+            await checkFriendChatBan();
+
+          if (wasBanned) {
+            return;
+          }
+
 
           localStorage.removeItem(
             "friendChatTheme"
           );
 
-          applyTheme("purple");
+
+          applyTheme(
+            "purple"
+          );
+
 
           document
             .getElementById(
@@ -495,11 +678,13 @@
 
           setTimeout(
             function() {
+
               document
                 .getElementById(
                   "savedMessage"
                 )
                 .textContent = "";
+
             },
             1500
           );
@@ -508,17 +693,197 @@
       );
 
 
-    // =========================
-    // 保存済みテーマを読み込み
-    // =========================
+    /* =========================
+       管理者パネル
+    ========================= */
 
-    const savedTheme =
-      localStorage.getItem(
-        "friendChatTheme"
-      ) || "purple";
+    document
+      .getElementById(
+        "adminButton"
+      )
+      .addEventListener(
+        "click",
+        async function() {
+
+          const wasBanned =
+            await checkFriendChatBan();
+
+          if (wasBanned) {
+            return;
+          }
 
 
-    applyTheme(savedTheme);
+          if (
+            !ADMIN_USERNAMES.has(
+              currentUsername
+            )
+          ) {
+
+            alert(
+              "管理者専用ページです。"
+            );
+
+            return;
+          }
+
+
+          location.href =
+            "admin.html";
+
+        }
+      );
+
+
+    /* =========================
+       ログアウト
+    ========================= */
+
+    document
+      .getElementById(
+        "logoutButton"
+      )
+      .addEventListener(
+        "click",
+        async function() {
+
+          const button =
+            document.getElementById(
+              "logoutButton"
+            );
+
+          const message =
+            document.getElementById(
+              "accountMessage"
+            );
+
+
+          button.disabled = true;
+
+          button.textContent =
+            "ログアウトしています...";
+
+
+          const {
+            error
+          } =
+            await supabaseClient.auth.signOut();
+
+
+          if (error) {
+
+            console.error(error);
+
+            button.disabled = false;
+
+            button.textContent =
+              "🚪 ログアウト";
+
+            message.style.color =
+              "#e05252";
+
+            message.textContent =
+              "ログアウトに失敗しました。";
+
+            return;
+          }
+
+
+          localStorage.removeItem(
+            "friendChatTheme"
+          );
+
+
+          location.href =
+            "index.html";
+
+        }
+      );
+
+
+    /* =========================
+       初期化
+    ========================= */
+
+    async function init() {
+
+      const wasBanned =
+        await checkFriendChatBan();
+
+      if (wasBanned) {
+        return;
+      }
+
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient.auth.getUser();
+
+
+      if (
+        error ||
+        !data.user
+      ) {
+
+        location.href =
+          "index.html";
+
+        return;
+      }
+
+
+      currentUsername =
+        data.user.user_metadata?.username ||
+        "";
+
+
+      if (
+        !currentUsername
+      ) {
+
+        location.href =
+          "index.html";
+
+        return;
+      }
+
+
+      /* 管理者だけ表示 */
+
+      if (
+        ADMIN_USERNAMES.has(
+          currentUsername
+        )
+      ) {
+
+        document
+          .getElementById(
+            "adminSection"
+          )
+          .classList.remove(
+            "hidden"
+          );
+
+      }
+
+
+      /* 保存済みテーマ */
+
+      const savedTheme =
+        localStorage.getItem(
+          "friendChatTheme"
+        ) || "purple";
+
+
+      applyTheme(
+        savedTheme
+      );
+
+    }
+
+
+    init();
 
   </script>
 
