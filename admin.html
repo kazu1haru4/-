@@ -62,6 +62,23 @@ header h1 {
   border-radius: 14px;
   background: #f5f5f8;
   margin-bottom: 14px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.status.success {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status.error {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.status.info {
+  background: #e8eaf6;
+  color: #3949ab;
 }
 
 .user-card,
@@ -119,6 +136,7 @@ button {
   cursor: pointer;
   background: #8f7cff;
   color: white;
+  font-size: 14px;
 }
 
 button:hover {
@@ -259,6 +277,27 @@ textarea {
   padding: 10px 0;
 }
 
+.frame-status {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f5f5f8;
+  color: #666;
+  font-size: 13px;
+  margin-top: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.frame-status.error {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.frame-status.success {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
 .modal {
   position: fixed;
   inset: 0;
@@ -288,6 +327,7 @@ textarea {
 }
 
 @media(max-width:600px) {
+
   .user-card {
     align-items: flex-start;
     flex-wrap: wrap;
@@ -313,12 +353,17 @@ textarea {
 <div class="container">
 
 <header>
-  <h1>👑 管理者パネル</h1>
-  <div id="adminName" class="admin-name">確認中...</div>
+
+<h1>👑 管理者パネル</h1>
+
+<div id="adminName" class="admin-name">
+確認中...
+</div>
+
 </header>
 
 <div id="status" class="status">
-  読み込み中...
+読み込み中...
 </div>
 
 
@@ -352,7 +397,7 @@ textarea {
 </section>
 
 
-<!-- 配布コード管理 -->
+<!-- 配布コード -->
 
 <section class="panel">
 
@@ -363,10 +408,10 @@ textarea {
 <label>配布コード</label>
 
 <input
-  id="rewardCode"
-  type="text"
-  maxlength="100"
-  placeholder="例：WELCOME2026">
+id="rewardCode"
+type="text"
+maxlength="100"
+placeholder="例：WELCOME2026">
 
 </div>
 
@@ -376,11 +421,11 @@ textarea {
 <label>🪙 コイン報酬</label>
 
 <input
-  id="rewardCodeCoins"
-  type="number"
-  min="0"
-  step="1"
-  value="0">
+id="rewardCodeCoins"
+type="number"
+min="0"
+step="1"
+value="0">
 
 </div>
 
@@ -395,6 +440,10 @@ textarea {
 
 </select>
 
+<div id="rewardFrameStatus" class="frame-status">
+フレーム一覧を読み込んでいます...
+</div>
+
 </div>
 
 
@@ -403,11 +452,11 @@ textarea {
 <label>👥 最大利用人数</label>
 
 <input
-  id="rewardCodeMaxUses"
-  type="number"
-  min="0"
-  step="1"
-  value="0">
+id="rewardCodeMaxUses"
+type="number"
+min="0"
+step="1"
+value="0">
 
 <div class="hint">
 0なら無制限です。
@@ -416,12 +465,18 @@ textarea {
 </div>
 
 
-<button id="createRewardCodeButton">
+<button
+id="createRewardCodeButton"
+type="button">
+
 🎁 配布コードを作成
+
 </button>
 
 </section>
 
+
+<!-- 配布コード一覧 -->
 
 <section class="panel">
 
@@ -436,18 +491,25 @@ textarea {
 </section>
 
 
-<!-- イベント作成 -->
+<!-- イベント -->
 
 <section class="panel">
 
 <h2>🎉 イベント作成</h2>
 
 <div class="form-row">
+
 <label>イベント名</label>
-<input id="eventTitle" type="text" placeholder="例：秋のコインイベント">
+
+<input
+id="eventTitle"
+type="text"
+placeholder="例：秋のコインイベント">
+
 </div>
 
 <div class="form-row">
+
 <label>説明</label>
 
 <textarea
@@ -457,37 +519,56 @@ placeholder="イベントの説明を入力"></textarea>
 </div>
 
 <div class="form-row">
+
 <label>開始日時</label>
-<input id="eventStart" type="datetime-local">
+
+<input
+id="eventStart"
+type="datetime-local">
+
 </div>
 
 <div class="form-row">
+
 <label>終了日時</label>
-<input id="eventEnd" type="datetime-local">
+
+<input
+id="eventEnd"
+type="datetime-local">
+
 </div>
 
 <div class="form-row">
+
 <label>コイン報酬</label>
 
 <input
 id="eventCoins"
 type="number"
 min="0"
+step="1"
 value="0">
 
 </div>
 
 <div class="form-row">
+
 <label>フレーム報酬</label>
 
 <select id="eventItem">
+
 <option value="">なし</option>
+
 </select>
 
 </div>
 
-<button id="createEventButton">
+<button
+id="createEventButton"
+type="button">
+
 🎉 イベントを作成
+
 </button>
 
 </section>
@@ -510,7 +591,7 @@ value="0">
 </div>
 
 
-<!-- BANモーダル -->
+<!-- BAN -->
 
 <div id="banModal" class="modal hidden">
 
@@ -534,23 +615,30 @@ placeholder="BAN理由を入力"></textarea>
 
 <button
 id="confirmBanButton"
-class="danger">
+class="danger"
+type="button">
+
 🚫 BANする
+
 </button>
 
 <button
 id="cancelBanButton"
-class="gray">
+class="gray"
+type="button">
+
 キャンセル
+
 </button>
 
 </div>
 
 </div>
+
 </div>
 
 
-<!-- 編集モーダル -->
+<!-- 編集 -->
 
 <div id="editModal" class="modal hidden">
 
@@ -568,19 +656,27 @@ placeholder="メッセージ"></textarea>
 
 <div class="actions">
 
-<button id="saveEditButton">
+<button
+id="saveEditButton"
+type="button">
+
 💾 保存
+
 </button>
 
 <button
 id="cancelEditButton"
-class="gray">
+class="gray"
+type="button">
+
 キャンセル
+
 </button>
 
 </div>
 
 </div>
+
 </div>
 
 
@@ -599,7 +695,8 @@ SUPABASE_KEY
 );
 
 
-const ADMIN_USERNAMES = new Set([
+const ADMIN_USERNAMES =
+new Set([
 "kazu1haru100",
 "kazu1haru4sub"
 ]);
@@ -614,27 +711,39 @@ let editTargetMessageId = null;
 共通
 ========================= */
 
-function setStatus(text) {
-document.getElementById("status").textContent = text;
+function setStatus(text,type="") {
+
+const element =
+document.getElementById("status");
+
+element.textContent = text;
+
+element.className =
+"status " + type;
+
 }
 
 
 function escapeHtml(value) {
+
 return String(value ?? "")
 .replaceAll("&","&amp;")
 .replaceAll("<","&lt;")
 .replaceAll(">","&gt;")
 .replaceAll('"',"&quot;")
 .replaceAll("'","&#039;");
+
 }
 
 
 function escapeAttribute(value) {
+
 return String(value ?? "")
 .replaceAll("&","&amp;")
 .replaceAll('"',"&quot;")
 .replaceAll("<","&lt;")
 .replaceAll(">","&gt;");
+
 }
 
 
@@ -642,13 +751,15 @@ function formatDate(value) {
 
 if (!value) return "";
 
-const date = new Date(value);
+const date =
+new Date(value);
 
 if (Number.isNaN(date.getTime())) {
 return value;
 }
 
 return date.toLocaleString("ja-JP");
+
 }
 
 
@@ -660,30 +771,49 @@ async function init() {
 
 try {
 
+setStatus(
+"🔄 ログイン状態を確認しています...",
+"info"
+);
+
+
 const {
 data,
 error
-} = await supabase.auth.getSession();
+} =
+await supabase.auth.getSession();
 
-if (error) throw error;
 
-const session = data.session;
+if (error) {
+throw error;
+}
+
+
+const session =
+data.session;
+
 
 if (!session) {
 
 document.body.innerHTML = `
-<div style="padding:40px;text-align:center;font-family:sans-serif">
+<div style="
+padding:40px;
+text-align:center;
+font-family:sans-serif;
+">
 <h2>ログインが必要です</h2>
 <p>管理者アカウントでログインしてください。</p>
 </div>`;
 
 return;
+
 }
 
 
-/* BAN確認 */
-
-if (typeof checkFriendChatBan === "function") {
+if (
+typeof checkFriendChatBan ===
+"function"
+) {
 
 const banned =
 await checkFriendChatBan();
@@ -697,31 +827,73 @@ currentUsername =
 session.user.user_metadata?.username || "";
 
 
-if (!ADMIN_USERNAMES.has(currentUsername)) {
+if (
+!ADMIN_USERNAMES.has(
+currentUsername
+)
+) {
 
 document.body.innerHTML = `
-<div style="padding:40px;text-align:center;font-family:sans-serif">
+<div style="
+padding:40px;
+text-align:center;
+font-family:sans-serif;
+">
 <h2>🚫 アクセスできません</h2>
 <p>このページは管理者専用です。</p>
 </div>`;
 
 return;
+
 }
 
 
-document.getElementById("adminName").textContent =
+document.getElementById(
+"adminName"
+).textContent =
 `ログイン中：${currentUsername}`;
 
-setStatus("管理者としてログインしています。");
+
+setStatus(
+"✅ 管理者としてログインしています。",
+"success"
+);
 
 
-await Promise.all([
-loadUsers(),
-loadBoardMessages(),
-loadItems(),
-loadEvents(),
-loadRewardCodes()
-]);
+/*
+  ここは個別に読み込みます。
+  1つ失敗しても他の機能を止めません。
+*/
+
+try {
+await loadUsers();
+} catch(error) {
+console.error("loadUsers:",error);
+}
+
+try {
+await loadBoardMessages();
+} catch(error) {
+console.error("loadBoardMessages:",error);
+}
+
+try {
+await loadItems();
+} catch(error) {
+console.error("loadItems:",error);
+}
+
+try {
+await loadEvents();
+} catch(error) {
+console.error("loadEvents:",error);
+}
+
+try {
+await loadRewardCodes();
+} catch(error) {
+console.error("loadRewardCodes:",error);
+}
 
 
 } catch(error) {
@@ -729,8 +901,9 @@ loadRewardCodes()
 console.error(error);
 
 setStatus(
-"エラー：" +
-(error.message || "読み込みに失敗しました")
+"❌ 初期化エラー\n" +
+(error.message || error),
+"error"
 );
 
 }
@@ -745,31 +918,43 @@ setStatus(
 async function loadUsers() {
 
 const loading =
-document.getElementById("usersLoading");
+document.getElementById(
+"usersLoading"
+);
 
 const list =
-document.getElementById("usersList");
+document.getElementById(
+"usersList"
+);
 
 loading.classList.remove("hidden");
+
 list.innerHTML = "";
 
 
 const {
-data: profiles,
+data:profiles,
 error
 } =
 await supabase
 .from("profiles")
-.select("user_id,name,avatar_url,created_at")
-.order("created_at",{ascending:false});
+.select(
+"user_id,name,avatar_url,created_at"
+)
+.order(
+"created_at",
+{ascending:false}
+);
 
 
 if (error) {
 
 loading.textContent =
-"ユーザー読み込みエラー："+error.message;
+"❌ ユーザー読み込みエラー：" +
+error.message;
 
 return;
+
 }
 
 
@@ -779,44 +964,61 @@ error:banError
 } =
 await supabase
 .from("user_bans")
-.select("user_id,reason,banned_at,expires_at");
+.select(
+"user_id,reason,banned_at,expires_at"
+);
 
 
 if (banError) {
 
 loading.textContent =
-"BAN情報読み込みエラー："+banError.message;
+"❌ BAN情報読み込みエラー：" +
+banError.message;
 
 return;
+
 }
 
 
-const banMap = new Map();
+const banMap =
+new Map();
 
-(bans || []).forEach(ban=>{
-banMap.set(ban.user_id,ban);
+(bans || []).forEach(
+ban => {
+banMap.set(
+ban.user_id,
+ban
+);
 });
 
 
-loading.classList.add("hidden");
+loading.classList.add(
+"hidden"
+);
 
 
 if (!profiles?.length) {
 
 list.innerHTML =
-`<div class="empty">ユーザーがいません。</div>`;
+`<div class="empty">
+ユーザーがいません。
+</div>`;
 
 return;
+
 }
 
 
-profiles.forEach(profile=>{
+profiles.forEach(
+profile => {
 
 const username =
 profile.user_id || "";
 
 const isAdmin =
-ADMIN_USERNAMES.has(username);
+ADMIN_USERNAMES.has(
+username
+);
 
 const ban =
 banMap.get(username);
@@ -824,7 +1026,8 @@ banMap.get(username);
 const card =
 document.createElement("div");
 
-card.className="user-card";
+card.className =
+"user-card";
 
 
 const avatar =
@@ -832,33 +1035,49 @@ profile.avatar_url ||
 "https://via.placeholder.com/100";
 
 
-card.innerHTML=`
+card.innerHTML = `
 
-<img class="avatar"
+<img
+class="avatar"
 src="${escapeAttribute(avatar)}"
 alt="">
 
 <div class="user-info">
 
 <div class="user-name">
-${escapeHtml(profile.name || username)}
+${escapeHtml(
+profile.name || username
+)}
 </div>
 
 <div class="user-id">
-ID：${escapeHtml(username)}
+ID：
+${escapeHtml(username)}
 </div>
 
 ${
 isAdmin
-? `<div style="color:#8f6b00;font-weight:bold;font-size:13px">
+?
+`
+<div style="
+color:#8f6b00;
+font-weight:bold;
+font-size:13px;
+">
 👑 管理者
-</div>`
+</div>
+`
 :""
 }
 
 ${
 ban
-? `<div class="banned">🚫 BAN中</div>`
+?
+`
+<div class="banned">
+🚫 BAN中
+</div>
+`
 :""
 }
 
@@ -868,19 +1087,28 @@ ban
 
 ${
 isAdmin
-?""
+?
+""
 :
 ban
 ?
-`<button class="success small"
-data-unban="${escapeAttribute(username)}">
+`
+<button
+class="success small"
+data-unban="${escapeAttribute(username)}"
+type="button">
 🔓 BAN解除
-</button>`
+</button>
+`
 :
-`<button class="danger small"
-data-ban="${escapeAttribute(username)}">
+`
+<button
+class="danger small"
+data-ban="${escapeAttribute(username)}"
+type="button">
 🚫 BAN
-</button>`
+</button>
+`
 }
 
 </div>
@@ -891,19 +1119,35 @@ list.appendChild(card);
 });
 
 
-list.querySelectorAll("[data-ban]")
-.forEach(button=>{
-button.addEventListener("click",()=>{
-openBanModal(button.dataset.ban);
-});
+list
+.querySelectorAll("[data-ban]")
+.forEach(button => {
+
+button.addEventListener(
+"click",
+() => {
+openBanModal(
+button.dataset.ban
+);
+}
+);
+
 });
 
 
-list.querySelectorAll("[data-unban]")
-.forEach(button=>{
-button.addEventListener("click",()=>{
-unbanUser(button.dataset.unban);
-});
+list
+.querySelectorAll("[data-unban]")
+.forEach(button => {
+
+button.addEventListener(
+"click",
+() => {
+unbanUser(
+button.dataset.unban
+);
+}
+);
+
 });
 
 }
@@ -915,43 +1159,66 @@ BAN
 
 function openBanModal(username) {
 
-banTargetUsername=username;
+banTargetUsername =
+username;
 
-document.getElementById("banTarget").textContent =
+document.getElementById(
+"banTarget"
+).textContent =
 `対象ユーザー：${username}`;
 
-document.getElementById("banReason").value="";
+document.getElementById(
+"banReason"
+).value = "";
 
-document.getElementById("banModal")
-.classList.remove("hidden");
+document.getElementById(
+"banModal"
+).classList.remove(
+"hidden"
+);
 
 }
 
 
 function closeBanModal() {
 
-document.getElementById("banModal")
-.classList.add("hidden");
+document.getElementById(
+"banModal"
+).classList.add(
+"hidden"
+);
 
-banTargetUsername="";
+banTargetUsername = "";
 
 }
 
 
 async function banUser() {
 
-if (!banTargetUsername) return;
+if (!banTargetUsername) {
+return;
+}
 
-if (ADMIN_USERNAMES.has(banTargetUsername)) {
 
-alert("管理者はBANできません。");
+if (
+ADMIN_USERNAMES.has(
+banTargetUsername
+)
+) {
+
+alert(
+"管理者はBANできません。"
+);
+
 return;
 
 }
 
 
 const reason =
-document.getElementById("banReason").value.trim();
+document.getElementById(
+"banReason"
+).value.trim();
 
 
 const {error} =
@@ -964,28 +1231,39 @@ banned_by:currentUsername
 });
 
 
-if(error){
+if (error) {
 
-alert("BANに失敗しました：\n"+error.message);
+alert(
+"BANに失敗しました：\n" +
+error.message
+);
+
 return;
 
 }
 
 
-const target=banTargetUsername;
+const target =
+banTargetUsername;
 
 closeBanModal();
 
 await loadUsers();
 
-alert(`${target} をBANしました。`);
+alert(
+`${target} をBANしました。`
+);
 
 }
 
 
 async function unbanUser(username) {
 
-if(!confirm(`${username} のBANを解除しますか？`)){
+if (
+!confirm(
+`${username} のBANを解除しますか？`
+)
+) {
 return;
 }
 
@@ -997,9 +1275,13 @@ await supabase
 .eq("user_id",username);
 
 
-if(error){
+if (error) {
 
-alert("BAN解除に失敗しました：\n"+error.message);
+alert(
+"BAN解除に失敗しました：\n" +
+error.message
+);
+
 return;
 
 }
@@ -1007,7 +1289,9 @@ return;
 
 await loadUsers();
 
-alert(`${username} のBANを解除しました。`);
+alert(
+`${username} のBANを解除しました。`
+);
 
 }
 
@@ -1019,13 +1303,20 @@ alert(`${username} のBANを解除しました。`);
 async function loadBoardMessages() {
 
 const loading =
-document.getElementById("boardLoading");
+document.getElementById(
+"boardLoading"
+);
 
 const list =
-document.getElementById("boardList");
+document.getElementById(
+"boardList"
+);
 
-loading.classList.remove("hidden");
-list.innerHTML="";
+loading.classList.remove(
+"hidden"
+);
+
+list.innerHTML = "";
 
 
 const {
@@ -1034,66 +1325,89 @@ error
 } =
 await supabase
 .from("board_messages")
-.select("id,sender_id,content,created_at,is_deleted")
-.order("created_at",{ascending:false})
+.select(
+"id,sender_id,content,created_at,is_deleted"
+)
+.order(
+"created_at",
+{ascending:false}
+)
 .limit(100);
 
 
-if(error){
+if (error) {
 
 loading.textContent =
-"掲示板読み込みエラー："+error.message;
+"❌ 掲示板読み込みエラー：" +
+error.message;
 
 return;
 
 }
 
 
-loading.classList.add("hidden");
+loading.classList.add(
+"hidden"
+);
 
 
-if(!data?.length){
+if (!data?.length) {
 
 list.innerHTML =
-`<div class="empty">掲示板メッセージがありません。</div>`;
+`<div class="empty">
+掲示板メッセージがありません。
+</div>`;
 
 return;
 
 }
 
 
-data.forEach(message=>{
+data.forEach(message => {
 
 const card =
 document.createElement("div");
 
-card.className="board-message";
+card.className =
+"board-message";
 
 
-card.innerHTML=`
+card.innerHTML = `
 
 <div class="board-header">
 
 <div class="board-user">
-👤 ${escapeHtml(message.sender_id)}
+👤 ${escapeHtml(
+message.sender_id
+)}
 </div>
 
 <div class="board-date">
-${escapeHtml(formatDate(message.created_at))}
+${escapeHtml(
+formatDate(message.created_at)
+)}
 </div>
 
 </div>
 
 <div class="board-content">
-${escapeHtml(message.content)}
+${escapeHtml(
+message.content
+)}
 </div>
 
 ${
 message.is_deleted
 ?
-`<div style="color:#e53935;font-weight:bold;margin-top:8px">
+`
+<div style="
+color:#e53935;
+font-weight:bold;
+margin-top:8px;
+">
 🗑️ 削除済み
-</div>`
+</div>
+`
 :""
 }
 
@@ -1101,16 +1415,21 @@ message.is_deleted
 
 ${
 message.is_deleted
-?""
+?
+""
 :
 `
-<button class="small"
-data-edit="${message.id}">
+<button
+class="small"
+data-edit="${message.id}"
+type="button">
 ✏️ 編集
 </button>
 
-<button class="danger small"
-data-delete="${message.id}">
+<button
+class="danger small"
+data-delete="${message.id}"
+type="button">
 🗑️ 削除
 </button>
 `
@@ -1124,28 +1443,48 @@ list.appendChild(card);
 });
 
 
-list.querySelectorAll("[data-edit]")
-.forEach(button=>{
-button.addEventListener("click",()=>{
+list
+.querySelectorAll("[data-edit]")
+.forEach(button => {
+
+button.addEventListener(
+"click",
+() => {
 
 const message =
 data.find(
-x=>Number(x.id)===Number(button.dataset.edit)
+x =>
+Number(x.id) ===
+Number(button.dataset.edit)
 );
 
-if(message) openEditModal(message);
+if (message) {
+openEditModal(message);
+}
+
+}
+);
 
 });
-});
 
 
-list.querySelectorAll("[data-delete]")
-.forEach(button=>{
-button.addEventListener("click",()=>{
+list
+.querySelectorAll("[data-delete]")
+.forEach(button => {
+
+button.addEventListener(
+"click",
+() => {
+
 deleteBoardMessage(
-Number(button.dataset.delete)
+Number(
+button.dataset.delete
+)
 );
-});
+
+}
+);
+
 });
 
 }
@@ -1155,40 +1494,60 @@ Number(button.dataset.delete)
 掲示板編集
 ========================= */
 
-function openEditModal(message){
+function openEditModal(message) {
 
-editTargetMessageId=message.id;
+editTargetMessageId =
+message.id;
 
-document.getElementById("editContent").value =
+document.getElementById(
+"editContent"
+).value =
 message.content || "";
 
-document.getElementById("editModal")
-.classList.remove("hidden");
+document.getElementById(
+"editModal"
+).classList.remove(
+"hidden"
+);
 
 }
 
 
-function closeEditModal(){
+function closeEditModal() {
 
-document.getElementById("editModal")
-.classList.add("hidden");
+document.getElementById(
+"editModal"
+).classList.add(
+"hidden"
+);
 
-editTargetMessageId=null;
+editTargetMessageId = null;
 
 }
 
 
-async function saveBoardEdit(){
+async function saveBoardEdit() {
 
-if(editTargetMessageId===null)return;
+if (
+editTargetMessageId ===
+null
+) {
+return;
+}
+
 
 const content =
-document.getElementById("editContent")
-.value.trim();
+document.getElementById(
+"editContent"
+).value.trim();
 
-if(!content){
 
-alert("メッセージを入力してください。");
+if (!content) {
+
+alert(
+"メッセージを入力してください。"
+);
+
 return;
 
 }
@@ -1201,9 +1560,13 @@ await supabase
 .eq("id",editTargetMessageId);
 
 
-if(error){
+if (error) {
 
-alert("編集に失敗しました：\n"+error.message);
+alert(
+"編集に失敗しました：\n" +
+error.message
+);
+
 return;
 
 }
@@ -1218,9 +1581,13 @@ alert("編集しました。");
 }
 
 
-async function deleteBoardMessage(id){
+async function deleteBoardMessage(id) {
 
-if(!confirm("この掲示板メッセージを削除しますか？")){
+if (
+!confirm(
+"この掲示板メッセージを削除しますか？"
+)
+) {
 return;
 }
 
@@ -1232,9 +1599,13 @@ await supabase
 .eq("id",id);
 
 
-if(error){
+if (error) {
 
-alert("削除に失敗しました：\n"+error.message);
+alert(
+"削除に失敗しました：\n" +
+error.message
+);
+
 return;
 
 }
@@ -1251,7 +1622,37 @@ alert("削除しました。");
 フレーム一覧
 ========================= */
 
-async function loadItems(){
+async function loadItems() {
+
+const rewardSelect =
+document.getElementById(
+"rewardCodeItem"
+);
+
+const eventSelect =
+document.getElementById(
+"eventItem"
+);
+
+const frameStatus =
+document.getElementById(
+"rewardFrameStatus"
+);
+
+
+frameStatus.className =
+"frame-status";
+
+frameStatus.textContent =
+"🔄 フレーム一覧を取得しています...";
+
+
+rewardSelect.innerHTML =
+`<option value="">なし</option>`;
+
+eventSelect.innerHTML =
+`<option value="">なし</option>`;
+
 
 const {
 data,
@@ -1259,53 +1660,107 @@ error
 } =
 await supabase
 .from("coin_items")
-.select("item_key,name,price")
-.neq("item_key","admin")
-.order("price",{ascending:true});
+.select(
+"item_key,name,icon,price,frame_color"
+)
+.neq(
+"item_key",
+"admin"
+)
+.order(
+"price",
+{ascending:true}
+);
 
 
-if(error){
+if (error) {
 
-console.error(error);
+console.error(
+"coin_items取得エラー:",
+error
+);
+
+frameStatus.className =
+"frame-status error";
+
+frameStatus.textContent =
+"❌ フレーム取得失敗\n" +
+error.message;
+
+rewardSelect.innerHTML =
+`<option value="">
+取得失敗
+</option>`;
+
+eventSelect.innerHTML =
+`<option value="">
+取得失敗
+</option>`;
+
+throw error;
+
+}
+
+
+if (!data || data.length === 0) {
+
+frameStatus.className =
+"frame-status error";
+
+frameStatus.textContent =
+"⚠️ フレームが1件もありません。\n" +
+"coin_itemsテーブルにフレームを登録してください。";
+
 return;
 
 }
 
 
-const eventSelect =
-document.getElementById("eventItem");
+data.forEach(item => {
 
-const rewardSelect =
-document.getElementById("rewardCodeItem");
-
-
-eventSelect.innerHTML =
-`<option value="">なし</option>`;
-
-rewardSelect.innerHTML =
-`<option value="">なし</option>`;
+const icon =
+item.icon || "🖼️";
 
 
-(data || []).forEach(item=>{
+/* 配布コード */
 
-const option1 =
+const rewardOption =
 document.createElement("option");
 
-option1.value=item.item_key;
-option1.textContent=item.name;
+rewardOption.value =
+item.item_key;
 
-eventSelect.appendChild(option1);
+rewardOption.textContent =
+`${icon} ${item.name}`;
+
+rewardSelect.appendChild(
+rewardOption
+);
 
 
-const option2 =
+/* イベント */
+
+const eventOption =
 document.createElement("option");
 
-option2.value=item.item_key;
-option2.textContent=item.name;
+eventOption.value =
+item.item_key;
 
-rewardSelect.appendChild(option2);
+eventOption.textContent =
+`${icon} ${item.name}`;
+
+eventSelect.appendChild(
+eventOption
+);
 
 });
+
+
+frameStatus.className =
+"frame-status success";
+
+frameStatus.textContent =
+`✅ ${data.length}個のフレームを読み込みました。`;
 
 }
 
@@ -1314,99 +1769,222 @@ rewardSelect.appendChild(option2);
 配布コード作成
 ========================= */
 
-async function createRewardCode(){
+async function createRewardCode() {
+
+const button =
+document.getElementById(
+"createRewardCodeButton"
+);
+
+
+try {
+
+button.disabled = true;
+
+button.textContent =
+"⏳ 作成しています...";
+
+
+setStatus(
+"🎁 配布コードを作成しています...",
+"info"
+);
+
 
 let code =
-document.getElementById("rewardCode")
-.value.trim()
-.toUpperCase();
+document.getElementById(
+"rewardCode"
+).value.trim().toUpperCase();
 
 
 const rewardCoins =
 Number(
-document.getElementById("rewardCodeCoins").value || 0
+document.getElementById(
+"rewardCodeCoins"
+).value || 0
 );
 
 
 const rewardItem =
-document.getElementById("rewardCodeItem").value || null;
+document.getElementById(
+"rewardCodeItem"
+).value || null;
 
 
 const maxUses =
 Number(
-document.getElementById("rewardCodeMaxUses").value || 0
+document.getElementById(
+"rewardCodeMaxUses"
+).value || 0
 );
 
 
-if(!code){
+if (!code) {
 
-alert("配布コードを入力してください。");
-return;
-
-}
-
-
-if(!Number.isInteger(rewardCoins) || rewardCoins<0){
-
-alert("コイン報酬が正しくありません。");
-return;
+throw new Error(
+"配布コードを入力してください。"
+);
 
 }
 
 
-if(!Number.isInteger(maxUses) || maxUses<0){
+if (
+code.length > 100
+) {
 
-alert("最大利用人数が正しくありません。");
-return;
-
-}
-
-
-if(rewardCoins===0 && !rewardItem){
-
-alert("コインまたはフレームを1つ以上設定してください。");
-return;
+throw new Error(
+"配布コードは100文字以内にしてください。"
+);
 
 }
 
 
-const {error} =
+if (
+!Number.isInteger(
+rewardCoins
+) ||
+rewardCoins < 0
+) {
+
+throw new Error(
+"コイン報酬が正しくありません。"
+);
+
+}
+
+
+if (
+!Number.isInteger(
+maxUses
+) ||
+maxUses < 0
+) {
+
+throw new Error(
+"最大利用人数が正しくありません。"
+);
+
+}
+
+
+if (
+rewardCoins === 0 &&
+!rewardItem
+) {
+
+throw new Error(
+"コインまたはフレームを1つ以上設定してください。"
+);
+
+}
+
+
+setStatus(
+"📡 Supabaseに保存しています...",
+"info"
+);
+
+
+const {data,error} =
 await supabase
 .from("coin_reward_codes")
 .insert({
-
-code,
-
-reward_coins:rewardCoins,
-
+code:code,
+reward_coins:Math.floor(
+rewardCoins
+),
 reward_item_key:rewardItem,
-
-max_uses:maxUses,
-
+max_uses:Math.floor(
+maxUses
+),
 is_active:true,
-
 created_by:currentUsername
+})
+.select()
+.single();
 
-});
 
+if (error) {
 
-if(error){
+console.error(
+"配布コード作成DBエラー:",
+error
+);
 
-alert("配布コード作成に失敗しました：\n"+error.message);
-return;
+throw new Error(
+"配布コード作成に失敗しました。\n" +
+error.message
+);
 
 }
 
 
-document.getElementById("rewardCode").value="";
-document.getElementById("rewardCodeCoins").value="0";
-document.getElementById("rewardCodeItem").value="";
-document.getElementById("rewardCodeMaxUses").value="0";
+console.log(
+"作成された配布コード:",
+data
+);
+
+
+document.getElementById(
+"rewardCode"
+).value = "";
+
+document.getElementById(
+"rewardCodeCoins"
+).value = "0";
+
+document.getElementById(
+"rewardCodeItem"
+).value = "";
+
+document.getElementById(
+"rewardCodeMaxUses"
+).value = "0";
 
 
 await loadRewardCodes();
 
-alert("🎁 配布コードを作成しました！");
+
+setStatus(
+`✅ 配布コード「${code}」を作成しました！`,
+"success"
+);
+
+
+alert(
+`🎁 配布コードを作成しました！\n\n${code}`
+);
+
+
+} catch(error) {
+
+console.error(
+"createRewardCode error:",
+error
+);
+
+
+setStatus(
+"❌ 配布コード作成エラー\n" +
+(error.message || error),
+"error"
+);
+
+
+alert(
+"❌ 配布コードを作成できませんでした。\n\n" +
+(error.message || error)
+);
+
+
+} finally {
+
+button.disabled = false;
+
+button.textContent =
+"🎁 配布コードを作成";
+
+}
 
 }
 
@@ -1415,16 +1993,23 @@ alert("🎁 配布コードを作成しました！");
 配布コード一覧
 ========================= */
 
-async function loadRewardCodes(){
+async function loadRewardCodes() {
 
 const loading =
-document.getElementById("rewardCodesLoading");
+document.getElementById(
+"rewardCodesLoading"
+);
 
 const list =
-document.getElementById("rewardCodesList");
+document.getElementById(
+"rewardCodesList"
+);
 
-loading.classList.remove("hidden");
-list.innerHTML="";
+loading.classList.remove(
+"hidden"
+);
+
+list.innerHTML = "";
 
 
 const {
@@ -1442,15 +2027,22 @@ max_uses,
 is_active,
 created_by,
 created_at,
-coin_items(name)
+coin_items(
+name,
+icon
+)
 `)
-.order("created_at",{ascending:false});
+.order(
+"created_at",
+{ascending:false}
+);
 
 
-if(error){
+if (error) {
 
 loading.textContent =
-"配布コード読み込みエラー："+error.message;
+"❌ 配布コード読み込みエラー：\n" +
+error.message;
 
 return;
 
@@ -1463,69 +2055,97 @@ error:usesError
 } =
 await supabase
 .from("coin_reward_code_uses")
-.select("reward_code_id");
+.select(
+"reward_code_id"
+);
 
 
-if(usesError){
+if (usesError) {
 
-console.error(usesError);
+console.error(
+"使用数取得エラー:",
+usesError
+);
 
 }
 
 
-const useMap = new Map();
+const useMap =
+new Map();
 
-(uses || []).forEach(row=>{
 
-const id=Number(row.reward_code_id);
+(uses || []).forEach(
+row => {
+
+const id =
+Number(
+row.reward_code_id
+);
 
 useMap.set(
 id,
-(useMap.get(id)||0)+1
+(useMap.get(id) || 0) + 1
 );
 
 });
 
 
-loading.classList.add("hidden");
+loading.classList.add(
+"hidden"
+);
 
 
-if(!codes?.length){
+if (!codes?.length) {
 
 list.innerHTML =
-`<div class="empty">配布コードはまだありません。</div>`;
+`<div class="empty">
+配布コードはまだありません。
+</div>`;
 
 return;
 
 }
 
 
-codes.forEach(code=>{
+codes.forEach(code => {
 
 const used =
-useMap.get(Number(code.id)) || 0;
+useMap.get(
+Number(code.id)
+) || 0;
 
 const limit =
-Number(code.max_uses || 0);
+Number(
+code.max_uses || 0
+);
 
-const itemName =
-code.coin_items?.name || "";
+const item =
+code.coin_items;
 
-const rewardText=[];
+const rewardText = [];
 
 
-if(Number(code.reward_coins)>0){
+if (
+Number(code.reward_coins) > 0
+) {
 
 rewardText.push(
-`🪙 ${Number(code.reward_coins).toLocaleString()} COIN`
+`🪙 ${Number(
+code.reward_coins
+).toLocaleString()} COIN`
 );
 
 }
 
-if(itemName){
+
+if (item) {
 
 rewardText.push(
-`🖼️ ${escapeHtml(itemName)}`
+`${
+item.icon || "🖼️"
+} ${
+escapeHtml(item.name)
+}`
 );
 
 }
@@ -1534,10 +2154,11 @@ rewardText.push(
 const card =
 document.createElement("div");
 
-card.className="reward-code-card";
+card.className =
+"reward-code-card";
 
 
-card.innerHTML=`
+card.innerHTML = `
 
 <div class="reward-code-title">
 🎁 ${escapeHtml(code.code)}
@@ -1552,24 +2173,41 @@ ${rewardText.join(" ＋ ")}
 
 利用：
 ${used} /
-${limit===0 ? "無制限" : limit}
+${limit === 0
+? "無制限"
+: limit}
 
 <br>
 
 状態：
-<span class="${code.is_active?"active":"inactive"}">
-${code.is_active?"🟢 有効":"🔴 無効"}
+
+<span class="${
+code.is_active
+? "active"
+: "inactive"
+}">
+
+${
+code.is_active
+? "🟢 有効"
+: "🔴 無効"
+}
+
 </span>
 
 <br>
 
 作成者：
-${escapeHtml(code.created_by)}
+${escapeHtml(
+code.created_by
+)}
 
 <br>
 
 作成日：
-${escapeHtml(formatDate(code.created_at))}
+${escapeHtml(
+formatDate(code.created_at)
+)}
 
 </div>
 
@@ -1577,14 +2215,24 @@ ${escapeHtml(formatDate(code.created_at))}
 
 <button
 class="small"
-data-toggle-code="${code.id}">
-${code.is_active?"⏸️ 無効にする":"▶️ 有効にする"}
+data-toggle-code="${code.id}"
+type="button">
+
+${
+code.is_active
+? "⏸️ 無効にする"
+: "▶️ 有効にする"
+}
+
 </button>
 
 <button
 class="danger small"
-data-delete-code="${code.id}">
+data-delete-code="${code.id}"
+type="button">
+
 🗑️ 削除
+
 </button>
 
 </div>
@@ -1595,30 +2243,46 @@ list.appendChild(card);
 });
 
 
-list.querySelectorAll("[data-toggle-code]")
-.forEach(button=>{
+list
+.querySelectorAll(
+"[data-toggle-code]"
+)
+.forEach(button => {
 
-button.addEventListener("click",()=>{
+button.addEventListener(
+"click",
+() => {
 
 toggleRewardCode(
-Number(button.dataset.toggleCode)
+Number(
+button.dataset.toggleCode
+)
+);
+
+}
 );
 
 });
 
-});
 
+list
+.querySelectorAll(
+"[data-delete-code]"
+)
+.forEach(button => {
 
-list.querySelectorAll("[data-delete-code]")
-.forEach(button=>{
-
-button.addEventListener("click",()=>{
+button.addEventListener(
+"click",
+() => {
 
 deleteRewardCode(
-Number(button.dataset.deleteCode)
+Number(
+button.dataset.deleteCode
+)
 );
 
-});
+}
+);
 
 });
 
@@ -1629,7 +2293,7 @@ Number(button.dataset.deleteCode)
 配布コードON/OFF
 ========================= */
 
-async function toggleRewardCode(id){
+async function toggleRewardCode(id) {
 
 const {
 data,
@@ -1637,31 +2301,44 @@ error
 } =
 await supabase
 .from("coin_reward_codes")
-.select("is_active")
+.select(
+"is_active"
+)
 .eq("id",id)
 .single();
 
 
-if(error){
+if (error) {
 
-alert("配布コード取得に失敗しました：\n"+error.message);
+alert(
+"配布コード取得に失敗しました：\n" +
+error.message
+);
+
 return;
 
 }
 
 
-const {error:updateError} =
+const {
+error:updateError
+} =
 await supabase
 .from("coin_reward_codes")
 .update({
-is_active:!data.is_active
+is_active:
+!data.is_active
 })
 .eq("id",id);
 
 
-if(updateError){
+if (updateError) {
 
-alert("変更に失敗しました：\n"+updateError.message);
+alert(
+"変更に失敗しました：\n" +
+updateError.message
+);
+
 return;
 
 }
@@ -1676,9 +2353,13 @@ await loadRewardCodes();
 配布コード削除
 ========================= */
 
-async function deleteRewardCode(id){
+async function deleteRewardCode(id) {
 
-if(!confirm("この配布コードを削除しますか？")){
+if (
+!confirm(
+"この配布コードを削除しますか？"
+)
+) {
 return;
 }
 
@@ -1690,9 +2371,13 @@ await supabase
 .eq("id",id);
 
 
-if(error){
+if (error) {
 
-alert("削除に失敗しました：\n"+error.message);
+alert(
+"削除に失敗しました：\n" +
+error.message
+);
+
 return;
 
 }
@@ -1700,7 +2385,9 @@ return;
 
 await loadRewardCodes();
 
-alert("配布コードを削除しました。");
+alert(
+"配布コードを削除しました。"
+);
 
 }
 
@@ -1709,71 +2396,110 @@ alert("配布コードを削除しました。");
 イベント作成
 ========================= */
 
-async function createEvent(){
+async function createEvent() {
 
 const title =
-document.getElementById("eventTitle").value.trim();
+document.getElementById(
+"eventTitle"
+).value.trim();
 
 const description =
-document.getElementById("eventDescription").value.trim();
+document.getElementById(
+"eventDescription"
+).value.trim();
 
 const startValue =
-document.getElementById("eventStart").value;
+document.getElementById(
+"eventStart"
+).value;
 
 const endValue =
-document.getElementById("eventEnd").value;
+document.getElementById(
+"eventEnd"
+).value;
 
 const rewardCoins =
 Number(
-document.getElementById("eventCoins").value || 0
+document.getElementById(
+"eventCoins"
+).value || 0
 );
 
 const rewardItem =
-document.getElementById("eventItem").value || null;
+document.getElementById(
+"eventItem"
+).value || null;
 
 
-if(!title){
+if (!title) {
 
-alert("イベント名を入力してください。");
+alert(
+"イベント名を入力してください。"
+);
+
 return;
 
 }
 
 
-if(!startValue || !endValue){
+if (!startValue || !endValue) {
 
-alert("開始日時と終了日時を入力してください。");
+alert(
+"開始日時と終了日時を入力してください。"
+);
+
 return;
 
 }
 
 
-const start=new Date(startValue);
-const end=new Date(endValue);
+const start =
+new Date(startValue);
+
+const end =
+new Date(endValue);
 
 
-if(
-Number.isNaN(start.getTime()) ||
-Number.isNaN(end.getTime())
-){
+if (
+Number.isNaN(
+start.getTime()
+) ||
+Number.isNaN(
+end.getTime()
+)
+) {
 
-alert("日時が正しくありません。");
+alert(
+"日時が正しくありません。"
+);
+
 return;
 
 }
 
 
-if(end<=start){
+if (end <= start) {
 
-alert("終了日時は開始日時より後にしてください。");
+alert(
+"終了日時は開始日時より後にしてください。"
+);
+
 return;
 
 }
 
 
-if(!Number.isFinite(rewardCoins)||rewardCoins<0){
+if (
+!Number.isFinite(
+rewardCoins
+) ||
+rewardCoins < 0
+) {
 
-alert("コイン報酬が正しくありません。");
+alert(
+"コイン報酬が正しくありません。"
+);
+
 return;
 
 }
@@ -1787,39 +2513,70 @@ await supabase
 title,
 description,
 
-start_at:start.toISOString(),
-end_at:end.toISOString(),
+start_at:
+start.toISOString(),
 
-reward_coins:Math.floor(rewardCoins),
+end_at:
+end.toISOString(),
 
-reward_item_key:rewardItem,
+reward_coins:
+Math.floor(
+rewardCoins
+),
 
-created_by:currentUsername,
+reward_item_key:
+rewardItem,
+
+created_by:
+currentUsername,
 
 is_active:true
 
 });
 
 
-if(error){
+if (error) {
 
-alert("イベント作成に失敗しました：\n"+error.message);
+alert(
+"イベント作成に失敗しました：\n" +
+error.message
+);
+
 return;
 
 }
 
 
-document.getElementById("eventTitle").value="";
-document.getElementById("eventDescription").value="";
-document.getElementById("eventStart").value="";
-document.getElementById("eventEnd").value="";
-document.getElementById("eventCoins").value="0";
-document.getElementById("eventItem").value="";
+document.getElementById(
+"eventTitle"
+).value = "";
+
+document.getElementById(
+"eventDescription"
+).value = "";
+
+document.getElementById(
+"eventStart"
+).value = "";
+
+document.getElementById(
+"eventEnd"
+).value = "";
+
+document.getElementById(
+"eventCoins"
+).value = "0";
+
+document.getElementById(
+"eventItem"
+).value = "";
 
 
 await loadEvents();
 
-alert("🎉 イベントを作成しました！");
+alert(
+"🎉 イベントを作成しました！"
+);
 
 }
 
@@ -1828,16 +2585,23 @@ alert("🎉 イベントを作成しました！");
 イベント一覧
 ========================= */
 
-async function loadEvents(){
+async function loadEvents() {
 
 const loading =
-document.getElementById("eventsLoading");
+document.getElementById(
+"eventsLoading"
+);
 
 const list =
-document.getElementById("eventsList");
+document.getElementById(
+"eventsList"
+);
 
-loading.classList.remove("hidden");
-list.innerHTML="";
+loading.classList.remove(
+"hidden"
+);
+
+list.innerHTML = "";
 
 
 const {
@@ -1857,60 +2621,90 @@ reward_item_key,
 created_by,
 is_active,
 created_at,
-coin_items(name)
+coin_items(
+name,
+icon
+)
 `)
-.order("created_at",{ascending:false});
+.order(
+"created_at",
+{ascending:false}
+);
 
 
-if(error){
+if (error) {
 
 loading.textContent =
-"イベント読み込みエラー："+error.message;
+"❌ イベント読み込みエラー：\n" +
+error.message;
 
 return;
 
 }
 
 
-loading.classList.add("hidden");
+loading.classList.add(
+"hidden"
+);
 
 
-if(!data?.length){
+if (!data?.length) {
 
 list.innerHTML =
-`<div class="empty">イベントはまだありません。</div>`;
+`<div class="empty">
+イベントはまだありません。
+</div>`;
 
 return;
 
 }
 
 
-data.forEach(event=>{
+data.forEach(event => {
 
 const card =
 document.createElement("div");
 
-card.className="event-card";
+card.className =
+"event-card";
+
+
+const item =
+event.coin_items;
 
 const itemName =
-event.coin_items?.name || "";
+item?.name || "";
+
+const itemIcon =
+item?.icon || "🖼️";
 
 
-card.innerHTML=`
+card.innerHTML = `
 
 <div class="event-title">
-${escapeHtml(event.title)}
+${escapeHtml(
+event.title
+)}
 </div>
 
 <div class="event-description">
-${escapeHtml(event.description)}
+${escapeHtml(
+event.description
+)}
 </div>
 
 <div class="event-info">
 
-📅 ${escapeHtml(formatDate(event.start_at))}
+📅
+${escapeHtml(
+formatDate(event.start_at)
+)}
+
 〜
-${escapeHtml(formatDate(event.end_at))}
+
+${escapeHtml(
+formatDate(event.end_at)
+)}
 
 <br>
 
@@ -1920,13 +2714,22 @@ ${event.reward_coins || 0}
 ${
 itemName
 ?
-`<br>🖼️ フレーム：${escapeHtml(itemName)}`
+`
+<br>
+${itemIcon}
+フレーム：
+${escapeHtml(itemName)}
+`
 :""
 }
 
 <br>
 
-${event.is_active?"🟢 公開中":"⚪ 非公開"}
+${
+event.is_active
+? "🟢 公開中"
+: "⚪ 非公開"
+}
 
 </div>
 
@@ -1934,14 +2737,24 @@ ${event.is_active?"🟢 公開中":"⚪ 非公開"}
 
 <button
 class="small"
-data-toggle-event="${event.id}">
-${event.is_active?"⏸️ 非公開":"▶️ 公開"}
+data-toggle-event="${event.id}"
+type="button">
+
+${
+event.is_active
+? "⏸️ 非公開"
+: "▶️ 公開"
+}
+
 </button>
 
 <button
 class="danger small"
-data-delete-event="${event.id}">
+data-delete-event="${event.id}"
+type="button">
+
 🗑️ 削除
+
 </button>
 
 </div>
@@ -1952,30 +2765,46 @@ list.appendChild(card);
 });
 
 
-list.querySelectorAll("[data-toggle-event]")
-.forEach(button=>{
+list
+.querySelectorAll(
+"[data-toggle-event]"
+)
+.forEach(button => {
 
-button.addEventListener("click",()=>{
+button.addEventListener(
+"click",
+() => {
 
 toggleEvent(
-Number(button.dataset.toggleEvent)
+Number(
+button.dataset.toggleEvent
+)
+);
+
+}
 );
 
 });
 
-});
 
+list
+.querySelectorAll(
+"[data-delete-event]"
+)
+.forEach(button => {
 
-list.querySelectorAll("[data-delete-event]")
-.forEach(button=>{
-
-button.addEventListener("click",()=>{
+button.addEventListener(
+"click",
+() => {
 
 deleteEvent(
-Number(button.dataset.deleteEvent)
+Number(
+button.dataset.deleteEvent
+)
 );
 
-});
+}
+);
 
 });
 
@@ -1986,7 +2815,7 @@ Number(button.dataset.deleteEvent)
 イベント切替
 ========================= */
 
-async function toggleEvent(id){
+async function toggleEvent(id) {
 
 const {
 data:event,
@@ -1994,14 +2823,20 @@ error:getError
 } =
 await supabase
 .from("events")
-.select("is_active")
+.select(
+"is_active"
+)
 .eq("id",id)
 .single();
 
 
-if(getError){
+if (getError) {
 
-alert("イベント取得に失敗しました：\n"+getError.message);
+alert(
+"イベント取得に失敗しました：\n" +
+getError.message
+);
+
 return;
 
 }
@@ -2011,14 +2846,19 @@ const {error} =
 await supabase
 .from("events")
 .update({
-is_active:!event.is_active
+is_active:
+!event.is_active
 })
 .eq("id",id);
 
 
-if(error){
+if (error) {
 
-alert("変更に失敗しました：\n"+error.message);
+alert(
+"変更に失敗しました：\n" +
+error.message
+);
+
 return;
 
 }
@@ -2033,9 +2873,13 @@ await loadEvents();
 イベント削除
 ========================= */
 
-async function deleteEvent(id){
+async function deleteEvent(id) {
 
-if(!confirm("このイベントを削除しますか？")){
+if (
+!confirm(
+"このイベントを削除しますか？"
+)
+) {
 return;
 }
 
@@ -2047,9 +2891,13 @@ await supabase
 .eq("id",id);
 
 
-if(error){
+if (error) {
 
-alert("イベント削除に失敗しました：\n"+error.message);
+alert(
+"イベント削除に失敗しました：\n" +
+error.message
+);
+
 return;
 
 }
@@ -2057,7 +2905,9 @@ return;
 
 await loadEvents();
 
-alert("イベントを削除しました。");
+alert(
+"イベントを削除しました。"
+);
 
 }
 
@@ -2066,48 +2916,114 @@ alert("イベントを削除しました。");
 ボタン
 ========================= */
 
-document.getElementById("confirmBanButton")
-.addEventListener("click",banUser);
+document
+.getElementById(
+"confirmBanButton"
+)
+.addEventListener(
+"click",
+banUser
+);
 
-document.getElementById("cancelBanButton")
-.addEventListener("click",closeBanModal);
+document
+.getElementById(
+"cancelBanButton"
+)
+.addEventListener(
+"click",
+closeBanModal
+);
 
-document.getElementById("saveEditButton")
-.addEventListener("click",saveBoardEdit);
+document
+.getElementById(
+"saveEditButton"
+)
+.addEventListener(
+"click",
+saveBoardEdit
+);
 
-document.getElementById("cancelEditButton")
-.addEventListener("click",closeEditModal);
+document
+.getElementById(
+"cancelEditButton"
+)
+.addEventListener(
+"click",
+closeEditModal
+);
 
-document.getElementById("createEventButton")
-.addEventListener("click",createEvent);
+document
+.getElementById(
+"createEventButton"
+)
+.addEventListener(
+"click",
+createEvent
+);
 
-document.getElementById("createRewardCodeButton")
-.addEventListener("click",createRewardCode);
+document
+.getElementById(
+"createRewardCodeButton"
+)
+.addEventListener(
+"click",
+createRewardCode
+);
 
 
-/* モーダル外側 */
+/* =========================
+モーダル
+========================= */
 
-document.getElementById("banModal")
-.addEventListener("click",event=>{
+document
+.getElementById(
+"banModal"
+)
+.addEventListener(
+"click",
+event => {
 
-if(event.target===document.getElementById("banModal")){
+if (
+event.target ===
+document.getElementById(
+"banModal"
+)
+) {
+
 closeBanModal();
+
 }
 
-});
+}
+);
 
 
-document.getElementById("editModal")
-.addEventListener("click",event=>{
+document
+.getElementById(
+"editModal"
+)
+.addEventListener(
+"click",
+event => {
 
-if(event.target===document.getElementById("editModal")){
+if (
+event.target ===
+document.getElementById(
+"editModal"
+)
+) {
+
 closeEditModal();
+
 }
 
-});
+}
+);
 
 
-/* 開始 */
+/* =========================
+開始
+========================= */
 
 init();
 
