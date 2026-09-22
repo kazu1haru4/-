@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>じゃんけん</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Hiragino Kaku Gothic ProN",
+        "Yu Gothic",
+        sans-serif;
+      background: linear-gradient(135deg, #fff4fb, #eef7ff);
+      min-height: 100vh;
+      color: #333;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 24px 18px 40px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 25px;
+    }
+
+    .back-button {
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 14px;
+      background: white;
+      font-size: 22px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .title {
+      font-size: 25px;
+      font-weight: bold;
+    }
+
+    .score-board {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .score {
+      flex: 1;
+      background: white;
+      border-radius: 20px;
+      padding: 18px;
+      text-align: center;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.07);
+    }
+
+    .score-name {
+      font-size: 14px;
+      color: #777;
+      margin-bottom: 6px;
+    }
+
+    .score-number {
+      font-size: 32px;
+      font-weight: bold;
+    }
+
+    .battle {
+      background: white;
+      border-radius: 24px;
+      padding: 25px 18px;
+      text-align: center;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+
+    .battle-title {
+      color: #777;
+      font-size: 14px;
+      margin-bottom: 18px;
+    }
+
+    .choices-display {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 30px;
+      margin-bottom: 20px;
+    }
+
+    .choice-display {
+      width: 95px;
+      height: 95px;
+      border-radius: 22px;
+      background: #f7f7f7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 55px;
+    }
+
+    .vs {
+      font-size: 20px;
+      font-weight: bold;
+      color: #999;
+    }
+
+    .result {
+      min-height: 34px;
+      font-size: 22px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .choose-title {
+      text-align: center;
+      font-size: 16px;
+      font-weight: bold;
+      margin: 22px 0 12px;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .choice-button {
+      flex: 1;
+      border: none;
+      border-radius: 20px;
+      background: white;
+      padding: 17px 8px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 5px 14px rgba(0,0,0,0.08);
+      transition: transform 0.12s;
+    }
+
+    .choice-button:active {
+      transform: scale(0.94);
+    }
+
+    .choice-button .emoji {
+      display: block;
+      font-size: 38px;
+      margin-bottom: 6px;
+    }
+
+    .reset-button {
+      width: 100%;
+      margin-top: 18px;
+      border: none;
+      border-radius: 16px;
+      background: #eee;
+      padding: 13px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <div class="header">
+      <button
+        class="back-button"
+        type="button"
+        onclick="location.href='minigame.html'"
+      >
+        ←
+      </button>
+
+      <div class="title">
+        ✊ じゃんけん
+      </div>
+    </div>
+
+
+    <div class="score-board">
+
+      <div class="score">
+        <div class="score-name">
+          あなた
+        </div>
+
+        <div
+          class="score-number"
+          id="playerScore"
+        >
+          0
+        </div>
+      </div>
+
+
+      <div class="score">
+        <div class="score-name">
+          コンピューター
+        </div>
+
+        <div
+          class="score-number"
+          id="computerScore"
+        >
+          0
+        </div>
+      </div>
+
+    </div>
+
+
+    <div class="battle">
+
+      <div class="battle-title">
+        勝負！
+      </div>
+
+      <div class="choices-display">
+
+        <div
+          class="choice-display"
+          id="playerChoice"
+        >
+          ❔
+        </div>
+
+        <div class="vs">
+          VS
+        </div>
+
+        <div
+          class="choice-display"
+          id="computerChoice"
+        >
+          ❔
+        </div>
+
+      </div>
+
+      <div
+        class="result"
+        id="result"
+      >
+        手を選んでね！
+      </div>
+
+    </div>
+
+
+    <div class="choose-title">
+      あなたの手を選んでください
+    </div>
+
+
+    <div class="buttons">
+
+      <button
+        class="choice-button"
+        type="button"
+        data-choice="rock"
+      >
+        <span class="emoji">✊</span>
+        グー
+      </button>
+
+      <button
+        class="choice-button"
+        type="button"
+        data-choice="scissors"
+      >
+        <span class="emoji">✌️</span>
+        チョキ
+      </button>
+
+      <button
+        class="choice-button"
+        type="button"
+        data-choice="paper"
+      >
+        <span class="emoji">✋</span>
+        パー
+      </button>
+
+    </div>
+
+
+    <button
+      class="reset-button"
+      type="button"
+      id="resetButton"
+    >
+      🔄 スコアをリセット
+    </button>
+
+  </div>
+
+
+  <script>
+
+    let playerScore = 0;
+    let computerScore = 0;
+
+
+    const choices = {
+      rock: "✊",
+      scissors: "✌️",
+      paper: "✋"
+    };
+
+
+    const playerScoreElement =
+      document.getElementById("playerScore");
+
+    const computerScoreElement =
+      document.getElementById("computerScore");
+
+    const playerChoiceElement =
+      document.getElementById("playerChoice");
+
+    const computerChoiceElement =
+      document.getElementById("computerChoice");
+
+    const resultElement =
+      document.getElementById("result");
+
+
+    function play(playerChoice) {
+
+      const choiceList = [
+        "rock",
+        "scissors",
+        "paper"
+      ];
+
+      const computerChoice =
+        choiceList[
+          Math.floor(
+            Math.random() * choiceList.length
+          )
+        ];
+
+
+      playerChoiceElement.textContent =
+        choices[playerChoice];
+
+      computerChoiceElement.textContent =
+        choices[computerChoice];
+
+
+      if (playerChoice === computerChoice) {
+
+        resultElement.textContent =
+          "🤝 あいこ！";
+
+      } else if (
+
+        (playerChoice === "rock" &&
+          computerChoice === "scissors") ||
+
+        (playerChoice === "scissors" &&
+          computerChoice === "paper") ||
+
+        (playerChoice === "paper" &&
+          computerChoice === "rock")
+
+      ) {
+
+        playerScore++;
+
+        resultElement.textContent =
+          "🎉 あなたの勝ち！";
+
+      } else {
+
+        computerScore++;
+
+        resultElement.textContent =
+          "😣 コンピューターの勝ち！";
+
+      }
+
+
+      playerScoreElement.textContent =
+        playerScore;
+
+      computerScoreElement.textContent =
+        computerScore;
+    }
+
+
+    document
+      .querySelectorAll(".choice-button")
+      .forEach(button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            play(
+              button.dataset.choice
+            );
+
+          }
+        );
+
+      });
+
+
+    document
+      .getElementById("resetButton")
+      .addEventListener(
+        "click",
+        () => {
+
+          playerScore = 0;
+          computerScore = 0;
+
+          playerScoreElement.textContent = "0";
+          computerScoreElement.textContent = "0";
+
+          playerChoiceElement.textContent = "❔";
+          computerChoiceElement.textContent = "❔";
+
+          resultElement.textContent =
+            "手を選んでね！";
+
+        }
+      );
+
+  </script>
+
+</body>
+</html>
