@@ -331,6 +331,25 @@ textarea {
   color: #c62828;
 }
 
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 10px;
+}
+.stat-card { padding: 14px; border-radius: 16px; background: #f7f8fc; text-align: center; }
+.stat-label { color: #777; font-size: 13px; }
+.stat-value { margin-top: 5px; font-size: 25px; font-weight: 800; }
+.frame-admin-card { padding: 14px; border-radius: 16px; background: #f7f8fc; margin-bottom: 10px; display:flex; align-items:center; gap:12px; }
+.frame-preview { width:54px; height:54px; border-radius:50%; display:grid; place-items:center; font-size:25px; background:white; border:4px solid var(--frame-color,#ffd0e7); flex-shrink:0; }
+.frame-admin-info { min-width:0; flex:1; }
+.frame-admin-name { font-weight:800; }
+.frame-admin-meta { color:#777; font-size:13px; margin-top:3px; line-height:1.6; }
+.home-button { margin-top:12px; display:inline-block; text-decoration:none; border-radius:12px; padding:10px 14px; font-weight:bold; background:#8f7cff; color:white; }
+.history { margin-top:12px; padding-top:10px; border-top:1px solid #e5e5eb; }
+.history-title { font-weight:bold; margin-bottom:6px; }
+.history-row { font-size:13px; color:#666; padding:4px 0; word-break:break-word; }
+
 .modal {
   position: fixed;
   inset: 0;
@@ -387,11 +406,24 @@ textarea {
 <header>
   <h1>👑 管理者パネル</h1>
   <div id="adminName" class="admin-name">起動しています...</div>
+  <a class="home-button" href="home.html">🏠 ホームへ戻る</a>
 </header>
 
 <div id="status" class="status info">
   🔄 管理者パネルを起動しています...
 </div>
+
+<details class="panel collapsible-panel">
+<summary>📊 サイト統計</summary>
+<div id="statsLoading" class="loading">統計を読み込んでいます...</div>
+<div id="statsGrid" class="stat-grid"></div>
+</details>
+
+<details class="panel collapsible-panel">
+<summary>🖼️ フレーム一覧</summary>
+<div id="framesLoading" class="loading">フレームを読み込んでいます...</div>
+<div id="framesList"></div>
+</details>
 
 <details class="panel collapsible-panel">
 
@@ -1195,154 +1227,78 @@ async function createRewardCode() {
 }
 
 async function loadRewardCodes() {
-  const loading =
-    document.getElementById("rewardCodesLoading");
-
-  const list =
-    document.getElementById("rewardCodesList");
-
+  const loading = document.getElementById("rewardCodesLoading");
+  const list = document.getElementById("rewardCodesList");
   loading.classList.remove("hidden");
   list.innerHTML = "";
 
-  const { data:codes, error } =
-    await supabaseClient
-      .from("coin_reward_codes")
-      .select(`
-        id,
-        code,
-        reward_coins,
-        reward_item_key,
-        max_uses,
-        is_active,
-        created_by,
-        created_at,
-        coin_items(
-          name,
-          icon
-        )
-      `)
-      .order("created_at",{ascending:false});
+  const { data: codes, error } = await supabaseClient
+    .from("coin_reward_codes")
+    .select(`id,code,reward_coins,reward_item_key,max_uses,is_active,created_by,created_at,coin_items(name,icon)`)
+    .order("created_at", { ascending:false });
 
   if (error) {
-    loading.textContent =
-      "❌ 配布コード読み込みエラー：\n" + error.message;
+    loading.textContent = "❌ 配布コード読み込みエラー：\n" + error.message;
     return;
   }
 
-  const { data:uses, error:usesError } =
-    await supabaseClient
-      .from("coin_reward_code_uses")
-      .select("reward_code_id");
+  const { data: uses, error: usesError } = await supabaseClient
+    .from("coin_reward_code_uses")
+    .select("reward_code_id,user_id,used_at")
+    .order("used_at", { ascending:false });
 
-  if (usesError) {
-    console.warn(
-      "使用数取得エラー:",
-      usesError.message
-    );
-  }
+  if (usesError) console.warn("使用履歴取得エラー:", usesError.message);
 
   const useMap = new Map();
-
   (uses || []).forEach(row => {
     const id = Number(row.reward_code_id);
-    useMap.set(id,(useMap.get(id) || 0) + 1);
+    if (!useMap.has(id)) useMap.set(id, []);
+    useMap.get(id).push(row);
   });
 
   loading.classList.add("hidden");
-
   if (!codes?.length) {
-    list.innerHTML =
-      `<div class="empty">配布コードはまだありません。</div>`;
+    list.innerHTML = `<div class="empty">配布コードはまだありません。</div>`;
     return;
   }
 
   codes.forEach(code => {
-    const used =
-      useMap.get(Number(code.id)) || 0;
-
-    const limit =
-      Number(code.max_uses || 0);
-
+    const history = useMap.get(Number(code.id)) || [];
     const item = code.coin_items;
     const rewards = [];
+    if (Number(code.reward_coins) > 0) rewards.push(`🪙 ${Number(code.reward_coins).toLocaleString()} COIN`);
+    if (item) rewards.push(`${item.icon || "🖼️"} ${escapeHtml(item.name)}`);
 
-    if (Number(code.reward_coins) > 0) {
-      rewards.push(
-        `🪙 ${Number(code.reward_coins).toLocaleString()} COIN`
-      );
-    }
+    const historyHtml = history.length
+      ? `<div class="history"><div class="history-title">👥 受取履歴（${history.length}人）</div>${history.map(row => `<div class="history-row">👤 ${escapeHtml(row.user_id)}　${escapeHtml(formatDate(row.used_at))}</div>`).join("")}</div>`
+      : `<div class="history"><div class="history-row">まだ使用されていません。</div></div>`;
 
-    if (item) {
-      rewards.push(
-        `${item.icon || "🖼️"} ${escapeHtml(item.name)}`
-      );
-    }
-
-    const card =
-      document.createElement("div");
-
+    const card = document.createElement("div");
     card.className = "reward-code-card";
-
     card.innerHTML = `
-      <div class="reward-code-title">
-        🎁 ${escapeHtml(code.code)}
-      </div>
-
+      <div class="reward-code-title">🎁 ${escapeHtml(code.code)}</div>
       <div class="reward-code-info">
-        報酬：
-        ${rewards.length ? rewards.join(" ＋ ") : "なし"}
-        <br>
-        利用：
-        ${used} /
-        ${limit === 0 ? "無制限" : limit}
-        <br>
-        状態：
-        <span class="${code.is_active ? "active" : "inactive"}">
-          ${code.is_active ? "🟢 有効" : "🔴 無効"}
-        </span>
-        <br>
-        作成者：
-        ${escapeHtml(code.created_by)}
-        <br>
-        作成日：
-        ${escapeHtml(formatDate(code.created_at))}
+        報酬：${rewards.length ? rewards.join(" ＋ ") : "なし"}<br>
+        利用：${history.length} / ${Number(code.max_uses || 0) === 0 ? "無制限" : Number(code.max_uses)}<br>
+        状態：<span class="${code.is_active ? "active" : "inactive"}">${code.is_active ? "🟢 有効" : "🔴 無効"}</span><br>
+        作成者：${escapeHtml(code.created_by)}<br>
+        作成日：${escapeHtml(formatDate(code.created_at))}
       </div>
-
+      ${historyHtml}
       <div class="actions">
-        <button class="small"
-          data-toggle-code="${code.id}"
-          type="button">
-          ${code.is_active ? "⏸️ 無効にする" : "▶️ 有効にする"}
-        </button>
-
-        <button class="danger small"
-          data-delete-code="${code.id}"
-          type="button">
-          🗑️ 削除
-        </button>
-      </div>
-    `;
-
+        <button class="small" data-toggle-code="${code.id}" type="button">${code.is_active ? "⏸️ 無効にする" : "▶️ 有効にする"}</button>
+        <button class="danger small" data-delete-code="${code.id}" type="button">🗑️ 削除</button>
+      </div>`;
     list.appendChild(card);
   });
 
   list.querySelectorAll("[data-toggle-code]").forEach(button => {
-    button.addEventListener("click", () => {
-      toggleRewardCode(
-        Number(button.dataset.toggleCode)
-      );
-    });
+    button.addEventListener("click", () => toggleRewardCode(Number(button.dataset.toggleCode)));
   });
-
   list.querySelectorAll("[data-delete-code]").forEach(button => {
-    button.addEventListener("click", () => {
-      deleteRewardCode(
-        Number(button.dataset.deleteCode)
-      );
-    });
+    button.addEventListener("click", () => deleteRewardCode(Number(button.dataset.deleteCode)));
   });
 }
-
 async function toggleRewardCode(id) {
   const { data, error } =
     await supabaseClient
@@ -1665,29 +1621,6 @@ async function deleteEvent(id) {
   alert("イベントを削除しました。");
 }
 
-function setupCollapsiblePanels() {
-  document.querySelectorAll(".panel").forEach(panel => {
-    const title = panel.querySelector("h2");
-    if (!title) return;
-
-    const details = document.createElement("details");
-    details.className = "panel collapsible-panel";
-    details.open = false;
-
-    const summary = document.createElement("summary");
-    summary.innerHTML = title.innerHTML;
-
-    details.appendChild(summary);
-
-    Array.from(panel.children).forEach(child => {
-      if (child === title) return;
-      details.appendChild(child);
-    });
-
-    panel.replaceWith(details);
-  });
-}
-
 function setupButtons() {
   document.getElementById("confirmBanButton")
     .addEventListener("click", banUser);
@@ -1754,6 +1687,12 @@ async function init() {
       "✅ 管理者としてログインしています。読み込みを開始します。",
       "success"
     );
+
+    setStatus("📊 サイト統計を読み込んでいます...", "info");
+    await loadSiteStats();
+
+    setStatus("🖼️ フレーム一覧を読み込んでいます...", "info");
+    await loadFrameList();
 
     setStatus(
       "👤 ユーザーを読み込んでいます...",
