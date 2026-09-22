@@ -6,6 +6,8 @@
 
   <title>プロフィール</title>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     * {
       box-sizing: border-box;
@@ -17,272 +19,386 @@
       font-family:
         -apple-system,
         BlinkMacSystemFont,
-        "Segoe UI",
         "Hiragino Kaku Gothic ProN",
         "Yu Gothic",
+        "Noto Sans JP",
         sans-serif;
       background: linear-gradient(135deg, #fff4fb, #eef7ff);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
       color: #333;
+      padding: 20px;
     }
 
-    .home-button {
-      position: fixed;
-      top: 15px;
-      left: 15px;
-      width: auto;
-      margin: 0;
-      padding: 10px 15px;
-      border-radius: 14px;
-      background: white;
-      color: #6556d8;
+    .home-link {
+      display: inline-block;
       text-decoration: none;
+      color: #7658d9;
+      background: rgba(255,255,255,.9);
+      padding: 10px 16px;
+      border-radius: 999px;
       font-weight: bold;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-      z-index: 10;
+      box-shadow: 0 4px 12px rgba(100,80,150,.12);
+      margin-bottom: 16px;
     }
 
     .container {
       width: 100%;
       max-width: 420px;
+      margin: 0 auto;
       background: white;
       border-radius: 24px;
-      padding: 30px 24px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      padding: 28px 22px;
+      box-shadow: 0 12px 35px rgba(100,80,150,.15);
     }
 
     h1 {
       text-align: center;
       margin: 0 0 25px;
-      font-size: 28px;
+      font-size: 27px;
+      color: #7158cf;
     }
 
     /* =========================
        プロフィール画像
     ========================= */
 
-    .avatar {
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      background: #ffe2f1;
+    .avatar-area {
       display: flex;
-      align-items: center;
       justify-content: center;
-      margin: 0 auto 15px;
-      font-size: 55px;
-      overflow: hidden;
+      margin-bottom: 20px;
     }
 
-    .avatar img {
+    .avatar-frame {
+      position: relative;
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      padding: 7px;
+      background: #ffd9ec;
+      box-shadow:
+        0 5px 18px rgba(0,0,0,.12),
+        0 0 0 3px rgba(255,255,255,.9);
+      transition: .25s;
+    }
+
+    .avatar-frame.sakura {
+      background: #ff77b7;
+    }
+
+    .avatar-frame.star {
+      background: #f4bf3f;
+    }
+
+    .avatar-frame.diamond {
+      background: #4db9ee;
+    }
+
+    .avatar-image {
       width: 100%;
       height: 100%;
+      border-radius: 50%;
+      background: #fff3f9;
       object-fit: cover;
+      display: block;
+      border: 3px solid white;
     }
 
-    /* =========================
-       交換アイテム
-    ========================= */
-
-    .items-title {
-      text-align: center;
-      margin-top: 8px;
-      margin-bottom: 8px;
-      font-size: 14px;
-      font-weight: bold;
-      color: #777;
-    }
-
-    .profile-items {
-      min-height: 42px;
+    .avatar-placeholder {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #fff3f9;
+      border: 3px solid white;
       display: flex;
+      align-items: center;
       justify-content: center;
+      font-size: 58px;
+    }
+
+    /* 右上の絵文字 */
+    .equipped-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+
+      width: 48px;
+      height: 48px;
+
+      border-radius: 50%;
+      background: white;
+
+      display: none;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 18px;
+      justify-content: center;
+
+      font-size: 27px;
+
+      box-shadow:
+        0 4px 12px rgba(0,0,0,.18),
+        0 0 0 3px white;
+
+      z-index: 5;
     }
 
-    .profile-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 7px 11px;
-      border-radius: 14px;
-      background: #f7f5ff;
-      color: #5e50c9;
-      font-size: 13px;
-      font-weight: bold;
-      border: 1px solid #e8e3ff;
-    }
-
-    .profile-item-icon {
-      font-size: 20px;
-    }
-
-    .no-items {
-      color: #aaa;
-      font-size: 13px;
+    .equipped-badge.show {
+      display: flex;
     }
 
     /* =========================
-       画像選択
+       アイコン画像選択
     ========================= */
 
     .image-button {
       display: block;
       width: 100%;
-      padding: 12px;
-      border-radius: 12px;
-      background: #eeeaff;
-      color: #6556d8;
-      text-align: center;
+      padding: 14px;
+      border: none;
+      border-radius: 15px;
+      background: #f0eaff;
+      color: #7158cf;
+      font-size: 16px;
       font-weight: bold;
       cursor: pointer;
-      margin-bottom: 20px;
+      text-align: center;
+      margin-bottom: 24px;
     }
 
-    #avatarFile {
+    .image-button:active {
+      transform: scale(.98);
+    }
+
+    #imageInput {
       display: none;
     }
 
     /* =========================
-       入力
+       アイテム
     ========================= */
 
-    label {
-      display: block;
-      margin: 15px 0 7px;
+    .item-title {
       font-weight: bold;
+      font-size: 18px;
+      margin: 8px 0 12px;
+      color: #555;
     }
 
-    input,
-    textarea {
+    .items {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 25px;
+    }
+
+    .item-card {
+      width: 94px;
+      min-height: 118px;
+      border-radius: 18px;
+      background: #fafafa;
+      border: 2px solid #eee;
+      padding: 10px 7px;
+      text-align: center;
+    }
+
+    .item-icon {
+      position: relative;
+      width: 62px;
+      height: 62px;
+      margin: 0 auto 7px;
+
+      border-radius: 16px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      font-size: 35px;
+
+      background: white;
+    }
+
+    .item-icon.sakura {
+      border: 4px solid #ff77b7;
+      background: #fff0f7;
+    }
+
+    .item-icon.star {
+      border: 4px solid #f4bf3f;
+      background: #fff9df;
+    }
+
+    .item-icon.diamond {
+      border: 4px solid #4db9ee;
+      background: #eaf8ff;
+    }
+
+    .item-small-badge {
+      position: absolute;
+      top: -9px;
+      right: -9px;
+
+      width: 25px;
+      height: 25px;
+
+      border-radius: 50%;
+      background: white;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      font-size: 15px;
+
+      box-shadow: 0 2px 6px rgba(0,0,0,.15);
+    }
+
+    .item-name {
+      font-size: 12px;
+      margin-bottom: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .equip-button {
       width: 100%;
-      padding: 14px;
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      font-size: 16px;
-      outline: none;
-      font-family: inherit;
-    }
-
-    textarea {
-      min-height: 100px;
-      resize: vertical;
-    }
-
-    input:focus,
-    textarea:focus {
-      border-color: #9b8cff;
-    }
-
-    /* =========================
-       保存ボタン
-    ========================= */
-
-    button.save-button {
-      width: 100%;
-      padding: 14px;
-      margin-top: 20px;
       border: none;
-      border-radius: 12px;
-      background: #8f7cff;
+      border-radius: 9px;
+      padding: 6px 3px;
+      background: #7658d9;
       color: white;
-      font-size: 16px;
+      font-size: 11px;
       font-weight: bold;
       cursor: pointer;
     }
 
-    button.save-button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+    .equip-button.equipped {
+      background: #bbb;
+    }
+
+    .remove-equip {
+      display: none;
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      padding: 9px;
+      background: #f3f3f3;
+      color: #777;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .remove-equip.show {
+      display: block;
+    }
+
+    .no-items {
+      color: #999;
+      text-align: center;
+      font-size: 14px;
+      padding: 15px 0;
     }
 
     /* =========================
-       メッセージ
+       フォーム
     ========================= */
 
+    label {
+      display: block;
+      font-weight: bold;
+      margin: 18px 0 7px;
+      color: #444;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      border: 2px solid #eee;
+      border-radius: 14px;
+      padding: 13px;
+      font-size: 16px;
+      font-family: inherit;
+      outline: none;
+      background: #fff;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus {
+      border-color: #b8a7ef;
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .save-button {
+      width: 100%;
+      margin-top: 25px;
+      border: none;
+      border-radius: 16px;
+      padding: 15px;
+      background: #7658d9;
+      color: white;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .save-button:active {
+      transform: scale(.98);
+    }
+
     #message {
-      min-height: 24px;
       text-align: center;
       margin-top: 15px;
-      font-weight: bold;
-      color: #666;
-      word-break: break-word;
+      min-height: 22px;
+      font-size: 14px;
+      color: #7658d9;
     }
   </style>
 </head>
 
 <body>
 
-  <a href="home.html" class="home-button">
-    🏠 ホーム
-  </a>
+  <a class="home-link" href="home.html">🏠 ホーム</a>
 
   <div class="container">
 
     <h1>👤 プロフィール</h1>
 
+    <!-- プロフィール画像 -->
+    <div class="avatar-area">
+      <div id="avatarFrame" class="avatar-frame">
 
-    <!-- =========================
-         プロフィール画像
-    ========================= -->
+        <div id="avatarContent" class="avatar-placeholder">
+          😊
+        </div>
 
-    <div
-      class="avatar"
-      id="avatarPreview"
-    >
-      😊
-    </div>
+        <div id="equippedBadge" class="equipped-badge"></div>
 
-
-    <!-- =========================
-         交換アイテム
-    ========================= -->
-
-    <div class="items-title">
-      🎁 交換したアイテム
-    </div>
-
-    <div
-      class="profile-items"
-      id="profileItems"
-    >
-      <div class="no-items">
-        読み込み中…
       </div>
     </div>
 
+    <!-- アイテム -->
+    <div class="item-title">🎁 交換したアイテム</div>
 
-    <!-- =========================
-         画像選択
-    ========================= -->
+    <div id="items" class="items">
+      <div class="no-items">読み込み中...</div>
+    </div>
 
-    <label
-      for="avatarFile"
-      class="image-button"
-    >
+    <!-- 画像選択 -->
+    <label for="imageInput" class="image-button">
       📷 アイコン画像を選ぶ
     </label>
 
     <input
-      id="avatarFile"
+      id="imageInput"
       type="file"
       accept="image/*"
     >
 
-
-    <!-- =========================
-         名前
-    ========================= -->
-
-    <label for="name">
-      名前
-    </label>
+    <!-- 名前 -->
+    <label for="name">名前</label>
 
     <input
       id="name"
@@ -291,681 +407,648 @@
       maxlength="30"
     >
 
-
-    <!-- =========================
-         自己紹介
-    ========================= -->
-
-    <label for="bio">
-      自己紹介
-    </label>
+    <!-- 自己紹介 -->
+    <label for="bio">自己紹介</label>
 
     <textarea
       id="bio"
       placeholder="自己紹介を書こう！"
-      maxlength="200"
+      maxlength="300"
     ></textarea>
 
-
-    <!-- =========================
-         保存
-    ========================= -->
-
+    <!-- 保存 -->
     <button
-      type="button"
-      class="save-button"
       id="saveButton"
-      onclick="saveProfile()"
+      class="save-button"
+      type="button"
     >
       プロフィールを保存
     </button>
-
 
     <div id="message"></div>
 
   </div>
 
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
 
-  <script>
+const SUPABASE_URL =
+  "https://yxonmqdyekwenyzekjwj.supabase.co";
 
-    /* =========================
-       Supabase
-    ========================= */
+const SUPABASE_KEY =
+  "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 
-    const SUPABASE_URL =
-      "https://yxonmqdyekwenyzekjwj.supabase.co";
-
-    const SUPABASE_KEY =
-      "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
-
-    const supabaseClient =
-      supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-      );
+const supabaseClient =
+  supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
 
 
-    let selectedFile = null;
+let currentUsername = "";
+let currentProfile = null;
+let ownedItems = [];
 
 
-    /* =========================
-       メッセージ
-    ========================= */
+// ================================
+// アイテム設定
+// ================================
 
-    function showMessage(text) {
+const ITEM_SETTINGS = {
 
-      document
-        .getElementById("message")
-        .textContent = text;
+  sakura: {
+    icon: "🌸",
+    className: "sakura"
+  },
 
-    }
+  star: {
+    icon: "⭐",
+    className: "star"
+  },
 
+  diamond: {
+    icon: "💎",
+    className: "diamond"
+  }
 
-    /* =========================
-       画像選択
-    ========================= */
-
-    document
-      .getElementById("avatarFile")
-      .addEventListener(
-        "change",
-        function(event) {
-
-          const file =
-            event.target.files[0];
-
-          if (!file) {
-            return;
-          }
+};
 
 
-          /* 画像かチェック */
+// ================================
+// メッセージ
+// ================================
 
-          if (
-            !file.type.startsWith("image/")
-          ) {
+function showMessage(text, error = false) {
 
-            showMessage(
-              "画像ファイルを選んでね！"
-            );
+  const el =
+    document.getElementById("message");
 
-            return;
-          }
+  el.textContent = text;
 
+  el.style.color =
+    error ? "#e05252" : "#7658d9";
 
-          /* サイズチェック */
-
-          if (
-            file.size >
-            5 * 1024 * 1024
-          ) {
-
-            showMessage(
-              "画像は5MB以下にしてね！"
-            );
-
-            return;
-          }
+}
 
 
-          selectedFile = file;
+// ================================
+// ログインユーザー取得
+// ================================
+
+async function getCurrentUser() {
+
+  const {
+    data,
+    error
+  } = await supabaseClient.auth.getUser();
+
+  if (error || !data.user) {
+
+    location.href = "index.html";
+
+    return null;
+  }
+
+  currentUsername =
+    data.user.user_metadata?.username || "";
+
+  if (!currentUsername) {
+
+    showMessage(
+      "ユーザー情報を取得できませんでした。",
+      true
+    );
+
+    return null;
+  }
+
+  return data.user;
+}
 
 
-          /* プレビュー */
+// ================================
+// プロフィール読み込み
+// ================================
 
-          const imageUrl =
-            URL.createObjectURL(file);
+async function loadProfile() {
 
-          document
-            .getElementById("avatarPreview")
-            .innerHTML =
-              `<img src="${imageUrl}" alt="アイコン">`;
+  const {
+    data,
+    error
+  } = await supabaseClient
+    .from("profiles")
+    .select("*")
+    .eq("user_id", currentUsername)
+    .maybeSingle();
+
+  if (error) {
+
+    console.error(error);
+
+    showMessage(
+      "プロフィールの読み込みに失敗しました。",
+      true
+    );
+
+    return;
+  }
+
+  currentProfile = data;
+
+  if (data) {
+
+    document.getElementById("name").value =
+      data.name || "";
+
+    document.getElementById("bio").value =
+      data.bio || "";
+
+    displayAvatar(data.avatar_url);
+
+  }
+
+}
 
 
-          showMessage(
-            "画像を選択したよ！"
-          );
+// ================================
+// プロフィール画像表示
+// ================================
+
+function displayAvatar(url) {
+
+  const content =
+    document.getElementById("avatarContent");
+
+  if (url) {
+
+    content.outerHTML = `
+      <img
+        id="avatarContent"
+        class="avatar-image"
+        src="${escapeHtml(url)}"
+        alt="プロフィール画像"
+      >
+    `;
+
+  } else {
+
+    content.outerHTML = `
+      <div
+        id="avatarContent"
+        class="avatar-placeholder"
+      >
+        😊
+      </div>
+    `;
+
+  }
+
+}
+
+
+// ================================
+// アイテム読み込み
+// ================================
+
+async function loadItems() {
+
+  const {
+    data,
+    error
+  } = await supabaseClient
+    .from("user_coin_items")
+    .select(`
+      item_key,
+      coin_items (
+        item_key,
+        name,
+        icon
+      )
+    `)
+    .eq("user_id", currentUsername);
+
+  if (error) {
+
+    console.error(error);
+
+    document.getElementById("items").innerHTML =
+      `<div class="no-items">
+        アイテムを読み込めませんでした
+      </div>`;
+
+    return;
+  }
+
+  ownedItems = data || [];
+
+  renderItems();
+
+}
+
+
+// ================================
+// アイテム表示
+// ================================
+
+function renderItems() {
+
+  const container =
+    document.getElementById("items");
+
+  if (!ownedItems.length) {
+
+    container.innerHTML =
+      `<div class="no-items">
+        まだ交換したアイテムはありません
+      </div>`;
+
+    return;
+  }
+
+  const equipped =
+    currentProfile?.equipped_item_key || "";
+
+  container.innerHTML = "";
+
+  ownedItems.forEach(row => {
+
+    const item =
+      row.coin_items;
+
+    if (!item) return;
+
+    const key =
+      item.item_key || row.item_key;
+
+    const setting =
+      ITEM_SETTINGS[key];
+
+    if (!setting) return;
+
+    const isEquipped =
+      equipped === key;
+
+    const card =
+      document.createElement("div");
+
+    card.className =
+      "item-card";
+
+    card.innerHTML = `
+
+      <div class="item-icon ${setting.className}">
+
+        ${escapeHtml(item.icon || setting.icon)}
+
+        <div class="item-small-badge">
+          ${escapeHtml(item.icon || setting.icon)}
+        </div>
+
+      </div>
+
+      <div class="item-name">
+        ${escapeHtml(item.name)}
+      </div>
+
+      <button
+        type="button"
+        class="equip-button ${isEquipped ? "equipped" : ""}"
+        data-key="${escapeHtml(key)}"
+      >
+        ${isEquipped ? "装備中" : "装備する"}
+      </button>
+
+    `;
+
+    container.appendChild(card);
+
+  });
+
+  document
+    .querySelectorAll(".equip-button")
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const key =
+            button.dataset.key;
+
+          equipItem(key);
 
         }
       );
 
+    });
 
-    /* =========================
-       ログインユーザー取得
-    ========================= */
+  updateEquippedDisplay();
 
-    async function getCurrentUsername() {
-
-      const {
-        data: { user },
-        error
-      } =
-        await supabaseClient.auth.getUser();
+}
 
 
-      if (
-        error ||
-        !user
-      ) {
+// ================================
+// アイテム装備
+// ================================
 
-        return null;
+async function equipItem(itemKey) {
+
+  showMessage("装備しています...");
+
+  const {
+    error
+  } = await supabaseClient
+    .from("profiles")
+    .update({
+      equipped_item_key: itemKey
+    })
+    .eq("user_id", currentUsername);
+
+  if (error) {
+
+    console.error(error);
+
+    showMessage(
+      "装備に失敗しました。Supabaseの設定を確認してください。",
+      true
+    );
+
+    return;
+  }
+
+  if (!currentProfile) {
+    currentProfile = {};
+  }
+
+  currentProfile.equipped_item_key =
+    itemKey;
+
+  renderItems();
+
+  showMessage("装備しました！✨");
+
+}
+
+
+// ================================
+// 装備表示
+// ================================
+
+function updateEquippedDisplay() {
+
+  const frame =
+    document.getElementById("avatarFrame");
+
+  const badge =
+    document.getElementById("equippedBadge");
+
+  frame.classList.remove(
+    "sakura",
+    "star",
+    "diamond"
+  );
+
+  badge.classList.remove("show");
+
+  badge.textContent = "";
+
+  const key =
+    currentProfile?.equipped_item_key;
+
+  if (!key) return;
+
+  const setting =
+    ITEM_SETTINGS[key];
+
+  if (!setting) return;
+
+  frame.classList.add(
+    setting.className
+  );
+
+  badge.textContent =
+    setting.icon;
+
+  badge.classList.add("show");
+
+}
+
+
+// ================================
+// 画像アップロード
+// ================================
+
+document
+  .getElementById("imageInput")
+  .addEventListener(
+    "change",
+    async function() {
+
+      const file =
+        this.files?.[0];
+
+      if (!file) return;
+
+      if (!file.type.startsWith("image/")) {
+
+        showMessage(
+          "画像ファイルを選んでください。",
+          true
+        );
+
+        return;
       }
 
+      if (file.size > 5 * 1024 * 1024) {
 
-      const username =
-        user.user_metadata?.username;
+        showMessage(
+          "画像は5MB以下にしてください。",
+          true
+        );
 
-
-      if (!username) {
-
-        return null;
+        return;
       }
-
-
-      return {
-        user,
-        username
-      };
-
-    }
-
-
-    /* =========================
-       プロフィール読み込み
-    ========================= */
-
-    async function loadProfile() {
 
       showMessage(
-        "読み込み中…"
+        "画像をアップロードしています..."
       );
 
+      const extension =
+        file.name
+          .split(".")
+          .pop()
+          .toLowerCase();
 
-      const current =
-        await getCurrentUsername();
-
-
-      if (!current) {
-
-        showMessage(
-          "ログインしてください。"
-        );
-
-        return;
-      }
-
-
-      const username =
-        current.username;
-
-
-      /* =========================
-         profiles取得
-      ========================= */
+      const path =
+        `${currentUsername}/${Date.now()}.${extension}`;
 
       const {
-        data: profile,
-        error
-      } =
-        await supabaseClient
-          .from("profiles")
-          .select("*")
-          .eq(
-            "user_id",
-            username
-          )
-          .maybeSingle();
-
-
-      if (error) {
-
-        console.error(
-          "PROFILE LOAD ERROR:",
-          error
+        error: uploadError
+      } = await supabaseClient
+        .storage
+        .from("avatars")
+        .upload(
+          path,
+          file,
+          {
+            upsert: true,
+            contentType: file.type
+          }
         );
 
+      if (uploadError) {
+
+        console.error(uploadError);
+
         showMessage(
-          "プロフィールを読み込めませんでした。"
+          "画像のアップロードに失敗しました。",
+          true
         );
 
         return;
       }
-
-
-      if (!profile) {
-
-        showMessage(
-          "プロフィールがまだありません。"
-        );
-
-      } else {
-
-        /* 名前 */
-
-        document
-          .getElementById("name")
-          .value =
-            profile.name ||
-            username;
-
-
-        /* 自己紹介 */
-
-        document
-          .getElementById("bio")
-          .value =
-            profile.bio || "";
-
-
-        /* プロフィール画像 */
-
-        if (
-          profile.avatar_url
-        ) {
-
-          document
-            .getElementById(
-              "avatarPreview"
-            )
-            .innerHTML =
-              `<img src="${profile.avatar_url}" alt="プロフィール画像">`;
-
-        }
-
-      }
-
-
-      /* =========================
-         交換アイテム読み込み
-      ========================= */
-
-      await loadProfileItems(
-        username
-      );
-
-
-      showMessage("");
-
-    }
-
-
-    /* =========================
-       交換アイテム読み込み
-    ========================= */
-
-    async function loadProfileItems(
-      username
-    ) {
-
-      const container =
-        document.getElementById(
-          "profileItems"
-        );
-
-
-      container.innerHTML =
-        `<div class="no-items">読み込み中…</div>`;
-
-
-      /*
-        user_coin_items と
-        coin_items を取得
-      */
 
       const {
-        data,
-        error
-      } =
-        await supabaseClient
-          .from("user_coin_items")
-          .select(
-            `
-              item_key,
-              coin_items (
-                name,
-                icon
-              )
-            `
-          )
-          .eq(
-            "user_id",
-            username
-          );
-
-
-      if (error) {
-
-        console.error(
-          "ITEM LOAD ERROR:",
-          error
-        );
-
-        container.innerHTML =
-          `<div class="no-items">
-            アイテムを読み込めませんでした
-          </div>`;
-
-        return;
-      }
-
-
-      if (
-        !data ||
-        data.length === 0
-      ) {
-
-        container.innerHTML =
-          `<div class="no-items">
-            まだ交換したアイテムはありません
-          </div>`;
-
-        return;
-      }
-
-
-      /* =========================
-         アイテム表示
-      ========================= */
-
-      container.innerHTML =
         data
-          .map(
-            item => {
+      } = supabaseClient
+        .storage
+        .from("avatars")
+        .getPublicUrl(path);
 
-              const itemInfo =
-                item.coin_items;
+      const imageUrl =
+        data.publicUrl;
 
+      displayAvatar(imageUrl);
 
-              if (!itemInfo) {
-                return "";
-              }
+      if (!currentProfile) {
+        currentProfile = {};
+      }
 
+      currentProfile.avatar_url =
+        imageUrl;
 
-              return `
-                <div
-                  class="profile-item"
-                  title="${escapeHtml(itemInfo.name)}"
-                >
-
-                  <span
-                    class="profile-item-icon"
-                  >
-                    ${itemInfo.icon}
-                  </span>
-
-                  <span>
-                    ${escapeHtml(itemInfo.name)}
-                  </span>
-
-                </div>
-              `;
-
-            }
-          )
-          .join("");
+      showMessage(
+        "画像を選びました。最後に「プロフィールを保存」を押してください。"
+      );
 
     }
+  );
 
 
-    /* =========================
-       HTML安全化
-    ========================= */
+// ================================
+// プロフィール保存
+// ================================
 
-    function escapeHtml(value) {
-
-      return String(value)
-        .replace(
-          /&/g,
-          "&amp;"
-        )
-        .replace(
-          /</g,
-          "&lt;"
-        )
-        .replace(
-          />/g,
-          "&gt;"
-        )
-        .replace(
-          /"/g,
-          "&quot;"
-        )
-        .replace(
-          /'/g,
-          "&#039;"
-        );
-
-    }
+document
+  .getElementById("saveButton")
+  .addEventListener(
+    "click",
+    saveProfile
+  );
 
 
-    /* =========================
-       プロフィール保存
-    ========================= */
+async function saveProfile() {
 
-    async function saveProfile() {
+  const name =
+    document
+      .getElementById("name")
+      .value
+      .trim();
 
-      const name =
-        document
-          .getElementById("name")
-          .value
-          .trim();
+  const bio =
+    document
+      .getElementById("bio")
+      .value
+      .trim();
 
+  const avatar =
+    currentProfile?.avatar_url || null;
 
-      const bio =
-        document
-          .getElementById("bio")
-          .value
-          .trim();
+  showMessage(
+    "プロフィールを保存しています..."
+  );
 
-
-      const message =
-        document.getElementById(
-          "message"
-        );
-
-
-      const saveButton =
-        document.getElementById(
-          "saveButton"
-        );
-
-
-      /* 名前チェック */
-
-      if (!name) {
-
-        message.textContent =
-          "名前を入力してね！";
-
-        return;
-      }
-
-
-      /* ログインユーザー */
-
-      const current =
-        await getCurrentUsername();
-
-
-      if (!current) {
-
-        message.textContent =
-          "ログイン情報を取得できませんでした。";
-
-        return;
-      }
-
-
-      const user =
-        current.user;
-
-      const username =
-        current.username;
-
-
-      saveButton.disabled =
-        true;
-
-
-      message.textContent =
-        "保存中…";
-
-
-      let avatarUrl =
-        null;
-
-
-      /* =========================
-         画像アップロード
-      ========================= */
-
-      if (selectedFile) {
-
-        const fileExt =
-          selectedFile.name
-            .split(".")
-            .pop()
-            .toLowerCase();
-
-
-        const fileName =
-          `${user.id}/${Date.now()}.${fileExt}`;
-
-
-        const {
-          error: uploadError
-        } =
-          await supabaseClient.storage
-            .from("avatars")
-            .upload(
-              fileName,
-              selectedFile,
-              {
-                upsert: true,
-                contentType:
-                  selectedFile.type
-              }
-            );
-
-
-        if (uploadError) {
-
-          console.error(
-            "UPLOAD ERROR:",
-            uploadError
-          );
-
-          message.textContent =
-            "画像アップロードに失敗しました。";
-
-          saveButton.disabled =
-            false;
-
-          return;
-        }
-
-
-        /* 公開URL */
-
-        const {
-          data: publicData
-        } =
-          supabaseClient.storage
-            .from("avatars")
-            .getPublicUrl(
-              fileName
-            );
-
-
-        avatarUrl =
-          publicData.publicUrl;
-
-      }
-
-
-      /* =========================
-         更新データ
-      ========================= */
-
-      const updateData = {
-
+  const {
+    error
+  } = await supabaseClient
+    .from("profiles")
+    .upsert(
+      {
+        user_id: currentUsername,
         name: name,
-
-        bio: bio
-
-      };
-
-
-      if (avatarUrl) {
-
-        updateData.avatar_url =
-          avatarUrl;
-
+        bio: bio,
+        avatar_url: avatar,
+        equipped_item_key:
+          currentProfile?.equipped_item_key || null
+      },
+      {
+        onConflict: "user_id"
       }
+    );
+
+  if (error) {
+
+    console.error(error);
+
+    showMessage(
+      "保存に失敗しました。",
+      true
+    );
+
+    return;
+  }
+
+  showMessage(
+    "プロフィールを保存しました！✨"
+  );
+
+}
 
 
-      /* =========================
-         profiles更新
-      ========================= */
+// ================================
+// HTMLエスケープ
+// ================================
 
-      const {
-        error: profileError
-      } =
-        await supabaseClient
-          .from("profiles")
-          .update(
-            updateData
-          )
-          .eq(
-            "user_id",
-            username
-          );
+function escapeHtml(value) {
 
+  if (value === null ||
+      value === undefined) {
 
-      if (profileError) {
+    return "";
+  }
 
-        console.error(
-          "PROFILE ERROR:",
-          profileError
-        );
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 
-        message.textContent =
-          "プロフィールの保存に失敗しました。";
-
-        saveButton.disabled =
-          false;
-
-        return;
-      }
+}
 
 
-      /* =========================
-         完了
-      ========================= */
+// ================================
+// 初期化
+// ================================
 
-      selectedFile =
-        null;
+async function init() {
 
+  const user =
+    await getCurrentUser();
 
-      message.textContent =
-        "プロフィールを保存したよ！🎉";
+  if (!user) return;
 
+  await loadProfile();
 
-      saveButton.disabled =
-        false;
+  await loadItems();
 
-    }
+  updateEquippedDisplay();
 
+}
 
-    /* =========================
-       開始
-    ========================= */
+init();
 
-    loadProfile();
-
-  </script>
+</script>
 
 </body>
 </html>
