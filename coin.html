@@ -3,10 +3,7 @@
 <head>
 
 <meta charset="UTF-8">
-
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>フレンドコイン</title>
 
@@ -18,7 +15,6 @@
 
 body {
   margin: 0;
-
   font-family:
     -apple-system,
     BlinkMacSystemFont,
@@ -26,379 +22,230 @@ body {
     "Yu Gothic",
     sans-serif;
 
-  background:
-    linear-gradient(
-      135deg,
-      #fff4fb,
-      #eef7ff
-    );
-
+  background: linear-gradient(135deg,#fff4fb,#eef7ff);
   color: #333;
 }
 
 .container {
-  width: min(92%, 460px);
-
+  width: min(92%,460px);
   margin: 0 auto;
-
-  padding:
-    24px 0 40px;
+  padding: 24px 0 40px;
 }
 
 .header {
   display: flex;
-
   align-items: center;
-
   gap: 12px;
-
   margin-bottom: 20px;
 }
 
 .back {
   border: none;
-
   background: white;
-
   width: 42px;
   height: 42px;
-
   border-radius: 14px;
-
   font-size: 26px;
-
   cursor: pointer;
-
-  box-shadow:
-    0 4px 12px rgba(0,0,0,.08);
+  box-shadow: 0 4px 12px rgba(0,0,0,.08);
 }
 
 .header h1 {
   margin: 0;
-
   font-size: 24px;
 }
 
 .balance-card {
-  background:
-    linear-gradient(
-      135deg,
-      #8f7cff,
-      #b49cff
-    );
-
+  background: linear-gradient(135deg,#8f7cff,#b49cff);
   color: white;
-
   border-radius: 24px;
-
   padding: 26px;
-
-  box-shadow:
-    0 10px 25px
-    rgba(143,124,255,.25);
-
+  box-shadow: 0 10px 25px rgba(143,124,255,.25);
   margin-bottom: 18px;
 }
 
 .balance-label {
   font-size: 14px;
-
   opacity: .9;
 }
 
 .balance {
   font-size: 42px;
-
   font-weight: bold;
-
   margin-top: 5px;
 }
 
 .coin {
   font-size: 18px;
-
   margin-left: 4px;
 }
 
 .card {
-  background:
-    rgba(255,255,255,.94);
-
+  background: rgba(255,255,255,.94);
   border-radius: 22px;
-
   padding: 20px;
-
   margin-bottom: 16px;
-
-  box-shadow:
-    0 6px 18px
-    rgba(0,0,0,.07);
+  box-shadow: 0 6px 18px rgba(0,0,0,.07);
 }
 
 .card h2 {
-  margin:
-    0 0 8px;
-
+  margin: 0 0 8px;
   font-size: 20px;
 }
 
 .description {
-  margin:
-    0 0 16px;
-
+  margin: 0 0 16px;
   color: #777;
-
   font-size: 14px;
-
   line-height: 1.6;
 }
 
 
-/* =========================
-   運試し
-========================= */
+/* 配布コード */
+
+.reward-code-box {
+  display: flex;
+  gap: 8px;
+}
+
+.reward-code-box input {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid #ddd;
+  border-radius: 14px;
+  padding: 13px;
+  font-size: 16px;
+  font-family: inherit;
+  text-transform: uppercase;
+}
+
+.reward-code-box button {
+  border: none;
+  border-radius: 14px;
+  padding: 12px 15px;
+  background: #8f7cff;
+  color: white;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.reward-message {
+  margin-top: 10px;
+  min-height: 22px;
+  text-align: center;
+  font-weight: bold;
+}
+
+
+/* スロット */
 
 .slot {
-  background:
-    #faf9ff;
-
-  border:
-    2px solid #e8e3ff;
-
+  background: #faf9ff;
+  border: 2px solid #e8e3ff;
   border-radius: 20px;
-
   padding: 18px;
-
   text-align: center;
 }
 
 .slot-machine {
   display: flex;
-
   justify-content: center;
-
   gap: 10px;
-
-  margin:
-    10px 0 18px;
+  margin: 10px 0 18px;
 }
 
 .reel {
   width: 72px;
   height: 72px;
-
   display: flex;
-
   justify-content: center;
   align-items: center;
-
   background: white;
-
   border-radius: 16px;
-
   font-size: 40px;
-
-  box-shadow:
-    inset 0 0 0 2px #eee;
+  box-shadow: inset 0 0 0 2px #eee;
 }
 
 .result {
   min-height: 26px;
-
-  margin:
-    10px 0;
-
+  margin: 10px 0;
   font-weight: bold;
 }
 
 .main-button {
   width: 100%;
-
   border: none;
-
   border-radius: 16px;
-
   padding: 14px;
-
   font-size: 16px;
-
   font-weight: bold;
-
   cursor: pointer;
-
-  background:
-    #8f7cff;
-
+  background: #8f7cff;
   color: white;
 }
 
 .main-button:disabled {
   opacity: .5;
-
-  cursor: not-allowed;
 }
 
 
-/* =========================
-   コインを集める
-========================= */
+/* 集める */
 
 .actions {
   display: grid;
-
-  grid-template-columns:
-    1fr 1fr;
-
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
 .action {
   border: none;
-
-  background:
-    #f7f5ff;
-
+  background: #f7f5ff;
   border-radius: 18px;
-
-  padding:
-    18px 10px;
-
+  padding: 18px 10px;
   cursor: pointer;
-
   text-align: center;
 }
 
 .action .icon {
   font-size: 30px;
-
   margin-bottom: 7px;
 }
 
 .action strong {
   display: block;
-
   font-size: 15px;
 }
 
 .action span {
   display: block;
-
   color: #777;
-
   font-size: 12px;
-
   margin-top: 4px;
 }
 
 
-/* =========================
-   配布コード
-========================= */
-
-.reward-code-box {
-  display: flex;
-
-  gap: 8px;
-
-  align-items: stretch;
-}
-
-.reward-code-input {
-  flex: 1;
-
-  min-width: 0;
-
-  border:
-    1px solid #ddd;
-
-  border-radius: 14px;
-
-  padding: 13px;
-
-  font-size: 16px;
-
-  font-family: inherit;
-}
-
-.reward-code-button {
-  border: none;
-
-  border-radius: 14px;
-
-  padding:
-    0 15px;
-
-  background:
-    #8f7cff;
-
-  color: white;
-
-  font-size: 14px;
-
-  font-weight: bold;
-
-  white-space: nowrap;
-
-  cursor: pointer;
-}
-
-.reward-code-button:disabled {
-  opacity: .5;
-
-  cursor: not-allowed;
-}
-
-.reward-code-message {
-  margin-top: 10px;
-
-  min-height: 22px;
-
-  text-align: center;
-
-  font-size: 14px;
-
-  font-weight: bold;
-}
-
-
-/* =========================
-   フレームショップ
-========================= */
+/* ショップ */
 
 .shop-details {
   border-radius: 18px;
-
   overflow: hidden;
 }
 
 .shop-summary {
   list-style: none;
-
   cursor: pointer;
-
   user-select: none;
 
   display: flex;
-
   align-items: center;
+  justify-content: space-between;
 
-  justify-content:
-    space-between;
+  background: linear-gradient(135deg,#f8f5ff,#fff4fb);
 
-  background:
-    linear-gradient(
-      135deg,
-      #f8f5ff,
-      #fff4fb
-    );
-
-  border:
-    2px solid #e8e3ff;
-
+  border: 2px solid #e8e3ff;
   border-radius: 18px;
 
   padding: 16px;
-
   font-weight: bold;
 }
 
@@ -408,9 +255,7 @@ body {
 
 .shop-summary-left {
   display: flex;
-
   align-items: center;
-
   gap: 10px;
 }
 
@@ -420,9 +265,7 @@ body {
 
 .shop-summary-text {
   display: flex;
-
   flex-direction: column;
-
   gap: 3px;
 }
 
@@ -432,23 +275,17 @@ body {
 
 .shop-summary-sub {
   color: #777;
-
   font-size: 12px;
-
   font-weight: normal;
 }
 
 .shop-arrow {
   font-size: 18px;
-
-  transition:
-    transform .2s;
+  transition: transform .2s;
 }
 
-.shop-details[open]
-.shop-arrow {
-  transform:
-    rotate(180deg);
+.shop-details[open] .shop-arrow {
+  transform: rotate(180deg);
 }
 
 .shop-content {
@@ -457,57 +294,42 @@ body {
 
 .shop {
   display: grid;
-
   gap: 12px;
 }
 
 .shop-item {
-  background:
-    #faf9ff;
-
-  border:
-    2px solid #e8e3ff;
-
+  background: #faf9ff;
+  border: 2px solid #e8e3ff;
   border-radius: 18px;
-
   padding: 15px;
 
   display: flex;
-
   align-items: center;
-
   gap: 12px;
 }
 
 .shop-preview {
   width: 58px;
   height: 58px;
-
   border-radius: 50%;
-
   padding: 4px;
 
   display: flex;
-
   align-items: center;
   justify-content: center;
 
   flex-shrink: 0;
 
-  background:
-    #ffd0e7;
+  background: #ffd0e7;
 }
 
 .shop-preview-inner {
   width: 100%;
   height: 100%;
-
   border-radius: 50%;
-
   background: white;
 
   display: flex;
-
   align-items: center;
   justify-content: center;
 
@@ -515,242 +337,139 @@ body {
 }
 
 
-/* =========================
-   フレーム
-========================= */
+/* フレーム */
 
 .frame-sakura {
-  background:
-    linear-gradient(
-      135deg,
-      #ff9bc9,
-      #ff5da8,
-      #ffd1e7
-    ) !important;
+  background: linear-gradient(135deg,#ff9bc9,#ff5da8,#ffd1e7)!important;
 }
 
 .frame-star {
-  background:
-    linear-gradient(
-      135deg,
-      #ffe98a,
-      #f4bf3f,
-      #fff1a8
-    ) !important;
+  background: linear-gradient(135deg,#ffe98a,#f4bf3f,#fff1a8)!important;
 }
 
 .frame-diamond {
-  background:
-    linear-gradient(
-      135deg,
-      #a8ecff,
-      #4db9ee,
-      #d4f7ff
-    ) !important;
+  background: linear-gradient(135deg,#a8ecff,#4db9ee,#d4f7ff)!important;
 }
 
 .frame-heart {
-  background:
-    linear-gradient(
-      135deg,
-      #ff9bb8,
-      #ff4f81,
-      #ffc4d5
-    ) !important;
+  background: linear-gradient(135deg,#ff9bb8,#ff4f81,#ffc4d5)!important;
 }
 
 .frame-rainbow {
-  background:
-    conic-gradient(
-      #ff4d4d,
-      #ffb84d,
-      #ffff66,
-      #5cff8d,
-      #4ddcff,
-      #7b6cff,
-      #ff4dd8,
-      #ff4d4d
-    ) !important;
+  background: conic-gradient(
+    #ff4d4d,#ffb84d,#ffff66,#5cff8d,
+    #4ddcff,#7b6cff,#ff4dd8,#ff4d4d
+  )!important;
 }
 
 .frame-flame {
-  background:
-    linear-gradient(
-      135deg,
-      #ff3b1f,
-      #ff8c00,
-      #ffd400
-    ) !important;
+  background: linear-gradient(135deg,#ff3b1f,#ff8c00,#ffd400)!important;
 }
 
 .frame-sea {
-  background:
-    linear-gradient(
-      135deg,
-      #0077ff,
-      #00cfff,
-      #9ff5ff
-    ) !important;
+  background: linear-gradient(135deg,#0077ff,#00cfff,#9ff5ff)!important;
 }
 
 .frame-space {
   background:
-    radial-gradient(
-      circle at 20% 20%,
-      #ffffff 1px,
-      transparent 2px
-    ),
-    radial-gradient(
-      circle at 70% 35%,
-      #ffffff 1px,
-      transparent 2px
-    ),
-    radial-gradient(
-      circle at 45% 75%,
-      #ffffff 1px,
-      transparent 2px
-    ),
-    linear-gradient(
-      135deg,
-      #08051c,
-      #25104f,
-      #09031c
-    ) !important;
+    radial-gradient(circle at 20% 20%,#fff 1px,transparent 2px),
+    radial-gradient(circle at 70% 35%,#fff 1px,transparent 2px),
+    radial-gradient(circle at 45% 75%,#fff 1px,transparent 2px),
+    linear-gradient(135deg,#08051c,#25104f,#09031c)!important;
 }
 
 .frame-neon {
-  background:
-    linear-gradient(
-      135deg,
-      #00ff88,
-      #00e5ff,
-      #ff00d4
-    ) !important;
+  background: linear-gradient(
+    135deg,#00ff88,#00e5ff,#ff00d4
+  )!important;
 }
 
 
-/* =========================
-   ショップ情報
-========================= */
+/* ショップ情報 */
 
 .shop-info {
   flex: 1;
-
   min-width: 0;
 }
 
 .shop-name {
   font-size: 15px;
-
   font-weight: bold;
 }
 
 .shop-price {
   margin-top: 4px;
-
   color: #777;
-
   font-size: 13px;
 }
 
 .buy-button {
   border: none;
-
-  background:
-    #8f7cff;
-
+  background: #8f7cff;
   color: white;
-
   border-radius: 12px;
-
-  padding:
-    10px 12px;
-
+  padding: 10px 12px;
   font-size: 13px;
-
   font-weight: bold;
-
   cursor: pointer;
-
   white-space: nowrap;
 }
 
 .buy-button:disabled {
   opacity: .45;
-
-  cursor: not-allowed;
 }
 
 .buy-button.owned {
-  background:
-    #e8e5ff;
-
-  color:
-    #6255c7;
-
-  cursor: default;
+  background: #e8e5ff;
+  color: #6255c7;
 }
 
 
-/* =========================
-   説明
-========================= */
+/* 説明 */
 
 .notice {
-  background:
-    #fff8df;
-
+  background: #fff8df;
   border-radius: 16px;
-
   padding: 13px;
-
   font-size: 13px;
-
   color: #735f19;
-
   line-height: 1.6;
 }
 
 .message {
   text-align: center;
-
   margin-top: 12px;
-
   min-height: 22px;
-
   font-size: 14px;
-
   font-weight: bold;
 }
 
+@media(max-width:380px){
 
-@media (max-width: 380px) {
+.reward-code-box {
+  flex-direction: column;
+}
 
-  .reward-code-box {
-    flex-direction: column;
-  }
+.reward-code-box button {
+  width: 100%;
+}
 
-  .reward-code-button {
-    padding: 13px;
-  }
+.shop-item {
+  padding: 12px;
+}
 
-  .shop-item {
-    padding: 12px;
-  }
+.shop-preview {
+  width: 50px;
+  height: 50px;
+}
 
-  .shop-preview {
-    width: 50px;
-    height: 50px;
-  }
+.shop-preview-inner {
+  font-size: 23px;
+}
 
-  .shop-preview-inner {
-    font-size: 23px;
-  }
-
-  .buy-button {
-    padding:
-      9px 10px;
-  }
+.buy-button {
+  padding: 9px 10px;
+}
 
 }
 
@@ -762,1892 +481,1273 @@ body {
 <div class="container">
 
 
-<!-- =========================
-     ヘッダー
-========================= -->
-
 <div class="header">
 
-  <button
-    class="back"
-    onclick="history.back()">
-    ‹
-  </button>
+<button
+class="back"
+onclick="history.back()">
+‹
+</button>
 
-  <h1>
-    🪙 フレンドコイン
-  </h1>
+<h1>🪙 フレンドコイン</h1>
 
 </div>
 
 
-<!-- =========================
-     残高
-========================= -->
+<!-- 残高 -->
 
 <div class="balance-card">
 
-  <div class="balance-label">
-    現在のコイン
-  </div>
+<div class="balance-label">
+現在のコイン
+</div>
 
-  <div class="balance">
+<div class="balance">
 
-    <span id="balance">
-      ---
-    </span>
+<span id="balance">---</span>
 
-    <span class="coin">
-      COIN
-    </span>
+<span class="coin">
+COIN
+</span>
 
-  </div>
+</div>
 
 </div>
 
 
-<!-- =========================
-     運試し
-========================= -->
+<!-- 配布コード -->
 
 <div class="card">
 
-  <h2>
-    🎰 今日の運試し
-  </h2>
+<h2>🎁 配布コード</h2>
 
-  <p class="description">
-    1日1回、無料で運試しできます！
-  </p>
+<p class="description">
+管理者からもらった配布コードを入力すると、
+コインやフレームを受け取れます。
+</p>
 
-  <div class="slot">
+<div class="reward-code-box">
 
-    <div class="slot-machine">
+<input
+id="rewardCodeInput"
+type="text"
+maxlength="100"
+placeholder="配布コード">
 
-      <div
-        class="reel"
-        id="reel1">
-        ❓
-      </div>
-
-      <div
-        class="reel"
-        id="reel2">
-        ❓
-      </div>
-
-      <div
-        class="reel"
-        id="reel3">
-        ❓
-      </div>
-
-    </div>
-
-    <div
-      class="result"
-      id="slotResult">
-      今日の運試しをしてみよう！
-    </div>
-
-    <button
-      class="main-button"
-      id="slotButton"
-      onclick="playSlot()"
-      disabled>
-      🎰 運試しする
-    </button>
-
-  </div>
+<button
+id="redeemRewardCodeButton"
+onclick="redeemRewardCode()">
+🎁 受け取る
+</button>
 
 </div>
-
-
-<!-- =========================
-     コインを集める
-========================= -->
-
-<div class="card">
-
-  <h2>
-    🎮 コインを集める
-  </h2>
-
-  <p class="description">
-    フレンドチャットのいろいろな機能でコインを集めよう！
-  </p>
-
-  <div class="actions">
-
-    <button
-      class="action"
-      onclick="showComingSoon()">
-
-      <div class="icon">
-        🎮
-      </div>
-
-      <strong>
-        ゲーム
-      </strong>
-
-      <span>
-        ゲームで獲得
-      </span>
-
-    </button>
-
-
-    <button
-      class="action"
-      onclick="showComingSoon()">
-
-      <div class="icon">
-        🎯
-      </div>
-
-      <strong>
-        チャレンジ
-      </strong>
-
-      <span>
-        達成して獲得
-      </span>
-
-    </button>
-
-
-    <button
-      class="action"
-      onclick="claimLoginBonus()">
-
-      <div class="icon">
-        📅
-      </div>
-
-      <strong>
-        ログイン
-      </strong>
-
-      <span>
-        +10 COIN
-      </span>
-
-    </button>
-
-
-    <button
-      class="action"
-      onclick="scrollToShop()">
-
-      <div class="icon">
-        🖼️
-      </div>
-
-      <strong>
-        フレーム
-      </strong>
-
-      <span>
-        フレームと交換
-      </span>
-
-    </button>
-
-  </div>
-
-</div>
-
-
-<!-- =========================
-     配布コード
-========================= -->
-
-<div class="card">
-
-  <h2>
-    🎁 配布コード
-  </h2>
-
-  <p class="description">
-    管理者からもらった配布コードを入力すると、
-    コインやフレームを受け取れます。
-  </p>
-
-  <div class="reward-code-box">
-
-    <input
-      id="rewardCodeInput"
-      class="reward-code-input"
-      type="text"
-      maxlength="100"
-      autocomplete="off"
-      autocapitalize="characters"
-      placeholder="配布コードを入力">
-
-    <button
-      id="redeemRewardCodeButton"
-      class="reward-code-button"
-      onclick="redeemRewardCode()">
-      🎁 受け取る
-    </button>
-
-  </div>
-
-  <div
-    id="rewardCodeMessage"
-    class="reward-code-message">
-  </div>
-
-</div>
-
-
-<!-- =========================
-     フレームショップ
-========================= -->
 
 <div
-  class="card"
-  id="shopCard">
-
-  <details
-    class="shop-details"
-    id="shopDetails">
-
-    <summary
-      class="shop-summary">
-
-      <div
-        class="shop-summary-left">
-
-        <div
-          class="shop-summary-icon">
-          🖼️
-        </div>
-
-        <div
-          class="shop-summary-text">
-
-          <div
-            class="shop-summary-title">
-            フレームショップ
-          </div>
-
-          <div
-            class="shop-summary-sub">
-            コインでプロフィールフレームを交換
-          </div>
-
-        </div>
-
-      </div>
-
-      <div class="shop-arrow">
-        ▼
-      </div>
-
-    </summary>
-
-
-    <div class="shop-content">
-
-      <p class="description">
-        集めたコインでプロフィールのフレームを交換できます！
-      </p>
-
-      <div
-        class="shop"
-        id="shop">
-        読み込み中……
-      </div>
-
-    </div>
-
-  </details>
+id="rewardCodeMessage"
+class="reward-message">
+</div>
 
 </div>
 
 
-<!-- =========================
-     説明
-========================= -->
+<!-- 運試し -->
 
 <div class="card">
 
-  <h2>
-    ℹ️ コインについて
-  </h2>
+<h2>🎰 今日の運試し</h2>
 
-  <div class="notice">
+<p class="description">
+1日1回、無料で運試しできます！
+</p>
 
-    フレンドコインは
-    フレンドチャット内で使える
-    ゲーム内ポイントです。<br>
+<div class="slot">
 
-    ゲームやチャレンジなどで集めて、
-    プロフィールフレームなどと
-    交換できます。
+<div class="slot-machine">
 
-  </div>
+<div class="reel" id="reel1">❓</div>
+<div class="reel" id="reel2">❓</div>
+<div class="reel" id="reel3">❓</div>
+
+</div>
+
+<div
+class="result"
+id="slotResult">
+今日の運試しをしてみよう！
+</div>
+
+<button
+class="main-button"
+id="slotButton"
+onclick="playSlot()"
+disabled>
+🎰 運試しする
+</button>
+
+</div>
+
+</div>
+
+
+<!-- 集める -->
+
+<div class="card">
+
+<h2>🎮 コインを集める</h2>
+
+<p class="description">
+フレンドチャットのいろいろな機能でコインを集めよう！
+</p>
+
+<div class="actions">
+
+<button class="action" onclick="showComingSoon()">
+<div class="icon">🎮</div>
+<strong>ゲーム</strong>
+<span>ゲームで獲得</span>
+</button>
+
+<button class="action" onclick="showComingSoon()">
+<div class="icon">🎯</div>
+<strong>チャレンジ</strong>
+<span>達成して獲得</span>
+</button>
+
+<button class="action" onclick="claimLoginBonus()">
+<div class="icon">📅</div>
+<strong>ログイン</strong>
+<span>+10 COIN</span>
+</button>
+
+<button class="action" onclick="scrollToShop()">
+<div class="icon">🖼️</div>
+<strong>フレーム</strong>
+<span>フレームと交換</span>
+</button>
+
+</div>
+
+</div>
+
+
+<!-- ショップ -->
+
+<div
+class="card"
+id="shopCard">
+
+<details
+class="shop-details"
+id="shopDetails">
+
+<summary class="shop-summary">
+
+<div class="shop-summary-left">
+
+<div class="shop-summary-icon">
+🖼️
+</div>
+
+<div class="shop-summary-text">
+
+<div class="shop-summary-title">
+フレームショップ
+</div>
+
+<div class="shop-summary-sub">
+コインでプロフィールフレームを交換
+</div>
+
+</div>
+
+</div>
+
+<div class="shop-arrow">
+▼
+</div>
+
+</summary>
+
+<div class="shop-content">
+
+<p class="description">
+集めたコインでプロフィールのフレームを交換できます！
+</p>
+
+<div id="shop" class="shop">
+読み込み中……
+</div>
+
+</div>
+
+</details>
+
+</div>
+
+
+<!-- 説明 -->
+
+<div class="card">
+
+<h2>ℹ️ コインについて</h2>
+
+<div class="notice">
+
+フレンドコインは
+フレンドチャット内で使える
+ゲーム内ポイントです。<br>
+
+ゲームやチャレンジなどで集めて、
+プロフィールフレームなどと
+交換できます。
+
+</div>
 
 </div>
 
 
 <div
-  class="message"
-  id="message">
+class="message"
+id="message">
+</div>
+
 </div>
 
 
-</div>
-
-
-<script
-  src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-</script>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="ban-check.js"></script>
 
 <script>
 
-
-/* =========================
-   Supabase
-========================= */
-
 const SUPABASE_URL =
-  "https://yxonmqdyekwenyzekjwj.supabase.co";
+"https://yxonmqdyekwenyzekjwj.supabase.co";
 
 const SUPABASE_KEY =
-  "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
-
+"sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 
 const supabaseClient =
-  window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-  );
-
-
-/* =========================
-   状態
-========================= */
-
-let currentUsername = "";
-
-let balance = 0;
-
-let shopItems = [];
-
-let ownedItems =
-  new Set();
-
-
-/* =========================
-   今日の日付
-========================= */
-
-function getToday() {
-
-  const now =
-    new Date();
-
-  const year =
-    now.getFullYear();
-
-  const month =
-    String(
-      now.getMonth() + 1
-    ).padStart(2, "0");
-
-  const day =
-    String(
-      now.getDate()
-    ).padStart(2, "0");
-
-  return (
-    year +
-    "-" +
-    month +
-    "-" +
-    day
-  );
-}
-
-
-/* =========================
-   残高
-========================= */
-
-function updateBalance() {
-
-  document.getElementById(
-    "balance"
-  ).textContent =
-    balance;
-}
-
-
-/* =========================
-   メッセージ
-========================= */
-
-function showMessage(text) {
-
-  document.getElementById(
-    "message"
-  ).textContent =
-    text;
-}
-
-
-/* =========================
-   配布コードメッセージ
-========================= */
-
-function showRewardCodeMessage(
-  text
-) {
-
-  document.getElementById(
-    "rewardCodeMessage"
-  ).textContent =
-    text;
-}
-
-
-/* =========================
-   ユーザー
-========================= */
-
-async function getCurrentUser() {
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient.auth.getUser();
-
-
-  if (
-    error ||
-    !data.user
-  ) {
-
-    return false;
-  }
-
-
-  currentUsername =
-    data.user
-      .user_metadata
-      ?.username || "";
-
-
-  return !!currentUsername;
-}
-
-
-/* =========================
-   BAN確認
-========================= */
-
-async function checkBan() {
-
-  if (
-    typeof checkFriendChatBan !==
-    "function"
-  ) {
-    return false;
-  }
-
-
-  return await checkFriendChatBan();
-}
-
-
-/* =========================
-   コイン読み込み
-========================= */
-
-async function loadCoins() {
-
-  const loggedIn =
-    await getCurrentUser();
-
-
-  if (!loggedIn) {
-
-    document.getElementById(
-      "balance"
-    ).textContent =
-      "ログインしてください";
-
-    return false;
-  }
-
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient
-      .from("user_coins")
-      .select(
-        "coins,last_login_bonus_date"
-      )
-      .eq(
-        "user_id",
-        currentUsername
-      )
-      .maybeSingle();
-
-
-  if (error) {
-
-    console.error(
-      "コイン取得エラー:",
-      error
-    );
-
-
-    document.getElementById(
-      "balance"
-    ).textContent =
-      "エラー";
-
-
-    return false;
-  }
-
-
-  if (!data) {
-
-    const {
-      data: created,
-      error: createError
-    } =
-      await supabaseClient
-        .from("user_coins")
-        .insert({
-          user_id:
-            currentUsername,
-
-          coins:
-            0
-        })
-        .select(
-          "coins,last_login_bonus_date"
-        )
-        .single();
-
-
-    if (createError) {
-
-      console.error(
-        "コイン作成エラー:",
-        createError
-      );
-
-
-      document.getElementById(
-        "balance"
-      ).textContent =
-        "エラー";
-
-
-      return false;
-    }
-
-
-    balance =
-      Number(
-        created.coins || 0
-      );
-
-  } else {
-
-    balance =
-      Number(
-        data.coins || 0
-      );
-
-  }
-
-
-  updateBalance();
-
-
-  document.getElementById(
-    "slotButton"
-  ).disabled =
-    false;
-
-
-  return true;
-}
-
-
-/* =========================
-   コイン保存
-========================= */
-
-async function saveCoins() {
-
-  const {
-    error
-  } =
-    await supabaseClient
-      .from("user_coins")
-      .update({
-
-        coins:
-          balance,
-
-        updated_at:
-          new Date().toISOString()
-
-      })
-      .eq(
-        "user_id",
-        currentUsername
-      );
-
-
-  if (error) {
-
-    console.error(
-      "コイン保存エラー:",
-      error
-    );
-
-    return false;
-  }
-
-
-  return true;
-}
-
-
-/* =========================
-   ログインボーナス
-========================= */
-
-async function claimLoginBonus() {
-
-  if (!currentUsername) {
-
-    const loggedIn =
-      await getCurrentUser();
-
-
-    if (!loggedIn) {
-
-      showMessage(
-        "❌ ログインしてください"
-      );
-
-      return;
-    }
-  }
-
-
-  const today =
-    getToday();
-
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient
-      .from("user_coins")
-      .select(
-        "coins,last_login_bonus_date"
-      )
-      .eq(
-        "user_id",
-        currentUsername
-      )
-      .maybeSingle();
-
-
-  if (
-    error ||
-    !data
-  ) {
-
-    console.error(
-      "ログインボーナス取得エラー:",
-      error
-    );
-
-
-    showMessage(
-      "❌ コイン情報を取得できませんでした"
-    );
-
-
-    return;
-  }
-
-
-  if (
-    data.last_login_bonus_date ===
-    today
-  ) {
-
-    showMessage(
-      "📅 今日のログインボーナスは受け取り済みだよ！"
-    );
-
-    return;
-  }
-
-
-  const newCoins =
-    Number(
-      data.coins || 0
-    ) + 10;
-
-
-  const {
-    error: updateError
-  } =
-    await supabaseClient
-      .from("user_coins")
-      .update({
-
-        coins:
-          newCoins,
-
-        last_login_bonus_date:
-          today,
-
-        updated_at:
-          new Date().toISOString()
-
-      })
-      .eq(
-        "user_id",
-        currentUsername
-      );
-
-
-  if (updateError) {
-
-    console.error(
-      "ログインボーナス保存エラー:",
-      updateError
-    );
-
-
-    showMessage(
-      "❌ ボーナスの受け取りに失敗しました"
-    );
-
-
-    return;
-  }
-
-
-  balance =
-    newCoins;
-
-
-  updateBalance();
-
-
-  showMessage(
-    "🎉 ログインボーナス +10 COIN！"
-  );
-}
-
-
-/* =========================
-   配布コード受け取り
-========================= */
-
-async function redeemRewardCode() {
-
-  const input =
-    document.getElementById(
-      "rewardCodeInput"
-    );
-
-  const button =
-    document.getElementById(
-      "redeemRewardCodeButton"
-    );
-
-
-  const code =
-    input.value
-      .trim()
-      .toUpperCase();
-
-
-  if (!code) {
-
-    showRewardCodeMessage(
-      "❌ 配布コードを入力してください"
-    );
-
-    return;
-  }
-
-
-  if (!currentUsername) {
-
-    const loggedIn =
-      await getCurrentUser();
-
-
-    if (!loggedIn) {
-
-      showRewardCodeMessage(
-        "❌ ログインしてください"
-      );
-
-      return;
-    }
-  }
-
-
-  const banned =
-    await checkBan();
-
-
-  if (banned) {
-    return;
-  }
-
-
-  button.disabled =
-    true;
-
-
-  showRewardCodeMessage(
-    "⏳ 配布コードを確認しています..."
-  );
-
-
-  try {
-
-    const {
-      data,
-      error
-    } =
-      await supabaseClient.rpc(
-        "redeem_coin_reward_code",
-        {
-          input_code:
-            code
-        }
-      );
-
-
-    if (error) {
-
-      console.error(
-        "配布コードエラー:",
-        error
-      );
-
-      throw error;
-    }
-
-
-    const rewardCoins =
-      Number(
-        data?.reward_coins || 0
-      );
-
-
-    const rewardItemKey =
-      data?.reward_item_key ||
-      null;
-
-
-    await loadCoins();
-
-    await loadShop();
-
-
-    input.value =
-      "";
-
-
-    const rewards = [];
-
-
-    if (rewardCoins > 0) {
-
-      rewards.push(
-        `🪙 ${rewardCoins.toLocaleString()} COIN`
-      );
-
-    }
-
-
-    if (rewardItemKey) {
-
-      const item =
-        shopItems.find(
-          x =>
-            x.item_key ===
-            rewardItemKey
-        );
-
-
-      if (item) {
-
-        rewards.push(
-          `🖼️ ${item.icon || ""} ${item.name}`
-        );
-
-      } else {
-
-        rewards.push(
-          "🖼️ フレーム"
-        );
-
-      }
-    }
-
-
-    showRewardCodeMessage(
-      `🎉 受け取り成功！ ${rewards.join(" / ")}`
-    );
-
-  } catch (error) {
-
-    let message =
-      error?.message ||
-      "配布コードの受け取りに失敗しました";
-
-
-    message =
-      message
-        .replace(
-          /^.*?:\s*/,
-          ""
-        );
-
-
-    showRewardCodeMessage(
-      "❌ " + message
-    );
-
-  } finally {
-
-    button.disabled =
-      false;
-  }
-}
-
-
-/* =========================
-   Enterでも受け取り
-========================= */
-
-document.getElementById(
-  "rewardCodeInput"
-).addEventListener(
-  "keydown",
-  event => {
-
-    if (
-      event.key ===
-      "Enter"
-    ) {
-
-      event.preventDefault();
-
-      redeemRewardCode();
-
-    }
-
-  }
+window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
 );
 
 
+let currentUsername="";
+let balance=0;
+let shopItems=[];
+let ownedItems=new Set();
+
+
 /* =========================
-   運試し
+今日
 ========================= */
 
-async function playSlot() {
+function getToday(){
 
-  const button =
-    document.getElementById(
-      "slotButton"
-    );
+const now=new Date();
 
-  const result =
-    document.getElementById(
-      "slotResult"
-    );
+return (
+now.getFullYear()+"-"+
+String(now.getMonth()+1).padStart(2,"0")+"-"+
+String(now.getDate()).padStart(2,"0")
+);
 
-
-  const today =
-    getToday();
-
-
-  const lastPlay =
-    localStorage.getItem(
-      "friendCoinSlotDate"
-    );
-
-
-  if (
-    lastPlay ===
-    today
-  ) {
-
-    result.textContent =
-      "今日はもう運試し済みだよ！😊";
-
-    return;
-  }
-
-
-  button.disabled =
-    true;
-
-
-  result.textContent =
-    "運試し中……";
-
-
-  const symbols = [
-    "🍒",
-    "⭐",
-    "🍋",
-    "💎",
-    "🍀",
-    "🎁"
-  ];
-
-
-  let count = 0;
-
-
-  const animation =
-    setInterval(
-      async function() {
-
-        document.getElementById(
-          "reel1"
-        ).textContent =
-          symbols[
-            Math.floor(
-              Math.random() *
-              symbols.length
-            )
-          ];
-
-
-        document.getElementById(
-          "reel2"
-        ).textContent =
-          symbols[
-            Math.floor(
-              Math.random() *
-              symbols.length
-            )
-          ];
-
-
-        document.getElementById(
-          "reel3"
-        ).textContent =
-          symbols[
-            Math.floor(
-              Math.random() *
-              symbols.length
-            )
-          ];
-
-
-        count++;
-
-
-        if (
-          count >= 12
-        ) {
-
-          clearInterval(
-            animation
-          );
-
-
-          const a =
-            symbols[
-              Math.floor(
-                Math.random() *
-                symbols.length
-              )
-            ];
-
-
-          const b =
-            symbols[
-              Math.floor(
-                Math.random() *
-                symbols.length
-              )
-            ];
-
-
-          const c =
-            symbols[
-              Math.floor(
-                Math.random() *
-                symbols.length
-              )
-            ];
-
-
-          document.getElementById(
-            "reel1"
-          ).textContent =
-            a;
-
-
-          document.getElementById(
-            "reel2"
-          ).textContent =
-            b;
-
-
-          document.getElementById(
-            "reel3"
-          ).textContent =
-            c;
-
-
-          let reward;
-
-
-          if (
-            a === b &&
-            b === c
-          ) {
-
-            reward =
-              100;
-
-            result.textContent =
-              "🎉 大当たり！ +100 COIN";
-
-          } else if (
-            a === b ||
-            b === c ||
-            a === c
-          ) {
-
-            reward =
-              50;
-
-            result.textContent =
-              "✨ 当たり！ +50 COIN";
-
-          } else {
-
-            reward =
-              10;
-
-            result.textContent =
-              "🍀 参加賞！ +10 COIN";
-          }
-
-
-          balance +=
-            reward;
-
-
-          updateBalance();
-
-
-          const saved =
-            await saveCoins();
-
-
-          if (!saved) {
-
-            balance -=
-              reward;
-
-
-            updateBalance();
-
-
-            result.textContent =
-              "❌ コインの保存に失敗しました";
-
-
-            button.disabled =
-              false;
-
-
-            return;
-          }
-
-
-          localStorage.setItem(
-            "friendCoinSlotDate",
-            today
-          );
-
-
-          button.disabled =
-            false;
-        }
-
-      },
-      100
-    );
 }
 
 
 /* =========================
-   フレームクラス
+残高
 ========================= */
 
-function getFrameClass(
-  itemKey
-) {
+function updateBalance(){
 
-  const map = {
+document.getElementById("balance")
+.textContent=balance;
 
-    sakura:
-      "frame-sakura",
-
-    star:
-      "frame-star",
-
-    diamond:
-      "frame-diamond",
-
-    space:
-      "frame-space",
-
-    neon:
-      "frame-neon",
-
-    rainbow:
-      "frame-rainbow",
-
-    flame:
-      "frame-flame",
-
-    sea:
-      "frame-sea",
-
-    heart:
-      "frame-heart"
-
-  };
-
-
-  return (
-    map[itemKey] ||
-    ""
-  );
 }
 
 
 /* =========================
-   ショップ
+メッセージ
 ========================= */
 
-async function loadShop() {
+function showMessage(text){
 
-  const shop =
-    document.getElementById(
-      "shop"
-    );
+document.getElementById("message")
+.textContent=text;
 
-
-  const {
-    data: items,
-    error: itemError
-  } =
-    await supabaseClient
-      .from("coin_items")
-      .select(
-        "item_key,name,icon,price,frame_color"
-      )
-      .order(
-        "price",
-        {
-          ascending: true
-        }
-      );
+}
 
 
-  if (itemError) {
+function showRewardMessage(text){
 
-    console.error(
-      "ショップ取得エラー:",
-      itemError
-    );
+document.getElementById("rewardCodeMessage")
+.textContent=text;
 
-
-    shop.innerHTML =
-      "❌ フレームショップを読み込めませんでした";
-
-
-    return;
-  }
-
-
-  shopItems =
-    (items || [])
-      .filter(
-        item =>
-          item.item_key !==
-          "admin"
-      );
-
-
-  const {
-    data: owned,
-    error: ownedError
-  } =
-    await supabaseClient
-      .from("user_coin_items")
-      .select(
-        "item_key"
-      )
-      .eq(
-        "user_id",
-        currentUsername
-      );
-
-
-  if (ownedError) {
-
-    console.error(
-      "購入済みフレーム取得エラー:",
-      ownedError
-    );
-
-
-    ownedItems =
-      new Set();
-
-  } else {
-
-    ownedItems =
-      new Set(
-        (owned || [])
-          .map(
-            item =>
-              item.item_key
-          )
-      );
-  }
-
-
-  renderShop();
 }
 
 
 /* =========================
-   ショップ表示
+ユーザー
 ========================= */
 
-function renderShop() {
+async function getCurrentUser(){
 
-  const shop =
-    document.getElementById(
-      "shop"
-    );
-
-
-  if (
-    shopItems.length ===
-    0
-  ) {
-
-    shop.innerHTML =
-      "現在交換できるフレームはありません。";
-
-    return;
-  }
+const {
+data,
+error
+} =
+await supabaseClient.auth.getUser();
 
 
-  shop.innerHTML =
-    shopItems
-      .map(
-        item => {
-
-          const owned =
-            ownedItems.has(
-              item.item_key
-            );
+if(error || !data.user){
+return false;
+}
 
 
-          const frameClass =
-            getFrameClass(
-              item.item_key
-            );
+currentUsername =
+data.user.user_metadata?.username || "";
 
 
-          const inlineFrameStyle =
-            frameClass
-              ? ""
-              : `style="background:${escapeAttribute(
-                  item.frame_color ||
-                  "#ffd0e7"
-                )}"`;
+return !!currentUsername;
 
-
-          return `
-
-            <div class="shop-item">
-
-              <div
-                class="shop-preview ${frameClass}"
-                ${inlineFrameStyle}>
-
-                <div
-                  class="shop-preview-inner">
-
-                  ${escapeHtml(
-                    item.icon ||
-                    "🖼️"
-                  )}
-
-                </div>
-
-              </div>
-
-
-              <div class="shop-info">
-
-                <div class="shop-name">
-                  ${escapeHtml(
-                    item.name
-                  )}
-                </div>
-
-                <div class="shop-price">
-                  🪙
-                  ${Number(
-                    item.price
-                  ).toLocaleString()}
-                  COIN
-                </div>
-
-              </div>
-
-
-              ${
-                owned
-
-                  ? `
-                    <button
-                      class="buy-button owned"
-                      disabled>
-                      交換済み
-                    </button>
-                  `
-
-                  : `
-                    <button
-                      class="buy-button"
-                      onclick="buyItem('${escapeAttribute(
-                        item.item_key
-                      )}')">
-                      交換
-                    </button>
-                  `
-              }
-
-            </div>
-
-          `;
-
-        }
-      )
-      .join("");
 }
 
 
 /* =========================
-   HTML安全化
+コイン
 ========================= */
 
-function escapeHtml(value) {
+async function loadCoins(){
 
-  return String(
-    value ?? ""
-  )
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
-    );
+const loggedIn =
+await getCurrentUser();
+
+
+if(!loggedIn){
+
+document.getElementById("balance")
+.textContent="ログインしてください";
+
+return false;
+
 }
 
 
-function escapeAttribute(value) {
+const {
+data,
+error
+} =
+await supabaseClient
+.from("user_coins")
+.select("coins,last_login_bonus_date")
+.eq("user_id",currentUsername)
+.maybeSingle();
 
-  return String(
-    value ?? ""
-  )
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
-    );
+
+if(error){
+
+console.error(error);
+
+document.getElementById("balance")
+.textContent="エラー";
+
+return false;
+
 }
 
 
-/* =========================
-   フレーム交換
-========================= */
+if(!data){
 
-async function buyItem(
-  itemKey
-) {
+const {
+data:created,
+error:createError
+} =
+await supabaseClient
+.from("user_coins")
+.insert({
+user_id:currentUsername,
+coins:0
+})
+.select("coins,last_login_bonus_date")
+.single();
 
-  const item =
-    shopItems.find(
-      x =>
-        x.item_key ===
-        itemKey
-    );
 
+if(createError){
 
-  if (!item) {
+console.error(createError);
 
-    showMessage(
-      "❌ フレームが見つかりません"
-    );
+document.getElementById("balance")
+.textContent="エラー";
 
-    return;
-  }
+return false;
 
+}
 
-  if (
-    itemKey ===
-    "admin"
-  ) {
 
-    showMessage(
-      "❌ このフレームは交換できません"
-    );
+balance=Number(created.coins||0);
 
-    return;
-  }
+}else{
 
+balance=Number(data.coins||0);
 
-  if (
-    ownedItems.has(
-      itemKey
-    )
-  ) {
+}
 
-    showMessage(
-      "このフレームはすでに交換済みだよ！"
-    );
 
-    return;
-  }
+updateBalance();
 
+document.getElementById("slotButton")
+.disabled=false;
 
-  const price =
-    Number(
-      item.price
-    );
+return true;
 
-
-  if (
-    balance <
-    price
-  ) {
-
-    showMessage(
-      "🪙 コインが足りません！"
-    );
-
-    return;
-  }
-
-
-  const ok =
-    confirm(
-      `${item.icon} ${item.name}を\n${price.toLocaleString()} COINで交換しますか？`
-    );
-
-
-  if (!ok) {
-    return;
-  }
-
-
-  renderShopButtonsDisabled();
-
-
-  const oldBalance =
-    balance;
-
-
-  const newBalance =
-    balance -
-    price;
-
-
-  const {
-    error: coinError
-  } =
-    await supabaseClient
-      .from("user_coins")
-      .update({
-
-        coins:
-          newBalance,
-
-        updated_at:
-          new Date().toISOString()
-
-      })
-      .eq(
-        "user_id",
-        currentUsername
-      );
-
-
-  if (coinError) {
-
-    console.error(
-      "コイン更新エラー:",
-      coinError
-    );
-
-
-    renderShop();
-
-
-    showMessage(
-      "❌ コインの更新に失敗しました"
-    );
-
-
-    return;
-  }
-
-
-  const {
-    error: itemError
-  } =
-    await supabaseClient
-      .from("user_coin_items")
-      .insert({
-
-        user_id:
-          currentUsername,
-
-        item_key:
-          itemKey
-
-      });
-
-
-  if (itemError) {
-
-    console.error(
-      "フレーム保存エラー:",
-      itemError
-    );
-
-
-    await supabaseClient
-      .from("user_coins")
-      .update({
-
-        coins:
-          oldBalance,
-
-        updated_at:
-          new Date().toISOString()
-
-      })
-      .eq(
-        "user_id",
-        currentUsername
-      );
-
-
-    renderShop();
-
-
-    showMessage(
-      "❌ 交換に失敗しました。コインは戻しました。"
-    );
-
-
-    return;
-  }
-
-
-  balance =
-    newBalance;
-
-
-  ownedItems.add(
-    itemKey
-  );
-
-
-  updateBalance();
-
-  renderShop();
-
-
-  showMessage(
-    `🎉 ${item.icon} ${item.name}を交換しました！`
-  );
 }
 
 
 /* =========================
-   ショップボタン停止
+コイン保存
 ========================= */
 
-function renderShopButtonsDisabled() {
+async function saveCoins(){
 
-  document
-    .querySelectorAll(
-      ".buy-button:not(.owned)"
-    )
-    .forEach(
-      button => {
+const {
+error
+} =
+await supabaseClient
+.from("user_coins")
+.update({
 
-        button.disabled =
-          true;
+coins:balance,
 
-      }
-    );
+updated_at:
+new Date().toISOString()
+
+})
+.eq("user_id",currentUsername);
+
+
+if(error){
+
+console.error(error);
+return false;
+
+}
+
+return true;
+
 }
 
 
 /* =========================
-   ショップへ
+配布コード
 ========================= */
 
-function scrollToShop() {
+async function redeemRewardCode(){
 
-  const details =
-    document.getElementById(
-      "shopDetails"
-    );
+const input =
+document.getElementById("rewardCodeInput");
 
+const button =
+document.getElementById("redeemRewardCodeButton");
 
-  if (details) {
-    details.open =
-      true;
-  }
+const code =
+input.value.trim().toUpperCase();
 
 
-  const card =
-    document.getElementById(
-      "shopCard"
-    );
+if(!code){
+
+showRewardMessage(
+"❌ 配布コードを入力してください"
+);
+
+return;
+
+}
 
 
-  if (card) {
+button.disabled=true;
 
-    setTimeout(
-      function() {
+showRewardMessage(
+"🎁 受け取っています……"
+);
 
-        card.scrollIntoView({
-          behavior:
-            "smooth",
 
-          block:
-            "start"
+try{
 
-        });
+const {
+data,
+error
+} =
+await supabaseClient.rpc(
+"redeem_coin_reward_code",
+{
+input_code:code
+}
+);
 
-      },
-      50
-    );
 
-  }
+if(error){
+
+showRewardMessage(
+"❌ "+error.message
+);
+
+return;
+
+}
+
+
+await loadCoins();
+await loadShop();
+
+
+const rewardCoins =
+Number(data?.reward_coins||0);
+
+const rewardItem =
+data?.reward_item_key;
+
+
+const parts=[];
+
+
+if(rewardCoins>0){
+
+parts.push(
+`🪙 ${rewardCoins.toLocaleString()} COIN`
+);
+
+}
+
+
+if(rewardItem){
+
+const item =
+shopItems.find(
+x=>x.item_key===rewardItem
+);
+
+parts.push(
+`🖼️ ${item?.name || "フレーム"}`
+);
+
+}
+
+
+showRewardMessage(
+"🎉 "+parts.join(" ＋ ")+" を受け取りました！"
+);
+
+input.value="";
+
+
+}catch(error){
+
+console.error(error);
+
+showRewardMessage(
+"❌ 受け取りに失敗しました"
+);
+
+}finally{
+
+button.disabled=false;
+
+}
+
 }
 
 
 /* =========================
-   準備中
+ログインボーナス
 ========================= */
 
-function showComingSoon() {
+async function claimLoginBonus(){
 
-  showMessage(
-    "🚧 この機能はこれから追加するよ！"
-  );
+if(!currentUsername){
+
+const loggedIn =
+await getCurrentUser();
+
+if(!loggedIn){
+
+showMessage("❌ ログインしてください");
+return;
+
+}
+
+}
+
+
+const today=getToday();
+
+
+const {
+data,
+error
+} =
+await supabaseClient
+.from("user_coins")
+.select("coins,last_login_bonus_date")
+.eq("user_id",currentUsername)
+.maybeSingle();
+
+
+if(error||!data){
+
+showMessage(
+"❌ コイン情報を取得できませんでした"
+);
+
+return;
+
+}
+
+
+if(data.last_login_bonus_date===today){
+
+showMessage(
+"📅 今日のログインボーナスは受け取り済みだよ！"
+);
+
+return;
+
+}
+
+
+const newCoins=
+Number(data.coins||0)+10;
+
+
+const {
+error:updateError
+} =
+await supabaseClient
+.from("user_coins")
+.update({
+
+coins:newCoins,
+
+last_login_bonus_date:today,
+
+updated_at:
+new Date().toISOString()
+
+})
+.eq("user_id",currentUsername);
+
+
+if(updateError){
+
+showMessage(
+"❌ ボーナスの受け取りに失敗しました"
+);
+
+return;
+
+}
+
+
+balance=newCoins;
+
+updateBalance();
+
+showMessage(
+"🎉 ログインボーナス +10 COIN！"
+);
+
 }
 
 
 /* =========================
-   開始
+スロット
 ========================= */
 
-async function start() {
+async function playSlot(){
 
-  const banned =
-    await checkBan();
+const button =
+document.getElementById("slotButton");
 
+const result =
+document.getElementById("slotResult");
 
-  if (banned) {
-    return;
-  }
-
-
-  const loaded =
-    await loadCoins();
+const today=getToday();
 
 
-  if (!loaded) {
-    return;
-  }
+const lastPlay =
+localStorage.getItem("friendCoinSlotDate");
 
 
-  await loadShop();
+if(lastPlay===today){
+
+result.textContent=
+"今日はもう運試し済みだよ！😊";
+
+return;
+
+}
+
+
+button.disabled=true;
+
+result.textContent="運試し中……";
+
+
+const symbols=[
+"🍒","⭐","🍋","💎","🍀","🎁"
+];
+
+
+let count=0;
+
+
+const animation=setInterval(async()=>{
+
+document.getElementById("reel1")
+.textContent=
+symbols[Math.floor(Math.random()*symbols.length)];
+
+document.getElementById("reel2")
+.textContent=
+symbols[Math.floor(Math.random()*symbols.length)];
+
+document.getElementById("reel3")
+.textContent=
+symbols[Math.floor(Math.random()*symbols.length)];
+
+
+count++;
+
+
+if(count>=12){
+
+clearInterval(animation);
+
+
+const a=
+symbols[Math.floor(Math.random()*symbols.length)];
+
+const b=
+symbols[Math.floor(Math.random()*symbols.length)];
+
+const c=
+symbols[Math.floor(Math.random()*symbols.length)];
+
+
+document.getElementById("reel1").textContent=a;
+document.getElementById("reel2").textContent=b;
+document.getElementById("reel3").textContent=c;
+
+
+let reward;
+
+
+if(a===b&&b===c){
+
+reward=100;
+
+result.textContent=
+"🎉 大当たり！ +100 COIN";
+
+}else if(a===b||b===c||a===c){
+
+reward=50;
+
+result.textContent=
+"✨ 当たり！ +50 COIN";
+
+}else{
+
+reward=10;
+
+result.textContent=
+"🍀 参加賞！ +10 COIN";
+
+}
+
+
+balance+=reward;
+
+updateBalance();
+
+
+const saved=await saveCoins();
+
+
+if(!saved){
+
+balance-=reward;
+
+updateBalance();
+
+result.textContent=
+"❌ コインの保存に失敗しました";
+
+button.disabled=false;
+
+return;
+
+}
+
+
+localStorage.setItem(
+"friendCoinSlotDate",
+today
+);
+
+
+button.disabled=false;
+
+}
+
+},100);
+
+}
+
+
+/* =========================
+フレームクラス
+========================= */
+
+function getFrameClass(itemKey){
+
+const map={
+
+sakura:"frame-sakura",
+star:"frame-star",
+diamond:"frame-diamond",
+space:"frame-space",
+neon:"frame-neon",
+rainbow:"frame-rainbow",
+flame:"frame-flame",
+sea:"frame-sea",
+heart:"frame-heart"
+
+};
+
+return map[itemKey]||"";
+
+}
+
+
+/* =========================
+ショップ
+========================= */
+
+async function loadShop(){
+
+const shop=
+document.getElementById("shop");
+
+
+const {
+data:items,
+error:itemError
+} =
+await supabaseClient
+.from("coin_items")
+.select("item_key,name,icon,price,frame_color")
+.order("price",{ascending:true});
+
+
+if(itemError){
+
+shop.innerHTML=
+"❌ フレームショップを読み込めませんでした";
+
+return;
+
+}
+
+
+shopItems=
+(items||[]).filter(
+item=>item.item_key!=="admin"
+);
+
+
+const {
+data:owned,
+error:ownedError
+} =
+await supabaseClient
+.from("user_coin_items")
+.select("item_key")
+.eq("user_id",currentUsername);
+
+
+if(ownedError){
+
+ownedItems=new Set();
+
+}else{
+
+ownedItems=
+new Set(
+(owned||[]).map(x=>x.item_key)
+);
+
+}
+
+
+renderShop();
+
+}
+
+
+/* =========================
+ショップ表示
+========================= */
+
+function renderShop(){
+
+const shop=
+document.getElementById("shop");
+
+
+if(!shopItems.length){
+
+shop.innerHTML=
+"現在交換できるフレームはありません。";
+
+return;
+
+}
+
+
+shop.innerHTML=
+shopItems.map(item=>{
+
+const owned=
+ownedItems.has(item.item_key);
+
+const frameClass=
+getFrameClass(item.item_key);
+
+
+const inlineStyle=
+frameClass
+?""
+:`style="background:${escapeAttribute(item.frame_color||"#ffd0e7")}"`;
+
+
+return `
+
+<div class="shop-item">
+
+<div
+class="shop-preview ${frameClass}"
+${inlineStyle}>
+
+<div class="shop-preview-inner">
+${escapeHtml(item.icon||"🖼️")}
+</div>
+
+</div>
+
+
+<div class="shop-info">
+
+<div class="shop-name">
+${escapeHtml(item.name)}
+</div>
+
+<div class="shop-price">
+🪙 ${Number(item.price).toLocaleString()} COIN
+</div>
+
+</div>
+
+
+${
+owned
+?
+`
+<button
+class="buy-button owned"
+disabled>
+交換済み
+</button>
+`
+:
+`
+<button
+class="buy-button"
+onclick="buyItem('${escapeAttribute(item.item_key)}')">
+交換
+</button>
+`
+}
+
+</div>
+
+`;
+
+}).join("");
+
+}
+
+
+/* =========================
+安全化
+========================= */
+
+function escapeHtml(value){
+
+return String(value??"")
+.replaceAll("&","&amp;")
+.replaceAll("<","&lt;")
+.replaceAll(">","&gt;")
+.replaceAll('"',"&quot;")
+.replaceAll("'","&#039;");
+
+}
+
+
+function escapeAttribute(value){
+
+return String(value??"")
+.replaceAll("&","&amp;")
+.replaceAll('"',"&quot;")
+.replaceAll("<","&lt;")
+.replaceAll(">","&gt;");
+
+}
+
+
+/* =========================
+購入
+========================= */
+
+async function buyItem(itemKey){
+
+const item=
+shopItems.find(
+x=>x.item_key===itemKey
+);
+
+
+if(!item){
+
+showMessage("❌ フレームが見つかりません");
+return;
+
+}
+
+
+if(itemKey==="admin"){
+
+showMessage("❌ このフレームは交換できません");
+return;
+
+}
+
+
+if(ownedItems.has(itemKey)){
+
+showMessage("このフレームはすでに交換済みだよ！");
+return;
+
+}
+
+
+const price=Number(item.price);
+
+
+if(balance<price){
+
+showMessage("🪙 コインが足りません！");
+return;
+
+}
+
+
+if(!confirm(
+`${item.icon} ${item.name}を\n${price.toLocaleString()} COINで交換しますか？`
+)){
+
+return;
+
+}
+
+
+renderShopButtonsDisabled();
+
+
+const oldBalance=balance;
+const newBalance=balance-price;
+
+
+const {
+error:coinError
+} =
+await supabaseClient
+.from("user_coins")
+.update({
+
+coins:newBalance,
+
+updated_at:
+new Date().toISOString()
+
+})
+.eq("user_id",currentUsername);
+
+
+if(coinError){
+
+renderShop();
+
+showMessage(
+"❌ コインの更新に失敗しました"
+);
+
+return;
+
+}
+
+
+const {
+error:itemError
+} =
+await supabaseClient
+.from("user_coin_items")
+.insert({
+
+user_id:currentUsername,
+item_key:itemKey
+
+});
+
+
+if(itemError){
+
+await supabaseClient
+.from("user_coins")
+.update({
+
+coins:oldBalance,
+
+updated_at:
+new Date().toISOString()
+
+})
+.eq("user_id",currentUsername);
+
+
+renderShop();
+
+showMessage(
+"❌ 交換に失敗しました。コインは戻しました。"
+);
+
+return;
+
+}
+
+
+balance=newBalance;
+
+ownedItems.add(itemKey);
+
+updateBalance();
+
+renderShop();
+
+showMessage(
+`🎉 ${item.icon} ${item.name}を交換しました！`
+);
+
+}
+
+
+/* =========================
+ボタン停止
+========================= */
+
+function renderShopButtonsDisabled(){
+
+document
+.querySelectorAll(".buy-button:not(.owned)")
+.forEach(button=>{
+button.disabled=true;
+});
+
+}
+
+
+/* =========================
+ショップへ
+========================= */
+
+function scrollToShop(){
+
+const details=
+document.getElementById("shopDetails");
+
+if(details){
+details.open=true;
+}
+
+
+const card=
+document.getElementById("shopCard");
+
+
+if(card){
+
+setTimeout(()=>{
+
+card.scrollIntoView({
+behavior:"smooth",
+block:"start"
+});
+
+},50);
+
+}
+
+}
+
+
+/* =========================
+準備中
+========================= */
+
+function showComingSoon(){
+
+showMessage(
+"🚧 この機能はこれから追加するよ！"
+);
+
+}
+
+
+/* =========================
+開始
+========================= */
+
+async function start(){
+
+if(typeof checkFriendChatBan==="function"){
+
+const banned =
+await checkFriendChatBan();
+
+if(banned)return;
+
+}
+
+
+const loaded =
+await loadCoins();
+
+
+if(!loaded)return;
+
+
+await loadShop();
+
 }
 
 
