@@ -128,10 +128,6 @@ body{
   margin-bottom:10px
 }
 
-/* =========================
-   プロフィール画像＋装備枠
-========================= */
-
 .message-avatar-frame{
   width:46px;
   height:46px;
@@ -183,8 +179,6 @@ body{
 .message-avatar-badge.show{
   display:flex
 }
-
-/* ========================= */
 
 .message{
   position:relative;
@@ -509,10 +503,6 @@ body{
   cursor:pointer
 }
 
-/* =========================
-   発言禁止
-========================= */
-
 .mute-banner{
   display:none;
   background:#fff0f0;
@@ -570,8 +560,6 @@ body{
   cursor:pointer
 }
 
-/* ========================= */
-
 .modal{
   display:none;
   position:fixed;
@@ -625,8 +613,6 @@ body{
   padding:10px;
   margin-bottom:8px
 }
-
-/* メンバー一覧のプロフィール枠 */
 
 .member-icon-frame{
   width:44px;
@@ -828,10 +814,7 @@ body{
 
 <div>
 <div class="title">👥 グループチャット</div>
-
-<div id="groupName" class="group-name">
-読み込み中...
-</div>
+<div id="groupName" class="group-name">読み込み中...</div>
 </div>
 
 </div>
@@ -1016,9 +999,8 @@ theme.text
 }
 
 applyTheme(
-localStorage.getItem(
-"friendChatTheme"
-) || "purple"
+localStorage.getItem("friendChatTheme") ||
+"purple"
 );
 
 const params =
@@ -1103,6 +1085,15 @@ const profileCache = {};
 const itemCache = {};
 const groupReadCounts = {};
 
+let loadingMessages = false;
+let realtimeQueue = Promise.resolve();
+let readUpdateTimer = null;
+
+
+/* =========================
+   管理者状態
+========================= */
+
 function updateGroupAdminState(){
 
 isGroupAdmin =
@@ -1110,7 +1101,6 @@ currentUsername === groupOwnerId ||
 currentGroupRole === "admin";
 
 if(adminNote){
-
 adminNote.style.display =
 isGroupAdmin
 ? "block"
@@ -1118,6 +1108,11 @@ isGroupAdmin
 }
 
 }
+
+
+/* =========================
+   オンライン
+========================= */
 
 function isOnline(lastSeen){
 
@@ -1165,8 +1160,7 @@ Math.floor(seconds / 60);
 
 if(minutes < 60){
 return "最終オンライン：" +
-minutes +
-"分前";
+minutes + "分前";
 }
 
 const hours =
@@ -1174,8 +1168,7 @@ Math.floor(minutes / 60);
 
 if(hours < 24){
 return "最終オンライン：" +
-hours +
-"時間前";
+hours + "時間前";
 }
 
 const days =
@@ -1183,8 +1176,7 @@ Math.floor(hours / 24);
 
 if(days < 30){
 return "最終オンライン：" +
-days +
-"日前";
+days + "日前";
 }
 
 const date =
@@ -1224,9 +1216,80 @@ error
 
 }
 
+
 /* =========================
-   プロフィール＋装備
+   プロフィール
 ========================= */
+
+async function getProfiles(usernames){
+
+const unique =
+[
+...new Set(
+(usernames || [])
+.filter(Boolean)
+)
+];
+
+if(!unique.length){
+return;
+}
+
+const missing =
+unique.filter(
+username =>
+!Object.prototype.hasOwnProperty.call(
+profileCache,
+username
+)
+);
+
+if(!missing.length){
+return;
+}
+
+const {data,error} =
+await supabaseClient
+.from("profiles")
+.select(
+"user_id,name,avatar_url,equipped_item_key"
+)
+.in(
+"user_id",
+missing
+);
+
+if(error){
+
+console.error(
+"プロフィール一括取得エラー:",
+error
+);
+
+return;
+}
+
+(data || []).forEach(
+profile=>{
+profileCache[
+profile.user_id
+] = profile;
+}
+);
+
+missing.forEach(
+username=>{
+if(
+!Object.prototype.hasOwnProperty.call(
+profileCache,
+username
+)
+){
+profileCache[username]=null;
+}
+}
+);
+}
 
 async function getProfile(username){
 
@@ -1241,22 +1304,84 @@ username
 return profileCache[username];
 }
 
-const {data} =
+await getProfiles([username]);
+
+return profileCache[username] || null;
+}
+
+
+/* =========================
+   装備アイテム
+========================= */
+
+async function getItems(itemKeys){
+
+const unique =
+[
+...new Set(
+(itemKeys || [])
+.filter(Boolean)
+)
+];
+
+if(!unique.length){
+return;
+}
+
+const missing =
+unique.filter(
+key =>
+!Object.prototype.hasOwnProperty.call(
+itemCache,
+key
+)
+);
+
+if(!missing.length){
+return;
+}
+
+const {data,error} =
 await supabaseClient
-.from("profiles")
+.from("coin_items")
 .select(
-"user_id,name,avatar_url,equipped_item_key"
+"item_key,icon,frame_color"
 )
-.eq(
-"user_id",
-username
+.in(
+"item_key",
+missing
+);
+
+if(error){
+
+console.error(
+"装備アイテム一括取得エラー:",
+error
+);
+
+return;
+}
+
+(data || []).forEach(
+item=>{
+itemCache[
+item.item_key
+] = item;
+}
+);
+
+missing.forEach(
+key=>{
+if(
+!Object.prototype.hasOwnProperty.call(
+itemCache,
+key
 )
-.maybeSingle();
-
-profileCache[username] =
-data || null;
-
-return data || null;
+){
+itemCache[key]=null;
+}
+}
+);
 }
 
 async function getEquippedItem(itemKey){
@@ -1274,37 +1399,17 @@ itemKey
 return itemCache[itemKey];
 }
 
-const {data,error} =
-await supabaseClient
-.from("coin_items")
-.select(
-"item_key,icon,frame_color"
-)
-.eq(
-"item_key",
-itemKey
-)
-.maybeSingle();
+await getItems([itemKey]);
 
-if(error){
-
-console.error(
-"装備アイテム取得エラー:",
-error
-);
-
-itemCache[itemKey] = null;
-
-return null;
+return itemCache[itemKey] || null;
 }
 
-itemCache[itemKey] =
-data || null;
 
-return data || null;
-}
+/* =========================
+   アバター
+========================= */
 
-async function createAvatar(profile){
+function createAvatarSync(profile){
 
 const frame =
 document.createElement("div");
@@ -1313,9 +1418,11 @@ frame.className =
 "message-avatar-frame";
 
 const item =
-await getEquippedItem(
 profile?.equipped_item_key
-);
+? itemCache[
+profile.equipped_item_key
+]
+: null;
 
 frame.style.background =
 item?.frame_color ||
@@ -1346,9 +1453,7 @@ avatar.textContent =
 "👤";
 }
 
-frame.appendChild(
-avatar
-);
+frame.appendChild(avatar);
 
 if(item?.icon){
 
@@ -1368,88 +1473,126 @@ item.frame_color ||
 "#eee8ff"
 );
 
-frame.appendChild(
-badge
-);
+frame.appendChild(badge);
 }
 
 return frame;
 }
-  async function loadGroup(){
 
-  if(!groupId){
-    groupName.textContent="グループIDがありません";
-    return;
-  }
 
-  const {data,error} =
-    await supabaseClient
-    .from("groups")
-    .select("id,name,owner_id")
-    .eq("id",groupId)
-    .maybeSingle();
+/* =========================
+   グループ
+========================= */
 
-  if(error){
-    console.error("グループ取得エラー:",error);
-    groupName.textContent="グループを読み込めませんでした";
-    return;
-  }
+async function loadGroup(){
 
-  if(!data){
-    groupName.textContent="グループが見つかりません";
-    return;
-  }
+if(!groupId){
+groupName.textContent =
+"グループIDがありません";
+return;
+}
 
-  groupName.textContent=data.name || "グループ";
+const {data,error} =
+await supabaseClient
+.from("groups")
+.select("id,name,owner_id")
+.eq("id",groupId)
+.maybeSingle();
 
-  groupOwnerId =
-    data.owner_id || "";
+if(error){
 
-  updateGroupAdminState();
+console.error(
+"グループ取得エラー:",
+error
+);
+
+groupName.textContent =
+"グループを読み込めませんでした";
+
+return;
+}
+
+if(!data){
+
+groupName.textContent =
+"グループが見つかりません";
+
+return;
+}
+
+groupName.textContent =
+data.name || "グループ";
+
+groupOwnerId =
+data.owner_id || "";
+
+updateGroupAdminState();
 }
 
 
 /* =========================
-   メンバー読み込み
+   メンバー
 ========================= */
 
 async function loadGroupMembers(){
 
-  const {data,error} =
-    await supabaseClient
-    .from("group_members")
-    .select(
-      "id,group_id,user_id,role,created_at"
-    )
-    .eq(
-      "group_id",
-      groupId
-    )
-    .order(
-      "created_at",
-      {ascending:true}
-    );
+const {data,error} =
+await supabaseClient
+.from("group_members")
+.select(
+"id,group_id,user_id,role,created_at"
+)
+.eq(
+"group_id",
+groupId
+)
+.order(
+"created_at",
+{ascending:true}
+);
 
-  if(error){
-    console.error(
-      "グループメンバー取得エラー:",
-      error
-    );
-    return;
-  }
+if(error){
 
-  groupMembersCache =
-    data || [];
+console.error(
+"グループメンバー取得エラー:",
+error
+);
 
-  const me =
-    groupMembersCache.find(
-      m => m.user_id === currentUsername
-    );
+return;
+}
 
-  currentGroupRole =
-    me?.role || "member";
+groupMembersCache =
+data || [];
 
-  updateGroupAdminState();
+const usernames =
+groupMembersCache.map(
+member =>
+member.user_id
+);
+
+await getProfiles(usernames);
+
+const itemKeys =
+Object.values(profileCache)
+.filter(Boolean)
+.map(
+profile =>
+profile.equipped_item_key
+);
+
+await getItems(itemKeys);
+
+const me =
+groupMembersCache.find(
+member =>
+member.user_id ===
+currentUsername
+);
+
+currentGroupRole =
+me?.role || "member";
+
+updateGroupAdminState();
 }
 
 
@@ -1459,234 +1602,254 @@ async function loadGroupMembers(){
 
 async function loadGroupMutes(){
 
-  const {data,error} =
-    await supabaseClient
-    .from("group_mutes")
-    .select(
-      "id,group_id,user_id,muted_until,created_by,created_at"
-    )
-    .eq(
-      "group_id",
-      groupId
-    );
+const {data,error} =
+await supabaseClient
+.from("group_mutes")
+.select(
+"id,group_id,user_id,muted_until,created_by,created_at"
+)
+.eq(
+"group_id",
+groupId
+);
 
-  if(error){
-    console.error(
-      "発言禁止情報取得エラー:",
-      error
-    );
-    return;
-  }
+if(error){
 
-  groupMutesCache =
-    data || [];
+console.error(
+"発言禁止情報取得エラー:",
+error
+);
 
-  updateCurrentMute();
+return;
+}
+
+groupMutesCache =
+data || [];
+
+updateCurrentMute();
 }
 
 function updateCurrentMute(){
 
-  currentMute =
-    groupMutesCache.find(
-      mute =>
-        mute.user_id === currentUsername &&
-        new Date(mute.muted_until).getTime() > Date.now()
-    ) || null;
+currentMute =
+groupMutesCache.find(
+mute =>
+mute.user_id === currentUsername &&
+new Date(
+mute.muted_until
+).getTime() > Date.now()
+) || null;
 
-  if(muteTimer){
-    clearTimeout(muteTimer);
-    muteTimer=null;
-  }
+if(muteTimer){
+clearTimeout(muteTimer);
+muteTimer=null;
+}
 
-  if(currentMute){
+if(currentMute){
 
-    const until =
-      new Date(
-        currentMute.muted_until
-      );
+const until =
+new Date(
+currentMute.muted_until
+);
 
-    muteBanner.textContent =
-      "🔇 発言禁止中です。解除予定：" +
-      until.toLocaleString("ja-JP");
+muteBanner.textContent =
+"🔇 発言禁止中です。解除予定：" +
+until.toLocaleString("ja-JP");
 
-    muteBanner.classList.add("show");
+muteBanner.classList.add("show");
 
-    messageInput.disabled=true;
-    sendButton.disabled=true;
-    imageButton.disabled=true;
+messageInput.disabled=true;
+sendButton.disabled=true;
+imageButton.disabled=true;
 
-    const remaining =
-      until.getTime() - Date.now();
+const remaining =
+until.getTime() -
+Date.now();
 
-    if(remaining > 0){
+if(remaining > 0){
 
-      muteTimer =
-        setTimeout(
-          async ()=>{
-            await loadGroupMutes();
-          },
-          Math.min(
-            remaining + 500,
-            2147483647
-          )
-        );
-    }
+muteTimer =
+setTimeout(
+async ()=>{
+await loadGroupMutes();
+},
+Math.min(
+remaining + 500,
+2147483647
+)
+);
+}
 
-  }else{
+}else{
 
-    muteBanner.textContent="";
-    muteBanner.classList.remove("show");
+muteBanner.textContent="";
+muteBanner.classList.remove("show");
 
-    messageInput.disabled=false;
-    sendButton.disabled=false;
-    imageButton.disabled=false;
-  }
+messageInput.disabled=false;
+sendButton.disabled=false;
+imageButton.disabled=false;
+}
 }
 
 async function setMute(username,minutes){
 
-  if(!isGroupAdmin){
-    alert("管理者だけが設定できます");
-    return;
-  }
+if(!isGroupAdmin){
+alert("管理者だけが設定できます");
+return;
+}
 
-  if(
-    !username ||
-    username === groupOwnerId
-  ){
-    alert("このユーザーには設定できません");
-    return;
-  }
+if(
+!username ||
+username === groupOwnerId
+){
+alert("このユーザーには設定できません");
+return;
+}
 
-  const value =
-    Number(minutes);
+const value =
+Number(minutes);
 
-  if(
-    !Number.isFinite(value) ||
-    value <= 0
-  ){
-    alert("正しい時間を入力してください");
-    return;
-  }
+if(
+!Number.isFinite(value) ||
+value <= 0
+){
+alert("正しい時間を入力してください");
+return;
+}
 
-  const until =
-    new Date(
-      Date.now() +
-      value * 60 * 1000
-    ).toISOString();
+const until =
+new Date(
+Date.now() +
+value * 60 * 1000
+).toISOString();
 
-  const {error} =
-    await supabaseClient
-    .from("group_mutes")
-    .upsert(
-      {
-        group_id:groupId,
-        user_id:username,
-        muted_until:until,
-        created_by:currentUsername
-      },
-      {
-        onConflict:
-          "group_id,user_id"
-      }
-    );
+const {error} =
+await supabaseClient
+.from("group_mutes")
+.upsert(
+{
+group_id:groupId,
+user_id:username,
+muted_until:until,
+created_by:currentUsername
+},
+{
+onConflict:
+"group_id,user_id"
+}
+);
 
-  if(error){
-    console.error(error);
-    alert(
-      "発言禁止の設定に失敗しました"
-    );
-    return;
-  }
+if(error){
 
-  await loadGroupMutes();
-  await loadMembers();
+console.error(error);
+
+alert(
+"発言禁止の設定に失敗しました"
+);
+
+return;
+}
+
+await Promise.all([
+loadGroupMutes(),
+loadMembers()
+]);
 }
 
 async function clearMute(username){
 
-  if(!isGroupAdmin){
-    return;
-  }
+if(!isGroupAdmin){
+return;
+}
 
-  const {error} =
-    await supabaseClient
-    .from("group_mutes")
-    .delete()
-    .eq(
-      "group_id",
-      groupId
-    )
-    .eq(
-      "user_id",
-      username
-    );
+const {error} =
+await supabaseClient
+.from("group_mutes")
+.delete()
+.eq(
+"group_id",
+groupId
+)
+.eq(
+"user_id",
+username
+);
 
-  if(error){
-    console.error(error);
-    alert(
-      "発言禁止の解除に失敗しました"
-    );
-    return;
-  }
+if(error){
 
-  await loadGroupMutes();
-  await loadMembers();
+console.error(error);
+
+alert(
+"発言禁止の解除に失敗しました"
+);
+
+return;
+}
+
+await Promise.all([
+loadGroupMutes(),
+loadMembers()
+]);
 }
 
 
 /* =========================
-   管理者設定
+   副管理者
 ========================= */
 
 async function setDeputyAdmin(
-  username,
-  makeAdmin
+username,
+makeAdmin
 ){
 
-  if(
-    currentUsername !== groupOwnerId
-  ){
-    alert(
-      "副管理者を変更できるのはグループオーナーだけです"
-    );
-    return;
-  }
+if(
+currentUsername !== groupOwnerId
+){
 
-  if(username === groupOwnerId){
-    return;
-  }
+alert(
+"副管理者を変更できるのはグループオーナーだけです"
+);
 
-  const role =
-    makeAdmin
-    ? "admin"
-    : "member";
+return;
+}
 
-  const {error} =
-    await supabaseClient
-    .from("group_members")
-    .update({
-      role:role
-    })
-    .eq(
-      "group_id",
-      groupId
-    )
-    .eq(
-      "user_id",
-      username
-    );
+if(username === groupOwnerId){
+return;
+}
 
-  if(error){
-    console.error(error);
-    alert(
-      "副管理者設定に失敗しました"
-    );
-    return;
-  }
+const role =
+makeAdmin
+? "admin"
+: "member";
 
-  await loadGroupMembers();
-  await loadMembers();
+const {error} =
+await supabaseClient
+.from("group_members")
+.update({
+role:role
+})
+.eq(
+"group_id",
+groupId
+)
+.eq(
+"user_id",
+username
+);
+
+if(error){
+
+console.error(error);
+
+alert(
+"副管理者設定に失敗しました"
+);
+
+return;
+}
+
+await loadGroupMembers();
+await loadMembers();
 }
 
 
@@ -1696,124 +1859,177 @@ async function setDeputyAdmin(
 
 async function loadGroupReadCounts(){
 
-  const {data,error} =
-    await supabaseClient
-    .from("group_message_reads")
-    .select(
-      "group_message_id,user_id"
-    )
-    .in(
-      "group_message_id",
-      Array.from(
-        messages.querySelectorAll(
-          "[data-message-id]"
-        )
-      )
-      .map(
-        el =>
-          Number(
-            el.dataset.messageId
-          )
-      )
-      .filter(Boolean)
-    );
+const ids =
+Array.from(
+messages.querySelectorAll(
+"[data-message-id]"
+)
+)
+.map(
+el =>
+Number(
+el.dataset.messageId
+)
+)
+.filter(
+Boolean
+);
 
-  if(error){
-    console.error(
-      "既読取得エラー:",
-      error
-    );
-    return;
-  }
+if(!ids.length){
+return;
+}
 
-  Object.keys(
-    groupReadCounts
-  ).forEach(
-    key =>
-      delete groupReadCounts[key]
-  );
+const {data,error} =
+await supabaseClient
+.from("group_message_reads")
+.select(
+"group_message_id,user_id"
+)
+.in(
+"group_message_id",
+ids
+);
 
-  (data || []).forEach(row=>{
+if(error){
 
-    const id =
-      String(
-        row.group_message_id
-      );
+console.error(
+"既読取得エラー:",
+error
+);
 
-    if(!groupReadCounts[id]){
-      groupReadCounts[id]=0;
-    }
+return;
+}
 
-    groupReadCounts[id]++;
-  });
+Object.keys(
+groupReadCounts
+).forEach(
+key =>
+delete groupReadCounts[key]
+);
 
-  updateReadDisplays();
+(data || []).forEach(
+row=>{
+
+const id =
+String(
+row.group_message_id
+);
+
+if(!groupReadCounts[id]){
+groupReadCounts[id]=0;
+}
+
+groupReadCounts[id]++;
+}
+);
+
+updateReadDisplays();
 }
 
 function updateReadDisplays(){
 
-  messages
-    .querySelectorAll(
-      "[data-read-message-id]"
-    )
-    .forEach(el=>{
+messages
+.querySelectorAll(
+"[data-read-message-id]"
+)
+.forEach(
+el=>{
 
-      const id =
-        el.dataset.readMessageId;
+const id =
+el.dataset.readMessageId;
 
-      const count =
-        groupReadCounts[id] || 0;
+const count =
+groupReadCounts[id] || 0;
 
-      if(count > 0){
+if(count > 0){
 
-        el.textContent =
-          "既読 " +
-          count +
-          "人";
+el.textContent =
+"既読 " +
+count +
+"人";
 
-        el.style.display =
-          "block";
+el.style.display =
+"block";
 
-      }else{
+}else{
 
-        el.textContent="";
-        el.style.display="none";
-      }
-    });
+el.textContent="";
+el.style.display="none";
+}
+});
 }
 
-async function markMessageRead(
-  messageId
+async function markMessagesRead(ids){
+
+if(
+!currentUsername ||
+!ids?.length
 ){
+return;
+}
 
-  if(!currentUsername){
-    return;
-  }
+const uniqueIds =
+[
+...new Set(
+ids.map(
+id =>
+Number(id)
+).filter(Boolean)
+)
+];
 
-  const {error} =
-    await supabaseClient
-    .from("group_message_reads")
-    .upsert(
-      {
-        group_message_id:
-          messageId,
-        user_id:
-          currentUsername,
-        read_at:
-          new Date().toISOString()
-      },
-      {
-        onConflict:
-          "group_message_id,user_id"
-      }
-    );
+if(!uniqueIds.length){
+return;
+}
 
-  if(error){
-    console.error(
-      "既読登録エラー:",
-      error
-    );
-  }
+const rows =
+uniqueIds.map(
+id=>({
+group_message_id:id,
+user_id:currentUsername,
+read_at:
+new Date().toISOString()
+})
+);
+
+const {error} =
+await supabaseClient
+.from("group_message_reads")
+.upsert(
+rows,
+{
+onConflict:
+"group_message_id,user_id"
+}
+);
+
+if(error){
+
+console.error(
+"既読一括登録エラー:",
+error
+);
+
+return;
+}
+
+loadGroupReadCounts();
+}
+
+function scheduleReadRefresh(){
+
+if(readUpdateTimer){
+return;
+}
+
+readUpdateTimer =
+setTimeout(
+()=>{
+readUpdateTimer=null;
+loadGroupReadCounts();
+},
+150
+);
 }
 
 
@@ -1823,76 +2039,74 @@ async function markMessageRead(
 
 function isNearBottom(){
 
-  return (
-    messages.scrollHeight -
-    messages.scrollTop -
-    messages.clientHeight
-  ) < 120;
+return (
+messages.scrollHeight -
+messages.scrollTop -
+messages.clientHeight
+) < 120;
 }
 
 function scrollToBottom(){
 
-  messages.scrollTop =
-    messages.scrollHeight;
+messages.scrollTop =
+messages.scrollHeight;
 }
 
 messages.addEventListener(
-  "scroll",
-  ()=>{
-    latestButton.classList.toggle(
-      "show",
-      !isNearBottom()
-    );
-  }
+"scroll",
+()=>{
+latestButton.classList.toggle(
+"show",
+!isNearBottom()
 );
+});
 
 latestButton.addEventListener(
-  "click",
-  ()=>{
-    scrollToBottom();
-  }
+"click",
+scrollToBottom
 );
 
 
 /* =========================
-   メンション表示
+   メンション
 ========================= */
 
 function renderMentions(text){
 
-  if(!text){
-    return "";
-  }
+if(!text){
+return "";
+}
 
-  const escaped =
-    text
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+const escaped =
+String(text)
+.replaceAll("&","&amp;")
+.replaceAll("<","&lt;")
+.replaceAll(">","&gt;")
+.replaceAll('"',"&quot;")
+.replaceAll("'","&#039;");
 
-  return escaped.replace(
-    /@([a-zA-Z0-9_\-]+)/g,
-    (match,username)=>{
+return escaped.replace(
+/@([a-zA-Z0-9_\-]+)/g,
+(match,username)=>{
 
-      const exists =
-        groupMembersCache.some(
-          member =>
-            member.user_id === username
-        );
+const exists =
+groupMembersCache.some(
+member =>
+member.user_id ===
+username
+);
 
-      if(!exists){
-        return match;
-      }
+if(!exists){
+return match;
+}
 
-      return (
-        '<span class="mention">' +
-        match +
-        "</span>"
-      );
-    }
-  );
+return (
+'<span class="mention">' +
+match +
+"</span>"
+);
+}
+);
 }
 
 
@@ -1901,53 +2115,58 @@ function renderMentions(text){
 ========================= */
 
 async function editMessage(
-  messageId,
-  content
+messageId,
+content
 ){
 
-  const newContent =
-    prompt(
-      "メッセージを編集してください",
-      content
-    );
+const newContent =
+prompt(
+"メッセージを編集してください",
+content
+);
 
-  if(newContent === null){
-    return;
-  }
+if(newContent === null){
+return;
+}
 
-  const value =
-    newContent.trim();
+const value =
+newContent.trim();
 
-  if(!value){
-    return;
-  }
+if(!value){
+return;
+}
 
-  const {error} =
-    await supabaseClient
-    .from("group_messages")
-    .update({
-      content:value,
-      edited_at:
-        new Date().toISOString()
-    })
-    .eq(
-      "id",
-      messageId
-    )
-    .eq(
-      "sender_id",
-      currentUsername
-    );
+const {error} =
+await supabaseClient
+.from("group_messages")
+.update({
+content:value,
+edited_at:
+new Date().toISOString()
+})
+.eq(
+"id",
+messageId
+)
+.eq(
+"sender_id",
+currentUsername
+);
 
-  if(error){
-    console.error(error);
-    alert(
-      "メッセージの編集に失敗しました"
-    );
-    return;
-  }
+if(error){
 
-  await loadMessages();
+console.error(error);
+
+alert(
+"メッセージの編集に失敗しました"
+);
+
+return;
+}
+
+await refreshSingleMessage(
+messageId
+);
 }
 
 
@@ -1956,632 +2175,878 @@ async function editMessage(
 ========================= */
 
 async function deleteMessage(
-  messageId
+messageId
 ){
 
-  const ok =
-    confirm(
-      "このメッセージを削除しますか？"
-    );
+const ok =
+confirm(
+"このメッセージを削除しますか？"
+);
 
-  if(!ok){
-    return;
-  }
-
-  const {error} =
-    await supabaseClient
-    .from("group_messages")
-    .update({
-      is_deleted:true,
-      content:""
-    })
-    .eq(
-      "id",
-      messageId
-    )
-    .eq(
-      "sender_id",
-      currentUsername
-    );
-
-  if(error){
-    console.error(error);
-    alert(
-      "メッセージの削除に失敗しました"
-    );
-    return;
-  }
-
-  await loadMessages();
+if(!ok){
+return;
 }
+
+const {error} =
+await supabaseClient
+.from("group_messages")
+.update({
+is_deleted:true,
+content:""
+})
+.eq(
+"id",
+messageId
+)
+.eq(
+"sender_id",
+currentUsername
+);
+
+if(error){
+
+console.error(error);
+
+alert(
+"メッセージの削除に失敗しました"
+);
+
+return;
+}
+
+await refreshSingleMessage(
+messageId
+);
 
 
 /* =========================
-   メッセージ表示
+   メッセージデータ取得
 ========================= */
 
-async function addMessage(
-  message,
-  fragment=null
+async function fetchMessageExtras(list){
+
+if(!list.length){
+return {
+profiles:[],
+replies:[],
+reactions:[],
+signedUrls:{}
+};
+}
+
+const messageIds =
+list.map(
+message =>
+message.id
+);
+
+const senderIds =
+list.map(
+message =>
+message.sender_id
+);
+
+const {data:replies} =
+await supabaseClient
+.from("group_replies")
+.select(
+"id,group_message_id,sender_id,content,created_at"
+)
+.in(
+"group_message_id",
+messageIds
+)
+.order(
+"created_at",
+{ascending:true}
+);
+
+const {data:reactions} =
+await supabaseClient
+.from("group_reactions")
+.select(
+"id,group_message_id,user_id,reaction"
+)
+.in(
+"group_message_id",
+messageIds
+);
+
+const replySenderIds =
+(replies || []).map(
+reply =>
+reply.sender_id
+);
+
+await getProfiles(
+[
+...senderIds,
+...replySenderIds
+]
+);
+
+const itemKeys =
+Object.values(profileCache)
+.filter(Boolean)
+.map(
+profile =>
+profile.equipped_item_key
+);
+
+await getItems(itemKeys);
+
+const signedUrls = {};
+
+const imageMessages =
+list.filter(
+message =>
+message.image_url &&
+!message.is_deleted
+);
+
+await Promise.all(
+imageMessages.map(
+async message=>{
+
+try{
+
+const {data,error} =
+await supabaseClient
+.storage
+.from("chat-images")
+.createSignedUrl(
+message.image_url,
+3600
+);
+
+if(
+!error &&
+data?.signedUrl
 ){
 
-  const profile =
-    await getProfile(
-      message.sender_id
-    );
-
-  const row =
-    document.createElement("div");
-
-  row.className =
-    "message-row";
-
-  row.dataset.messageId =
-    message.id;
-
-  row.appendChild(
-    await createAvatar(profile)
-  );
-
-  const box =
-    document.createElement("div");
-
-  box.className="message";
-
-  const sender =
-    document.createElement("div");
-
-  sender.className="sender";
-
-  sender.textContent =
-    profile?.name ||
-    message.sender_id;
-
-  box.appendChild(sender);
-
-  if(message.is_deleted){
-
-    const deleted =
-      document.createElement("div");
-
-    deleted.className =
-      "deleted-message";
-
-    deleted.textContent =
-      "このメッセージは削除されました";
-
-    box.appendChild(deleted);
-
-  }else{
-
-    if(message.content){
-
-      const content =
-        document.createElement("div");
-
-      content.className="content";
-
-      content.innerHTML =
-        renderMentions(
-          message.content
-        );
-
-      box.appendChild(content);
-    }
-
-    if(message.image_url){
-
-      try{
-
-        const {data,error} =
-          await supabaseClient
-          .storage
-          .from("chat-images")
-          .createSignedUrl(
-            message.image_url,
-            3600
-          );
-
-        if(!error && data?.signedUrl){
-
-          const img =
-            document.createElement("img");
-
-          img.className="chat-image";
-
-          img.src =
-            data.signedUrl;
-
-          img.alt="送信画像";
-
-          box.appendChild(img);
-        }
-
-      }catch(error){
-
-        console.error(
-          "画像URL取得エラー:",
-          error
-        );
-      }
-    }
-
-    if(message.edited_at){
-
-      const edited =
-        document.createElement("span");
-
-      edited.className =
-        "edited-label";
-
-      edited.textContent =
-        "編集済み";
-
-      sender.appendChild(
-        edited
-      );
-    }
-  }
-
-  const repliesResult =
-    await supabaseClient
-    .from("group_replies")
-    .select(
-      "id,sender_id,content,created_at"
-    )
-    .eq(
-      "group_message_id",
-      message.id
-    )
-    .order(
-      "created_at",
-      {ascending:true}
-    );
-
-  if(
-    !repliesResult.error &&
-    repliesResult.data?.length
-  ){
-
-    repliesResult.data.forEach(
-      reply=>{
-
-        const preview =
-          document.createElement("div");
-
-        preview.className =
-          "reply-preview";
-
-        const replyProfile =
-          profileCache[
-            reply.sender_id
-          ] ||
-          null;
-
-        preview.innerHTML =
-          "<strong>" +
-          (
-            replyProfile?.name ||
-            reply.sender_id
-          ) +
-          "</strong>：" +
-          renderMentions(
-            reply.content
-          );
-
-        box.appendChild(
-          preview
-        );
-      }
-    );
-  }
-
-  const reactionsResult =
-    await supabaseClient
-    .from("group_reactions")
-    .select(
-      "reaction,user_id"
-    )
-    .eq(
-      "group_message_id",
-      message.id
-    );
-
-  if(
-    !reactionsResult.error &&
-    reactionsResult.data?.length
-  ){
-
-    const reactionMap={};
-
-    reactionsResult.data.forEach(
-      row=>{
-
-        if(!reactionMap[row.reaction]){
-          reactionMap[row.reaction]=0;
-        }
-
-        reactionMap[row.reaction]++;
-      }
-    );
-
-    const reactions =
-      document.createElement("div");
-
-    reactions.className =
-      "reactions";
-
-    Object.entries(
-      reactionMap
-    ).forEach(
-      ([reaction,count])=>{
-
-        const item =
-          document.createElement("div");
-
-        item.className =
-          "reaction-item";
-
-        item.textContent =
-          reaction +
-          " " +
-          count;
-
-        reactions.appendChild(item);
-      }
-    );
-
-    box.appendChild(
-      reactions
-    );
-  }
-
-  if(
-    message.sender_id ===
-    currentUsername
-  ){
-
-    const read =
-      document.createElement("div");
-
-    read.dataset.readMessageId =
-      message.id;
-
-    read.className =
-      "read-status";
-
-    const count =
-      groupReadCounts[
-        String(message.id)
-      ] || 0;
-
-    read.textContent =
-      count > 0
-      ? "既読 " + count + "人"
-      : "";
-
-    read.style.display =
-      count > 0
-      ? "block"
-      : "none";
-
-    box.appendChild(read);
-  }
-
-  const menu =
-    document.createElement("div");
-
-  menu.className =
-    "message-menu";
-
-  const reactionButton =
-    document.createElement("button");
-
-  reactionButton.type="button";
-
-  reactionButton.textContent =
-    "😀 リアクション";
-
-  menu.appendChild(
-    reactionButton
-  );
-
-  const replyButton =
-    document.createElement("button");
-
-  replyButton.type="button";
-
-  replyButton.textContent =
-    "↩️ 返信";
-
-  menu.appendChild(
-    replyButton
-  );
-
-  if(
-    message.sender_id ===
-    currentUsername &&
-    !message.is_deleted
-  ){
-
-    const editButton =
-      document.createElement("button");
-
-    editButton.type="button";
-
-    editButton.className =
-      "edit-button";
-
-    editButton.textContent =
-      "✏️ 編集";
-
-    editButton.addEventListener(
-      "click",
-      async event=>{
-
-        event.stopPropagation();
-
-        menu.style.display="none";
-
-        await editMessage(
-          message.id,
-          message.content || ""
-        );
-      }
-    );
-
-    menu.appendChild(
-      editButton
-    );
-
-    const deleteButton =
-      document.createElement("button");
-
-    deleteButton.type="button";
-
-    deleteButton.className =
-      "delete-button";
-
-    deleteButton.textContent =
-      "🗑️ 削除";
-
-    deleteButton.addEventListener(
-      "click",
-      async event=>{
-
-        event.stopPropagation();
-
-        menu.style.display="none";
-
-        await deleteMessage(
-          message.id
-        );
-      }
-    );
-
-    menu.appendChild(
-      deleteButton
-    );
-  }
-
-  const picker =
-    document.createElement("div");
-
-  picker.className =
-    "reaction-picker";
-
-  [
-    "👍",
-    "❤️",
-    "😂",
-    "😮",
-    "😢",
-    "👏"
-  ].forEach(
-    reaction=>{
-
-      const button =
-        document.createElement("button");
-
-      button.type="button";
-
-      button.textContent =
-        reaction;
-
-      button.addEventListener(
-        "click",
-        async event=>{
-
-          event.stopPropagation();
-
-          await addReaction(
-            message.id,
-            reaction
-          );
-
-          picker.style.display="none";
-          menu.style.display="none";
-        }
-      );
-
-      picker.appendChild(button);
-    }
-  );
-
-  reactionButton.addEventListener(
-    "click",
-    event=>{
-
-      event.stopPropagation();
-
-      picker.style.display =
-        picker.style.display === "flex"
-        ? "none"
-        : "flex";
-    }
-  );
-
-  replyButton.addEventListener(
-    "click",
-    event=>{
-
-      event.stopPropagation();
-
-      startReply(message);
-
-      menu.style.display="none";
-      picker.style.display="none";
-    }
-  );
-
-  box.appendChild(menu);
-  box.appendChild(picker);
-
-  box.addEventListener(
-    "click",
-    event=>{
-
-      if(
-        event.target.closest(
-          ".message-menu"
-        ) ||
-        event.target.closest(
-          ".reaction-picker"
-        )
-      ){
-        return;
-      }
-
-      document
-        .querySelectorAll(
-          ".message-menu"
-        )
-        .forEach(
-          el=>{
-            if(el !== menu){
-              el.style.display="none";
-            }
-          }
-        );
-
-      document
-        .querySelectorAll(
-          ".reaction-picker"
-        )
-        .forEach(
-          el=>{
-            if(el !== picker){
-              el.style.display="none";
-            }
-          }
-        );
-
-      menu.style.display =
-        menu.style.display === "block"
-        ? "none"
-        : "block";
-    }
-  );
-
-  row.appendChild(box);
-
-  if(fragment){
-    fragment.appendChild(row);
-  }else{
-    messages.appendChild(row);
-  }
-
-  if(
-    message.sender_id !==
-    currentUsername
-  ){
-    await markMessageRead(
-      message.id
-    );
-  }
-
-  return row;
+signedUrls[
+message.id
+] =
+data.signedUrl;
+}
+
+}catch(error){
+
+console.error(
+"画像URL取得エラー:",
+error
+);
+}
+})
+);
+
+return {
+replies:
+replies || [],
+reactions:
+reactions || [],
+signedUrls
+};
 }
 
 
 /* =========================
-   メッセージ読み込み
+   メッセージDOM作成
+========================= */
+
+function buildMessageElement(
+message,
+extras
+){
+
+const profile =
+profileCache[
+message.sender_id
+] || null;
+
+const row =
+document.createElement("div");
+
+row.className =
+"message-row";
+
+row.dataset.messageId =
+message.id;
+
+row.appendChild(
+createAvatarSync(profile)
+);
+
+const box =
+document.createElement("div");
+
+box.className="message";
+
+const sender =
+document.createElement("div");
+
+sender.className="sender";
+
+sender.textContent =
+profile?.name ||
+message.sender_id;
+
+box.appendChild(sender);
+
+if(message.is_deleted){
+
+const deleted =
+document.createElement("div");
+
+deleted.className =
+"deleted-message";
+
+deleted.textContent =
+"このメッセージは削除されました";
+
+box.appendChild(deleted);
+
+}else{
+
+if(message.content){
+
+const content =
+document.createElement("div");
+
+content.className="content";
+
+content.innerHTML =
+renderMentions(
+message.content
+);
+
+box.appendChild(content);
+}
+
+if(
+extras.signedUrls[
+message.id
+]
+){
+
+const img =
+document.createElement("img");
+
+img.className="chat-image";
+
+img.src =
+extras.signedUrls[
+message.id
+];
+
+img.alt="送信画像";
+
+box.appendChild(img);
+}
+
+if(message.edited_at){
+
+const edited =
+document.createElement("span");
+
+edited.className =
+"edited-label";
+
+edited.textContent =
+"編集済み";
+
+sender.appendChild(
+edited
+);
+}
+}
+
+
+/* 返信 */
+
+const replies =
+extras.replies.filter(
+reply =>
+String(
+reply.group_message_id
+) === String(message.id)
+);
+
+replies.forEach(
+reply=>{
+
+const preview =
+document.createElement("div");
+
+preview.className =
+"reply-preview";
+
+const replyProfile =
+profileCache[
+reply.sender_id
+] || null;
+
+const strong =
+document.createElement("strong");
+
+strong.textContent =
+replyProfile?.name ||
+reply.sender_id;
+
+preview.appendChild(
+strong
+);
+
+preview.appendChild(
+document.createTextNode(
+"：" +
+(reply.content || "")
+)
+);
+
+box.appendChild(
+preview
+);
+});
+
+
+/* リアクション */
+
+const reactionRows =
+extras.reactions.filter(
+reaction =>
+String(
+reaction.group_message_id
+) === String(message.id)
+);
+
+if(reactionRows.length){
+
+const reactionMap={};
+
+reactionRows.forEach(
+row=>{
+
+if(
+!reactionMap[
+row.reaction
+]
+){
+
+reactionMap[
+row.reaction
+]=0;
+}
+
+reactionMap[
+row.reaction
+]++;
+}
+);
+
+const reactions =
+document.createElement("div");
+
+reactions.className =
+"reactions";
+
+Object.entries(
+reactionMap
+).forEach(
+([reaction,count])=>{
+
+const item =
+document.createElement("div");
+
+item.className =
+"reaction-item";
+
+item.textContent =
+reaction +
+" " +
+count;
+
+reactions.appendChild(
+item
+);
+}
+);
+
+box.appendChild(
+reactions
+);
+}
+
+
+/* 既読 */
+
+if(
+message.sender_id ===
+currentUsername
+){
+
+const read =
+document.createElement("div");
+
+read.dataset.readMessageId =
+message.id;
+
+read.className =
+"read-status";
+
+const count =
+groupReadCounts[
+String(message.id)
+] || 0;
+
+read.textContent =
+count > 0
+? "既読 " + count + "人"
+: "";
+
+read.style.display =
+count > 0
+? "block"
+: "none";
+
+box.appendChild(read);
+}
+
+
+/* メニュー */
+
+const menu =
+document.createElement("div");
+
+menu.className =
+"message-menu";
+
+const reactionButton =
+document.createElement("button");
+
+reactionButton.type="button";
+
+reactionButton.textContent =
+"😀 リアクション";
+
+menu.appendChild(
+reactionButton
+);
+
+const replyButton =
+document.createElement("button");
+
+replyButton.type="button";
+
+replyButton.textContent =
+"↩️ 返信";
+
+menu.appendChild(
+replyButton
+);
+
+if(
+message.sender_id ===
+currentUsername &&
+!message.is_deleted
+){
+
+const editButton =
+document.createElement("button");
+
+editButton.type="button";
+
+editButton.className =
+"edit-button";
+
+editButton.textContent =
+"✏️ 編集";
+
+editButton.addEventListener(
+"click",
+async event=>{
+
+event.stopPropagation();
+
+menu.style.display="none";
+
+await editMessage(
+message.id,
+message.content || ""
+);
+}
+);
+
+menu.appendChild(
+editButton
+);
+
+const deleteButton =
+document.createElement("button");
+
+deleteButton.type="button";
+
+deleteButton.className =
+"delete-button";
+
+deleteButton.textContent =
+"🗑️ 削除";
+
+deleteButton.addEventListener(
+"click",
+async event=>{
+
+event.stopPropagation();
+
+menu.style.display="none";
+
+await deleteMessage(
+message.id
+);
+}
+);
+
+menu.appendChild(
+deleteButton
+);
+}
+
+
+/* リアクション選択 */
+
+const picker =
+document.createElement("div");
+
+picker.className =
+"reaction-picker";
+
+[
+"👍",
+"❤️",
+"😂",
+"😮",
+"😢",
+"👏"
+].forEach(
+reaction=>{
+
+const button =
+document.createElement("button");
+
+button.type="button";
+
+button.textContent =
+reaction;
+
+button.addEventListener(
+"click",
+async event=>{
+
+event.stopPropagation();
+
+await addReaction(
+message.id,
+reaction
+);
+
+picker.style.display="none";
+menu.style.display="none";
+}
+);
+
+picker.appendChild(
+button
+);
+});
+
+reactionButton.addEventListener(
+"click",
+event=>{
+
+event.stopPropagation();
+
+picker.style.display =
+picker.style.display === "flex"
+? "none"
+: "flex";
+});
+
+replyButton.addEventListener(
+"click",
+event=>{
+
+event.stopPropagation();
+
+startReply(message);
+
+menu.style.display="none";
+picker.style.display="none";
+});
+
+box.appendChild(menu);
+box.appendChild(picker);
+
+box.addEventListener(
+"click",
+event=>{
+
+if(
+event.target.closest(
+".message-menu"
+) ||
+event.target.closest(
+".reaction-picker"
+)
+){
+return;
+}
+
+document
+.querySelectorAll(
+".message-menu"
+)
+.forEach(
+el=>{
+if(el !== menu){
+el.style.display="none";
+}
+});
+
+document
+.querySelectorAll(
+".reaction-picker"
+)
+.forEach(
+el=>{
+if(el !== picker){
+el.style.display="none";
+}
+});
+
+menu.style.display =
+menu.style.display === "block"
+? "none"
+: "block";
+});
+
+row.appendChild(box);
+
+return row;
+}
+
+
+/* =========================
+   高速メッセージ描画
+========================= */
+
+async function renderMessages(
+list,
+keepBottom=true
+){
+
+if(!list.length){
+
+messages.innerHTML =
+'<div class="member-empty">まだメッセージはありません</div>';
+
+return;
+}
+
+const extras =
+await fetchMessageExtras(
+list
+);
+
+const fragment =
+document.createDocumentFragment();
+
+const unreadIds=[];
+
+list.forEach(
+message=>{
+
+const row =
+buildMessageElement(
+message,
+extras
+);
+
+fragment.appendChild(row);
+
+if(
+message.sender_id !==
+currentUsername
+){
+
+unreadIds.push(
+message.id
+);
+}
+}
+);
+
+messages.innerHTML="";
+messages.appendChild(
+fragment
+);
+
+if(keepBottom){
+
+requestAnimationFrame(
+scrollToBottom
+);
+}
+
+/*
+  既読登録は画面描画後に一括。
+  表示を待たせない。
+*/
+if(unreadIds.length){
+
+void markMessagesRead(
+unreadIds
+);
+}
+}
+
+
+/* =========================
+   メッセージ全体読み込み
 ========================= */
 
 async function loadMessages(){
 
-  if(!groupId){
-    return;
-  }
+if(!groupId){
+return;
+}
 
-  const keepBottom =
-    isNearBottom();
+if(loadingMessages){
+return;
+}
 
-  const {data,error} =
-    await supabaseClient
-    .from("group_messages")
-    .select(
-      "id,group_id,sender_id,content,image_url,created_at,is_deleted,edited_at"
-    )
-    .eq(
-      "group_id",
-      groupId
-    )
-    .order(
-      "created_at",
-      {ascending:true}
-    );
+loadingMessages=true;
 
-  if(error){
+const keepBottom =
+isNearBottom();
 
-    console.error(
-      "メッセージ取得エラー:",
-      error
-    );
+try{
 
-    messages.innerHTML =
-      '<div class="error">メッセージを読み込めませんでした</div>';
+const {data,error} =
+await supabaseClient
+.from("group_messages")
+.select(
+"id,group_id,sender_id,content,image_url,created_at,is_deleted,edited_at"
+)
+.eq(
+"group_id",
+groupId
+)
+.order(
+"created_at",
+{ascending:true}
+);
 
-    return;
-  }
+if(error){
 
-  messages.innerHTML="";
+console.error(
+"メッセージ取得エラー:",
+error
+);
 
-  const list =
-    data || [];
+messages.innerHTML =
+'<div class="error">メッセージを読み込めませんでした</div>';
 
-  if(!list.length){
+return;
+}
 
-    messages.innerHTML =
-      '<div class="member-empty">まだメッセージはありません</div>';
+await renderMessages(
+data || [],
+keepBottom
+);
 
-    return;
-  }
+await loadGroupReadCounts();
 
-  const fragment =
-    document.createDocumentFragment();
+}catch(error){
 
-  for(
-    const message of list
-  ){
+console.error(
+"高速メッセージ読み込みエラー:",
+error
+);
 
-    await addMessage(
-      message,
-      fragment
-    );
-  }
+}finally{
 
-  messages.appendChild(
-    fragment
-  );
+loadingMessages=false;
+}
+}
 
-  if(keepBottom){
-    requestAnimationFrame(
-      scrollToBottom
-    );
-  }
 
-  await loadGroupReadCounts();
+/* =========================
+   1件更新
+========================= */
+
+async function refreshSingleMessage(
+messageId
+){
+
+const wasBottom =
+isNearBottom();
+
+const {data,error} =
+await supabaseClient
+.from("group_messages")
+.select(
+"id,group_id,sender_id,content,image_url,created_at,is_deleted,edited_at"
+)
+.eq(
+"id",
+messageId
+)
+.eq(
+"group_id",
+groupId
+)
+.maybeSingle();
+
+if(error){
+
+console.error(error);
+return;
+}
+
+if(!data){
+return;
+}
+
+const old =
+messages.querySelector(
+`[data-message-id="${messageId}"]`
+);
+
+if(!old){
+await loadMessages();
+return;
+}
+
+const extras =
+await fetchMessageExtras(
+[data]
+);
+
+const newRow =
+buildMessageElement(
+data,
+extras
+);
+
+old.replaceWith(
+newRow
+);
+
+if(wasBottom){
+scrollToBottom();
+}
+
+await loadGroupReadCounts();
 }
 
 
@@ -2590,64 +3055,82 @@ async function loadMessages(){
 ========================= */
 
 async function addReaction(
-  messageId,
-  reaction
+messageId,
+reaction
 ){
 
-  const {data:existing,error:
-    existingError} =
-    await supabaseClient
-    .from("group_reactions")
-    .select("id")
-    .eq(
-      "group_message_id",
-      messageId
-    )
-    .eq(
-      "user_id",
-      currentUsername
-    )
-    .eq(
-      "reaction",
-      reaction
-    )
-    .maybeSingle();
+const {data:existing,error:
+existingError} =
+await supabaseClient
+.from("group_reactions")
+.select("id")
+.eq(
+"group_message_id",
+messageId
+)
+.eq(
+"user_id",
+currentUsername
+)
+.eq(
+"reaction",
+reaction
+)
+.maybeSingle();
 
-  if(existingError){
-    console.error(existingError);
-  }
+if(existingError){
 
-  if(existing){
+console.error(
+existingError
+);
 
-    await supabaseClient
-      .from("group_reactions")
-      .delete()
-      .eq(
-        "id",
-        existing.id
-      );
+return;
+}
 
-  }else{
+if(existing){
 
-    const {error} =
-      await supabaseClient
-      .from("group_reactions")
-      .insert({
-        group_message_id:
-          messageId,
-        user_id:
-          currentUsername,
-        reaction:
-          reaction
-      });
+const {error} =
+await supabaseClient
+.from("group_reactions")
+.delete()
+.eq(
+"id",
+existing.id
+);
 
-    if(error){
-      console.error(error);
-      return;
-    }
-  }
+if(error){
+console.error(error);
+return;
+}
 
-  await loadMessages();
+}else{
+
+const {error} =
+await supabaseClient
+.from("group_reactions")
+.insert({
+group_message_id:
+messageId,
+user_id:
+currentUsername,
+reaction:
+reaction
+});
+
+if(error){
+
+console.error(error);
+return;
+}
+}
+
+/*
+  全件再読み込みをやめて
+  対象メッセージだけ更新。
+*/
+await refreshSingleMessage(
+messageId
+);
 }
 
 
@@ -2657,41 +3140,44 @@ async function addReaction(
 
 function startReply(message){
 
-  replyingToMessage =
-    message;
+replyingToMessage =
+message;
 
-  editingMessage=null;
+editingMessage=null;
 
-  replyArea.style.display =
-    "block";
+replyArea.style.display =
+"block";
 
-  const profile =
-    profileCache[
-      message.sender_id
-    ];
+const profile =
+profileCache[
+message.sender_id
+];
 
-  replyText.innerHTML =
-    "<strong>" +
-    (
-      profile?.name ||
-      message.sender_id
-    ) +
-    "</strong>：" +
-    renderMentions(
-      message.content ||
-      "画像"
-    );
+replyText.innerHTML =
+"<strong>" +
+(
+profile?.name ||
+message.sender_id
+) +
+"</strong>：" +
+renderMentions(
+message.content ||
+"画像"
+);
 
-  messageInput.focus();
+messageInput.focus();
 }
 
 cancelReplyButton.addEventListener(
-  "click",
-  ()=>{
-    replyingToMessage=null;
-    replyArea.style.display="none";
-    replyText.textContent="";
-  }
+"click",
+()=>{
+
+replyingToMessage=null;
+
+replyArea.style.display="none";
+
+replyText.textContent="";
+}
 );
 
 
@@ -2701,218 +3187,218 @@ cancelReplyButton.addEventListener(
 
 function updateMentionList(){
 
-  const value =
-    messageInput.value;
+const value =
+messageInput.value;
 
-  const cursor =
-    messageInput.selectionStart;
+const cursor =
+messageInput.selectionStart;
 
-  const before =
-    value.slice(
-      0,
-      cursor
-    );
+const before =
+value.slice(
+0,
+cursor
+);
 
-  const match =
-    before.match(
-      /@([a-zA-Z0-9_\-]*)$/
-    );
+const match =
+before.match(
+/@([a-zA-Z0-9_\-]*)$/
+);
 
-  if(!match){
+if(!match){
 
-    mentionList.classList.remove(
-      "show"
-    );
+mentionList.classList.remove(
+"show"
+);
 
-    return;
-  }
+return;
+}
 
-  const keyword =
-    match[1].toLowerCase();
+const keyword =
+match[1].toLowerCase();
 
-  const members =
-    groupMembersCache.filter(
-      member =>
-        member.user_id
-          .toLowerCase()
-          .includes(keyword)
-    );
+const members =
+groupMembersCache.filter(
+member =>
+member.user_id
+.toLowerCase()
+.includes(keyword)
+);
 
-  if(!members.length){
+if(!members.length){
 
-    mentionList.classList.remove(
-      "show"
-    );
+mentionList.classList.remove(
+"show"
+);
 
-    return;
-  }
+return;
+}
 
-  mentionList.innerHTML="";
+mentionList.innerHTML="";
 
-  members
-    .slice(0,10)
-    .forEach(
-      member=>{
+members
+.slice(0,10)
+.forEach(
+member=>{
 
-        const button =
-          document.createElement("button");
+const button =
+document.createElement("button");
 
-        button.type="button";
+button.type="button";
 
-        button.className =
-          "mention-item";
+button.className =
+"mention-item";
 
-        const profile =
-          profileCache[
-            member.user_id
-          ];
+const profile =
+profileCache[
+member.user_id
+];
 
-        const avatar =
-          document.createElement("div");
+const avatar =
+document.createElement("div");
 
-        avatar.className =
-          "mention-avatar";
+avatar.className =
+"mention-avatar";
 
-        if(profile?.avatar_url){
+if(profile?.avatar_url){
 
-          const img =
-            document.createElement("img");
+const img =
+document.createElement("img");
 
-          img.src =
-            profile.avatar_url;
+img.src =
+profile.avatar_url;
 
-          img.alt =
-            "プロフィール画像";
+img.alt =
+"プロフィール画像";
 
-          avatar.appendChild(img);
+avatar.appendChild(img);
 
-        }else{
+}else{
 
-          avatar.textContent="👤";
-        }
+avatar.textContent="👤";
+}
 
-        const info =
-          document.createElement("div");
+const info =
+document.createElement("div");
 
-        const name =
-          document.createElement("div");
+const name =
+document.createElement("div");
 
-        name.className =
-          "mention-name";
+name.className =
+"mention-name";
 
-        name.textContent =
-          profile?.name ||
-          member.user_id;
+name.textContent =
+profile?.name ||
+member.user_id;
 
-        const id =
-          document.createElement("div");
+const id =
+document.createElement("div");
 
-        id.className =
-          "mention-id";
+id.className =
+"mention-id";
 
-        id.textContent =
-          "@" +
-          member.user_id;
+id.textContent =
+"@" +
+member.user_id;
 
-        info.appendChild(name);
-        info.appendChild(id);
+info.appendChild(name);
+info.appendChild(id);
 
-        button.appendChild(avatar);
-        button.appendChild(info);
+button.appendChild(avatar);
+button.appendChild(info);
 
-        button.addEventListener(
-          "click",
-          ()=>{
+button.addEventListener(
+"click",
+()=>{
 
-            const start =
-              cursor -
-              match[0].length;
+const start =
+cursor -
+match[0].length;
 
-            const current =
-              messageInput.value;
+const current =
+messageInput.value;
 
-            messageInput.value =
-              current.slice(0,start) +
-              "@" +
-              member.user_id +
-              " " +
-              current.slice(cursor);
+messageInput.value =
+current.slice(0,start) +
+"@" +
+member.user_id +
+" " +
+current.slice(cursor);
 
-            mentionList.classList.remove(
-              "show"
-            );
+mentionList.classList.remove(
+"show"
+);
 
-            messageInput.focus();
+messageInput.focus();
 
-            const newCursor =
-              start +
-              member.user_id.length +
-              2;
+const newCursor =
+start +
+member.user_id.length +
+2;
 
-            messageInput.setSelectionRange(
-              newCursor,
-              newCursor
-            );
-          }
-        );
+messageInput.setSelectionRange(
+newCursor,
+newCursor
+);
+}
+);
 
-        mentionList.appendChild(
-          button
-        );
-      }
-    );
+mentionList.appendChild(
+button
+);
+}
+);
 
-  mentionList.classList.add(
-    "show"
-  );
+mentionList.classList.add(
+"show"
+);
 }
 
 messageInput.addEventListener(
-  "input",
-  updateMentionList
+"input",
+updateMentionList
 );
 
 messageInput.addEventListener(
-  "click",
-  updateMentionList
+"click",
+updateMentionList
 );
 
 messageInput.addEventListener(
-  "keyup",
-  updateMentionList
+"keyup",
+updateMentionList
 );
 
 
 /* =========================
-   画像選択
+   画像
 ========================= */
 
 imageButton.addEventListener(
-  "click",
-  ()=>{
-    if(currentMute){
-      return;
-    }
+"click",
+()=>{
 
-    imageInput.click();
-  }
-);
+if(currentMute){
+return;
+}
+
+imageInput.click();
+});
 
 imageInput.addEventListener(
-  "change",
-  async ()=>{
+"change",
+async ()=>{
 
-    const file =
-      imageInput.files?.[0];
+const file =
+imageInput.files?.[0];
 
-    if(!file){
-      return;
-    }
+if(!file){
+return;
+}
 
-    await sendImage(file);
+await sendImage(file);
 
-    imageInput.value="";
-  }
+imageInput.value="";
+}
 );
 
 
@@ -2922,96 +3408,135 @@ imageInput.addEventListener(
 
 async function sendMessage(){
 
-  if(currentMute){
+if(currentMute){
 
-    alert(
-      "現在、発言禁止中です"
-    );
+alert(
+"現在、発言禁止中です"
+);
 
-    return;
-  }
+return;
+}
 
-  const value =
-    messageInput.value.trim();
+const value =
+messageInput.value.trim();
 
-  if(!value){
-    return;
-  }
+if(!value){
+return;
+}
 
-  sendButton.disabled=true;
+sendButton.disabled=true;
 
-  const replyTarget =
-    replyingToMessage;
+try{
 
-  const {data,error} =
-    await supabaseClient
-    .from("group_messages")
-    .insert({
-      group_id:
-        Number(groupId),
-      sender_id:
-        currentUsername,
-      content:
-        value
-    })
-    .select()
-    .single();
+const replyTarget =
+replyingToMessage;
 
-  if(error){
+const {data,error} =
+await supabaseClient
+.from("group_messages")
+.insert({
+group_id:
+Number(groupId),
+sender_id:
+currentUsername,
+content:
+value
+})
+.select(
+"id,group_id,sender_id,content,image_url,created_at,is_deleted,edited_at"
+)
+.single();
 
-    console.error(error);
+if(error){
 
-    alert(
-      "メッセージ送信に失敗しました"
-    );
+console.error(error);
 
-    sendButton.disabled=false;
+alert(
+"メッセージ送信に失敗しました"
+);
 
-    return;
-  }
+return;
+}
 
-  messageInput.value="";
+messageInput.value="";
 
-  mentionList.classList.remove(
-    "show"
-  );
+mentionList.classList.remove(
+"show"
+);
 
-  replyingToMessage=null;
-  replyArea.style.display="none";
+replyingToMessage=null;
+replyArea.style.display="none";
 
-  if(replyTarget){
+if(replyTarget){
 
-    const {error:replyError} =
-      await supabaseClient
-      .from("group_replies")
-      .insert({
-        group_message_id:
-          data.id,
-        sender_id:
-          currentUsername,
-        content:
-          replyTarget.content ||
-          "画像"
-      });
+const {error:replyError} =
+await supabaseClient
+.from("group_replies")
+.insert({
+group_message_id:
+data.id,
+sender_id:
+currentUsername,
+content:
+replyTarget.content ||
+"画像"
+});
 
-    if(replyError){
-      console.error(
-        "返信保存エラー:",
-        replyError
-      );
-    }
-  }
+if(replyError){
 
-  await sendMentionNotifications(
-    value,
-    data.id
-  );
+console.error(
+"返信保存エラー:",
+replyError
+);
+}
+}
 
-  await loadMessages();
+/*
+  通知は画面表示を待たせない。
+*/
+void sendMentionNotifications(
+value,
+data.id
+);
 
-  scrollToBottom();
+/*
+  Realtimeで入るので
+  全件再読み込みしない。
+*/
+const exists =
+messages.querySelector(
+`[data-message-id="${data.id}"]`
+);
 
-  sendButton.disabled=false;
+if(!exists){
+
+const extras =
+await fetchMessageExtras(
+[data]
+);
+
+const row =
+buildMessageElement(
+data,
+extras
+);
+
+messages.appendChild(row);
+}
+
+scrollToBottom();
+
+}catch(error){
+
+console.error(
+"送信エラー:",
+error
+);
+
+}finally{
+
+sendButton.disabled=false;
+}
 }
 
 
@@ -3021,127 +3546,155 @@ async function sendMessage(){
 
 async function sendImage(file){
 
-  if(currentMute){
+if(currentMute){
 
-    alert(
-      "現在、発言禁止中です"
-    );
+alert(
+"現在、発言禁止中です"
+);
 
-    return;
-  }
+return;
+}
 
-  if(!file.type.startsWith("image/")){
+if(!file.type.startsWith("image/")){
 
-    alert(
-      "画像ファイルを選択してください"
-    );
+alert(
+"画像ファイルを選択してください"
+);
 
-    return;
-  }
+return;
+}
 
-  imageButton.disabled=true;
+imageButton.disabled=true;
 
-  try{
+try{
 
-    const extension =
-      file.name
-        .split(".")
-        .pop()
-        .toLowerCase();
+const extension =
+file.name
+.split(".")
+.pop()
+.toLowerCase();
 
-    const filePath =
-      currentUsername +
-      "/" +
-      groupId +
-      "/" +
-      Date.now() +
-      "-" +
-      Math.random()
-        .toString(36)
-        .slice(2) +
-      "." +
-      extension;
+const filePath =
+currentUsername +
+"/" +
+groupId +
+"/" +
+Date.now() +
+"-" +
+Math.random()
+.toString(36)
+.slice(2) +
+"." +
+extension;
 
-    const {error:uploadError} =
-      await supabaseClient
-      .storage
-      .from("chat-images")
-      .upload(
-        filePath,
-        file,
-        {
-          upsert:false
-        }
-      );
+const {error:uploadError} =
+await supabaseClient
+.storage
+.from("chat-images")
+.upload(
+filePath,
+file,
+{
+upsert:false
+}
+);
 
-    if(uploadError){
+if(uploadError){
 
-      console.error(
-        uploadError
-      );
+console.error(
+uploadError
+);
 
-      alert(
-        "画像のアップロードに失敗しました"
-      );
+alert(
+"画像のアップロードに失敗しました"
+);
 
-      return;
-    }
+return;
+}
 
-    const {data,error} =
-      await supabaseClient
-      .from("group_messages")
-      .insert({
-        group_id:
-          Number(groupId),
-        sender_id:
-          currentUsername,
-        content:"",
-        image_url:
-          filePath
-      })
-      .select()
-      .single();
+const {data,error} =
+await supabaseClient
+.from("group_messages")
+.insert({
+group_id:
+Number(groupId),
+sender_id:
+currentUsername,
+content:"",
+image_url:
+filePath
+})
+.select(
+"id,group_id,sender_id,content,image_url,created_at,is_deleted,edited_at"
+)
+.single();
 
-    if(error){
+if(error){
 
-      console.error(error);
+console.error(error);
 
-      alert(
-        "画像メッセージの送信に失敗しました"
-      );
+alert(
+"画像メッセージの送信に失敗しました"
+);
 
-      return;
-    }
+return;
+}
 
-    await loadMessages();
+const exists =
+messages.querySelector(
+`[data-message-id="${data.id}"]`
+);
 
-    scrollToBottom();
+if(!exists){
 
-  }finally{
+const extras =
+await fetchMessageExtras(
+[data]
+);
 
-    imageButton.disabled=false;
-  }
+const row =
+buildMessageElement(
+data,
+extras
+);
+
+messages.appendChild(row);
+}
+
+scrollToBottom();
+
+}catch(error){
+
+console.error(
+"画像送信エラー:",
+error
+);
+
+}finally{
+
+imageButton.disabled=false;
+}
 }
 
 sendButton.addEventListener(
-  "click",
-  sendMessage
+"click",
+sendMessage
 );
 
 messageInput.addEventListener(
-  "keydown",
-  event=>{
+"keydown",
+event=>{
 
-    if(
-      event.key === "Enter" &&
-      !event.shiftKey
-    ){
+if(
+event.key === "Enter" &&
+!event.shiftKey
+){
 
-      event.preventDefault();
+event.preventDefault();
 
-      sendMessage();
-    }
-  }
+sendMessage();
+}
+}
 );
 
 
@@ -3150,74 +3703,78 @@ messageInput.addEventListener(
 ========================= */
 
 async function sendMentionNotifications(
-  text,
-  messageId
+text,
+messageId
 ){
 
-  const mentioned =
-    [];
+const mentioned=[];
 
-  const regex =
-    /@([a-zA-Z0-9_\-]+)/g;
+const regex =
+/@([a-zA-Z0-9_\-]+)/g;
 
-  let match;
+let match;
 
-  while(
-    (match = regex.exec(text))
-  ){
+while(
+(match = regex.exec(text))
+){
 
-    const username =
-      match[1];
+const username =
+match[1];
 
-    if(
-      username !== currentUsername &&
-      groupMembersCache.some(
-        member =>
-          member.user_id === username
-      ) &&
-      !mentioned.includes(username)
-    ){
+if(
+username !== currentUsername &&
+groupMembersCache.some(
+member =>
+member.user_id === username
+) &&
+!mentioned.includes(username)
+){
 
-      mentioned.push(username);
-    }
-  }
+mentioned.push(username);
+}
+}
 
-  if(!mentioned.length){
-    return;
-  }
+if(!mentioned.length){
+return;
+}
 
-  const rows =
-    mentioned.map(
-      username=>({
-        user_id:
-          username,
-        type:
-          "mention",
-        title:
-          "グループでメンションされました",
-        message:
-          currentUsername +
-          "さんがあなたをメンションしました",
-        link:
-          "group_chat.html?id=" +
-          encodeURIComponent(
-            groupId
-          ),
-        is_read:false
-      })
-    );
+const rows =
+mentioned.map(
+username=>({
 
-  const {error} =
-    await supabaseClient
-    .from("notifications")
-    .insert(rows);
+user_id:
+username,
 
-  if(error){
-    console.error(
-      "メンション通知エラー:",
-      error
-    );
-  }
+type:
+"mention",
+
+title:
+"グループでメンションされました",
+
+message:
+currentUsername +
+"さんがあなたをメンションしました",
+
+link:
+"group_chat.html?id=" +
+encodeURIComponent(groupId),
+
+is_read:false
+})
+);
+
+const {error} =
+await supabaseClient
+.from("notifications")
+.insert(rows);
+
+if(error){
+
+console.error(
+"メンション通知エラー:",
+error
+);
+}
 }
 
 
@@ -3227,442 +3784,471 @@ async function sendMentionNotifications(
 
 async function loadMembers(){
 
-  memberList.innerHTML =
-    '<div class="member-loading">読み込み中...</div>';
-
-  const {data:members,error} =
-    await supabaseClient
-    .from("group_members")
-    .select(
-      "id,group_id,user_id,role,created_at"
-    )
-    .eq(
-      "group_id",
-      groupId
-    )
-    .order(
-      "created_at",
-      {ascending:true}
-    );
+memberList.innerHTML =
+'<div class="member-loading">読み込み中...</div>';
+
+const {data:members,error} =
+await supabaseClient
+.from("group_members")
+.select(
+"id,group_id,user_id,role,created_at"
+)
+.eq(
+"group_id",
+groupId
+)
+.order(
+"created_at",
+{ascending:true}
+);
+
+if(error){
+
+console.error(error);
+
+memberList.innerHTML =
+'<div class="member-empty">メンバーを読み込めませんでした</div>';
+
+return;
+}
+
+if(!members?.length){
+
+memberList.innerHTML =
+'<div class="member-empty">メンバーがいません</div>';
+
+return;
+}
+
+const usernames =
+members.map(
+member =>
+member.user_id
+);
 
-  if(error){
+const {data:presenceData} =
+await supabaseClient
+.from("user_presence")
+.select(
+"user_id,last_seen"
+)
+.in(
+"user_id",
+usernames
+);
 
-    console.error(error);
+const presenceMap={};
 
-    memberList.innerHTML =
-      '<div class="member-empty">メンバーを読み込めませんでした</div>';
+(presenceData || [])
+.forEach(
+item=>{
+presenceMap[
+item.user_id
+] =
+item.last_seen;
+}
+);
 
-    return;
-  }
+await getProfiles(
+usernames
+);
 
-  if(!members?.length){
+const itemKeys =
+usernames.map(
+username =>
+profileCache[
+username
+]?.equipped_item_key
+);
 
-    memberList.innerHTML =
-      '<div class="member-empty">メンバーがいません</div>';
+await getItems(itemKeys);
 
-    return;
-  }
+const fragment =
+document.createDocumentFragment();
 
-  const usernames =
-    members.map(
-      member =>
-        member.user_id
-    );
+members.forEach(
+member=>{
 
-  const {data:presenceData} =
-    await supabaseClient
-    .from("user_presence")
-    .select(
-      "user_id,last_seen"
-    )
-    .in(
-      "user_id",
-      usernames
-    );
+const profile =
+profileCache[
+member.user_id
+] || null;
 
-  const presenceMap={};
+const item =
+profile?.equipped_item_key
+? itemCache[
+profile.equipped_item_key
+]
+: null;
 
-  (presenceData || [])
-    .forEach(
-      item=>{
-        presenceMap[
-          item.user_id
-        ] = item.last_seen;
-      }
-    );
+const itemElement =
+document.createElement("div");
 
-  memberList.innerHTML="";
+itemElement.className =
+"member-item";
 
-  for(
-    const member of members
-  ){
+const iconFrame =
+document.createElement("div");
 
-    const profile =
-      await getProfile(
-        member.user_id
-      );
+iconFrame.className =
+"member-icon-frame";
 
-    const item =
-      await getEquippedItem(
-        profile?.equipped_item_key
-      );
+iconFrame.style.background =
+item?.frame_color ||
+"#eee8ff";
 
-    const itemElement =
-      document.createElement("div");
+const icon =
+document.createElement("div");
 
-    itemElement.className =
-      "member-item";
+icon.className =
+"member-icon";
 
-    const iconFrame =
-      document.createElement("div");
+if(profile?.avatar_url){
 
-    iconFrame.className =
-      "member-icon-frame";
+const img =
+document.createElement("img");
 
-    iconFrame.style.background =
-      item?.frame_color ||
-      "#eee8ff";
+img.src =
+profile.avatar_url;
 
-    const icon =
-      document.createElement("div");
+img.alt =
+"プロフィール画像";
 
-    icon.className =
-      "member-icon";
+icon.appendChild(img);
 
-    if(profile?.avatar_url){
+}else{
 
-      const img =
-        document.createElement("img");
+icon.textContent="👤";
+}
 
-      img.src =
-        profile.avatar_url;
+iconFrame.appendChild(icon);
 
-      img.alt =
-        "プロフィール画像";
+if(item?.icon){
 
-      icon.appendChild(img);
+const badge =
+document.createElement("div");
 
-    }else{
+badge.className =
+"member-icon-badge show";
 
-      icon.textContent="👤";
-    }
+badge.textContent =
+item.icon;
 
-    iconFrame.appendChild(icon);
+badge.style.border =
+"2px solid " +
+(
+item.frame_color ||
+"#eee8ff"
+);
 
-    if(item?.icon){
+iconFrame.appendChild(
+badge
+);
+}
 
-      const badge =
-        document.createElement("div");
+itemElement.appendChild(
+iconFrame
+);
 
-      badge.className =
-        "member-icon-badge show";
+const info =
+document.createElement("div");
 
-      badge.textContent =
-        item.icon;
+info.className =
+"member-info";
 
-      badge.style.border =
-        "2px solid " +
-        (
-          item.frame_color ||
-          "#eee8ff"
-        );
+const name =
+document.createElement("div");
 
-      iconFrame.appendChild(
-        badge
-      );
-    }
+name.className =
+"member-name";
 
-    itemElement.appendChild(
-      iconFrame
-    );
+name.textContent =
+profile?.name ||
+member.user_id;
 
-    const info =
-      document.createElement("div");
+info.appendChild(name);
 
-    info.className =
-      "member-info";
+const id =
+document.createElement("div");
 
-    const name =
-      document.createElement("div");
+id.className =
+"member-id";
 
-    name.className =
-      "member-name";
+id.textContent =
+"@" +
+member.user_id;
 
-    name.textContent =
-      profile?.name ||
-      member.user_id;
+info.appendChild(id);
 
-    info.appendChild(name);
+const lastSeen =
+presenceMap[
+member.user_id
+];
 
-    const id =
-      document.createElement("div");
+const online =
+isOnline(lastSeen);
 
-    id.className =
-      "member-id";
+const status =
+document.createElement("div");
 
-    id.textContent =
-      "@" +
-      member.user_id;
+status.className =
+"member-status " +
+(
+online
+? "online"
+: "offline"
+);
 
-    info.appendChild(id);
+status.textContent =
+online
+? "● オンライン"
+: "● オフライン";
 
-    const lastSeen =
-      presenceMap[
-        member.user_id
-      ];
+info.appendChild(status);
 
-    const status =
-      document.createElement("div");
+if(!online){
 
-    status.className =
-      "member-status " +
-      (
-        isOnline(lastSeen)
-        ? "online"
-        : "offline"
-      );
+const last =
+document.createElement("div");
 
-    status.textContent =
-      isOnline(lastSeen)
-      ? "● オンライン"
-      : "● オフライン";
+last.className =
+"last-online";
 
-    info.appendChild(status);
+last.textContent =
+formatLastOnline(
+lastSeen
+);
 
-    if(!isOnline(lastSeen)){
+info.appendChild(last);
+}
 
-      const last =
-        document.createElement("div");
+const roleBadge =
+document.createElement("div");
 
-      last.className =
-        "last-online";
+roleBadge.className =
+"role-badge";
 
-      last.textContent =
-        formatLastOnline(
-          lastSeen
-        );
+if(
+member.user_id ===
+groupOwnerId
+){
 
-      info.appendChild(last);
-    }
+roleBadge.classList.add(
+"role-owner"
+);
 
-    const roleBadge =
-      document.createElement("div");
+roleBadge.textContent =
+"👑 オーナー";
 
-    roleBadge.className =
-      "role-badge";
+}else if(
+member.role === "admin"
+){
 
-    if(
-      member.user_id ===
-      groupOwnerId
-    ){
+roleBadge.classList.add(
+"role-admin"
+);
 
-      roleBadge.classList.add(
-        "role-owner"
-      );
+roleBadge.textContent =
+"🛡️ 副管理者";
 
-      roleBadge.textContent =
-        "👑 オーナー";
+}else{
 
-    }else if(
-      member.role === "admin"
-    ){
+roleBadge.classList.add(
+"role-member"
+);
 
-      roleBadge.classList.add(
-        "role-admin"
-      );
+roleBadge.textContent =
+"メンバー";
+}
 
-      roleBadge.textContent =
-        "🛡️ 副管理者";
+info.appendChild(
+roleBadge
+);
 
-    }else{
+const mute =
+groupMutesCache.find(
+m =>
+m.user_id ===
+member.user_id &&
+new Date(
+m.muted_until
+).getTime() >
+Date.now()
+);
 
-      roleBadge.classList.add(
-        "role-member"
-      );
+if(mute){
 
-      roleBadge.textContent =
-        "メンバー";
-    }
+const muteStatus =
+document.createElement("div");
 
-    info.appendChild(
-      roleBadge
-    );
+muteStatus.className =
+"member-mute-status";
 
-    const mute =
-      groupMutesCache.find(
-        m =>
-          m.user_id ===
-            member.user_id &&
-          new Date(
-            m.muted_until
-          ).getTime() >
-            Date.now()
-      );
+muteStatus.textContent =
+"🔇 発言禁止中";
 
-    if(mute){
+info.appendChild(
+muteStatus
+);
+}
 
-      const muteStatus =
-        document.createElement("div");
 
-      muteStatus.className =
-        "member-mute-status";
+/* オーナーだけ副管理者変更 */
 
-      muteStatus.textContent =
-        "🔇 発言禁止中";
+if(
+currentUsername ===
+groupOwnerId &&
+member.user_id !==
+groupOwnerId
+){
 
-      info.appendChild(
-        muteStatus
-      );
-    }
+const roleControl =
+document.createElement("select");
 
-    /* オーナーだけ副管理者を変更 */
+roleControl.className =
+"role-control";
 
-    if(
-      currentUsername ===
-      groupOwnerId &&
-      member.user_id !==
-      groupOwnerId
-    ){
+const memberOption =
+document.createElement("option");
 
-      const roleControl =
-        document.createElement("select");
+memberOption.value =
+"member";
 
-      roleControl.className =
-        "role-control";
+memberOption.textContent =
+"通常メンバー";
 
-      const memberOption =
-        document.createElement("option");
+const adminOption =
+document.createElement("option");
 
-      memberOption.value =
-        "member";
+adminOption.value =
+"admin";
 
-      memberOption.textContent =
-        "通常メンバー";
+adminOption.textContent =
+"副管理者";
 
-      const adminOption =
-        document.createElement("option");
+roleControl.appendChild(
+memberOption
+);
 
-      adminOption.value =
-        "admin";
+roleControl.appendChild(
+adminOption
+);
 
-      adminOption.textContent =
-        "副管理者";
+roleControl.value =
+member.role === "admin"
+? "admin"
+: "member";
 
-      roleControl.appendChild(
-        memberOption
-      );
+roleControl.addEventListener(
+"change",
+async ()=>{
+await setDeputyAdmin(
+member.user_id,
+roleControl.value ===
+"admin"
+);
+}
+);
 
-      roleControl.appendChild(
-        adminOption
-      );
+info.appendChild(
+roleControl
+);
+}
 
-      roleControl.value =
-        member.role === "admin"
-        ? "admin"
-        : "member";
 
-      roleControl.addEventListener(
-        "change",
-        async ()=>{
-          await setDeputyAdmin(
-            member.user_id,
-            roleControl.value ===
-              "admin"
-          );
-        }
-      );
+/* 管理者の発言禁止 */
 
-      info.appendChild(
-        roleControl
-      );
-    }
+if(
+isGroupAdmin &&
+member.user_id !==
+currentUsername &&
+member.user_id !==
+groupOwnerId
+){
 
-    /* 管理者の発言禁止 */
+const muteControl =
+document.createElement("input");
 
-    if(
-      isGroupAdmin &&
-      member.user_id !==
-      currentUsername &&
-      member.user_id !==
-      groupOwnerId
-    ){
+muteControl.type="number";
 
-      const muteControl =
-        document.createElement("input");
+muteControl.min="1";
 
-      muteControl.type="number";
+muteControl.placeholder =
+"発言禁止（分）";
 
-      muteControl.min="1";
+muteControl.className =
+"mute-control";
 
-      muteControl.placeholder =
-        "発言禁止（分）";
+info.appendChild(
+muteControl
+);
 
-      muteControl.className =
-        "mute-control";
+const muteButton =
+document.createElement("button");
 
-      info.appendChild(
-        muteControl
-      );
+muteButton.type="button";
 
-      const muteButton =
-        document.createElement("button");
+muteButton.className =
+"mute-control";
 
-      muteButton.type="button";
+muteButton.textContent =
+"🔇 発言禁止";
 
-      muteButton.className =
-        "mute-control";
+muteButton.addEventListener(
+"click",
+async ()=>{
+await setMute(
+member.user_id,
+muteControl.value
+);
+}
+);
 
-      muteButton.textContent =
-        "🔇 発言禁止";
+info.appendChild(
+muteButton
+);
 
-      muteButton.addEventListener(
-        "click",
-        async ()=>{
-          await setMute(
-            member.user_id,
-            muteControl.value
-          );
-        }
-      );
+if(mute){
 
-      info.appendChild(
-        muteButton
-      );
+const clearButton =
+document.createElement("button");
 
-      if(mute){
+clearButton.type="button";
 
-        const clearButton =
-          document.createElement("button");
+clearButton.className =
+"mute-clear-button";
 
-        clearButton.type="button";
+clearButton.textContent =
+"🔊 発言禁止を解除";
 
-        clearButton.className =
-          "mute-clear-button";
+clearButton.addEventListener(
+"click",
+async ()=>{
+await clearMute(
+member.user_id
+);
+}
+);
 
-        clearButton.textContent =
-          "🔊 発言禁止を解除";
+info.appendChild(
+clearButton
+);
+}
+}
 
-        clearButton.addEventListener(
-          "click",
-          async ()=>{
-            await clearMute(
-              member.user_id
-            );
-          }
-        );
+itemElement.appendChild(
+info
+);
 
-        info.appendChild(
-          clearButton
-        );
-      }
-    }
+fragment.appendChild(
+itemElement
+);
+});
 
-    itemElement.appendChild(info);
-
-    memberList.appendChild(
-      itemElement
-    );
-  }
+memberList.innerHTML="";
+memberList.appendChild(
+fragment
+);
 }
 
 
@@ -3672,129 +4258,138 @@ async function loadMembers(){
 
 async function addMember(){
 
-  const username =
-    memberInput.value.trim();
+const username =
+memberInput.value.trim();
 
-  if(!username){
-    alert(
-      "ユーザーIDを入力してください"
-    );
-    return;
-  }
+if(!username){
 
-  if(
-    groupMembersCache.some(
-      member =>
-        member.user_id ===
-        username
-    )
-  ){
+alert(
+"ユーザーIDを入力してください"
+);
 
-    alert(
-      "すでにメンバーです"
-    );
-
-    return;
-  }
-
-  const {data:profile,error:
-    profileError} =
-    await supabaseClient
-    .from("profiles")
-    .select("user_id")
-    .eq(
-      "user_id",
-      username
-    )
-    .maybeSingle();
-
-  if(profileError){
-
-    console.error(
-      profileError
-    );
-
-    alert(
-      "ユーザー確認に失敗しました"
-    );
-
-    return;
-  }
-
-  if(!profile){
-
-    alert(
-      "そのユーザーIDは見つかりません"
-    );
-
-    return;
-  }
-
-  const {error} =
-    await supabaseClient
-    .from("group_members")
-    .insert({
-      group_id:
-        Number(groupId),
-      user_id:
-        username,
-      role:
-        "member"
-    });
-
-  if(error){
-
-    console.error(error);
-
-    alert(
-      "メンバー追加に失敗しました"
-    );
-
-    return;
-  }
-
-  memberInput.value="";
-
-  await loadGroupMembers();
-  await loadMembers();
+return;
 }
 
-addMemberButton.addEventListener(
-  "click",
-  addMember
+if(
+groupMembersCache.some(
+member =>
+member.user_id ===
+username
+)
+){
+
+alert(
+"すでにメンバーです"
 );
+
+return;
+}
+
+const {data:profile,error:
+profileError} =
+await supabaseClient
+.from("profiles")
+.select("user_id")
+.eq(
+"user_id",
+username
+)
+.maybeSingle();
+
+if(profileError){
+
+console.error(
+profileError
+);
+
+alert(
+"ユーザー確認に失敗しました"
+);
+
+return;
+}
+
+if(!profile){
+
+alert(
+"そのユーザーIDは見つかりません"
+);
+
+return;
+}
+
+const {error} =
+await supabaseClient
+.from("group_members")
+.insert({
+group_id:
+Number(groupId),
+user_id:
+username,
+role:
+"member"
+});
+
+if(error){
+
+console.error(error);
+
+alert(
+"メンバー追加に失敗しました"
+);
+
+return;
+}
+
+memberInput.value="";
+
+await loadGroupMembers();
+await loadMembers();
+}
 
 
 /* =========================
    モーダル
 ========================= */
 
-memberButton.addEventListener(
-  "click",
-  async ()=>{
-    memberModal.style.display =
-      "flex";
+addMemberButton.addEventListener(
+"click",
+addMember
+);
 
-    await loadMembers();
-  }
+memberButton.addEventListener(
+"click",
+async ()=>{
+
+memberModal.style.display =
+"flex";
+
+await loadMembers();
+}
 );
 
 closeModalButton.addEventListener(
-  "click",
-  ()=>{
-    memberModal.style.display =
-      "none";
-  }
+"click",
+()=>{
+
+memberModal.style.display =
+"none";
+}
 );
 
 memberModal.addEventListener(
-  "click",
-  event=>{
-    if(event.target === memberModal){
-      memberModal.style.display =
-        "none";
-    }
-  }
+"click",
+event=>{
+
+if(
+event.target ===
+memberModal
+){
+
+memberModal.style.display =
+"none";
+}
+}
 );
 
 
@@ -3804,143 +4399,224 @@ memberModal.addEventListener(
 
 function setupRealtime(){
 
-  supabaseClient
-    .channel(
-      "group-chat-" +
-      groupId
-    )
+const channel =
+supabaseClient
+.channel(
+"group-chat-" +
+groupId
+);
 
-    .on(
-      "postgres_changes",
-      {
-        event:"INSERT",
-        schema:"public",
-        table:"group_messages",
-        filter:
-          "group_id=eq." +
-          groupId
-      },
-      async payload=>{
 
-        const message =
-          payload.new;
+/*
+  新着メッセージ
+  → 全件再読み込みしない。
+*/
+channel.on(
+"postgres_changes",
+{
+event:"INSERT",
+schema:"public",
+table:"group_messages",
+filter:
+"group_id=eq." +
+groupId
+},
+payload=>{
 
-        if(
-          messages.querySelector(
-            `[data-message-id="${message.id}"]`
-          )
-        ){
-          return;
-        }
+realtimeQueue =
+realtimeQueue.then(
+async ()=>{
 
-        const wasBottom =
-          isNearBottom();
+const message =
+payload.new;
 
-        await addMessage(
-          message
-        );
+if(
+messages.querySelector(
+`[data-message-id="${message.id}"]`
+)
+){
+return;
+}
 
-        if(wasBottom){
-          scrollToBottom();
-        }
+const wasBottom =
+isNearBottom();
 
-        await loadGroupReadCounts();
-      }
-    )
+const extras =
+await fetchMessageExtras(
+[message]
+);
 
-    .on(
-      "postgres_changes",
-      {
-        event:"UPDATE",
-        schema:"public",
-        table:"group_messages",
-        filter:
-          "group_id=eq." +
-          groupId
-      },
-      async ()=>{
-        await loadMessages();
-      }
-    )
+const row =
+buildMessageElement(
+message,
+extras
+);
 
-    .on(
-      "postgres_changes",
-      {
-        event:"INSERT",
-        schema:"public",
-        table:"group_message_reads"
-      },
-      async payload=>{
+messages.appendChild(row);
 
-        if(
-          String(
-            payload.new.group_message_id
-          )
-        ){
+if(wasBottom){
+scrollToBottom();
+}
 
-          await loadGroupReadCounts();
-        }
-      }
-    )
+void markMessagesRead(
+message.sender_id !==
+currentUsername
+? [message.id]
+: []
+);
+}
+).catch(
+error=>{
+console.error(
+"Realtime INSERT処理エラー:",
+error
+);
+}
+);
+});
 
-    .on(
-      "postgres_changes",
-      {
-        event:"UPDATE",
-        schema:"public",
-        table:"group_message_reads"
-      },
-      async ()=>{
-        await loadGroupReadCounts();
-      }
-    )
 
-    .on(
-      "postgres_changes",
-      {
-        event:"INSERT",
-        schema:"public",
-        table:"group_mutes",
-        filter:
-          "group_id=eq." +
-          groupId
-      },
-      async ()=>{
-        await loadGroupMutes();
-      }
-    )
+/*
+  編集・削除
+  → 対象1件だけ更新。
+*/
+channel.on(
+"postgres_changes",
+{
+event:"UPDATE",
+schema:"public",
+table:"group_messages",
+filter:
+"group_id=eq." +
+groupId
+},
+payload=>{
 
-    .on(
-      "postgres_changes",
-      {
-        event:"UPDATE",
-        schema:"public",
-        table:"group_mutes",
-        filter:
-          "group_id=eq." +
-          groupId
-      },
-      async ()=>{
-        await loadGroupMutes();
-      }
-    )
+realtimeQueue =
+realtimeQueue.then(
+async ()=>{
 
-    .on(
-      "postgres_changes",
-      {
-        event:"DELETE",
-        schema:"public",
-        table:"group_mutes",
-        filter:
-          "group_id=eq." +
-          groupId
-      },
-      async ()=>{
-        await loadGroupMutes();
-      }
-    )
+const message =
+payload.new;
 
-    .subscribe();
+const old =
+messages.querySelector(
+`[data-message-id="${message.id}"]`
+);
+
+if(!old){
+await loadMessages();
+return;
+}
+
+const extras =
+await fetchMessageExtras(
+[message]
+);
+
+const newRow =
+buildMessageElement(
+message,
+extras
+);
+
+old.replaceWith(
+newRow
+);
+
+await loadGroupReadCounts();
+}
+).catch(
+error=>{
+console.error(
+"Realtime UPDATE処理エラー:",
+error
+);
+}
+);
+});
+
+
+/*
+  既読
+  → 150ms以内の連続更新をまとめる。
+*/
+channel.on(
+"postgres_changes",
+{
+event:"INSERT",
+schema:"public",
+table:"group_message_reads"
+},
+()=>{
+
+scheduleReadRefresh();
+}
+);
+
+channel.on(
+"postgres_changes",
+{
+event:"UPDATE",
+schema:"public",
+table:"group_message_reads"
+},
+()=>{
+
+scheduleReadRefresh();
+}
+);
+
+
+/*
+  発言禁止
+*/
+channel.on(
+"postgres_changes",
+{
+event:"INSERT",
+schema:"public",
+table:"group_mutes",
+filter:
+"group_id=eq." +
+groupId
+},
+async ()=>{
+await loadGroupMutes();
+}
+);
+
+channel.on(
+"postgres_changes",
+{
+event:"UPDATE",
+schema:"public",
+table:"group_mutes",
+filter:
+"group_id=eq." +
+groupId
+},
+async ()=>{
+await loadGroupMutes();
+}
+);
+
+channel.on(
+"postgres_changes",
+{
+event:"DELETE",
+schema:"public",
+table:"group_mutes",
+filter:
+"group_id=eq." +
+groupId
+},
+async ()=>{
+await loadGroupMutes();
+}
+);
+
+channel.subscribe();
 }
 
 
@@ -3950,72 +4626,78 @@ function setupRealtime(){
 
 async function start(){
 
-  if(!groupId){
+if(!groupId){
 
-    groupName.textContent =
-      "グループIDがありません";
+groupName.textContent =
+"グループIDがありません";
 
-    return;
-  }
+return;
+}
 
-  const {
-    data:{
-      session
-    }
-  } =
-    await supabaseClient
-    .auth
-    .getSession();
+const {
+data:{
+session
+}
+} =
+await supabaseClient
+.auth
+.getSession();
 
-  if(!session){
+if(!session){
 
-    location.href =
-      "index.html";
+location.href =
+"index.html";
 
-    return;
-  }
+return;
+}
 
-  currentUsername =
-    session.user
-      .user_metadata
-      ?.username ||
-    "";
+currentUsername =
+session.user
+.user_metadata
+?.username ||
+"";
 
-  if(!currentUsername){
+if(!currentUsername){
 
-    alert(
-      "ログイン情報が取得できませんでした"
-    );
+alert(
+"ログイン情報が取得できませんでした"
+);
 
-    location.href =
-      "index.html";
+location.href =
+"index.html";
 
-    return;
-  }
+return;
+}
 
-  await updateMyPresence();
 
-  await loadGroup();
+/*
+  最初の読み込みを可能な限り並列化。
+*/
+await Promise.all([
+updateMyPresence(),
+loadGroup()
+]);
 
-  await loadGroupMembers();
+await loadGroupMembers();
 
-  await loadGroupMutes();
+await loadGroupMutes();
 
-  await loadMessages();
+await loadMessages();
 
-  setupRealtime();
+setupRealtime();
 
-  if(presenceTimer){
-    clearInterval(
-      presenceTimer
-    );
-  }
+if(presenceTimer){
 
-  presenceTimer =
-    setInterval(
-      updateMyPresence,
-      30000
-    );
+clearInterval(
+presenceTimer
+);
+}
+
+presenceTimer =
+setInterval(
+updateMyPresence,
+30000
+);
 }
 
 start();
