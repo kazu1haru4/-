@@ -136,6 +136,11 @@
       color: #777;
       font-size: 11px;
     }
+
+    .online-badge {
+      background: #e8f7ed;
+      color: #22a447;
+    }
   </style>
 </head>
 
@@ -168,7 +173,9 @@
         href="rock-paper-scissors.html"
         class="game-card"
       >
-        <div class="game-icon">✊</div>
+        <div class="game-icon">
+          ✊
+        </div>
 
         <div class="game-info">
           <div class="game-title">
@@ -211,8 +218,8 @@
             ○と×を置いて3つそろえよう！
           </div>
 
-          <span class="badge">
-            2人用
+          <span class="badge online-badge">
+            2人用・オンライン
           </span>
         </div>
 
@@ -223,10 +230,13 @@
 
 
       <!-- 数字当て -->
-      <div class="game-card coming-soon">
-
+      <a
+        href="number-game.html"
+        class="game-card"
+      >
         <div
           class="game-icon"
+          style="background:#fff4dc;"
         >
           🎯
         </div>
@@ -240,20 +250,21 @@
             隠された数字を当てよう！
           </div>
 
-          <span class="badge">
-            準備中
+          <span class="badge online-badge">
+            2人用・オンライン
           </span>
         </div>
 
-      </div>
+        <div class="arrow">
+          ›
+        </div>
+      </a>
 
 
       <!-- 神経衰弱 -->
       <div class="game-card coming-soon">
 
-        <div
-          class="game-icon"
-        >
+        <div class="game-icon">
           🃏
         </div>
 
