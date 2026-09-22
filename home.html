@@ -178,12 +178,10 @@
       background: #eefcff;
     }
 
-    /* ミニゲーム */
     .games {
       background: #fff0f2;
     }
 
-    /* フレンドコイン */
     .coin {
       background: #fff8df;
     }
@@ -213,7 +211,6 @@
 
     <section class="header">
 
-      <!-- 設定 -->
       <a
         href="settings.html"
         class="settings-button"
@@ -222,7 +219,6 @@
         ⚙️
       </a>
 
-      <!-- 通知 -->
       <a
         href="notifications.html"
         class="notification-button"
@@ -262,7 +258,6 @@
 
     <section class="menu">
 
-      <!-- 個別チャット -->
       <a
         href="chats.html"
         class="menu-button direct-chat"
@@ -279,7 +274,6 @@
       </a>
 
 
-      <!-- グループ -->
       <a
         href="groups.html"
         class="menu-button groups"
@@ -296,7 +290,6 @@
       </a>
 
 
-      <!-- プロフィール -->
       <a
         href="profile.html"
         class="menu-button profile"
@@ -313,7 +306,6 @@
       </a>
 
 
-      <!-- フレンド -->
       <a
         href="friends.html"
         class="menu-button friends"
@@ -330,7 +322,6 @@
       </a>
 
 
-      <!-- 掲示板 -->
       <a
         href="board.html"
         class="menu-button board"
@@ -347,7 +338,6 @@
       </a>
 
 
-      <!-- 予定 -->
       <a
         href="schedule.html"
         class="menu-button schedule"
@@ -364,7 +354,6 @@
       </a>
 
 
-      <!-- ミニゲーム -->
       <a
         href="minigame.html"
         class="menu-button games"
@@ -381,7 +370,6 @@
       </a>
 
 
-      <!-- フレンドコイン -->
       <a
         href="coin.html"
         class="menu-button coin"
@@ -407,7 +395,14 @@
   </main>
 
 
+  <!-- Supabase -->
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- BANチェック -->
+
+  <script src="ban-check.js"></script>
+
 
   <script>
 
@@ -515,10 +510,28 @@
 
     async function start() {
 
+      /*
+       * まずBAN確認
+       *
+       * BANされたユーザーなら
+       * ban-check.js がログアウトして
+       * index.htmlへ移動する。
+       */
+
+      const wasBanned =
+        await checkFriendChatBan();
+
+
+      if (wasBanned) {
+        return;
+      }
+
+
       const {
         data,
         error
-      } = await supabaseClient.auth.getUser();
+      } =
+        await supabaseClient.auth.getUser();
 
 
       if (
@@ -618,7 +631,10 @@
 
 
       if (!username) {
-        badge.style.display = "none";
+
+        badge.style.display =
+          "none";
+
         return;
       }
 
@@ -653,14 +669,18 @@
           error
         );
 
-        badge.style.display = "none";
+        badge.style.display =
+          "none";
+
         return;
       }
 
 
       if (!count || count <= 0) {
 
-        badge.style.display = "none";
+        badge.style.display =
+          "none";
+
         return;
       }
 
@@ -683,7 +703,9 @@
       username
     ) {
 
-      if (!username) return;
+      if (!username) {
+        return;
+      }
 
 
       if (notificationChannel) {
