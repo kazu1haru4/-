@@ -6,6 +6,7 @@
 <title>グループチャット</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="ban-check.js"></script>
 
 <style>
 *{
@@ -180,12 +181,9 @@ body{
   width:100%;
   height:100%;
   object-fit:cover;
-
-  /* 画像そのものには色を付けない */
   filter:none !important;
   mix-blend-mode:normal !important;
   opacity:1 !important;
-
   border-radius:50%;
   display:block;
 }
@@ -336,7 +334,6 @@ body{
   }
 }
 
-/* 管理者 */
 .admin-frame{
   background:
     linear-gradient(
@@ -834,10 +831,6 @@ body{
   margin-bottom:8px;
 }
 
-/* =========================
-   メンバー用フレーム
-========================= */
-
 .member-icon-frame{
   width:44px;
   height:44px;
@@ -870,11 +863,9 @@ body{
   width:100%;
   height:100%;
   object-fit:cover;
-
   filter:none !important;
   mix-blend-mode:normal !important;
   opacity:1 !important;
-
   border-radius:50%;
   display:block;
 }
@@ -1322,11 +1313,6 @@ let loadingMessages = false;
 let realtimeQueue = Promise.resolve();
 let readUpdateTimer = null;
 
-
-/* =========================
-   管理者
-========================= */
-
 const ADMIN_USERNAMES = new Set([
   "kazu1haru100",
   "kazu1haru4sub"
@@ -1349,16 +1335,7 @@ isGroupAdmin
 
 }
 
-
-/* =========================
-   フレーム
-========================= */
-
 function getFrameClass(itemKey,username){
-
-/*
-  管理者フレームは管理者IDだけ
-*/
 
 if(
 itemKey === "admin" &&
@@ -1370,32 +1347,19 @@ return "admin-frame";
 const map = {
 
 sakura:"frame-sakura",
-
 star:"frame-star",
-
 diamond:"frame-diamond",
-
 space:"frame-space",
-
 neon:"frame-neon",
-
 rainbow:"frame-rainbow",
-
 flame:"frame-flame",
-
 sea:"frame-sea",
-
 heart:"frame-heart"
 
 };
 
 return map[itemKey] || "";
 }
-
-
-/* =========================
-   オンライン
-========================= */
 
 function isOnline(lastSeen){
 
@@ -1505,11 +1469,6 @@ error
 
 }
 
-
-/* =========================
-   プロフィール
-========================= */
-
 async function getProfiles(usernames){
 
 const unique =
@@ -1616,11 +1575,6 @@ return profileCache[
 username
 ] || null;
 }
-
-
-/* =========================
-   アイテム
-========================= */
 
 async function getItems(itemKeys){
 
@@ -1729,11 +1683,6 @@ itemKey
 ] || null;
 }
 
-
-/* =========================
-   アバター
-========================= */
-
 function createAvatarSync(profile){
 
 const username =
@@ -1765,11 +1714,6 @@ frameClass
 );
 
 }else{
-
-/*
-  新しい通常アイテムが追加された場合は
-  DBのframe_colorを使用
-*/
 
 frame.style.background =
 item?.frame_color ||
@@ -1836,11 +1780,6 @@ badge
 return frame;
 }
 
-
-/* =========================
-   グループ
-========================= */
-
 async function loadGroup(){
 
 if(!groupId){
@@ -1895,11 +1834,6 @@ data.owner_id ||
 updateGroupAdminState();
 
 }
-
-
-/* =========================
-   メンバー
-========================= */
 
 async function loadGroupMembers(){
 
@@ -1969,11 +1903,6 @@ me?.role ||
 updateGroupAdminState();
 
 }
-
-
-/* =========================
-   発言禁止
-========================= */
 
 async function loadGroupMutes(){
 
@@ -2201,11 +2130,6 @@ loadMembers()
 
 }
 
-
-/* =========================
-   副管理者
-========================= */
-
 async function setDeputyAdmin(
 username,
 makeAdmin
@@ -2266,11 +2190,6 @@ await loadGroupMembers();
 await loadMembers();
 
 }
-
-
-/* =========================
-   既読
-========================= */
 
 async function loadGroupReadCounts(){
 
@@ -2463,11 +2382,6 @@ loadGroupReadCounts();
 
 }
 
-
-/* =========================
-   スクロール
-========================= */
-
 function isNearBottom(){
 
 return (
@@ -2500,11 +2414,6 @@ latestButton.addEventListener(
 "click",
 scrollToBottom
 );
-
-
-/* =========================
-   メンション
-========================= */
 
 function renderMentions(text){
 
@@ -2560,11 +2469,6 @@ match +
 );
 
 }
-
-
-/* =========================
-   編集
-========================= */
 
 async function editMessage(
 messageId,
@@ -2622,11 +2526,6 @@ messageId
 
 }
 
-
-/* =========================
-   削除
-========================= */
-
 async function deleteMessage(
 messageId
 ){
@@ -2672,11 +2571,6 @@ messageId
 );
 
 }
-
-
-/* =========================
-   メッセージ追加情報
-========================= */
 
 async function fetchMessageExtras(list){
 
@@ -2818,11 +2712,6 @@ signedUrls
 
 }
 
-
-/* =========================
-   メッセージDOM
-========================= */
-
 function buildMessageElement(
 message,
 extras
@@ -2947,9 +2836,6 @@ edited
 
 }
 
-
-/* 返信 */
-
 const replies =
 extras.replies.filter(
 reply =>
@@ -3001,9 +2887,6 @@ preview
 );
 
 });
-
-
-/* リアクション */
 
 const reactionRows =
 extras.reactions.filter(
@@ -3075,9 +2958,6 @@ reactions
 
 }
 
-
-/* 既読 */
-
 if(
 message.sender_id ===
 currentUsername
@@ -3112,9 +2992,6 @@ read
 );
 
 }
-
-
-/* メニュー */
 
 const menu =
 document.createElement("div");
@@ -3221,9 +3098,6 @@ deleteButton
 );
 
 }
-
-
-/* リアクション選択 */
 
 const picker =
 document.createElement("div");
@@ -3374,11 +3248,6 @@ box
 return row;
 }
 
-
-/* =========================
-   メッセージ描画
-========================= */
-
 async function renderMessages(
 list,
 keepBottom=true
@@ -3450,10 +3319,9 @@ unreadIds
 
 }
 
+
 }
-
-
-/* =========================
+  /* =========================
    メッセージ読み込み
 ========================= */
 
@@ -3987,6 +3855,13 @@ imageInput.value="";
 
 async function sendMessage(){
 
+const wasBanned =
+await checkFriendChatBan();
+
+if(wasBanned){
+return;
+}
+
 if(currentMute){
 
 alert(
@@ -4133,6 +4008,13 @@ sendButton.disabled=false;
 ========================= */
 
 async function sendImage(file){
+
+const wasBanned =
+await checkFriendChatBan();
+
+if(wasBanned){
+return;
+}
 
 if(currentMute){
 
@@ -5341,6 +5223,13 @@ channel.subscribe();
 ========================= */
 
 async function start(){
+
+const wasBanned =
+await checkFriendChatBan();
+
+if(wasBanned){
+return;
+}
 
 if(!groupId){
 
