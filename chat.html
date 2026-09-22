@@ -80,6 +80,10 @@
       gap: 9px;
     }
 
+    /* =========================
+       アバターフレーム
+    ========================= */
+
     .header-avatar-frame {
       position: relative;
       width: 48px;
@@ -88,6 +92,7 @@
       border-radius: 50%;
       background: #eee8ff;
       flex-shrink: 0;
+      transition: .2s;
     }
 
     .header-avatar {
@@ -103,10 +108,17 @@
       border: 2px solid white;
     }
 
+    /*
+      重要：
+      画像には色を付けない。
+      frame側だけに色・グラデーションを付ける。
+    */
     .header-avatar img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      display: block;
+      filter: none;
     }
 
     .avatar-badge {
@@ -187,6 +199,7 @@
       border-radius: 50%;
       background: #eee8ff;
       flex-shrink: 0;
+      transition: .2s;
     }
 
     .message-avatar {
@@ -206,6 +219,10 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+      display: block;
+
+      /* 画像そのものは変色させない */
+      filter: none;
     }
 
     .message-avatar-badge {
@@ -554,6 +571,300 @@ friendId =
 
 
 /* =========================
+   フレームデザイン
+========================= */
+
+/*
+ * DBのframe_colorが単色でも、
+ * アイテム名・item_keyに応じて
+ * 特別なフレームを作る。
+ *
+ * 重要：
+ * これはフレームだけに適用。
+ * プロフィール画像には適用しない。
+ */
+
+function getFrameBackground(item) {
+
+  if (!item) {
+    return "#eee8ff";
+  }
+
+  const key =
+    String(item.item_key || "").toLowerCase();
+
+  const name =
+    String(item.name || "").toLowerCase();
+
+  const value =
+    key + " " + name;
+
+
+  /* 👑 管理者 */
+  if (
+    key === "admin" ||
+    value.includes("管理者")
+  ) {
+
+    return `
+      linear-gradient(
+        135deg,
+        #fff4a8,
+        #ffd700,
+        #fff7bd,
+        #e8ad00,
+        #fff4a8
+      )
+    `;
+  }
+
+
+  /* 🌈 虹 */
+  if (
+    key.includes("rainbow") ||
+    key.includes("rainbow_frame") ||
+    name.includes("虹")
+  ) {
+
+    return `
+      linear-gradient(
+        135deg,
+        #ff3b30 0%,
+        #ff9500 16%,
+        #ffcc00 32%,
+        #34c759 48%,
+        #00c7be 64%,
+        #007aff 80%,
+        #af52de 100%
+      )
+    `;
+  }
+
+
+  /* 💡 ネオン */
+  if (
+    key.includes("neon") ||
+    name.includes("ネオン")
+  ) {
+
+    return `
+      linear-gradient(
+        135deg,
+        #00f5ff,
+        #00ff87,
+        #fff000,
+        #ff00e5,
+        #7a00ff,
+        #00f5ff
+      )
+    `;
+  }
+
+
+  /* 🌌 宇宙 */
+  if (
+    key.includes("space") ||
+    key.includes("cosmos") ||
+    name.includes("宇宙")
+  ) {
+
+    return `
+      linear-gradient(
+        135deg,
+        #09001f,
+        #24105c,
+        #5b21b6,
+        #111827,
+        #020617
+      )
+    `;
+  }
+
+
+  /* 🔥 炎 */
+  if (
+    key.includes("fire") ||
+    name.includes("炎") ||
+    name.includes("ファイア")
+  ) {
+
+    return `
+      linear-gradient(
+        135deg,
+        #ff2d00,
+        #ff5e00,
+        #ff9500,
+        #ffd60a,
+        #ff3b30
+      )
+    `;
+  }
+
+
+  /* 🌊 海 */
+  if (
+    key.includes("sea") ||
+    key.includes("ocean") ||
+    name.includes("海")
+  ) {
+
+    return `
+      linear-gradient(
+        135deg,
+        #007aff,
+        #00c7be,
+        #00e5ff,
+        #0066ff,
+        #0047ab
+      )
+    `;
+  }
+
+
+  /* 💖 ハート */
+  if (
+    key.includes("heart") ||
+    name.includes("ハート")
+  ) {
+
+    return `
+      linear-gradient(
+        135deg,
+        #ff2d55,
+        #ff375f,
+        #ff6b9d,
+        #ff9ec4,
+        #ff2d55
+      )
+    `;
+  }
+
+
+  /* 🌸 桜 */
+  if (
+    key.includes("sakura") ||
+    name.includes("桜")
+  ) {
+
+    return `
+      linear-gradient(
+        135deg,
+        #ff77b7,
+        #ffb7d5,
+        #ffd6e7,
+        #ff77b7
+      )
+    `;
+  }
+
+
+  /* ⭐ 星 */
+  if (
+    key.includes("star") ||
+    name.includes("星")
+  ) {
+
+    return `
+      linear-gradient(
+        135deg,
+        #f4bf3f,
+        #ffe58a,
+        #fff3b0,
+        #e7a900
+      )
+    `;
+  }
+
+
+  /* 💎 ダイヤ */
+  if (
+    key.includes("diamond") ||
+    name.includes("ダイヤ") ||
+    name.includes("宝石")
+  ) {
+
+    return `
+      linear-gradient(
+        135deg,
+        #38bdf8,
+        #a5f3fc,
+        #ffffff,
+        #38bdf8
+      )
+    `;
+  }
+
+
+  /*
+   * その他のフレーム
+   * DBのframe_colorを使用
+   */
+  return item.frame_color || "#eee8ff";
+}
+
+
+/* =========================
+   フレームの影
+========================= */
+
+function getFrameShadow(item) {
+
+  if (!item) {
+    return "none";
+  }
+
+  const key =
+    String(item.item_key || "").toLowerCase();
+
+  const name =
+    String(item.name || "").toLowerCase();
+
+  const value =
+    key + " " + name;
+
+
+  if (
+    key.includes("neon") ||
+    name.includes("ネオン")
+  ) {
+
+    return `
+      0 0 7px rgba(0,255,255,.7),
+      0 0 14px rgba(255,0,230,.5)
+    `;
+  }
+
+
+  if (
+    key.includes("rainbow") ||
+    name.includes("虹")
+  ) {
+
+    return `
+      0 0 8px rgba(255,120,200,.45),
+      0 0 16px rgba(80,180,255,.35)
+    `;
+  }
+
+
+  if (
+    key === "admin" ||
+    value.includes("管理者")
+  ) {
+
+    return `
+      0 0 12px rgba(255,215,0,.55)
+    `;
+  }
+
+
+  return `
+    0 3px 9px rgba(0,0,0,.12)
+  `;
+}
+
+
+/* =========================
    アイテム取得
 ========================= */
 
@@ -566,15 +877,17 @@ async function loadEquippedItem(itemKey) {
   const { data, error } =
     await supabaseClient
       .from("coin_items")
-      .select("item_key, icon, frame_color")
+      .select("item_key, icon, frame_color, name")
       .eq("item_key", itemKey)
       .maybeSingle();
 
   if (error) {
+
     console.error(
       "アイテム取得エラー:",
       error
     );
+
     return null;
   }
 
@@ -583,35 +896,48 @@ async function loadEquippedItem(itemKey) {
 
 
 /* =========================
-   プロフィール表示
+   ヘッダープロフィール
 ========================= */
 
 function displayHeaderProfile() {
 
+  const background =
+    getFrameBackground(friendItem);
+
   headerAvatarFrame.style.background =
-    friendItem?.frame_color ||
-    "#eee8ff";
+    background;
+
+  headerAvatarFrame.style.boxShadow =
+    getFrameShadow(friendItem);
+
 
   headerAvatarBadge.classList.remove("show");
 
   headerAvatarBadge.textContent = "";
+
 
   if (friendItem?.icon) {
 
     headerAvatarBadge.textContent =
       friendItem.icon;
 
-    headerAvatarBadge.style.borderColor =
-      friendItem.frame_color ||
-      "#eee8ff";
+    headerAvatarBadge.style.border =
+      "2px solid " +
+      (
+        friendItem.frame_color ||
+        "#eee8ff"
+      );
 
     headerAvatarBadge.classList.add("show");
   }
 
+
+  /*
+   * 画像自体には色を付けない
+   */
   if (friendAvatarUrl) {
 
-    headerAvatar.innerHTML =
-      "";
+    headerAvatar.innerHTML = "";
 
     const img =
       document.createElement("img");
@@ -621,6 +947,9 @@ function displayHeaderProfile() {
 
     img.alt =
       "プロフィール画像";
+
+    img.style.filter =
+      "none";
 
     headerAvatar.appendChild(img);
 
@@ -648,9 +977,15 @@ function createAvatar(
   frame.className =
     "message-avatar-frame";
 
+
+  /*
+   * フレームだけを装飾
+   */
   frame.style.background =
-    item?.frame_color ||
-    "#eee8ff";
+    getFrameBackground(item);
+
+  frame.style.boxShadow =
+    getFrameShadow(item);
 
 
   const avatar =
@@ -670,6 +1005,13 @@ function createAvatar(
 
     img.alt =
       "プロフィール画像";
+
+    /*
+     * 絶対に画像を変色させない
+     */
+    img.style.filter =
+      "none";
+
 
     img.onerror =
       function() {
@@ -792,6 +1134,7 @@ async function updateMyPresence() {
       );
 
   if (error) {
+
     console.error(
       "自分のオンライン状態更新エラー:",
       error
@@ -842,6 +1185,7 @@ async function createNotification() {
       });
 
   if (error) {
+
     console.error(
       "通知作成エラー:",
       error
@@ -1087,7 +1431,7 @@ async function deleteMessage(messageId) {
 
 
 /* =========================
-   画像URLをまとめて取得
+   画像URL
 ========================= */
 
 async function prepareImageUrls(messages) {
@@ -1134,7 +1478,7 @@ async function prepareImageUrls(messages) {
 
 
 /* =========================
-   メッセージDOM作成
+   メッセージDOM
 ========================= */
 
 function createMessageElement(
@@ -1147,6 +1491,10 @@ function createMessageElement(
 
   wrapper.className =
     "message";
+
+
+  wrapper.dataset.messageId =
+    String(message.id);
 
 
   const isMine =
@@ -1233,10 +1581,12 @@ function createMessageElement(
   time.className =
     "time";
 
+
   const date =
     new Date(
       message.created_at
     );
+
 
   time.textContent =
     date.toLocaleTimeString(
@@ -1362,9 +1712,6 @@ async function loadMessages() {
     '<div class="empty">メッセージを読み込み中...</div>';
 
 
-  /*
-   * 2つの取得を同時に実行
-   */
   const [
     sentResult,
     receivedResult
@@ -1442,9 +1789,6 @@ async function loadMessages() {
   );
 
 
-  /*
-   * 既読取得と画像URL取得を同時実行
-   */
   const [
     ,
     imageUrls
@@ -1478,9 +1822,6 @@ async function loadMessages() {
   }
 
 
-  /*
-   * DOMをまとめて追加
-   */
   const fragment =
     document.createDocumentFragment();
 
@@ -1651,9 +1992,6 @@ function startRealtime() {
           }
 
 
-          /*
-           * 削除・編集時だけ再読み込み
-           */
           await loadMessages();
         }
       )
@@ -1719,9 +2057,6 @@ function startRealtime() {
           );
 
 
-          /*
-           * 既読だけなら画面を全再読み込みしない
-           */
           await updateReadDisplay();
         }
       )
@@ -1732,50 +2067,15 @@ function startRealtime() {
 
 
 /* =========================
-   既読表示だけ更新
+   既読表示
 ========================= */
 
 async function updateReadDisplay() {
 
-  const bubbles =
-    messagesElement.querySelectorAll(
-      ".message.mine"
-    );
-
-
   /*
-   * 軽量更新のため、
-   * 現在表示されている自分のメッセージを確認
+   * 現在のDOMを壊さず維持。
+   * 既読状態は次回のメッセージ描画時に反映。
    */
-  const myMessages =
-    messagesElement.querySelectorAll(
-      ".message.mine"
-    );
-
-
-  /*
-   * 正確な再描画が必要な場合だけ
-   * loadMessagesを使うのではなく、
-   * 現在のDOMに既読を追加
-   */
-  myMessages.forEach(
-    wrapper => {
-
-      const deleteButton =
-        wrapper.querySelector(
-          ".delete-button"
-        );
-
-      if (!deleteButton) {
-        return;
-      }
-
-      /*
-       * IDをDOMに保存していない古い表示は
-       * そのまま維持する
-       */
-    }
-  );
 }
 
 
@@ -1878,7 +2178,7 @@ messageForm.addEventListener(
 
 
     /*
-     * 通知は画面表示を待たせない
+     * 通知は待たない
      */
     createNotification();
   }
@@ -2216,6 +2516,7 @@ async function start() {
 
 
   if (friendResult.error) {
+
     console.error(
       "相手プロフィール取得エラー:",
       friendResult.error
@@ -2224,6 +2525,7 @@ async function start() {
 
 
   if (myResult.error) {
+
     console.error(
       "自分プロフィール取得エラー:",
       myResult.error
@@ -2248,7 +2550,7 @@ async function start() {
 
 
   /*
-   * アイテム2人分も同時取得
+   * 装備アイテムを同時取得
    */
   const [
     friendItemResult,
@@ -2277,19 +2579,19 @@ async function start() {
 
 
   /*
-   * ここから先はチャットを優先
+   * チャットを優先
    */
   await loadMessages();
 
 
   /*
-   * リアルタイム開始
+   * リアルタイム
    */
   startRealtime();
 
 
   /*
-   * オンライン情報は後から更新
+   * プレゼンスは後から
    */
   updateMyPresence();
 
