@@ -22,22 +22,22 @@ body {
     "Hiragino Kaku Gothic ProN",
     "Yu Gothic",
     sans-serif;
-
-  background: linear-gradient(135deg, #fff4fb, #eef7ff);
+  background: linear-gradient(135deg,#fff4fb,#eef7ff);
   color: #333;
 }
 
 .container {
-  width: min(100% - 24px, 900px);
+  width: min(100% - 24px,900px);
   margin: 24px auto 50px;
 }
 
-header {
+header,
+.panel {
   background: white;
   border-radius: 24px;
-  padding: 22px;
-  box-shadow: 0 8px 30px rgba(100, 80, 130, .12);
+  padding: 20px;
   margin-bottom: 18px;
+  box-shadow: 0 8px 30px rgba(100,80,130,.10);
 }
 
 header h1 {
@@ -51,34 +51,33 @@ header h1 {
   font-size: 14px;
 }
 
-.panel {
-  background: white;
-  border-radius: 24px;
-  padding: 20px;
-  margin-bottom: 18px;
-  box-shadow: 0 8px 30px rgba(100, 80, 130, .10);
-}
-
 .panel h2 {
   margin: 0 0 16px;
   font-size: 20px;
 }
 
+.status,
 .message {
   padding: 12px 14px;
   border-radius: 14px;
   background: #f5f5f8;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
+}
+
+.user-card,
+.board-message,
+.event-card,
+.reward-code-card {
+  padding: 14px;
+  border-radius: 16px;
+  background: #f7f8fc;
+  margin-bottom: 12px;
 }
 
 .user-card {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 13px;
-  border-radius: 16px;
-  background: #f7f8fc;
-  margin-bottom: 10px;
 }
 
 .avatar {
@@ -126,6 +125,11 @@ button:hover {
   opacity: .9;
 }
 
+button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
 button.danger {
   background: #ef5350;
 }
@@ -171,9 +175,9 @@ textarea {
 }
 
 .hint {
-  margin-top: 5px;
   color: #888;
   font-size: 12px;
+  margin-top: 5px;
 }
 
 .actions {
@@ -181,13 +185,6 @@ textarea {
   gap: 8px;
   flex-wrap: wrap;
   margin-top: 10px;
-}
-
-.board-message {
-  padding: 14px;
-  border-radius: 16px;
-  background: #f7f8fc;
-  margin-bottom: 12px;
 }
 
 .board-header {
@@ -211,16 +208,7 @@ textarea {
   word-break: break-word;
 }
 
-.event-card,
-.reward-code-card {
-  padding: 15px;
-  border-radius: 17px;
-  background: #f7f8fc;
-  margin-bottom: 12px;
-}
-
-.event-title,
-.reward-code-title {
+.event-title {
   font-size: 18px;
   font-weight: bold;
 }
@@ -230,45 +218,34 @@ textarea {
   white-space: pre-wrap;
 }
 
-.event-info,
-.reward-code-info {
+.event-info {
   color: #777;
   font-size: 13px;
   margin-top: 8px;
   line-height: 1.7;
 }
 
-.reward-code-value {
-  background: #fff;
-  border: 2px dashed #8f7cff;
-  color: #6d5de7;
-  border-radius: 14px;
-  padding: 12px;
-  margin-top: 10px;
+.reward-code-title {
   font-size: 18px;
   font-weight: bold;
   word-break: break-all;
 }
 
-.code-active {
-  color: #43a047;
+.reward-code-info {
+  margin-top: 7px;
+  color: #666;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.active {
+  color: #2e7d32;
   font-weight: bold;
 }
 
-.code-inactive {
+.inactive {
   color: #e53935;
   font-weight: bold;
-}
-
-.status {
-  padding: 12px;
-  border-radius: 14px;
-  background: #f4f4f7;
-  margin-bottom: 14px;
-}
-
-.hidden {
-  display: none !important;
 }
 
 .loading {
@@ -294,7 +271,7 @@ textarea {
 }
 
 .modal-box {
-  width: min(100%, 520px);
+  width: min(100%,520px);
   max-height: 90vh;
   overflow: auto;
   background: white;
@@ -306,8 +283,11 @@ textarea {
   margin-top: 0;
 }
 
-@media (max-width: 600px) {
+.hidden {
+  display: none !important;
+}
 
+@media(max-width:600px) {
   .user-card {
     align-items: flex-start;
     flex-wrap: wrap;
@@ -342,2611 +322,1792 @@ textarea {
 </div>
 
 
-<!-- =========================
-     ユーザー管理
-========================= -->
+<!-- ユーザー管理 -->
 
 <section class="panel">
 
-  <h2>👤 ユーザー管理</h2>
+<h2>👤 ユーザー管理</h2>
 
-  <div id="usersLoading" class="loading">
-    ユーザーを読み込んでいます...
-  </div>
+<div id="usersLoading" class="loading">
+ユーザーを読み込んでいます...
+</div>
 
-  <div id="usersList"></div>
+<div id="usersList"></div>
 
 </section>
 
 
-<!-- =========================
-     掲示板管理
-========================= -->
+<!-- 掲示板管理 -->
 
 <section class="panel">
 
-  <h2>💬 掲示板管理</h2>
+<h2>💬 掲示板管理</h2>
 
-  <div id="boardLoading" class="loading">
-    掲示板を読み込んでいます...
-  </div>
+<div id="boardLoading" class="loading">
+掲示板を読み込んでいます...
+</div>
 
-  <div id="boardList"></div>
+<div id="boardList"></div>
 
 </section>
 
 
-<!-- =========================
-     イベント作成
-========================= -->
+<!-- 配布コード管理 -->
 
 <section class="panel">
 
-  <h2>🎉 イベント作成</h2>
+<h2>🎁 配布コードを作成</h2>
 
-  <div class="form-row">
-    <label>イベント名</label>
-    <input
-      id="eventTitle"
-      type="text"
-      placeholder="例：秋のコインイベント">
-  </div>
+<div class="form-row">
 
-  <div class="form-row">
-    <label>説明</label>
-    <textarea
-      id="eventDescription"
-      placeholder="イベントの説明を入力"></textarea>
-  </div>
+<label>配布コード</label>
 
-  <div class="form-row">
-    <label>開始日時</label>
-    <input id="eventStart" type="datetime-local">
-  </div>
+<input
+  id="rewardCode"
+  type="text"
+  maxlength="100"
+  placeholder="例：WELCOME2026">
 
-  <div class="form-row">
-    <label>終了日時</label>
-    <input id="eventEnd" type="datetime-local">
-  </div>
+</div>
 
-  <div class="form-row">
-    <label>コイン報酬</label>
-    <input
-      id="eventCoins"
-      type="number"
-      min="0"
-      value="0">
-  </div>
 
-  <div class="form-row">
-    <label>フレーム報酬</label>
+<div class="form-row">
 
-    <select id="eventItem">
-      <option value="">なし</option>
-    </select>
-  </div>
+<label>🪙 コイン報酬</label>
 
-  <button id="createEventButton">
-    🎉 イベントを作成
-  </button>
+<input
+  id="rewardCodeCoins"
+  type="number"
+  min="0"
+  step="1"
+  value="0">
+
+</div>
+
+
+<div class="form-row">
+
+<label>🖼️ フレーム報酬</label>
+
+<select id="rewardCodeItem">
+
+<option value="">なし</option>
+
+</select>
+
+</div>
+
+
+<div class="form-row">
+
+<label>👥 最大利用人数</label>
+
+<input
+  id="rewardCodeMaxUses"
+  type="number"
+  min="0"
+  step="1"
+  value="0">
+
+<div class="hint">
+0なら無制限です。
+</div>
+
+</div>
+
+
+<button id="createRewardCodeButton">
+🎁 配布コードを作成
+</button>
 
 </section>
 
 
-<!-- =========================
-     イベント一覧
-========================= -->
-
 <section class="panel">
 
-  <h2>📋 イベント管理</h2>
+<h2>📦 配布コード一覧</h2>
 
-  <div id="eventsLoading" class="loading">
-    イベントを読み込んでいます...
-  </div>
+<div id="rewardCodesLoading" class="loading">
+配布コードを読み込んでいます...
+</div>
 
-  <div id="eventsList"></div>
+<div id="rewardCodesList"></div>
 
 </section>
 
 
-<!-- =========================
-     配布コード作成
-========================= -->
+<!-- イベント作成 -->
 
 <section class="panel">
 
-  <h2>🎁 配布コード管理</h2>
+<h2>🎉 イベント作成</h2>
 
-  <p style="color:#777;font-size:14px;line-height:1.6;">
-    イベントとは関係なく、好きな配布コードを作成できます。
-    コインやフレームをユーザーに配布できます。
-  </p>
+<div class="form-row">
+<label>イベント名</label>
+<input id="eventTitle" type="text" placeholder="例：秋のコインイベント">
+</div>
 
-  <div class="form-row">
+<div class="form-row">
+<label>説明</label>
 
-    <label>配布コード</label>
+<textarea
+id="eventDescription"
+placeholder="イベントの説明を入力"></textarea>
 
-    <input
-      id="rewardCode"
-      type="text"
-      maxlength="100"
-      placeholder="例：WELCOME100">
+</div>
 
-  </div>
+<div class="form-row">
+<label>開始日時</label>
+<input id="eventStart" type="datetime-local">
+</div>
 
+<div class="form-row">
+<label>終了日時</label>
+<input id="eventEnd" type="datetime-local">
+</div>
 
-  <div class="form-row">
+<div class="form-row">
+<label>コイン報酬</label>
 
-    <label>コイン報酬</label>
+<input
+id="eventCoins"
+type="number"
+min="0"
+value="0">
 
-    <input
-      id="rewardCodeCoins"
-      type="number"
-      min="0"
-      step="1"
-      value="0">
+</div>
 
-  </div>
+<div class="form-row">
+<label>フレーム報酬</label>
 
+<select id="eventItem">
+<option value="">なし</option>
+</select>
 
-  <div class="form-row">
+</div>
 
-    <label>フレーム報酬</label>
-
-    <select id="rewardCodeItem">
-
-      <option value="">
-        なし
-      </option>
-
-    </select>
-
-  </div>
-
-
-  <div class="form-row">
-
-    <label>最大利用人数</label>
-
-    <input
-      id="rewardCodeMaxUses"
-      type="number"
-      min="0"
-      step="1"
-      value="0">
-
-    <div class="hint">
-      0なら無制限。
-    </div>
-
-  </div>
-
-
-  <button id="createRewardCodeButton">
-    🎁 コードを作成
-  </button>
+<button id="createEventButton">
+🎉 イベントを作成
+</button>
 
 </section>
 
 
-<!-- =========================
-     配布コード一覧
-========================= -->
+<!-- イベント一覧 -->
 
 <section class="panel">
 
-  <h2>📦 配布コード一覧</h2>
+<h2>📋 イベント管理</h2>
 
-  <div
-    id="rewardCodesLoading"
-    class="loading">
-    配布コードを読み込んでいます...
-  </div>
+<div id="eventsLoading" class="loading">
+イベントを読み込んでいます...
+</div>
 
-  <div id="rewardCodesList"></div>
+<div id="eventsList"></div>
 
 </section>
 
 </div>
 
 
-<!-- =========================
-     BANモーダル
-========================= -->
+<!-- BANモーダル -->
 
 <div id="banModal" class="modal hidden">
 
-  <div class="modal-box">
+<div class="modal-box">
 
-    <h3>🚫 ユーザーをBAN</h3>
+<h3>🚫 ユーザーをBAN</h3>
 
-    <p id="banTarget"></p>
+<p id="banTarget"></p>
 
-    <div class="form-row">
+<div class="form-row">
 
-      <label>理由</label>
+<label>理由</label>
 
-      <textarea
-        id="banReason"
-        placeholder="BAN理由を入力"></textarea>
-
-    </div>
-
-    <div class="actions">
-
-      <button
-        id="confirmBanButton"
-        class="danger">
-        🚫 BANする
-      </button>
-
-      <button
-        id="cancelBanButton"
-        class="gray">
-        キャンセル
-      </button>
-
-    </div>
-
-  </div>
+<textarea
+id="banReason"
+placeholder="BAN理由を入力"></textarea>
 
 </div>
 
+<div class="actions">
 
-<!-- =========================
-     掲示板編集モーダル
-========================= -->
+<button
+id="confirmBanButton"
+class="danger">
+🚫 BANする
+</button>
+
+<button
+id="cancelBanButton"
+class="gray">
+キャンセル
+</button>
+
+</div>
+
+</div>
+</div>
+
+
+<!-- 編集モーダル -->
 
 <div id="editModal" class="modal hidden">
 
-  <div class="modal-box">
+<div class="modal-box">
 
-    <h3>✏️ 掲示板メッセージを編集</h3>
+<h3>✏️ 掲示板メッセージを編集</h3>
 
-    <div class="form-row">
+<div class="form-row">
 
-      <textarea
-        id="editContent"
-        placeholder="メッセージ"></textarea>
+<textarea
+id="editContent"
+placeholder="メッセージ"></textarea>
 
-    </div>
+</div>
 
-    <div class="actions">
+<div class="actions">
 
-      <button id="saveEditButton">
-        💾 保存
-      </button>
+<button id="saveEditButton">
+💾 保存
+</button>
 
-      <button
-        id="cancelEditButton"
-        class="gray">
-        キャンセル
-      </button>
+<button
+id="cancelEditButton"
+class="gray">
+キャンセル
+</button>
 
-    </div>
+</div>
 
-  </div>
-
+</div>
 </div>
 
 
 <script>
 
 const SUPABASE_URL =
-  "https://yxonmqdyekwenyzekjwj.supabase.co";
+"https://yxonmqdyekwenyzekjwj.supabase.co";
 
 const SUPABASE_KEY =
-  "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+"sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 
 const supabase =
-  window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-  );
+window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+);
 
 
 const ADMIN_USERNAMES = new Set([
-  "kazu1haru100",
-  "kazu1haru4sub"
+"kazu1haru100",
+"kazu1haru4sub"
 ]);
 
 
 let currentUsername = "";
-
 let banTargetUsername = "";
-
 let editTargetMessageId = null;
 
 
 /* =========================
-   共通
+共通
 ========================= */
 
 function setStatus(text) {
-
-  const el =
-    document.getElementById("status");
-
-  if (el) {
-    el.textContent = text;
-  }
+document.getElementById("status").textContent = text;
 }
 
 
 function escapeHtml(value) {
-
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+return String(value ?? "")
+.replaceAll("&","&amp;")
+.replaceAll("<","&lt;")
+.replaceAll(">","&gt;")
+.replaceAll('"',"&quot;")
+.replaceAll("'","&#039;");
 }
 
 
 function escapeAttribute(value) {
-
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll("'", "&#039;");
+return String(value ?? "")
+.replaceAll("&","&amp;")
+.replaceAll('"',"&quot;")
+.replaceAll("<","&lt;")
+.replaceAll(">","&gt;");
 }
 
 
 function formatDate(value) {
 
-  if (!value) return "";
+if (!value) return "";
 
-  const date =
-    new Date(value);
+const date = new Date(value);
 
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
+if (Number.isNaN(date.getTime())) {
+return value;
+}
 
-  return date.toLocaleString("ja-JP");
+return date.toLocaleString("ja-JP");
 }
 
 
 /* =========================
-   初期化
+初期化
 ========================= */
 
 async function init() {
 
-  try {
+try {
 
-    const {
-      data,
-      error
-    } =
-      await supabase.auth.getSession();
+const {
+data,
+error
+} = await supabase.auth.getSession();
 
-    if (error) {
-      throw error;
-    }
+if (error) throw error;
 
+const session = data.session;
 
-    const session =
-      data.session;
+if (!session) {
 
+document.body.innerHTML = `
+<div style="padding:40px;text-align:center;font-family:sans-serif">
+<h2>ログインが必要です</h2>
+<p>管理者アカウントでログインしてください。</p>
+</div>`;
 
-    if (!session) {
-
-      document.body.innerHTML = `
-        <div style="
-          padding:40px;
-          text-align:center;
-          font-family:sans-serif;
-        ">
-          <h2>ログインが必要です</h2>
-          <p>管理者アカウントでログインしてください。</p>
-        </div>
-      `;
-
-      return;
-    }
+return;
+}
 
 
-    if (
-      typeof checkFriendChatBan ===
-      "function"
-    ) {
+/* BAN確認 */
 
-      const banned =
-        await checkFriendChatBan();
+if (typeof checkFriendChatBan === "function") {
 
-      if (banned) {
-        return;
-      }
-    }
+const banned =
+await checkFriendChatBan();
+
+if (banned) return;
+
+}
 
 
-    currentUsername =
-      session.user.user_metadata?.username || "";
+currentUsername =
+session.user.user_metadata?.username || "";
 
 
-    if (
-      !ADMIN_USERNAMES.has(
-        currentUsername
-      )
-    ) {
+if (!ADMIN_USERNAMES.has(currentUsername)) {
 
-      document.body.innerHTML = `
-        <div style="
-          padding:40px;
-          text-align:center;
-          font-family:sans-serif;
-        ">
-          <h2>🚫 アクセスできません</h2>
-          <p>このページは管理者専用です。</p>
-        </div>
-      `;
+document.body.innerHTML = `
+<div style="padding:40px;text-align:center;font-family:sans-serif">
+<h2>🚫 アクセスできません</h2>
+<p>このページは管理者専用です。</p>
+</div>`;
 
-      return;
-    }
+return;
+}
 
 
-    document.getElementById(
-      "adminName"
-    ).textContent =
-      `ログイン中：${currentUsername}`;
+document.getElementById("adminName").textContent =
+`ログイン中：${currentUsername}`;
+
+setStatus("管理者としてログインしています。");
 
 
-    setStatus(
-      "管理者としてログインしています。"
-    );
+await Promise.all([
+loadUsers(),
+loadBoardMessages(),
+loadItems(),
+loadEvents(),
+loadRewardCodes()
+]);
 
 
-    await Promise.all([
-      loadUsers(),
-      loadBoardMessages(),
-      loadItems(),
-      loadEvents(),
-      loadRewardCodes()
-    ]);
+} catch(error) {
 
-  } catch (error) {
+console.error(error);
 
-    console.error(error);
+setStatus(
+"エラー：" +
+(error.message || "読み込みに失敗しました")
+);
 
-    setStatus(
-      "エラー：" +
-      (
-        error.message ||
-        "読み込みに失敗しました"
-      )
-    );
-  }
+}
+
 }
 
 
 /* =========================
-   ユーザー一覧
+ユーザー
 ========================= */
 
 async function loadUsers() {
 
-  const loading =
-    document.getElementById(
-      "usersLoading"
-    );
+const loading =
+document.getElementById("usersLoading");
 
-  const list =
-    document.getElementById(
-      "usersList"
-    );
+const list =
+document.getElementById("usersList");
 
+loading.classList.remove("hidden");
+list.innerHTML = "";
 
-  loading.classList.remove(
-    "hidden"
-  );
 
-  list.innerHTML = "";
+const {
+data: profiles,
+error
+} =
+await supabase
+.from("profiles")
+.select("user_id,name,avatar_url,created_at")
+.order("created_at",{ascending:false});
 
 
-  const {
-    data: profiles,
-    error
-  } =
-    await supabase
-      .from("profiles")
-      .select(
-        "user_id,name,avatar_url,created_at"
-      )
-      .order(
-        "created_at",
-        {
-          ascending: false
-        }
-      );
+if (error) {
 
+loading.textContent =
+"ユーザー読み込みエラー："+error.message;
 
-  if (error) {
+return;
+}
 
-    loading.textContent =
-      "ユーザー読み込みエラー：" +
-      error.message;
 
-    return;
-  }
+const {
+data:bans,
+error:banError
+} =
+await supabase
+.from("user_bans")
+.select("user_id,reason,banned_at,expires_at");
 
 
-  const {
-    data: bans,
-    error: banError
-  } =
-    await supabase
-      .from("user_bans")
-      .select(
-        "user_id,reason,banned_at,expires_at"
-      );
+if (banError) {
 
+loading.textContent =
+"BAN情報読み込みエラー："+banError.message;
 
-  if (banError) {
+return;
+}
 
-    loading.textContent =
-      "BAN情報読み込みエラー：" +
-      banError.message;
 
-    return;
-  }
+const banMap = new Map();
 
+(bans || []).forEach(ban=>{
+banMap.set(ban.user_id,ban);
+});
 
-  const banMap =
-    new Map();
 
+loading.classList.add("hidden");
 
-  (bans || []).forEach(
-    ban => {
 
-      banMap.set(
-        ban.user_id,
-        ban
-      );
+if (!profiles?.length) {
 
-    }
-  );
+list.innerHTML =
+`<div class="empty">ユーザーがいません。</div>`;
 
+return;
+}
 
-  loading.classList.add(
-    "hidden"
-  );
 
+profiles.forEach(profile=>{
 
-  if (
-    !profiles ||
-    profiles.length === 0
-  ) {
+const username =
+profile.user_id || "";
 
-    list.innerHTML =
-      `<div class="empty">
-        ユーザーがいません。
-      </div>`;
+const isAdmin =
+ADMIN_USERNAMES.has(username);
 
-    return;
-  }
+const ban =
+banMap.get(username);
 
+const card =
+document.createElement("div");
 
-  profiles.forEach(
-    profile => {
+card.className="user-card";
 
-      const username =
-        profile.user_id || "";
-
-
-      const isAdmin =
-        ADMIN_USERNAMES.has(
-          username
-        );
-
-
-      const ban =
-        banMap.get(
-          username
-        );
 
+const avatar =
+profile.avatar_url ||
+"https://via.placeholder.com/100";
 
-      const card =
-        document.createElement(
-          "div"
-        );
 
+card.innerHTML=`
 
-      card.className =
-        "user-card";
+<img class="avatar"
+src="${escapeAttribute(avatar)}"
+alt="">
 
+<div class="user-info">
 
-      const avatar =
-        profile.avatar_url ||
-        "https://via.placeholder.com/100";
+<div class="user-name">
+${escapeHtml(profile.name || username)}
+</div>
 
+<div class="user-id">
+ID：${escapeHtml(username)}
+</div>
+
+${
+isAdmin
+? `<div style="color:#8f6b00;font-weight:bold;font-size:13px">
+👑 管理者
+</div>`
+:""
+}
+
+${
+ban
+? `<div class="banned">🚫 BAN中</div>`
+:""
+}
+
+</div>
+
+<div class="actions">
+
+${
+isAdmin
+?""
+:
+ban
+?
+`<button class="success small"
+data-unban="${escapeAttribute(username)}">
+🔓 BAN解除
+</button>`
+:
+`<button class="danger small"
+data-ban="${escapeAttribute(username)}">
+🚫 BAN
+</button>`
+}
+
+</div>
+`;
+
+list.appendChild(card);
+
+});
+
+
+list.querySelectorAll("[data-ban]")
+.forEach(button=>{
+button.addEventListener("click",()=>{
+openBanModal(button.dataset.ban);
+});
+});
+
+
+list.querySelectorAll("[data-unban]")
+.forEach(button=>{
+button.addEventListener("click",()=>{
+unbanUser(button.dataset.unban);
+});
+});
 
-      card.innerHTML = `
-
-        <img
-          class="avatar"
-          src="${escapeAttribute(avatar)}"
-          alt="">
-
-        <div class="user-info">
-
-          <div class="user-name">
-            ${escapeHtml(
-              profile.name ||
-              username
-            )}
-          </div>
-
-          <div class="user-id">
-            ID：
-            ${escapeHtml(username)}
-          </div>
-
-          ${
-            isAdmin
-              ? `
-                <div style="
-                  color:#8f6b00;
-                  font-weight:bold;
-                  font-size:13px;
-                  margin-top:3px;
-                ">
-                  👑 管理者
-                </div>
-              `
-              : ""
-          }
-
-          ${
-            ban
-              ? `
-                <div class="banned">
-                  🚫 BAN中
-                </div>
-              `
-              : ""
-          }
-
-        </div>
-
-        <div class="actions">
-
-          ${
-            isAdmin
-              ? ""
-
-              : ban
-
-                ? `
-                  <button
-                    class="success small"
-                    data-unban="${escapeAttribute(
-                      username
-                    )}">
-                    🔓 BAN解除
-                  </button>
-                `
-
-                : `
-                  <button
-                    class="danger small"
-                    data-ban="${escapeAttribute(
-                      username
-                    )}">
-                    🚫 BAN
-                  </button>
-                `
-          }
-
-        </div>
-      `;
-
-
-      list.appendChild(card);
-
-    }
-  );
-
-
-  list.querySelectorAll(
-    "[data-ban]"
-  ).forEach(
-    button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          openBanModal(
-            button.dataset.ban
-          );
-
-        }
-      );
-
-    }
-  );
-
-
-  list.querySelectorAll(
-    "[data-unban]"
-  ).forEach(
-    button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          unbanUser(
-            button.dataset.unban
-          );
-
-        }
-      );
-
-    }
-  );
 }
 
 
 /* =========================
-   BAN
+BAN
 ========================= */
 
 function openBanModal(username) {
 
-  banTargetUsername =
-    username;
+banTargetUsername=username;
 
-  document.getElementById(
-    "banTarget"
-  ).textContent =
-    `対象ユーザー：${username}`;
+document.getElementById("banTarget").textContent =
+`対象ユーザー：${username}`;
 
-  document.getElementById(
-    "banReason"
-  ).value = "";
+document.getElementById("banReason").value="";
 
-  document.getElementById(
-    "banModal"
-  ).classList.remove(
-    "hidden"
-  );
+document.getElementById("banModal")
+.classList.remove("hidden");
+
 }
 
 
 function closeBanModal() {
 
-  document.getElementById(
-    "banModal"
-  ).classList.add(
-    "hidden"
-  );
+document.getElementById("banModal")
+.classList.add("hidden");
 
-  banTargetUsername =
-    "";
+banTargetUsername="";
+
 }
 
 
 async function banUser() {
 
-  if (!banTargetUsername) {
-    return;
-  }
+if (!banTargetUsername) return;
+
+if (ADMIN_USERNAMES.has(banTargetUsername)) {
+
+alert("管理者はBANできません。");
+return;
+
+}
 
 
-  if (
-    ADMIN_USERNAMES.has(
-      banTargetUsername
-    )
-  ) {
-
-    alert(
-      "管理者はBANできません。"
-    );
-
-    return;
-  }
+const reason =
+document.getElementById("banReason").value.trim();
 
 
-  const reason =
-    document.getElementById(
-      "banReason"
-    ).value.trim();
+const {error} =
+await supabase
+.from("user_bans")
+.insert({
+user_id:banTargetUsername,
+reason,
+banned_by:currentUsername
+});
 
 
-  const {
-    error
-  } =
-    await supabase
-      .from("user_bans")
-      .insert({
-        user_id:
-          banTargetUsername,
+if(error){
 
-        reason,
+alert("BANに失敗しました：\n"+error.message);
+return;
 
-        banned_by:
-          currentUsername
-      });
+}
 
 
-  if (error) {
+const target=banTargetUsername;
 
-    alert(
-      "BANに失敗しました：\n" +
-      error.message
-    );
+closeBanModal();
 
-    return;
-  }
+await loadUsers();
 
+alert(`${target} をBANしました。`);
 
-  closeBanModal();
-
-  await loadUsers();
-
-  alert(
-    `${banTargetUsername} をBANしました。`
-  );
 }
 
 
 async function unbanUser(username) {
 
-  if (
-    !confirm(
-      `${username} のBANを解除しますか？`
-    )
-  ) {
-    return;
-  }
+if(!confirm(`${username} のBANを解除しますか？`)){
+return;
+}
 
 
-  const {
-    error
-  } =
-    await supabase
-      .from("user_bans")
-      .delete()
-      .eq(
-        "user_id",
-        username
-      );
+const {error} =
+await supabase
+.from("user_bans")
+.delete()
+.eq("user_id",username);
 
 
-  if (error) {
+if(error){
 
-    alert(
-      "BAN解除に失敗しました：\n" +
-      error.message
-    );
+alert("BAN解除に失敗しました：\n"+error.message);
+return;
 
-    return;
-  }
+}
 
 
-  await loadUsers();
+await loadUsers();
 
-  alert(
-    `${username} のBANを解除しました。`
-  );
+alert(`${username} のBANを解除しました。`);
+
 }
 
 
 /* =========================
-   掲示板
+掲示板
 ========================= */
 
 async function loadBoardMessages() {
 
-  const loading =
-    document.getElementById(
-      "boardLoading"
-    );
+const loading =
+document.getElementById("boardLoading");
 
-  const list =
-    document.getElementById(
-      "boardList"
-    );
+const list =
+document.getElementById("boardList");
 
-
-  loading.classList.remove(
-    "hidden"
-  );
-
-  list.innerHTML = "";
+loading.classList.remove("hidden");
+list.innerHTML="";
 
 
-  const {
-    data,
-    error
-  } =
-    await supabase
-      .from("board_messages")
-      .select(
-        "id,sender_id,content,created_at,is_deleted"
-      )
-      .order(
-        "created_at",
-        {
-          ascending: false
-        }
-      )
-      .limit(100);
+const {
+data,
+error
+} =
+await supabase
+.from("board_messages")
+.select("id,sender_id,content,created_at,is_deleted")
+.order("created_at",{ascending:false})
+.limit(100);
 
 
-  if (error) {
+if(error){
 
-    loading.textContent =
-      "掲示板読み込みエラー：" +
-      error.message;
+loading.textContent =
+"掲示板読み込みエラー："+error.message;
 
-    return;
-  }
+return;
 
-
-  loading.classList.add(
-    "hidden"
-  );
+}
 
 
-  if (
-    !data ||
-    data.length === 0
-  ) {
-
-    list.innerHTML =
-      `<div class="empty">
-        掲示板メッセージがありません。
-      </div>`;
-
-    return;
-  }
+loading.classList.add("hidden");
 
 
-  data.forEach(
-    message => {
+if(!data?.length){
 
-      const card =
-        document.createElement(
-          "div"
-        );
+list.innerHTML =
+`<div class="empty">掲示板メッセージがありません。</div>`;
 
-      card.className =
-        "board-message";
+return;
+
+}
 
 
-      card.innerHTML = `
+data.forEach(message=>{
 
-        <div class="board-header">
+const card =
+document.createElement("div");
 
-          <div class="board-user">
-            👤
-            ${escapeHtml(
-              message.sender_id
-            )}
-          </div>
-
-          <div class="board-date">
-            ${escapeHtml(
-              formatDate(
-                message.created_at
-              )
-            )}
-          </div>
-
-        </div>
-
-        <div
-          class="board-content"
-          data-content>
-          ${escapeHtml(
-            message.content
-          )}
-        </div>
-
-        ${
-          message.is_deleted
-            ? `
-              <div style="
-                color:#e53935;
-                margin-top:8px;
-                font-weight:bold;
-              ">
-                🗑️ 削除済み
-              </div>
-            `
-            : ""
-        }
-
-        <div class="actions">
-
-          ${
-            message.is_deleted
-              ? ""
-
-              : `
-                <button
-                  class="small"
-                  data-edit="${message.id}">
-                  ✏️ 編集
-                </button>
-
-                <button
-                  class="danger small"
-                  data-delete="${message.id}">
-                  🗑️ 削除
-                </button>
-              `
-          }
-
-        </div>
-      `;
+card.className="board-message";
 
 
-      list.appendChild(card);
+card.innerHTML=`
 
-    }
-  );
+<div class="board-header">
+
+<div class="board-user">
+👤 ${escapeHtml(message.sender_id)}
+</div>
+
+<div class="board-date">
+${escapeHtml(formatDate(message.created_at))}
+</div>
+
+</div>
+
+<div class="board-content">
+${escapeHtml(message.content)}
+</div>
+
+${
+message.is_deleted
+?
+`<div style="color:#e53935;font-weight:bold;margin-top:8px">
+🗑️ 削除済み
+</div>`
+:""
+}
+
+<div class="actions">
+
+${
+message.is_deleted
+?""
+:
+`
+<button class="small"
+data-edit="${message.id}">
+✏️ 編集
+</button>
+
+<button class="danger small"
+data-delete="${message.id}">
+🗑️ 削除
+</button>
+`
+}
+
+</div>
+`;
+
+list.appendChild(card);
+
+});
 
 
-  list.querySelectorAll(
-    "[data-edit]"
-  ).forEach(
-    button => {
+list.querySelectorAll("[data-edit]")
+.forEach(button=>{
+button.addEventListener("click",()=>{
 
-      button.addEventListener(
-        "click",
-        () => {
+const message =
+data.find(
+x=>Number(x.id)===Number(button.dataset.edit)
+);
 
-          const id =
-            Number(
-              button.dataset.edit
-            );
+if(message) openEditModal(message);
 
-
-          const message =
-            data.find(
-              item =>
-                Number(item.id) === id
-            );
+});
+});
 
 
-          if (message) {
-            openEditModal(
-              message
-            );
-          }
+list.querySelectorAll("[data-delete]")
+.forEach(button=>{
+button.addEventListener("click",()=>{
+deleteBoardMessage(
+Number(button.dataset.delete)
+);
+});
+});
 
-        }
-      );
-
-    }
-  );
-
-
-  list.querySelectorAll(
-    "[data-delete]"
-  ).forEach(
-    button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          deleteBoardMessage(
-            Number(
-              button.dataset.delete
-            )
-          );
-
-        }
-      );
-
-    }
-  );
 }
 
 
 /* =========================
-   掲示板編集
+掲示板編集
 ========================= */
 
-function openEditModal(message) {
+function openEditModal(message){
 
-  editTargetMessageId =
-    message.id;
+editTargetMessageId=message.id;
 
-  document.getElementById(
-    "editContent"
-  ).value =
-    message.content || "";
+document.getElementById("editContent").value =
+message.content || "";
 
+document.getElementById("editModal")
+.classList.remove("hidden");
 
-  document.getElementById(
-    "editModal"
-  ).classList.remove(
-    "hidden"
-  );
 }
 
 
-function closeEditModal() {
+function closeEditModal(){
 
-  document.getElementById(
-    "editModal"
-  ).classList.add(
-    "hidden"
-  );
+document.getElementById("editModal")
+.classList.add("hidden");
 
-  editTargetMessageId =
-    null;
+editTargetMessageId=null;
+
 }
 
 
-async function saveBoardEdit() {
+async function saveBoardEdit(){
 
-  if (
-    editTargetMessageId ===
-    null
-  ) {
-    return;
-  }
+if(editTargetMessageId===null)return;
 
+const content =
+document.getElementById("editContent")
+.value.trim();
 
-  const content =
-    document.getElementById(
-      "editContent"
-    ).value.trim();
+if(!content){
 
+alert("メッセージを入力してください。");
+return;
 
-  if (!content) {
-
-    alert(
-      "メッセージを入力してください。"
-    );
-
-    return;
-  }
-
-
-  const {
-    error
-  } =
-    await supabase
-      .from("board_messages")
-      .update({
-        content
-      })
-      .eq(
-        "id",
-        editTargetMessageId
-      );
-
-
-  if (error) {
-
-    alert(
-      "編集に失敗しました：\n" +
-      error.message
-    );
-
-    return;
-  }
-
-
-  closeEditModal();
-
-  await loadBoardMessages();
-
-  alert("編集しました。");
 }
 
 
-async function deleteBoardMessage(id) {
-
-  if (
-    !confirm(
-      "この掲示板メッセージを削除しますか？"
-    )
-  ) {
-    return;
-  }
+const {error} =
+await supabase
+.from("board_messages")
+.update({content})
+.eq("id",editTargetMessageId);
 
 
-  const {
-    error
-  } =
-    await supabase
-      .from("board_messages")
-      .delete()
-      .eq(
-        "id",
-        id
-      );
+if(error){
+
+alert("編集に失敗しました：\n"+error.message);
+return;
+
+}
 
 
-  if (error) {
+closeEditModal();
 
-    alert(
-      "削除に失敗しました：\n" +
-      error.message
-    );
+await loadBoardMessages();
 
-    return;
-  }
+alert("編集しました。");
+
+}
 
 
-  await loadBoardMessages();
+async function deleteBoardMessage(id){
 
-  alert("削除しました。");
+if(!confirm("この掲示板メッセージを削除しますか？")){
+return;
+}
+
+
+const {error} =
+await supabase
+.from("board_messages")
+.delete()
+.eq("id",id);
+
+
+if(error){
+
+alert("削除に失敗しました：\n"+error.message);
+return;
+
+}
+
+
+await loadBoardMessages();
+
+alert("削除しました。");
+
 }
 
 
 /* =========================
-   フレーム一覧
+フレーム一覧
 ========================= */
 
-async function loadItems() {
+async function loadItems(){
 
-  const eventSelect =
-    document.getElementById(
-      "eventItem"
-    );
-
-  const rewardSelect =
-    document.getElementById(
-      "rewardCodeItem"
-    );
-
-
-  const {
-    data,
-    error
-  } =
-    await supabase
-      .from("coin_items")
-      .select(
-        "item_key,name,price"
-      )
-      .neq(
-        "item_key",
-        "admin"
-      )
-      .order(
-        "price",
-        {
-          ascending: true
-        }
-      );
+const {
+data,
+error
+} =
+await supabase
+.from("coin_items")
+.select("item_key,name,price")
+.neq("item_key","admin")
+.order("price",{ascending:true});
 
 
-  if (error) {
+if(error){
 
-    console.error(
-      "アイテム取得エラー",
-      error
-    );
+console.error(error);
+return;
 
-    return;
-  }
+}
 
 
-  eventSelect.innerHTML =
-    `<option value="">なし</option>`;
+const eventSelect =
+document.getElementById("eventItem");
 
-  rewardSelect.innerHTML =
-    `<option value="">なし</option>`;
-
-
-  (data || []).forEach(
-    item => {
-
-      const eventOption =
-        document.createElement(
-          "option"
-        );
-
-      eventOption.value =
-        item.item_key;
-
-      eventOption.textContent =
-        item.name;
-
-      eventSelect.appendChild(
-        eventOption
-      );
+const rewardSelect =
+document.getElementById("rewardCodeItem");
 
 
-      const rewardOption =
-        document.createElement(
-          "option"
-        );
+eventSelect.innerHTML =
+`<option value="">なし</option>`;
 
-      rewardOption.value =
-        item.item_key;
+rewardSelect.innerHTML =
+`<option value="">なし</option>`;
 
-      rewardOption.textContent =
-        item.name;
 
-      rewardSelect.appendChild(
-        rewardOption
-      );
+(data || []).forEach(item=>{
 
-    }
-  );
+const option1 =
+document.createElement("option");
+
+option1.value=item.item_key;
+option1.textContent=item.name;
+
+eventSelect.appendChild(option1);
+
+
+const option2 =
+document.createElement("option");
+
+option2.value=item.item_key;
+option2.textContent=item.name;
+
+rewardSelect.appendChild(option2);
+
+});
+
 }
 
 
 /* =========================
-   イベント作成
+配布コード作成
 ========================= */
 
-async function createEvent() {
+async function createRewardCode(){
 
-  const title =
-    document.getElementById(
-      "eventTitle"
-    ).value.trim();
+let code =
+document.getElementById("rewardCode")
+.value.trim()
+.toUpperCase();
 
 
-  const description =
-    document.getElementById(
-      "eventDescription"
-    ).value.trim();
-
-
-  const startValue =
-    document.getElementById(
-      "eventStart"
-    ).value;
-
-
-  const endValue =
-    document.getElementById(
-      "eventEnd"
-    ).value;
-
-
-  const rewardCoins =
-    Number(
-      document.getElementById(
-        "eventCoins"
-      ).value || 0
-    );
-
-
-  const rewardItem =
-    document.getElementById(
-      "eventItem"
-    ).value || null;
-
-
-  if (!title) {
-
-    alert(
-      "イベント名を入力してください。"
-    );
-
-    return;
-  }
-
-
-  if (
-    !startValue ||
-    !endValue
-  ) {
-
-    alert(
-      "開始日時と終了日時を入力してください。"
-    );
-
-    return;
-  }
-
-
-  const start =
-    new Date(startValue);
-
-  const end =
-    new Date(endValue);
-
-
-  if (
-    Number.isNaN(
-      start.getTime()
-    ) ||
-    Number.isNaN(
-      end.getTime()
-    )
-  ) {
-
-    alert(
-      "日時が正しくありません。"
-    );
-
-    return;
-  }
-
-
-  if (end <= start) {
-
-    alert(
-      "終了日時は開始日時より後にしてください。"
-    );
-
-    return;
-  }
-
-
-  if (
-    !Number.isFinite(
-      rewardCoins
-    ) ||
-    rewardCoins < 0
-  ) {
-
-    alert(
-      "コイン報酬が正しくありません。"
-    );
-
-    return;
-  }
-
-
-  const {
-    error
-  } =
-    await supabase
-      .from("events")
-      .insert({
-
-        title,
-
-        description,
-
-        start_at:
-          start.toISOString(),
-
-        end_at:
-          end.toISOString(),
-
-        reward_coins:
-          Math.floor(
-            rewardCoins
-          ),
-
-        reward_item_key:
-          rewardItem,
-
-        created_by:
-          currentUsername,
-
-        is_active:
-          true
-
-      });
-
-
-  if (error) {
-
-    alert(
-      "イベント作成に失敗しました：\n" +
-      error.message
-    );
-
-    return;
-  }
-
-
-  document.getElementById(
-    "eventTitle"
-  ).value = "";
-
-  document.getElementById(
-    "eventDescription"
-  ).value = "";
-
-  document.getElementById(
-    "eventStart"
-  ).value = "";
-
-  document.getElementById(
-    "eventEnd"
-  ).value = "";
-
-  document.getElementById(
-    "eventCoins"
-  ).value = "0";
-
-  document.getElementById(
-    "eventItem"
-  ).value = "";
-
-
-  await loadEvents();
-
-  alert(
-    "🎉 イベントを作成しました！"
-  );
-}
-
-
-/* =========================
-   イベント一覧
-========================= */
-
-async function loadEvents() {
-
-  const loading =
-    document.getElementById(
-      "eventsLoading"
-    );
-
-  const list =
-    document.getElementById(
-      "eventsList"
-    );
-
-
-  loading.classList.remove(
-    "hidden"
-  );
-
-  list.innerHTML = "";
-
-
-  const {
-    data,
-    error
-  } =
-    await supabase
-      .from("events")
-      .select(`
-        id,
-        title,
-        description,
-        start_at,
-        end_at,
-        reward_coins,
-        reward_item_key,
-        created_by,
-        is_active,
-        created_at,
-        coin_items(
-          name
-        )
-      `)
-      .order(
-        "created_at",
-        {
-          ascending: false
-        }
-      );
-
-
-  if (error) {
-
-    loading.textContent =
-      "イベント読み込みエラー：" +
-      error.message;
-
-    return;
-  }
-
-
-  loading.classList.add(
-    "hidden"
-  );
-
-
-  if (
-    !data ||
-    data.length === 0
-  ) {
-
-    list.innerHTML =
-      `<div class="empty">
-        イベントはまだありません。
-      </div>`;
-
-    return;
-  }
-
-
-  data.forEach(
-    event => {
-
-      const card =
-        document.createElement(
-          "div"
-        );
-
-      card.className =
-        "event-card";
-
-
-      const itemName =
-        event.coin_items?.name ||
-        "";
-
-
-      card.innerHTML = `
-
-        <div class="event-title">
-          ${escapeHtml(
-            event.title
-          )}
-        </div>
-
-        <div class="event-description">
-          ${escapeHtml(
-            event.description
-          )}
-        </div>
-
-        <div class="event-info">
-
-          📅
-          ${escapeHtml(
-            formatDate(
-              event.start_at
-            )
-          )}
-
-          〜
-
-          ${escapeHtml(
-            formatDate(
-              event.end_at
-            )
-          )}
-
-          <br>
-
-          🪙 コイン：
-          ${Number(
-            event.reward_coins || 0
-          )}
-
-          ${
-            itemName
-              ? `
-                <br>
-                🖼️ フレーム：
-                ${escapeHtml(
-                  itemName
-                )}
-              `
-              : ""
-          }
-
-          <br>
-
-          ${
-            event.is_active
-              ? "🟢 公開中"
-              : "⚪ 非公開"
-          }
-
-        </div>
-
-        <div class="actions">
-
-          <button
-            class="small"
-            data-toggle-event="${event.id}">
-            ${
-              event.is_active
-                ? "⏸️ 非公開"
-                : "▶️ 公開"
-            }
-          </button>
-
-          <button
-            class="danger small"
-            data-delete-event="${event.id}">
-            🗑️ 削除
-          </button>
-
-        </div>
-      `;
-
-
-      list.appendChild(
-        card
-      );
-
-    }
-  );
-
-
-  list.querySelectorAll(
-    "[data-toggle-event]"
-  ).forEach(
-    button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          toggleEvent(
-            Number(
-              button.dataset
-                .toggleEvent
-            )
-          );
-
-        }
-      );
-
-    }
-  );
-
-
-  list.querySelectorAll(
-    "[data-delete-event]"
-  ).forEach(
-    button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          deleteEvent(
-            Number(
-              button.dataset
-                .deleteEvent
-            )
-          );
-
-        }
-      );
-
-    }
-  );
-}
-
-
-async function toggleEvent(id) {
-
-  const {
-    data: event,
-    error: getError
-  } =
-    await supabase
-      .from("events")
-      .select(
-        "is_active"
-      )
-      .eq(
-        "id",
-        id
-      )
-      .single();
-
-
-  if (getError) {
-
-    alert(
-      "イベント取得に失敗しました：\n" +
-      getError.message
-    );
-
-    return;
-  }
-
-
-  const {
-    error
-  } =
-    await supabase
-      .from("events")
-      .update({
-        is_active:
-          !event.is_active
-      })
-      .eq(
-        "id",
-        id
-      );
-
-
-  if (error) {
-
-    alert(
-      "変更に失敗しました：\n" +
-      error.message
-    );
-
-    return;
-  }
-
-
-  await loadEvents();
-}
-
-
-async function deleteEvent(id) {
-
-  if (
-    !confirm(
-      "このイベントを削除しますか？"
-    )
-  ) {
-    return;
-  }
-
-
-  const {
-    error
-  } =
-    await supabase
-      .from("events")
-      .delete()
-      .eq(
-        "id",
-        id
-      );
-
-
-  if (error) {
-
-    alert(
-      "イベント削除に失敗しました：\n" +
-      error.message
-    );
-
-    return;
-  }
-
-
-  await loadEvents();
-
-  alert(
-    "イベントを削除しました。"
-  );
-}
-
-
-/* =========================
-   配布コード作成
-========================= */
-
-async function createRewardCode() {
-
-  const code =
-    document.getElementById(
-      "rewardCode"
-    ).value
-      .trim()
-      .toUpperCase();
-
-
-  const rewardCoins =
-    Number(
-      document.getElementById(
-        "rewardCodeCoins"
-      ).value || 0
-    );
-
-
-  const rewardItem =
-    document.getElementById(
-      "rewardCodeItem"
-    ).value || null;
-
-
-  const maxUses =
-    Number(
-      document.getElementById(
-        "rewardCodeMaxUses"
-      ).value || 0
-    );
-
-
-  if (!code) {
-
-    alert(
-      "配布コードを入力してください。"
-    );
-
-    return;
-  }
-
-
-  if (
-    !Number.isInteger(
-      rewardCoins
-    ) ||
-    rewardCoins < 0
-  ) {
-
-    alert(
-      "コイン報酬が正しくありません。"
-    );
-
-    return;
-  }
-
-
-  if (
-    !rewardItem &&
-    rewardCoins <= 0
-  ) {
-
-    alert(
-      "コインまたはフレームのどちらかを設定してください。"
-    );
-
-    return;
-  }
-
-
-  if (
-    !Number.isInteger(
-      maxUses
-    ) ||
-    maxUses < 0
-  ) {
-
-    alert(
-      "最大利用人数が正しくありません。"
-    );
-
-    return;
-  }
-
-
-  const {
-    error
-  } =
-    await supabase
-      .from("coin_reward_codes")
-      .insert({
-
-        code,
-
-        reward_coins:
-          rewardCoins,
-
-        reward_item_key:
-          rewardItem,
-
-        max_uses:
-          maxUses,
-
-        is_active:
-          true,
-
-        created_by:
-          currentUsername
-
-      });
-
-
-  if (error) {
-
-    console.error(
-      "配布コード作成エラー:",
-      error
-    );
-
-
-    if (
-      error.code === "23505"
-    ) {
-
-      alert(
-        "その配布コードはすでに存在します。"
-      );
-
-    } else {
-
-      alert(
-        "配布コード作成に失敗しました：\n" +
-        error.message
-      );
-    }
-
-    return;
-  }
-
-
-  document.getElementById(
-    "rewardCode"
-  ).value = "";
-
-  document.getElementById(
-    "rewardCodeCoins"
-  ).value = "0";
-
-  document.getElementById(
-    "rewardCodeItem"
-  ).value = "";
-
-  document.getElementById(
-    "rewardCodeMaxUses"
-  ).value = "0";
-
-
-  await loadRewardCodes();
-
-  alert(
-    `🎁 配布コード「${code}」を作成しました！`
-  );
-}
-
-
-/* =========================
-   配布コード一覧
-========================= */
-
-async function loadRewardCodes() {
-
-  const loading =
-    document.getElementById(
-      "rewardCodesLoading"
-    );
-
-  const list =
-    document.getElementById(
-      "rewardCodesList"
-    );
-
-
-  loading.classList.remove(
-    "hidden"
-  );
-
-  list.innerHTML = "";
-
-
-  const {
-    data,
-    error
-  } =
-    await supabase
-      .from("coin_reward_codes")
-      .select(`
-        id,
-        code,
-        reward_coins,
-        reward_item_key,
-        max_uses,
-        is_active,
-        created_by,
-        created_at,
-        coin_items(
-          name,
-          icon
-        )
-      `)
-      .order(
-        "created_at",
-        {
-          ascending: false
-        }
-      );
-
-
-  if (error) {
-
-    loading.textContent =
-      "配布コード読み込みエラー：" +
-      error.message;
-
-    return;
-  }
-
-
-  const {
-    data: uses,
-    error: usesError
-  } =
-    await supabase
-      .from("coin_reward_code_uses")
-      .select(
-        "reward_code_id"
-      );
-
-
-  if (usesError) {
-
-    loading.textContent =
-      "利用数読み込みエラー：" +
-      usesError.message;
-
-    return;
-  }
-
-
-  const useCounts =
-    new Map();
-
-
-  (uses || []).forEach(
-    use => {
-
-      const id =
-        Number(
-          use.reward_code_id
-        );
-
-      useCounts.set(
-        id,
-        (useCounts.get(id) || 0) + 1
-      );
-
-    }
-  );
-
-
-  loading.classList.add(
-    "hidden"
-  );
-
-
-  if (
-    !data ||
-    data.length === 0
-  ) {
-
-    list.innerHTML =
-      `<div class="empty">
-        配布コードはまだありません。
-      </div>`;
-
-    return;
-  }
-
-
-  data.forEach(
-    code => {
-
-      const card =
-        document.createElement(
-          "div"
-        );
-
-      card.className =
-        "reward-code-card";
-
-
-      const count =
-        useCounts.get(
-          Number(code.id)
-        ) || 0;
-
-
-      const limit =
-        Number(
-          code.max_uses || 0
-        );
-
-
-      const usageText =
-        limit > 0
-          ? `${count} / ${limit} 人`
-          : `${count} / 無制限`;
-
-
-      const frameName =
-        code.coin_items?.name ||
-        "";
-
-
-      const frameIcon =
-        code.coin_items?.icon ||
-        "";
-
-
-      const rewardParts = [];
-
-
-      if (
-        Number(
-          code.reward_coins || 0
-        ) > 0
-      ) {
-
-        rewardParts.push(
-          `🪙 ${Number(
-            code.reward_coins
-          ).toLocaleString()} COIN`
-        );
-
-      }
-
-
-      if (frameName) {
-
-        rewardParts.push(
-          `🖼️ ${frameIcon} ${frameName}`
-        );
-
-      }
-
-
-      card.innerHTML = `
-
-        <div class="reward-code-title">
-          🎁 配布コード
-        </div>
-
-        <div class="reward-code-value">
-          ${escapeHtml(
-            code.code
-          )}
-        </div>
-
-        <div class="reward-code-info">
-
-          🎁 報酬：
-          ${escapeHtml(
-            rewardParts.join(" / ")
-          )}
-
-          <br>
-
-          👥 利用数：
-          ${escapeHtml(
-            usageText
-          )}
-
-          <br>
-
-          👤 作成者：
-          ${escapeHtml(
-            code.created_by
-          )}
-
-          <br>
-
-          📅 作成日：
-          ${escapeHtml(
-            formatDate(
-              code.created_at
-            )
-          )}
-
-          <br>
-
-          ${
-            code.is_active
-              ? `
-                <span class="code-active">
-                  🟢 有効
-                </span>
-              `
-              : `
-                <span class="code-inactive">
-                  🔴 無効
-                </span>
-              `
-          }
-
-        </div>
-
-        <div class="actions">
-
-          <button
-            class="small"
-            data-toggle-code="${code.id}">
-            ${
-              code.is_active
-                ? "⏸️ 無効にする"
-                : "▶️ 有効にする"
-            }
-          </button>
-
-          <button
-            class="danger small"
-            data-delete-code="${code.id}">
-            🗑️ 削除
-          </button>
-
-        </div>
-      `;
-
-
-      list.appendChild(
-        card
-      );
-
-    }
-  );
-
-
-  list.querySelectorAll(
-    "[data-toggle-code]"
-  ).forEach(
-    button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          toggleRewardCode(
-            Number(
-              button.dataset
-                .toggleCode
-            )
-          );
-
-        }
-      );
-
-    }
-  );
-
-
-  list.querySelectorAll(
-    "[data-delete-code]"
-  ).forEach(
-    button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          deleteRewardCode(
-            Number(
-              button.dataset
-                .deleteCode
-            )
-          );
-
-        }
-      );
-
-    }
-  );
-}
-
-
-/* =========================
-   配布コード有効・無効
-========================= */
-
-async function toggleRewardCode(id) {
-
-  const {
-    data,
-    error: getError
-  } =
-    await supabase
-      .from("coin_reward_codes")
-      .select(
-        "code,is_active"
-      )
-      .eq(
-        "id",
-        id
-      )
-      .single();
-
-
-  if (getError) {
-
-    alert(
-      "配布コード取得に失敗しました：\n" +
-      getError.message
-    );
-
-    return;
-  }
-
-
-  const {
-    error
-  } =
-    await supabase
-      .from("coin_reward_codes")
-      .update({
-        is_active:
-          !data.is_active
-      })
-      .eq(
-        "id",
-        id
-      );
-
-
-  if (error) {
-
-    alert(
-      "変更に失敗しました：\n" +
-      error.message
-    );
-
-    return;
-  }
-
-
-  await loadRewardCodes();
-}
-
-
-/* =========================
-   配布コード削除
-========================= */
-
-async function deleteRewardCode(id) {
-
-  const {
-    data,
-    error: getError
-  } =
-    await supabase
-      .from("coin_reward_codes")
-      .select(
-        "code"
-      )
-      .eq(
-        "id",
-        id
-      )
-      .single();
-
-
-  if (getError) {
-
-    alert(
-      "配布コード取得に失敗しました：\n" +
-      getError.message
-    );
-
-    return;
-  }
-
-
-  if (
-    !confirm(
-      `配布コード「${data.code}」を削除しますか？\n\n使用履歴も削除されます。`
-    )
-  ) {
-    return;
-  }
-
-
-  const {
-    error
-  } =
-    await supabase
-      .from("coin_reward_codes")
-      .delete()
-      .eq(
-        "id",
-        id
-      );
-
-
-  if (error) {
-
-    alert(
-      "配布コード削除に失敗しました：\n" +
-      error.message
-    );
-
-    return;
-  }
-
-
-  await loadRewardCodes();
-
-  alert(
-    "配布コードを削除しました。"
-  );
-}
-
-
-/* =========================
-   ボタン
-========================= */
-
-document.getElementById(
-  "confirmBanButton"
-).addEventListener(
-  "click",
-  banUser
+const rewardCoins =
+Number(
+document.getElementById("rewardCodeCoins").value || 0
 );
 
 
-document.getElementById(
-  "cancelBanButton"
-).addEventListener(
-  "click",
-  closeBanModal
+const rewardItem =
+document.getElementById("rewardCodeItem").value || null;
+
+
+const maxUses =
+Number(
+document.getElementById("rewardCodeMaxUses").value || 0
 );
 
 
-document.getElementById(
-  "saveEditButton"
-).addEventListener(
-  "click",
-  saveBoardEdit
-);
+if(!code){
+
+alert("配布コードを入力してください。");
+return;
+
+}
 
 
-document.getElementById(
-  "cancelEditButton"
-).addEventListener(
-  "click",
-  closeEditModal
-);
+if(!Number.isInteger(rewardCoins) || rewardCoins<0){
+
+alert("コイン報酬が正しくありません。");
+return;
+
+}
 
 
-document.getElementById(
-  "createEventButton"
-).addEventListener(
-  "click",
-  createEvent
-);
+if(!Number.isInteger(maxUses) || maxUses<0){
+
+alert("最大利用人数が正しくありません。");
+return;
+
+}
 
 
-document.getElementById(
-  "createRewardCodeButton"
-).addEventListener(
-  "click",
-  createRewardCode
-);
+if(rewardCoins===0 && !rewardItem){
+
+alert("コインまたはフレームを1つ以上設定してください。");
+return;
+
+}
+
+
+const {error} =
+await supabase
+.from("coin_reward_codes")
+.insert({
+
+code,
+
+reward_coins:rewardCoins,
+
+reward_item_key:rewardItem,
+
+max_uses:maxUses,
+
+is_active:true,
+
+created_by:currentUsername
+
+});
+
+
+if(error){
+
+alert("配布コード作成に失敗しました：\n"+error.message);
+return;
+
+}
+
+
+document.getElementById("rewardCode").value="";
+document.getElementById("rewardCodeCoins").value="0";
+document.getElementById("rewardCodeItem").value="";
+document.getElementById("rewardCodeMaxUses").value="0";
+
+
+await loadRewardCodes();
+
+alert("🎁 配布コードを作成しました！");
+
+}
 
 
 /* =========================
-   モーダル外側
+配布コード一覧
 ========================= */
 
-document.getElementById(
-  "banModal"
-).addEventListener(
-  "click",
-  event => {
+async function loadRewardCodes(){
 
-    if (
-      event.target ===
-      document.getElementById(
-        "banModal"
-      )
-    ) {
+const loading =
+document.getElementById("rewardCodesLoading");
 
-      closeBanModal();
+const list =
+document.getElementById("rewardCodesList");
 
-    }
+loading.classList.remove("hidden");
+list.innerHTML="";
 
-  }
+
+const {
+data:codes,
+error
+} =
+await supabase
+.from("coin_reward_codes")
+.select(`
+id,
+code,
+reward_coins,
+reward_item_key,
+max_uses,
+is_active,
+created_by,
+created_at,
+coin_items(name)
+`)
+.order("created_at",{ascending:false});
+
+
+if(error){
+
+loading.textContent =
+"配布コード読み込みエラー："+error.message;
+
+return;
+
+}
+
+
+const {
+data:uses,
+error:usesError
+} =
+await supabase
+.from("coin_reward_code_uses")
+.select("reward_code_id");
+
+
+if(usesError){
+
+console.error(usesError);
+
+}
+
+
+const useMap = new Map();
+
+(uses || []).forEach(row=>{
+
+const id=Number(row.reward_code_id);
+
+useMap.set(
+id,
+(useMap.get(id)||0)+1
 );
 
+});
 
-document.getElementById(
-  "editModal"
-).addEventListener(
-  "click",
-  event => {
 
-    if (
-      event.target ===
-      document.getElementById(
-        "editModal"
-      )
-    ) {
+loading.classList.add("hidden");
 
-      closeEditModal();
 
-    }
+if(!codes?.length){
 
-  }
+list.innerHTML =
+`<div class="empty">配布コードはまだありません。</div>`;
+
+return;
+
+}
+
+
+codes.forEach(code=>{
+
+const used =
+useMap.get(Number(code.id)) || 0;
+
+const limit =
+Number(code.max_uses || 0);
+
+const itemName =
+code.coin_items?.name || "";
+
+const rewardText=[];
+
+
+if(Number(code.reward_coins)>0){
+
+rewardText.push(
+`🪙 ${Number(code.reward_coins).toLocaleString()} COIN`
 );
+
+}
+
+if(itemName){
+
+rewardText.push(
+`🖼️ ${escapeHtml(itemName)}`
+);
+
+}
+
+
+const card =
+document.createElement("div");
+
+card.className="reward-code-card";
+
+
+card.innerHTML=`
+
+<div class="reward-code-title">
+🎁 ${escapeHtml(code.code)}
+</div>
+
+<div class="reward-code-info">
+
+報酬：
+${rewardText.join(" ＋ ")}
+
+<br>
+
+利用：
+${used} /
+${limit===0 ? "無制限" : limit}
+
+<br>
+
+状態：
+<span class="${code.is_active?"active":"inactive"}">
+${code.is_active?"🟢 有効":"🔴 無効"}
+</span>
+
+<br>
+
+作成者：
+${escapeHtml(code.created_by)}
+
+<br>
+
+作成日：
+${escapeHtml(formatDate(code.created_at))}
+
+</div>
+
+<div class="actions">
+
+<button
+class="small"
+data-toggle-code="${code.id}">
+${code.is_active?"⏸️ 無効にする":"▶️ 有効にする"}
+</button>
+
+<button
+class="danger small"
+data-delete-code="${code.id}">
+🗑️ 削除
+</button>
+
+</div>
+`;
+
+list.appendChild(card);
+
+});
+
+
+list.querySelectorAll("[data-toggle-code]")
+.forEach(button=>{
+
+button.addEventListener("click",()=>{
+
+toggleRewardCode(
+Number(button.dataset.toggleCode)
+);
+
+});
+
+});
+
+
+list.querySelectorAll("[data-delete-code]")
+.forEach(button=>{
+
+button.addEventListener("click",()=>{
+
+deleteRewardCode(
+Number(button.dataset.deleteCode)
+);
+
+});
+
+});
+
+}
 
 
 /* =========================
-   開始
+配布コードON/OFF
 ========================= */
+
+async function toggleRewardCode(id){
+
+const {
+data,
+error
+} =
+await supabase
+.from("coin_reward_codes")
+.select("is_active")
+.eq("id",id)
+.single();
+
+
+if(error){
+
+alert("配布コード取得に失敗しました：\n"+error.message);
+return;
+
+}
+
+
+const {error:updateError} =
+await supabase
+.from("coin_reward_codes")
+.update({
+is_active:!data.is_active
+})
+.eq("id",id);
+
+
+if(updateError){
+
+alert("変更に失敗しました：\n"+updateError.message);
+return;
+
+}
+
+
+await loadRewardCodes();
+
+}
+
+
+/* =========================
+配布コード削除
+========================= */
+
+async function deleteRewardCode(id){
+
+if(!confirm("この配布コードを削除しますか？")){
+return;
+}
+
+
+const {error} =
+await supabase
+.from("coin_reward_codes")
+.delete()
+.eq("id",id);
+
+
+if(error){
+
+alert("削除に失敗しました：\n"+error.message);
+return;
+
+}
+
+
+await loadRewardCodes();
+
+alert("配布コードを削除しました。");
+
+}
+
+
+/* =========================
+イベント作成
+========================= */
+
+async function createEvent(){
+
+const title =
+document.getElementById("eventTitle").value.trim();
+
+const description =
+document.getElementById("eventDescription").value.trim();
+
+const startValue =
+document.getElementById("eventStart").value;
+
+const endValue =
+document.getElementById("eventEnd").value;
+
+const rewardCoins =
+Number(
+document.getElementById("eventCoins").value || 0
+);
+
+const rewardItem =
+document.getElementById("eventItem").value || null;
+
+
+if(!title){
+
+alert("イベント名を入力してください。");
+return;
+
+}
+
+
+if(!startValue || !endValue){
+
+alert("開始日時と終了日時を入力してください。");
+return;
+
+}
+
+
+const start=new Date(startValue);
+const end=new Date(endValue);
+
+
+if(
+Number.isNaN(start.getTime()) ||
+Number.isNaN(end.getTime())
+){
+
+alert("日時が正しくありません。");
+return;
+
+}
+
+
+if(end<=start){
+
+alert("終了日時は開始日時より後にしてください。");
+return;
+
+}
+
+
+if(!Number.isFinite(rewardCoins)||rewardCoins<0){
+
+alert("コイン報酬が正しくありません。");
+return;
+
+}
+
+
+const {error} =
+await supabase
+.from("events")
+.insert({
+
+title,
+description,
+
+start_at:start.toISOString(),
+end_at:end.toISOString(),
+
+reward_coins:Math.floor(rewardCoins),
+
+reward_item_key:rewardItem,
+
+created_by:currentUsername,
+
+is_active:true
+
+});
+
+
+if(error){
+
+alert("イベント作成に失敗しました：\n"+error.message);
+return;
+
+}
+
+
+document.getElementById("eventTitle").value="";
+document.getElementById("eventDescription").value="";
+document.getElementById("eventStart").value="";
+document.getElementById("eventEnd").value="";
+document.getElementById("eventCoins").value="0";
+document.getElementById("eventItem").value="";
+
+
+await loadEvents();
+
+alert("🎉 イベントを作成しました！");
+
+}
+
+
+/* =========================
+イベント一覧
+========================= */
+
+async function loadEvents(){
+
+const loading =
+document.getElementById("eventsLoading");
+
+const list =
+document.getElementById("eventsList");
+
+loading.classList.remove("hidden");
+list.innerHTML="";
+
+
+const {
+data,
+error
+} =
+await supabase
+.from("events")
+.select(`
+id,
+title,
+description,
+start_at,
+end_at,
+reward_coins,
+reward_item_key,
+created_by,
+is_active,
+created_at,
+coin_items(name)
+`)
+.order("created_at",{ascending:false});
+
+
+if(error){
+
+loading.textContent =
+"イベント読み込みエラー："+error.message;
+
+return;
+
+}
+
+
+loading.classList.add("hidden");
+
+
+if(!data?.length){
+
+list.innerHTML =
+`<div class="empty">イベントはまだありません。</div>`;
+
+return;
+
+}
+
+
+data.forEach(event=>{
+
+const card =
+document.createElement("div");
+
+card.className="event-card";
+
+const itemName =
+event.coin_items?.name || "";
+
+
+card.innerHTML=`
+
+<div class="event-title">
+${escapeHtml(event.title)}
+</div>
+
+<div class="event-description">
+${escapeHtml(event.description)}
+</div>
+
+<div class="event-info">
+
+📅 ${escapeHtml(formatDate(event.start_at))}
+〜
+${escapeHtml(formatDate(event.end_at))}
+
+<br>
+
+🪙 コイン：
+${event.reward_coins || 0}
+
+${
+itemName
+?
+`<br>🖼️ フレーム：${escapeHtml(itemName)}`
+:""
+}
+
+<br>
+
+${event.is_active?"🟢 公開中":"⚪ 非公開"}
+
+</div>
+
+<div class="actions">
+
+<button
+class="small"
+data-toggle-event="${event.id}">
+${event.is_active?"⏸️ 非公開":"▶️ 公開"}
+</button>
+
+<button
+class="danger small"
+data-delete-event="${event.id}">
+🗑️ 削除
+</button>
+
+</div>
+`;
+
+list.appendChild(card);
+
+});
+
+
+list.querySelectorAll("[data-toggle-event]")
+.forEach(button=>{
+
+button.addEventListener("click",()=>{
+
+toggleEvent(
+Number(button.dataset.toggleEvent)
+);
+
+});
+
+});
+
+
+list.querySelectorAll("[data-delete-event]")
+.forEach(button=>{
+
+button.addEventListener("click",()=>{
+
+deleteEvent(
+Number(button.dataset.deleteEvent)
+);
+
+});
+
+});
+
+}
+
+
+/* =========================
+イベント切替
+========================= */
+
+async function toggleEvent(id){
+
+const {
+data:event,
+error:getError
+} =
+await supabase
+.from("events")
+.select("is_active")
+.eq("id",id)
+.single();
+
+
+if(getError){
+
+alert("イベント取得に失敗しました：\n"+getError.message);
+return;
+
+}
+
+
+const {error} =
+await supabase
+.from("events")
+.update({
+is_active:!event.is_active
+})
+.eq("id",id);
+
+
+if(error){
+
+alert("変更に失敗しました：\n"+error.message);
+return;
+
+}
+
+
+await loadEvents();
+
+}
+
+
+/* =========================
+イベント削除
+========================= */
+
+async function deleteEvent(id){
+
+if(!confirm("このイベントを削除しますか？")){
+return;
+}
+
+
+const {error} =
+await supabase
+.from("events")
+.delete()
+.eq("id",id);
+
+
+if(error){
+
+alert("イベント削除に失敗しました：\n"+error.message);
+return;
+
+}
+
+
+await loadEvents();
+
+alert("イベントを削除しました。");
+
+}
+
+
+/* =========================
+ボタン
+========================= */
+
+document.getElementById("confirmBanButton")
+.addEventListener("click",banUser);
+
+document.getElementById("cancelBanButton")
+.addEventListener("click",closeBanModal);
+
+document.getElementById("saveEditButton")
+.addEventListener("click",saveBoardEdit);
+
+document.getElementById("cancelEditButton")
+.addEventListener("click",closeEditModal);
+
+document.getElementById("createEventButton")
+.addEventListener("click",createEvent);
+
+document.getElementById("createRewardCodeButton")
+.addEventListener("click",createRewardCode);
+
+
+/* モーダル外側 */
+
+document.getElementById("banModal")
+.addEventListener("click",event=>{
+
+if(event.target===document.getElementById("banModal")){
+closeBanModal();
+}
+
+});
+
+
+document.getElementById("editModal")
+.addEventListener("click",event=>{
+
+if(event.target===document.getElementById("editModal")){
+closeEditModal();
+}
+
+});
+
+
+/* 開始 */
 
 init();
 
