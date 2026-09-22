@@ -57,10 +57,6 @@
       color: #7158cf;
     }
 
-    /* =========================
-       プロフィール画像
-    ========================= */
-
     .avatar-area {
       display: flex;
       justify-content: center;
@@ -78,18 +74,6 @@
         0 5px 18px rgba(0,0,0,.12),
         0 0 0 3px rgba(255,255,255,.9);
       transition: .25s;
-    }
-
-    .avatar-frame.sakura {
-      background: #ff77b7;
-    }
-
-    .avatar-frame.star {
-      background: #f4bf3f;
-    }
-
-    .avatar-frame.diamond {
-      background: #4db9ee;
     }
 
     .avatar-image {
@@ -114,7 +98,6 @@
       font-size: 58px;
     }
 
-    /* 右上の絵文字 */
     .equipped-badge {
       position: absolute;
       top: -8px;
@@ -143,10 +126,6 @@
       display: flex;
     }
 
-    /* =========================
-       アイコン画像選択
-    ========================= */
-
     .image-button {
       display: block;
       width: 100%;
@@ -169,10 +148,6 @@
     #imageInput {
       display: none;
     }
-
-    /* =========================
-       アイテム
-    ========================= */
 
     .item-title {
       font-weight: bold;
@@ -213,21 +188,6 @@
       font-size: 35px;
 
       background: white;
-    }
-
-    .item-icon.sakura {
-      border: 4px solid #ff77b7;
-      background: #fff0f7;
-    }
-
-    .item-icon.star {
-      border: 4px solid #f4bf3f;
-      background: #fff9df;
-    }
-
-    .item-icon.diamond {
-      border: 4px solid #4db9ee;
-      background: #eaf8ff;
     }
 
     .item-small-badge {
@@ -274,33 +234,12 @@
       background: #bbb;
     }
 
-    .remove-equip {
-      display: none;
-      width: 100%;
-      border: none;
-      border-radius: 10px;
-      padding: 9px;
-      background: #f3f3f3;
-      color: #777;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 8px;
-    }
-
-    .remove-equip.show {
-      display: block;
-    }
-
     .no-items {
       color: #999;
       text-align: center;
       font-size: 14px;
       padding: 15px 0;
     }
-
-    /* =========================
-       フォーム
-    ========================= */
 
     label {
       display: block;
@@ -360,75 +299,68 @@
 
 <body>
 
-  <a class="home-link" href="home.html">🏠 ホーム</a>
+<a class="home-link" href="home.html">🏠 ホーム</a>
 
-  <div class="container">
+<div class="container">
 
-    <h1>👤 プロフィール</h1>
+  <h1>👤 プロフィール</h1>
 
-    <!-- プロフィール画像 -->
-    <div class="avatar-area">
-      <div id="avatarFrame" class="avatar-frame">
+  <div class="avatar-area">
+    <div id="avatarFrame" class="avatar-frame">
 
-        <div id="avatarContent" class="avatar-placeholder">
-          😊
-        </div>
-
-        <div id="equippedBadge" class="equipped-badge"></div>
-
+      <div id="avatarContent" class="avatar-placeholder">
+        😊
       </div>
+
+      <div id="equippedBadge" class="equipped-badge"></div>
+
     </div>
-
-    <!-- アイテム -->
-    <div class="item-title">🎁 交換したアイテム</div>
-
-    <div id="items" class="items">
-      <div class="no-items">読み込み中...</div>
-    </div>
-
-    <!-- 画像選択 -->
-    <label for="imageInput" class="image-button">
-      📷 アイコン画像を選ぶ
-    </label>
-
-    <input
-      id="imageInput"
-      type="file"
-      accept="image/*"
-    >
-
-    <!-- 名前 -->
-    <label for="name">名前</label>
-
-    <input
-      id="name"
-      type="text"
-      placeholder="表示する名前"
-      maxlength="30"
-    >
-
-    <!-- 自己紹介 -->
-    <label for="bio">自己紹介</label>
-
-    <textarea
-      id="bio"
-      placeholder="自己紹介を書こう！"
-      maxlength="300"
-    ></textarea>
-
-    <!-- 保存 -->
-    <button
-      id="saveButton"
-      class="save-button"
-      type="button"
-    >
-      プロフィールを保存
-    </button>
-
-    <div id="message"></div>
-
   </div>
 
+  <div class="item-title">🎁 交換したアイテム</div>
+
+  <div id="items" class="items">
+    <div class="no-items">読み込み中...</div>
+  </div>
+
+  <label for="imageInput" class="image-button">
+    📷 アイコン画像を選ぶ
+  </label>
+
+  <input
+    id="imageInput"
+    type="file"
+    accept="image/*"
+  >
+
+  <label for="name">名前</label>
+
+  <input
+    id="name"
+    type="text"
+    placeholder="表示する名前"
+    maxlength="30"
+  >
+
+  <label for="bio">自己紹介</label>
+
+  <textarea
+    id="bio"
+    placeholder="自己紹介を書こう！"
+    maxlength="300"
+  ></textarea>
+
+  <button
+    id="saveButton"
+    class="save-button"
+    type="button"
+  >
+    プロフィールを保存
+  </button>
+
+  <div id="message"></div>
+
+</div>
 
 <script>
 
@@ -451,30 +383,6 @@ let ownedItems = [];
 
 
 // ================================
-// アイテム設定
-// ================================
-
-const ITEM_SETTINGS = {
-
-  sakura: {
-    icon: "🌸",
-    className: "sakura"
-  },
-
-  star: {
-    icon: "⭐",
-    className: "star"
-  },
-
-  diamond: {
-    icon: "💎",
-    className: "diamond"
-  }
-
-};
-
-
-// ================================
 // メッセージ
 // ================================
 
@@ -487,12 +395,11 @@ function showMessage(text, error = false) {
 
   el.style.color =
     error ? "#e05252" : "#7658d9";
-
 }
 
 
 // ================================
-// ログインユーザー取得
+// ログインユーザー
 // ================================
 
 async function getCurrentUser() {
@@ -564,14 +471,14 @@ async function loadProfile() {
       data.bio || "";
 
     displayAvatar(data.avatar_url);
-
   }
 
+  updateEquippedDisplay();
 }
 
 
 // ================================
-// プロフィール画像表示
+// プロフィール画像
 // ================================
 
 function displayAvatar(url) {
@@ -600,9 +507,7 @@ function displayAvatar(url) {
         😊
       </div>
     `;
-
   }
-
 }
 
 
@@ -622,7 +527,8 @@ async function loadItems() {
       coin_items (
         item_key,
         name,
-        icon
+        icon,
+        frame_color
       )
     `)
     .eq("user_id", currentUsername);
@@ -643,6 +549,7 @@ async function loadItems() {
 
   renderItems();
 
+  updateEquippedDisplay();
 }
 
 
@@ -680,10 +587,11 @@ function renderItems() {
     const key =
       item.item_key || row.item_key;
 
-    const setting =
-      ITEM_SETTINGS[key];
+    const icon =
+      item.icon || "🎁";
 
-    if (!setting) return;
+    const frameColor =
+      item.frame_color || "#ffd9ec";
 
     const isEquipped =
       equipped === key;
@@ -696,18 +604,29 @@ function renderItems() {
 
     card.innerHTML = `
 
-      <div class="item-icon ${setting.className}">
+      <div
+        class="item-icon"
+        style="
+          border: 4px solid ${escapeHtml(frameColor)};
+          background: ${escapeHtml(frameColor)}22;
+        "
+      >
 
-        ${escapeHtml(item.icon || setting.icon)}
+        ${escapeHtml(icon)}
 
-        <div class="item-small-badge">
-          ${escapeHtml(item.icon || setting.icon)}
+        <div
+          class="item-small-badge"
+          style="
+            border: 2px solid ${escapeHtml(frameColor)};
+          "
+        >
+          ${escapeHtml(icon)}
         </div>
 
       </div>
 
       <div class="item-name">
-        ${escapeHtml(item.name)}
+        ${escapeHtml(item.name || key)}
       </div>
 
       <button
@@ -721,7 +640,6 @@ function renderItems() {
     `;
 
     container.appendChild(card);
-
   });
 
   document
@@ -732,18 +650,14 @@ function renderItems() {
         "click",
         () => {
 
-          const key =
-            button.dataset.key;
-
-          equipItem(key);
+          equipItem(
+            button.dataset.key
+          );
 
         }
       );
 
     });
-
-  updateEquippedDisplay();
-
 }
 
 
@@ -769,7 +683,7 @@ async function equipItem(itemKey) {
     console.error(error);
 
     showMessage(
-      "装備に失敗しました。Supabaseの設定を確認してください。",
+      "装備に失敗しました。",
       true
     );
 
@@ -785,13 +699,14 @@ async function equipItem(itemKey) {
 
   renderItems();
 
-  showMessage("装備しました！✨");
+  updateEquippedDisplay();
 
+  showMessage("装備しました！✨");
 }
 
 
 // ================================
-// 装備表示
+// 装備中の枠を自動表示
 // ================================
 
 function updateEquippedDisplay() {
@@ -802,11 +717,8 @@ function updateEquippedDisplay() {
   const badge =
     document.getElementById("equippedBadge");
 
-  frame.classList.remove(
-    "sakura",
-    "star",
-    "diamond"
-  );
+  frame.style.background =
+    "#ffd9ec";
 
   badge.classList.remove("show");
 
@@ -817,20 +729,41 @@ function updateEquippedDisplay() {
 
   if (!key) return;
 
-  const setting =
-    ITEM_SETTINGS[key];
+  const ownedRow =
+    ownedItems.find(row => {
 
-  if (!setting) return;
+      const item =
+        row.coin_items;
 
-  frame.classList.add(
-    setting.className
-  );
+      return (
+        (item?.item_key || row.item_key) === key
+      );
+
+    });
+
+  if (!ownedRow) return;
+
+  const item =
+    ownedRow.coin_items;
+
+  if (!item) return;
+
+  const icon =
+    item.icon || "🎁";
+
+  const frameColor =
+    item.frame_color || "#ffd9ec";
+
+  frame.style.background =
+    frameColor;
 
   badge.textContent =
-    setting.icon;
+    icon;
+
+  badge.style.border =
+    `3px solid ${frameColor}`;
 
   badge.classList.add("show");
-
 }
 
 
@@ -930,7 +863,6 @@ document
       showMessage(
         "画像を選びました。最後に「プロフィールを保存」を押してください。"
       );
-
     }
   );
 
@@ -1001,7 +933,6 @@ async function saveProfile() {
   showMessage(
     "プロフィールを保存しました！✨"
   );
-
 }
 
 
@@ -1011,9 +942,10 @@ async function saveProfile() {
 
 function escapeHtml(value) {
 
-  if (value === null ||
-      value === undefined) {
-
+  if (
+    value === null ||
+    value === undefined
+  ) {
     return "";
   }
 
@@ -1023,7 +955,6 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
-
 }
 
 
@@ -1043,7 +974,6 @@ async function init() {
   await loadItems();
 
   updateEquippedDisplay();
-
 }
 
 init();
