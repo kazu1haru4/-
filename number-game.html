@@ -1,1 +1,1285 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <title>数字当て</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Hiragino Kaku Gothic ProN",
+        "Yu Gothic",
+        sans-serif;
+      background: linear-gradient(135deg, #fff4fb, #eef7ff);
+      min-height: 100vh;
+      color: #333;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 24px 18px 40px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .back-button {
+      border: none;
+      background: white;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      font-size: 22px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .card {
+      background: white;
+      border-radius: 24px;
+      padding: 22px;
+      margin-bottom: 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    }
+
+    .emoji {
+      text-align: center;
+      font-size: 54px;
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      text-align: center;
+      margin: 0 0 10px;
+      font-size: 22px;
+    }
+
+    .description {
+      text-align: center;
+      color: #777;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      border: 2px solid #eee;
+      border-radius: 14px;
+      font-size: 18px;
+      outline: none;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    input:focus {
+      border-color: #b889ff;
+    }
+
+    button.action {
+      width: 100%;
+      border: none;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #8b5cf6;
+      color: white;
+      margin-bottom: 10px;
+    }
+
+    button.action:active {
+      transform: scale(0.98);
+    }
+
+    button.secondary {
+      background: #eef0f5;
+      color: #555;
+    }
+
+    .room-code {
+      text-align: center;
+      font-size: 34px;
+      font-weight: bold;
+      letter-spacing: 6px;
+      color: #7c3aed;
+      margin: 12px 0;
+    }
+
+    .status {
+      text-align: center;
+      font-weight: bold;
+      margin: 14px 0;
+      color: #666;
+    }
+
+    .players {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .player {
+      flex: 1;
+      padding: 14px;
+      border-radius: 16px;
+      background: #f7f7fb;
+      text-align: center;
+    }
+
+    .player.active {
+      background: #eee5ff;
+      color: #6d28d9;
+      font-weight: bold;
+    }
+
+    .guess-title {
+      text-align: center;
+      font-size: 17px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    .result {
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+      margin: 16px 0;
+      min-height: 32px;
+    }
+
+    .hint {
+      text-align: center;
+      font-size: 16px;
+      color: #666;
+      min-height: 24px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .success {
+      color: #16a34a;
+    }
+
+    .danger {
+      color: #dc2626;
+    }
+
+    .info {
+      color: #2563eb;
+    }
+
+    .attempts {
+      text-align: center;
+      color: #777;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    .small {
+      text-align: center;
+      font-size: 12px;
+      color: #999;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <button
+      class="back-button"
+      type="button"
+      onclick="location.href='minigame.html'"
+    >
+      ←
+    </button>
+
+    <div class="title">
+      🎯 数字当て
+    </div>
+  </div>
+
+
+  <!-- ロビー -->
+  <div id="lobby">
+
+    <div class="card">
+
+      <div class="emoji">
+        🎯
+      </div>
+
+      <h2>
+        オンライン数字当て
+      </h2>
+
+      <div class="description">
+        1〜100の数字を当てよう！<br>
+        友達と交互に挑戦して、先に正解した人の勝ち！
+      </div>
+
+      <button
+        id="createButton"
+        class="action"
+        type="button"
+      >
+        🎮 部屋を作る
+      </button>
+
+    </div>
+
+
+    <div class="card">
+
+      <h2>
+        👥 友達の部屋に参加
+      </h2>
+
+      <input
+        id="roomCodeInput"
+        type="text"
+        inputmode="numeric"
+        maxlength="6"
+        placeholder="6桁のルームコード"
+      >
+
+      <button
+        id="joinButton"
+        class="action"
+        type="button"
+      >
+        🚪 部屋に参加
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- 待機画面 -->
+  <div id="waiting" class="hidden">
+
+    <div class="card">
+
+      <div class="emoji">
+        🎮
+      </div>
+
+      <h2>
+        友達を待っています
+      </h2>
+
+      <div class="description">
+        このルームコードを友達に送ってね！
+      </div>
+
+      <div
+        id="waitingRoomCode"
+        class="room-code"
+      >
+        ------
+      </div>
+
+      <button
+        id="copyButton"
+        class="action"
+        type="button"
+      >
+        📋 コードをコピー
+      </button>
+
+      <div
+        id="waitingStatus"
+        class="status"
+      >
+        友達の参加を待っています…
+      </div>
+
+      <button
+        id="leaveWaitingButton"
+        class="action secondary"
+        type="button"
+      >
+        ← 戻る
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- ゲーム -->
+  <div id="game" class="hidden">
+
+    <div class="card">
+
+      <div
+        id="gameRoomCode"
+        class="small"
+      >
+        ルームコード
+      </div>
+
+      <div
+        id="gameCode"
+        class="room-code"
+      >
+        ------
+      </div>
+
+      <div
+        id="gameStatus"
+        class="status"
+      >
+        準備中…
+      </div>
+
+      <div class="players">
+
+        <div
+          id="hostPlayer"
+          class="player"
+        >
+          🔵 ホスト
+        </div>
+
+        <div
+          id="guestPlayer"
+          class="player"
+        >
+          🔴 ゲスト
+        </div>
+
+      </div>
+
+      <div class="guess-title">
+        1〜100の数字を入力
+      </div>
+
+      <input
+        id="guessInput"
+        type="number"
+        min="1"
+        max="100"
+        placeholder="数字を入力"
+      >
+
+      <button
+        id="guessButton"
+        class="action"
+        type="button"
+      >
+        🎯 予想する
+      </button>
+
+      <div
+        id="hint"
+        class="hint"
+      >
+      </div>
+
+      <div
+        id="result"
+        class="result"
+      >
+      </div>
+
+      <div
+        id="attempts"
+        class="attempts"
+      >
+      </div>
+
+      <button
+        id="leaveGameButton"
+        class="action secondary"
+        type="button"
+      >
+        🚪 部屋を退出
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL =
+  "https://yxonmqdyekwenyzekjwj.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+
+let currentUsername = "";
+let currentRoom = null;
+let currentRole = "";
+let realtimeChannel = null;
+
+
+const lobby =
+  document.getElementById("lobby");
+
+const waiting =
+  document.getElementById("waiting");
+
+const game =
+  document.getElementById("game");
+
+const createButton =
+  document.getElementById("createButton");
+
+const joinButton =
+  document.getElementById("joinButton");
+
+const roomCodeInput =
+  document.getElementById("roomCodeInput");
+
+const waitingRoomCode =
+  document.getElementById("waitingRoomCode");
+
+const copyButton =
+  document.getElementById("copyButton");
+
+const waitingStatus =
+  document.getElementById("waitingStatus");
+
+const gameCode =
+  document.getElementById("gameCode");
+
+const gameStatus =
+  document.getElementById("gameStatus");
+
+const guessInput =
+  document.getElementById("guessInput");
+
+const guessButton =
+  document.getElementById("guessButton");
+
+const hint =
+  document.getElementById("hint");
+
+const result =
+  document.getElementById("result");
+
+const attempts =
+  document.getElementById("attempts");
+
+const hostPlayer =
+  document.getElementById("hostPlayer");
+
+const guestPlayer =
+  document.getElementById("guestPlayer");
+
+const leaveWaitingButton =
+  document.getElementById("leaveWaitingButton");
+
+const leaveGameButton =
+  document.getElementById("leaveGameButton");
+
+
+async function init() {
+
+  const {
+    data,
+    error
+  } = await supabaseClient.auth.getSession();
+
+  if (
+    error ||
+    !data.session
+  ) {
+    alert("ログインしてください。");
+    location.href = "index.html";
+    return;
+  }
+
+  currentUsername =
+    data.session.user.user_metadata?.username || "";
+
+  if (!currentUsername) {
+    alert("ユーザー情報を取得できませんでした。");
+    return;
+  }
+
+}
+
+
+function generateRoomCode() {
+
+  return String(
+    Math.floor(
+      100000 +
+      Math.random() * 900000
+    )
+  );
+
+}
+
+
+function generateSecretNumber() {
+
+  return Math.floor(
+    Math.random() * 100
+  ) + 1;
+
+}
+
+
+async function createRoom() {
+
+  createButton.disabled = true;
+  createButton.textContent = "作成中…";
+
+  const roomCode =
+    generateRoomCode();
+
+  const secretNumber =
+    generateSecretNumber();
+
+  const {
+    data,
+    error
+  } = await supabaseClient
+    .from("number_game_rooms")
+    .insert({
+      room_code: roomCode,
+      host_id: currentUsername,
+      secret_number: secretNumber,
+      current_player: "host",
+      status: "waiting"
+    })
+    .select()
+    .single();
+
+  if (error) {
+
+    console.error(error);
+
+    alert(
+      "部屋を作れませんでした。\n\n" +
+      error.message
+    );
+
+    createButton.disabled = false;
+    createButton.textContent =
+      "🎮 部屋を作る";
+
+    return;
+
+  }
+
+  currentRoom = data;
+  currentRole = "host";
+
+  showWaiting();
+
+  subscribeRoom();
+
+}
+
+
+async function joinRoom() {
+
+  const code =
+    roomCodeInput.value.trim();
+
+  if (!/^\d{6}$/.test(code)) {
+
+    alert(
+      "6桁のルームコードを入力してください。"
+    );
+
+    return;
+
+  }
+
+  joinButton.disabled = true;
+  joinButton.textContent = "参加中…";
+
+
+  const {
+    data: room,
+    error: findError
+  } = await supabaseClient
+    .from("number_game_rooms")
+    .select("*")
+    .eq("room_code", code)
+    .eq("game_type", "number")
+    .maybeSingle();
+
+
+  /*
+    game_type がまだ無い環境でも動くように、
+    room_codeだけでも検索する。
+  */
+
+  let foundRoom = room;
+
+  if (findError || !foundRoom) {
+
+    const {
+      data: fallbackRoom,
+      error: fallbackError
+    } = await supabaseClient
+      .from("number_game_rooms")
+      .select("*")
+      .eq("room_code", code)
+      .maybeSingle();
+
+    if (fallbackError) {
+
+      console.error(fallbackError);
+
+      alert(
+        "部屋を探せませんでした。\n\n" +
+        fallbackError.message
+      );
+
+      joinButton.disabled = false;
+      joinButton.textContent =
+        "🚪 部屋に参加";
+
+      return;
+
+    }
+
+    foundRoom = fallbackRoom;
+
+  }
+
+
+  if (!foundRoom) {
+
+    alert("そのルームコードの部屋はありません。");
+
+    joinButton.disabled = false;
+    joinButton.textContent =
+      "🚪 部屋に参加";
+
+    return;
+
+  }
+
+
+  if (foundRoom.guest_id) {
+
+    alert("この部屋にはすでに参加者がいます。");
+
+    joinButton.disabled = false;
+    joinButton.textContent =
+      "🚪 部屋に参加";
+
+    return;
+
+  }
+
+
+  const {
+    data: updatedRoom,
+    error
+  } = await supabaseClient
+    .from("number_game_rooms")
+    .update({
+      guest_id: currentUsername,
+      status: "playing",
+      current_player: "host"
+    })
+    .eq("id", foundRoom.id)
+    .is("guest_id", null)
+    .select()
+    .single();
+
+
+  if (error) {
+
+    console.error(error);
+
+    alert(
+      "部屋に参加できませんでした。\n\n" +
+      error.message
+    );
+
+    joinButton.disabled = false;
+    joinButton.textContent =
+      "🚪 部屋に参加";
+
+    return;
+
+  }
+
+
+  currentRoom = updatedRoom;
+  currentRole = "guest";
+
+  showGame();
+
+  subscribeRoom();
+
+}
+
+
+function showWaiting() {
+
+  lobby.classList.add("hidden");
+  waiting.classList.remove("hidden");
+  game.classList.add("hidden");
+
+  waitingRoomCode.textContent =
+    currentRoom.room_code;
+
+  waitingStatus.textContent =
+    "友達の参加を待っています…";
+
+}
+
+
+function showGame() {
+
+  lobby.classList.add("hidden");
+  waiting.classList.add("hidden");
+  game.classList.remove("hidden");
+
+  gameCode.textContent =
+    currentRoom.room_code;
+
+  updateGameUI();
+
+}
+
+
+function subscribeRoom() {
+
+  if (realtimeChannel) {
+
+    supabaseClient.removeChannel(
+      realtimeChannel
+    );
+
+  }
+
+
+  realtimeChannel =
+    supabaseClient
+      .channel(
+        "number-game-" +
+        currentRoom.id
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "number_game_rooms",
+          filter:
+            "id=eq." + currentRoom.id
+        },
+        payload => {
+
+          currentRoom =
+            payload.new;
+
+          if (
+            currentRoom.status ===
+            "playing"
+          ) {
+
+            showGame();
+
+          }
+
+          updateGameUI();
+
+        }
+      )
+      .subscribe();
+
+}
+
+
+function updateGameUI() {
+
+  if (!currentRoom) {
+    return;
+  }
+
+
+  gameCode.textContent =
+    currentRoom.room_code;
+
+
+  if (
+    currentRoom.status ===
+    "waiting"
+  ) {
+
+    if (currentRole === "host") {
+
+      showWaiting();
+
+    }
+
+    return;
+
+  }
+
+
+  if (
+    currentRoom.status ===
+    "playing"
+  ) {
+
+    const myTurn =
+      currentRoom.current_player ===
+      currentRole;
+
+    gameStatus.textContent =
+      myTurn
+        ? "🟢 あなたの番！"
+        : "⏳ 相手の番です";
+
+    guessInput.disabled =
+      !myTurn;
+
+    guessButton.disabled =
+      !myTurn;
+
+
+    hostPlayer.classList.toggle(
+      "active",
+      currentRoom.current_player === "host"
+    );
+
+    guestPlayer.classList.toggle(
+      "active",
+      currentRoom.current_player === "guest"
+    );
+
+
+    attempts.textContent =
+      "🔵 ホスト：" +
+      currentRoom.attempts_host +
+      "回　　🔴 ゲスト：" +
+      currentRoom.attempts_guest +
+      "回";
+
+    return;
+
+  }
+
+
+  if (
+    currentRoom.status ===
+    "finished"
+  ) {
+
+    guessInput.disabled = true;
+    guessButton.disabled = true;
+
+
+    if (
+      currentRoom.winner ===
+      currentRole
+    ) {
+
+      result.textContent =
+        "🎉 あなたの勝ち！";
+
+      result.className =
+        "result success";
+
+    } else {
+
+      result.textContent =
+        "😿 あなたの負け…";
+
+      result.className =
+        "result danger";
+
+    }
+
+    return;
+
+  }
+
+}
+
+
+async function makeGuess() {
+
+  if (!currentRoom) {
+    return;
+  }
+
+
+  if (
+    currentRoom.current_player !==
+    currentRole
+  ) {
+
+    return;
+
+  }
+
+
+  const value =
+    Number(guessInput.value);
+
+
+  if (
+    !Number.isInteger(value) ||
+    value < 1 ||
+    value > 100
+  ) {
+
+    alert(
+      "1〜100の数字を入力してください。"
+    );
+
+    return;
+
+  }
+
+
+  guessButton.disabled = true;
+
+
+  const isCorrect =
+    value ===
+    currentRoom.secret_number;
+
+
+  const newHostAttempts =
+    currentRoom.attempts_host +
+    (currentRole === "host" ? 1 : 0);
+
+  const newGuestAttempts =
+    currentRoom.attempts_guest +
+    (currentRole === "guest" ? 1 : 0);
+
+
+  if (isCorrect) {
+
+    const {
+      error
+    } = await supabaseClient
+      .from("number_game_rooms")
+      .update({
+        attempts_host:
+          newHostAttempts,
+        attempts_guest:
+          newGuestAttempts,
+        status: "finished",
+        winner: currentRole
+      })
+      .eq("id", currentRoom.id)
+      .eq(
+        "current_player",
+        currentRole
+      )
+      .eq(
+        "status",
+        "playing"
+      );
+
+
+    if (error) {
+
+      console.error(error);
+
+      alert(
+        "結果を保存できませんでした。\n\n" +
+        error.message
+      );
+
+      guessButton.disabled = false;
+      return;
+
+    }
+
+
+    hint.textContent =
+      "🎯 正解！";
+
+    result.textContent =
+      "🎉 正解しました！";
+
+    result.className =
+      "result success";
+
+    return;
+
+  }
+
+
+  if (
+    value <
+    currentRoom.secret_number
+  ) {
+
+    hint.textContent =
+      "⬆️ もっと大きい数字です";
+
+  } else {
+
+    hint.textContent =
+      "⬇️ もっと小さい数字です";
+
+  }
+
+
+  const nextPlayer =
+    currentRole === "host"
+      ? "guest"
+      : "host";
+
+
+  const {
+    error
+  } = await supabaseClient
+    .from("number_game_rooms")
+    .update({
+      attempts_host:
+        newHostAttempts,
+      attempts_guest:
+        newGuestAttempts,
+      current_player:
+        nextPlayer
+    })
+    .eq("id", currentRoom.id)
+    .eq(
+      "current_player",
+      currentRole
+    )
+    .eq(
+      "status",
+      "playing"
+    );
+
+
+  if (error) {
+
+    console.error(error);
+
+    alert(
+      "予想を保存できませんでした。\n\n" +
+      error.message
+    );
+
+  }
+
+
+  guessInput.value = "";
+  guessButton.disabled = false;
+
+}
+
+
+async function leaveRoom() {
+
+  if (!currentRoom) {
+
+    location.href =
+      "minigame.html";
+
+    return;
+
+  }
+
+
+  if (currentRole === "host") {
+
+    await supabaseClient
+      .from("number_game_rooms")
+      .delete()
+      .eq(
+        "id",
+        currentRoom.id
+      );
+
+  } else {
+
+    await supabaseClient
+      .from("number_game_rooms")
+      .update({
+        guest_id: null,
+        status: "waiting",
+        current_player: "host",
+        attempts_host: 0,
+        attempts_guest: 0,
+        winner: null
+      })
+      .eq(
+        "id",
+        currentRoom.id
+      )
+      .eq(
+        "guest_id",
+        currentUsername
+      );
+
+  }
+
+
+  if (realtimeChannel) {
+
+    await supabaseClient.removeChannel(
+      realtimeChannel
+    );
+
+    realtimeChannel = null;
+
+  }
+
+
+  currentRoom = null;
+  currentRole = "";
+
+  location.href =
+    "minigame.html";
+
+}
+
+
+copyButton.addEventListener(
+  "click",
+  async () => {
+
+    if (!currentRoom) {
+      return;
+    }
+
+    try {
+
+      await navigator.clipboard.writeText(
+        currentRoom.room_code
+      );
+
+      copyButton.textContent =
+        "✅ コピーしました！";
+
+      setTimeout(() => {
+
+        copyButton.textContent =
+          "📋 コードをコピー";
+
+      }, 1500);
+
+    } catch {
+
+      alert(
+        "コード：" +
+        currentRoom.room_code
+      );
+
+    }
+
+  }
+);
+
+
+createButton.addEventListener(
+  "click",
+  createRoom
+);
+
+
+joinButton.addEventListener(
+  "click",
+  joinRoom
+);
+
+
+guessButton.addEventListener(
+  "click",
+  makeGuess
+);
+
+
+leaveWaitingButton.addEventListener(
+  "click",
+  leaveRoom
+);
+
+
+leaveGameButton.addEventListener(
+  "click",
+  leaveRoom
+);
+
+
+roomCodeInput.addEventListener(
+  "input",
+  () => {
+
+    roomCodeInput.value =
+      roomCodeInput.value
+        .replace(/\D/g, "")
+        .slice(0, 6);
+
+  }
+);
+
+
+guessInput.addEventListener(
+  "keydown",
+  event => {
+
+    if (
+      event.key === "Enter" &&
+      !guessButton.disabled
+    ) {
+
+      makeGuess();
+
+    }
+
+  }
+);
+
+
+init();
+
+</script>
+
+</body>
+</html>
