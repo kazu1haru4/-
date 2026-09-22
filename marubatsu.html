@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>○×ゲーム</title>
+  <title>オンライン○×ゲーム</title>
 
   <style>
     * {
@@ -50,25 +50,125 @@
     }
 
     .title {
-      font-size: 25px;
+      font-size: 24px;
       font-weight: bold;
     }
 
-    .turn {
+    .card {
       background: white;
-      border-radius: 18px;
+      border-radius: 22px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    }
+
+    .card-title {
+      font-size: 19px;
+      font-weight: bold;
+      margin-bottom: 14px;
+    }
+
+    .input {
+      width: 100%;
+      border: 2px solid #eee;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 18px;
+      outline: none;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .input:focus {
+      border-color: #9c7cff;
+    }
+
+    .main-button {
+      width: 100%;
+      border: none;
+      border-radius: 15px;
+      padding: 14px;
+      font-size: 17px;
+      font-weight: bold;
+      background: #8d6cff;
+      color: white;
+      cursor: pointer;
+    }
+
+    .main-button:active {
+      transform: scale(0.97);
+    }
+
+    .secondary-button {
+      width: 100%;
+      border: none;
+      border-radius: 15px;
+      padding: 13px;
+      font-size: 15px;
+      background: #eee;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .message {
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 22px;
+      margin-bottom: 14px;
+    }
+
+    .room-code {
+      background: #f4f0ff;
+      border-radius: 16px;
       padding: 15px;
       text-align: center;
-      font-size: 18px;
+      margin-bottom: 15px;
+    }
+
+    .room-code-label {
+      font-size: 12px;
+      color: #777;
+      margin-bottom: 4px;
+    }
+
+    .room-code-value {
+      font-size: 30px;
       font-weight: bold;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.07);
+      letter-spacing: 5px;
+      color: #7053df;
+    }
+
+    .player-info {
+      display: flex;
+      gap: 10px;
       margin-bottom: 18px;
+    }
+
+    .player-box {
+      flex: 1;
+      padding: 13px 8px;
+      background: #f8f8f8;
+      border-radius: 15px;
+      text-align: center;
+    }
+
+    .player-name {
+      font-size: 13px;
+      color: #777;
+      margin-bottom: 4px;
+    }
+
+    .player-mark {
+      font-size: 22px;
+      font-weight: bold;
     }
 
     .board {
       width: min(90vw, 390px);
       aspect-ratio: 1 / 1;
-      margin: 0 auto 22px;
+      margin: 0 auto 18px;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 10px;
@@ -77,49 +177,65 @@
     .cell {
       border: none;
       border-radius: 20px;
-      background: white;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-      font-size: clamp(45px, 15vw, 75px);
+      background: #fafafa;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.07);
+      font-size: clamp(42px, 14vw, 72px);
       font-weight: bold;
       cursor: pointer;
-      color: #333;
     }
 
-    .cell:active {
-      transform: scale(0.96);
-    }
-
-    .cell.x {
-      color: #4b8cff;
+    .cell:disabled {
+      cursor: default;
+      opacity: 1;
     }
 
     .cell.o {
       color: #ff5d8f;
     }
 
-    .result {
-      min-height: 32px;
-      text-align: center;
-      font-size: 21px;
-      font-weight: bold;
-      margin-bottom: 18px;
+    .cell.x {
+      color: #4b8cff;
     }
 
-    .reset-button {
+    .turn {
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      min-height: 30px;
+      margin-bottom: 12px;
+    }
+
+    .result {
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+      min-height: 34px;
+      margin-bottom: 12px;
+    }
+
+    .copy-button {
       width: 100%;
       border: none;
-      border-radius: 16px;
-      background: #eee;
-      padding: 14px;
-      font-size: 16px;
+      border-radius: 15px;
+      padding: 13px;
+      background: #eaf7ff;
+      color: #2874a6;
+      font-size: 15px;
+      font-weight: bold;
       cursor: pointer;
+      margin-top: 10px;
     }
 
-    .note {
+    .hidden {
+      display: none !important;
+    }
+
+    .small-note {
       text-align: center;
-      color: #777;
-      font-size: 13px;
-      margin-top: 15px;
+      color: #888;
+      font-size: 12px;
+      margin-top: 12px;
+      line-height: 1.5;
     }
   </style>
 </head>
@@ -129,76 +245,290 @@
   <div class="container">
 
     <div class="header">
-
       <button
         class="back-button"
         type="button"
-        onclick="location.href='minigame.html'"
+        id="backButton"
       >
         ←
       </button>
 
       <div class="title">
-        ⭕❌ ○×ゲーム
+        ⭕❌ オンライン○×ゲーム
+      </div>
+    </div>
+
+
+    <!-- 部屋作成・参加画面 -->
+
+    <div id="lobby">
+
+      <div class="card">
+
+        <div class="card-title">
+          🎮 対戦部屋を作る
+        </div>
+
+        <div class="message">
+          部屋を作って友達を招待しよう！
+        </div>
+
+        <button
+          class="main-button"
+          id="createRoomButton"
+          type="button"
+        >
+          部屋を作る
+        </button>
+
+      </div>
+
+
+      <div class="card">
+
+        <div class="card-title">
+          🔑 部屋に参加
+        </div>
+
+        <div class="message">
+          友達からもらった部屋コードを入力
+        </div>
+
+        <input
+          class="input"
+          id="roomCodeInput"
+          type="text"
+          inputmode="numeric"
+          maxlength="6"
+          placeholder="6桁のコード"
+        >
+
+        <button
+          class="main-button"
+          id="joinRoomButton"
+          type="button"
+        >
+          部屋に参加
+        </button>
+
+      </div>
+
+      <div
+        class="message"
+        id="lobbyMessage"
+      ></div>
+
+    </div>
+
+
+    <!-- 待機画面 -->
+
+    <div
+      id="waiting"
+      class="hidden"
+    >
+
+      <div class="card">
+
+        <div class="card-title">
+          ⏳ 友達を待っています
+        </div>
+
+        <div class="room-code">
+
+          <div class="room-code-label">
+            部屋コード
+          </div>
+
+          <div
+            class="room-code-value"
+            id="waitingRoomCode"
+          >
+            ------
+          </div>
+
+        </div>
+
+        <button
+          class="copy-button"
+          id="copyRoomButton"
+          type="button"
+        >
+          📋 部屋コードをコピー
+        </button>
+
+        <div class="message">
+          このコードを友達に送ってね！
+        </div>
+
       </div>
 
     </div>
 
 
-    <div
-      class="turn"
-      id="turn"
-    >
-      ⭕の番です
-    </div>
-
+    <!-- ゲーム画面 -->
 
     <div
-      class="board"
-      id="board"
+      id="game"
+      class="hidden"
     >
 
-      <button class="cell" data-index="0"></button>
-      <button class="cell" data-index="1"></button>
-      <button class="cell" data-index="2"></button>
+      <div class="card">
 
-      <button class="cell" data-index="3"></button>
-      <button class="cell" data-index="4"></button>
-      <button class="cell" data-index="5"></button>
+        <div class="room-code">
 
-      <button class="cell" data-index="6"></button>
-      <button class="cell" data-index="7"></button>
-      <button class="cell" data-index="8"></button>
+          <div class="room-code-label">
+            部屋コード
+          </div>
+
+          <div
+            class="room-code-value"
+            id="gameRoomCode"
+          >
+            ------
+          </div>
+
+        </div>
+
+
+        <div class="player-info">
+
+          <div class="player-box">
+
+            <div class="player-name">
+              ⭕ プレイヤー
+            </div>
+
+            <div
+              class="player-mark"
+              id="oPlayer"
+            >
+              待機中
+            </div>
+
+          </div>
+
+
+          <div class="player-box">
+
+            <div class="player-name">
+              ❌ プレイヤー
+            </div>
+
+            <div
+              class="player-mark"
+              id="xPlayer"
+            >
+              待機中
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div
+          class="turn"
+          id="turn"
+        >
+          待機中...
+        </div>
+
+
+        <div
+          class="board"
+          id="board"
+        >
+
+          <button class="cell" data-index="0"></button>
+          <button class="cell" data-index="1"></button>
+          <button class="cell" data-index="2"></button>
+
+          <button class="cell" data-index="3"></button>
+          <button class="cell" data-index="4"></button>
+          <button class="cell" data-index="5"></button>
+
+          <button class="cell" data-index="6"></button>
+          <button class="cell" data-index="7"></button>
+          <button class="cell" data-index="8"></button>
+
+        </div>
+
+
+        <div
+          class="result"
+          id="result"
+        ></div>
+
+
+        <button
+          class="secondary-button"
+          id="leaveButton"
+          type="button"
+        >
+          🚪 部屋を出る
+        </button>
+
+      </div>
 
     </div>
 
-
-    <div
-      class="result"
-      id="result"
-    ></div>
-
-
-    <button
-      class="reset-button"
-      id="resetButton"
-      type="button"
-    >
-      🔄 もう一度遊ぶ
-    </button>
-
-
-    <div class="note">
-      2人で交互に○と×を置いて遊ぼう！
-    </div>
 
   </div>
 
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
 
-    const cells =
-      document.querySelectorAll(".cell");
+    const SUPABASE_URL =
+      "https://yxonmqdyekwenyzekjwj.supabase.co";
+
+    const SUPABASE_KEY =
+      "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+
+    const supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
+
+    let currentUsername = "";
+
+    let currentRoomId = null;
+
+    let currentRoomCode = "";
+
+    let currentRole = "";
+
+    let currentMark = "";
+
+    let roomChannel = null;
+
+    let gameRoom = null;
+
+
+    const lobby =
+      document.getElementById("lobby");
+
+    const waiting =
+      document.getElementById("waiting");
+
+    const game =
+      document.getElementById("game");
+
+    const lobbyMessage =
+      document.getElementById("lobbyMessage");
+
+    const roomCodeInput =
+      document.getElementById("roomCodeInput");
+
+    const waitingRoomCode =
+      document.getElementById("waitingRoomCode");
+
+    const gameRoomCode =
+      document.getElementById("gameRoomCode");
 
     const turnElement =
       document.getElementById("turn");
@@ -206,69 +536,546 @@
     const resultElement =
       document.getElementById("result");
 
-    const resetButton =
-      document.getElementById("resetButton");
+    const oPlayer =
+      document.getElementById("oPlayer");
 
+    const xPlayer =
+      document.getElementById("xPlayer");
 
-    let board = [
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      ""
-    ];
-
-    let currentPlayer = "O";
-
-    let gameOver = false;
+    const cells =
+      document.querySelectorAll(".cell");
 
 
     const winningPatterns = [
-
-      [0, 1, 2],
-      [3, 4, 5],
-      [6, 7, 8],
-
-      [0, 3, 6],
-      [1, 4, 7],
-      [2, 5, 8],
-
-      [0, 4, 8],
-      [2, 4, 6]
-
+      [0,1,2],
+      [3,4,5],
+      [6,7,8],
+      [0,3,6],
+      [1,4,7],
+      [2,5,8],
+      [0,4,8],
+      [2,4,6]
     ];
 
 
-    function updateTurn() {
+    async function start() {
 
-      if (currentPlayer === "O") {
+      const {
+        data,
+        error
+      } = await supabaseClient.auth.getSession();
+
+
+      if (error || !data.session) {
+
+        lobbyMessage.textContent =
+          "ログイン情報を取得できませんでした。";
+
+        return;
+      }
+
+
+      currentUsername =
+        data.session.user.user_metadata?.username || "";
+
+
+      if (!currentUsername) {
+
+        lobbyMessage.textContent =
+          "ユーザー情報を取得できませんでした。";
+
+        return;
+      }
+
+    }
+
+
+    function showLobby() {
+
+      lobby.classList.remove("hidden");
+
+      waiting.classList.add("hidden");
+
+      game.classList.add("hidden");
+
+    }
+
+
+    function showWaiting() {
+
+      lobby.classList.add("hidden");
+
+      waiting.classList.remove("hidden");
+
+      game.classList.add("hidden");
+
+    }
+
+
+    function showGame() {
+
+      lobby.classList.add("hidden");
+
+      waiting.classList.add("hidden");
+
+      game.classList.remove("hidden");
+
+    }
+
+
+    function makeRoomCode() {
+
+      return String(
+        Math.floor(
+          100000 +
+          Math.random() * 900000
+        )
+      );
+
+    }
+
+
+    async function createRoom() {
+
+      lobbyMessage.textContent =
+        "部屋を作っています…";
+
+
+      let roomCode = "";
+
+      let created = false;
+
+      let roomData = null;
+
+
+      for (let i = 0; i < 10; i++) {
+
+        roomCode = makeRoomCode();
+
+
+        const {
+          data,
+          error
+        } = await supabaseClient
+          .from("game_rooms")
+          .insert({
+            room_code: roomCode,
+            game_type: "marubatsu",
+            host_id: currentUsername,
+            guest_id: null,
+            board: [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            current_player: "O",
+            status: "waiting",
+            winner: null
+          })
+          .select()
+          .single();
+
+
+        if (!error) {
+
+          roomData = data;
+
+          created = true;
+
+          break;
+
+        }
+
+      }
+
+
+      if (!created) {
+
+        console.error(
+          "部屋作成エラー"
+        );
+
+        lobbyMessage.textContent =
+          "部屋を作れませんでした。";
+
+        return;
+      }
+
+
+      currentRoomId =
+        roomData.id;
+
+      currentRoomCode =
+        roomData.room_code;
+
+      currentRole =
+        "host";
+
+      currentMark =
+        "O";
+
+      gameRoom =
+        roomData;
+
+
+      waitingRoomCode.textContent =
+        currentRoomCode;
+
+
+      await subscribeRoom();
+
+
+      showWaiting();
+
+    }
+
+
+    async function joinRoom() {
+
+      const roomCode =
+        roomCodeInput.value
+          .trim()
+          .replace(/\D/g, "");
+
+
+      if (roomCode.length !== 6) {
+
+        lobbyMessage.textContent =
+          "6桁の部屋コードを入力してください。";
+
+        return;
+      }
+
+
+      lobbyMessage.textContent =
+        "部屋を探しています…";
+
+
+      const {
+        data: room,
+        error
+      } = await supabaseClient
+        .from("game_rooms")
+        .select("*")
+        .eq("room_code", roomCode)
+        .eq("game_type", "marubatsu")
+        .maybeSingle();
+
+
+      if (error) {
+
+        console.error(
+          "部屋取得エラー:",
+          error
+        );
+
+        lobbyMessage.textContent =
+          "部屋を取得できませんでした。";
+
+        return;
+      }
+
+
+      if (!room) {
+
+        lobbyMessage.textContent =
+          "その部屋は見つかりませんでした。";
+
+        return;
+      }
+
+
+      if (room.host_id === currentUsername) {
+
+        lobbyMessage.textContent =
+          "自分で作った部屋には参加できません。";
+
+        return;
+      }
+
+
+      if (room.guest_id) {
+
+        lobbyMessage.textContent =
+          "この部屋はすでに満員です。";
+
+        return;
+      }
+
+
+      const {
+        data: updatedRoom,
+        error: updateError
+      } = await supabaseClient
+        .from("game_rooms")
+        .update({
+          guest_id: currentUsername,
+          status: "playing",
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", room.id)
+        .is("guest_id", null)
+        .select()
+        .single();
+
+
+      if (updateError || !updatedRoom) {
+
+        console.error(
+          "参加エラー:",
+          updateError
+        );
+
+        lobbyMessage.textContent =
+          "参加できませんでした。もう一度試してください。";
+
+        return;
+      }
+
+
+      currentRoomId =
+        updatedRoom.id;
+
+      currentRoomCode =
+        updatedRoom.room_code;
+
+      currentRole =
+        "guest";
+
+      currentMark =
+        "X";
+
+      gameRoom =
+        updatedRoom;
+
+
+      await subscribeRoom();
+
+      renderGame();
+
+      showGame();
+
+    }
+
+
+    async function subscribeRoom() {
+
+      if (roomChannel) {
+
+        await supabaseClient
+          .removeChannel(roomChannel);
+
+        roomChannel = null;
+
+      }
+
+
+      roomChannel =
+        supabaseClient
+          .channel(
+            "game-room-" + currentRoomId
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "game_rooms",
+              filter:
+                "id=eq." + currentRoomId
+            },
+            payload => {
+
+              if (
+                payload.eventType === "UPDATE"
+              ) {
+
+                gameRoom =
+                  payload.new;
+
+                renderGame();
+
+                if (
+                  gameRoom.status === "waiting"
+                ) {
+
+                  showWaiting();
+
+                } else {
+
+                  showGame();
+
+                }
+
+              }
+
+            }
+          )
+          .subscribe();
+
+    }
+
+
+    function renderGame() {
+
+      if (!gameRoom) {
+        return;
+      }
+
+
+      gameRoom.board =
+        Array.isArray(gameRoom.board)
+          ? gameRoom.board
+          : [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ];
+
+
+      gameRoomCode.textContent =
+        gameRoom.room_code;
+
+
+      oPlayer.textContent =
+        gameRoom.host_id || "待機中";
+
+
+      xPlayer.textContent =
+        gameRoom.guest_id || "待機中";
+
+
+      cells.forEach(
+        (cell, index) => {
+
+          const value =
+            gameRoom.board[index] || "";
+
+          cell.textContent =
+            value === "O"
+              ? "⭕"
+              : value === "X"
+              ? "❌"
+              : "";
+
+          cell.classList.remove(
+            "o",
+            "x"
+          );
+
+          if (value === "O") {
+
+            cell.classList.add("o");
+
+          }
+
+          if (value === "X") {
+
+            cell.classList.add("x");
+
+          }
+
+          cell.disabled =
+            !(
+              gameRoom.status === "playing" &&
+              gameRoom.current_player === currentMark &&
+              value === ""
+            );
+
+        }
+      );
+
+
+      resultElement.textContent = "";
+
+
+      if (
+        gameRoom.status === "waiting"
+      ) {
 
         turnElement.textContent =
-          "⭕の番です";
+          "⏳ 友達の参加を待っています";
+
+        return;
+      }
+
+
+      if (
+        gameRoom.status === "finished"
+      ) {
+
+        turnElement.textContent =
+          "ゲーム終了";
+
+        if (
+          gameRoom.winner === "draw"
+        ) {
+
+          resultElement.textContent =
+            "🤝 引き分け！";
+
+        } else if (
+          gameRoom.winner === "O"
+        ) {
+
+          resultElement.textContent =
+            "🎉 ⭕の勝ち！";
+
+        } else if (
+          gameRoom.winner === "X"
+        ) {
+
+          resultElement.textContent =
+            "🎉 ❌の勝ち！";
+
+        }
+
+        return;
+      }
+
+
+      if (
+        gameRoom.current_player === currentMark
+      ) {
+
+        turnElement.textContent =
+          currentMark === "O"
+            ? "⭕ あなたの番です"
+            : "❌ あなたの番です";
 
       } else {
 
         turnElement.textContent =
-          "❌の番です";
+          gameRoom.current_player === "O"
+            ? "⭕ 相手の番です"
+            : "❌ 相手の番です";
 
       }
 
     }
 
 
-    function checkWinner() {
+    function checkWinner(board) {
 
       for (
         const pattern
         of winningPatterns
       ) {
 
-        const [a, b, c] =
+        const [a,b,c] =
           pattern;
+
 
         if (
           board[a] &&
@@ -282,9 +1089,10 @@
 
       }
 
+
       if (
         board.every(
-          cell => cell !== ""
+          value => value !== ""
         )
       ) {
 
@@ -292,158 +1100,339 @@
 
       }
 
+
       return null;
+
     }
 
 
-    function handleCellClick(event) {
+    async function placeMark(index) {
 
-      if (gameOver) {
+      if (!gameRoom) {
         return;
       }
 
 
-      const index =
-        Number(
-          event.currentTarget.dataset.index
-        );
-
-
-      if (board[index] !== "") {
+      if (
+        gameRoom.status !== "playing"
+      ) {
         return;
       }
 
 
-      board[index] =
-        currentPlayer;
+      if (
+        gameRoom.current_player !== currentMark
+      ) {
+        return;
+      }
 
 
-      event.currentTarget.textContent =
-        currentPlayer === "O"
-          ? "⭕"
-          : "❌";
+      if (
+        gameRoom.board[index]
+      ) {
+        return;
+      }
 
 
-      event.currentTarget.classList.add(
-        currentPlayer === "O"
-          ? "o"
-          : "x"
-      );
+      const newBoard =
+        [...gameRoom.board];
+
+
+      newBoard[index] =
+        currentMark;
 
 
       const winner =
-        checkWinner();
+        checkWinner(newBoard);
 
 
-      if (winner === "O") {
+      let newStatus =
+        "playing";
 
-        gameOver = true;
-
-        resultElement.textContent =
-          "🎉 ⭕の勝ち！";
-
-        turnElement.textContent =
-          "ゲーム終了";
-
-        return;
-
-      }
-
-
-      if (winner === "X") {
-
-        gameOver = true;
-
-        resultElement.textContent =
-          "🎉 ❌の勝ち！";
-
-        turnElement.textContent =
-          "ゲーム終了";
-
-        return;
-
-      }
-
-
-      if (winner === "draw") {
-
-        gameOver = true;
-
-        resultElement.textContent =
-          "🤝 引き分け！";
-
-        turnElement.textContent =
-          "ゲーム終了";
-
-        return;
-
-      }
-
-
-      currentPlayer =
-        currentPlayer === "O"
+      let newCurrentPlayer =
+        currentMark === "O"
           ? "X"
           : "O";
 
-
-      updateTurn();
-
-    }
+      let newWinner = null;
 
 
-    function resetGame() {
+      if (winner) {
 
-      board = [
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        ""
-      ];
+        newStatus =
+          "finished";
 
-      currentPlayer = "O";
+        newWinner =
+          winner;
 
-      gameOver = false;
+        newCurrentPlayer =
+          currentMark;
 
-      resultElement.textContent = "";
+      }
 
-      cells.forEach(cell => {
 
-        cell.textContent = "";
+      const {
+        data,
+        error
+      } = await supabaseClient
+        .from("game_rooms")
+        .update({
+          board: newBoard,
+          current_player:
+            newCurrentPlayer,
+          status:
+            newStatus,
+          winner:
+            newWinner,
+          updated_at:
+            new Date().toISOString()
+        })
+        .eq("id", currentRoomId)
+        .eq(
+          "current_player",
+          currentMark
+        )
+        .eq(
+          "status",
+          "playing"
+        )
+        .select()
+        .maybeSingle();
 
-        cell.classList.remove(
-          "o",
-          "x"
+
+      if (error) {
+
+        console.error(
+          "ゲーム更新エラー:",
+          error
         );
 
-      });
+        return;
+      }
 
-      updateTurn();
+
+      if (data) {
+
+        gameRoom =
+          data;
+
+        renderGame();
+
+      }
 
     }
 
 
-    cells.forEach(cell => {
+    async function copyRoomCode() {
 
-      cell.addEventListener(
-        "click",
-        handleCellClick
-      );
-
-    });
+      const code =
+        currentRoomCode;
 
 
-    resetButton.addEventListener(
-      "click",
-      resetGame
+      try {
+
+        await navigator.clipboard.writeText(
+          code
+        );
+
+        alert(
+          "部屋コードをコピーしました！"
+        );
+
+      } catch {
+
+        alert(
+          "部屋コード：" + code
+        );
+
+      }
+
+    }
+
+
+    async function leaveRoom() {
+
+      if (!currentRoomId) {
+
+        showLobby();
+
+        return;
+
+      }
+
+
+      if (
+        !window.confirm(
+          "この部屋を退出しますか？"
+        )
+      ) {
+
+        return;
+
+      }
+
+
+      if (roomChannel) {
+
+        await supabaseClient
+          .removeChannel(roomChannel);
+
+        roomChannel = null;
+
+      }
+
+
+      /*
+       * 自分がホストなら部屋を削除。
+       * 自分がゲストならguest_idを空に戻す。
+       */
+
+      if (
+        currentRole === "host"
+      ) {
+
+        await supabaseClient
+          .from("game_rooms")
+          .delete()
+          .eq("id", currentRoomId);
+
+      } else {
+
+        await supabaseClient
+          .from("game_rooms")
+          .update({
+            guest_id: null,
+            status: "waiting",
+            board: [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            current_player: "O",
+            winner: null,
+            updated_at:
+              new Date().toISOString()
+          })
+          .eq("id", currentRoomId);
+
+      }
+
+
+      currentRoomId = null;
+
+      currentRoomCode = "";
+
+      currentRole = "";
+
+      currentMark = "";
+
+      gameRoom = null;
+
+      showLobby();
+
+    }
+
+
+    cells.forEach(
+      cell => {
+
+        cell.addEventListener(
+          "click",
+          () => {
+
+            const index =
+              Number(
+                cell.dataset.index
+              );
+
+            placeMark(index);
+
+          }
+        );
+
+      }
     );
 
 
-    updateTurn();
+    document
+      .getElementById("createRoomButton")
+      .addEventListener(
+        "click",
+        createRoom
+      );
+
+
+    document
+      .getElementById("joinRoomButton")
+      .addEventListener(
+        "click",
+        joinRoom
+      );
+
+
+    document
+      .getElementById("copyRoomButton")
+      .addEventListener(
+        "click",
+        copyRoomCode
+      );
+
+
+    document
+      .getElementById("leaveButton")
+      .addEventListener(
+        "click",
+        leaveRoom
+      );
+
+
+    document
+      .getElementById("backButton")
+      .addEventListener(
+        "click",
+        () => {
+
+          location.href =
+            "minigame.html";
+
+        }
+      );
+
+
+    roomCodeInput.addEventListener(
+      "input",
+      () => {
+
+        roomCodeInput.value =
+          roomCodeInput.value
+            .replace(/\D/g, "")
+            .slice(0, 6);
+
+      }
+    );
+
+
+    window.addEventListener(
+      "pagehide",
+      () => {
+
+        if (roomChannel) {
+
+          supabaseClient
+            .removeChannel(roomChannel);
+
+        }
+
+      }
+    );
+
+
+    start();
 
   </script>
 
