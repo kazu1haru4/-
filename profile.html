@@ -14,8 +14,13 @@
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
-        "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        "Hiragino Kaku Gothic ProN",
+        "Yu Gothic",
+        sans-serif;
       background: linear-gradient(135deg, #fff4fb, #eef7ff);
       display: flex;
       justify-content: center;
@@ -55,6 +60,10 @@
       font-size: 28px;
     }
 
+    /* =========================
+       プロフィール画像
+    ========================= */
+
     .avatar {
       width: 120px;
       height: 120px;
@@ -74,6 +83,55 @@
       object-fit: cover;
     }
 
+    /* =========================
+       交換アイテム
+    ========================= */
+
+    .items-title {
+      text-align: center;
+      margin-top: 8px;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #777;
+    }
+
+    .profile-items {
+      min-height: 42px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .profile-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 11px;
+      border-radius: 14px;
+      background: #f7f5ff;
+      color: #5e50c9;
+      font-size: 13px;
+      font-weight: bold;
+      border: 1px solid #e8e3ff;
+    }
+
+    .profile-item-icon {
+      font-size: 20px;
+    }
+
+    .no-items {
+      color: #aaa;
+      font-size: 13px;
+    }
+
+    /* =========================
+       画像選択
+    ========================= */
+
     .image-button {
       display: block;
       width: 100%;
@@ -90,6 +148,10 @@
     #avatarFile {
       display: none;
     }
+
+    /* =========================
+       入力
+    ========================= */
 
     label {
       display: block;
@@ -118,6 +180,10 @@
       border-color: #9b8cff;
     }
 
+    /* =========================
+       保存ボタン
+    ========================= */
+
     button.save-button {
       width: 100%;
       padding: 14px;
@@ -135,6 +201,10 @@
       opacity: 0.6;
       cursor: not-allowed;
     }
+
+    /* =========================
+       メッセージ
+    ========================= */
 
     #message {
       min-height: 24px;
@@ -157,11 +227,45 @@
 
     <h1>👤 プロフィール</h1>
 
-    <div class="avatar" id="avatarPreview">
+
+    <!-- =========================
+         プロフィール画像
+    ========================= -->
+
+    <div
+      class="avatar"
+      id="avatarPreview"
+    >
       😊
     </div>
 
-    <label for="avatarFile" class="image-button">
+
+    <!-- =========================
+         交換アイテム
+    ========================= -->
+
+    <div class="items-title">
+      🎁 交換したアイテム
+    </div>
+
+    <div
+      class="profile-items"
+      id="profileItems"
+    >
+      <div class="no-items">
+        読み込み中…
+      </div>
+    </div>
+
+
+    <!-- =========================
+         画像選択
+    ========================= -->
+
+    <label
+      for="avatarFile"
+      class="image-button"
+    >
       📷 アイコン画像を選ぶ
     </label>
 
@@ -171,7 +275,14 @@
       accept="image/*"
     >
 
-    <label for="name">名前</label>
+
+    <!-- =========================
+         名前
+    ========================= -->
+
+    <label for="name">
+      名前
+    </label>
 
     <input
       id="name"
@@ -180,13 +291,25 @@
       maxlength="30"
     >
 
-    <label for="bio">自己紹介</label>
+
+    <!-- =========================
+         自己紹介
+    ========================= -->
+
+    <label for="bio">
+      自己紹介
+    </label>
 
     <textarea
       id="bio"
       placeholder="自己紹介を書こう！"
       maxlength="200"
     ></textarea>
+
+
+    <!-- =========================
+         保存
+    ========================= -->
 
     <button
       type="button"
@@ -197,13 +320,19 @@
       プロフィールを保存
     </button>
 
+
     <div id="message"></div>
 
   </div>
 
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
+
+    /* =========================
+       Supabase
+    ========================= */
 
     const SUPABASE_URL =
       "https://yxonmqdyekwenyzekjwj.supabase.co";
@@ -217,11 +346,13 @@
         SUPABASE_KEY
       );
 
+
     let selectedFile = null;
 
-    // =========================
-    // メッセージ表示
-    // =========================
+
+    /* =========================
+       メッセージ
+    ========================= */
 
     function showMessage(text) {
 
@@ -231,9 +362,10 @@
 
     }
 
-    // =========================
-    // 画像選択
-    // =========================
+
+    /* =========================
+       画像選択
+    ========================= */
 
     document
       .getElementById("avatarFile")
@@ -248,9 +380,12 @@
             return;
           }
 
-          // 画像かチェック
 
-          if (!file.type.startsWith("image/")) {
+          /* 画像かチェック */
+
+          if (
+            !file.type.startsWith("image/")
+          ) {
 
             showMessage(
               "画像ファイルを選んでね！"
@@ -259,10 +394,13 @@
             return;
           }
 
-          // サイズチェック
-          // 5MBまで
 
-          if (file.size > 5 * 1024 * 1024) {
+          /* サイズチェック */
+
+          if (
+            file.size >
+            5 * 1024 * 1024
+          ) {
 
             showMessage(
               "画像は5MB以下にしてね！"
@@ -271,9 +409,11 @@
             return;
           }
 
+
           selectedFile = file;
 
-          // プレビュー表示
+
+          /* プレビュー */
 
           const imageUrl =
             URL.createObjectURL(file);
@@ -283,6 +423,7 @@
             .innerHTML =
               `<img src="${imageUrl}" alt="アイコン">`;
 
+
           showMessage(
             "画像を選択したよ！"
           );
@@ -290,23 +431,63 @@
         }
       );
 
-    // =========================
-    // プロフィール読み込み
-    // =========================
 
-    async function loadProfile() {
+    /* =========================
+       ログインユーザー取得
+    ========================= */
 
-      showMessage("読み込み中…");
-
-      // ログインユーザー取得
+    async function getCurrentUsername() {
 
       const {
         data: { user },
-        error: userError
+        error
       } =
         await supabaseClient.auth.getUser();
 
-      if (userError || !user) {
+
+      if (
+        error ||
+        !user
+      ) {
+
+        return null;
+      }
+
+
+      const username =
+        user.user_metadata?.username;
+
+
+      if (!username) {
+
+        return null;
+      }
+
+
+      return {
+        user,
+        username
+      };
+
+    }
+
+
+    /* =========================
+       プロフィール読み込み
+    ========================= */
+
+    async function loadProfile() {
+
+      showMessage(
+        "読み込み中…"
+      );
+
+
+      const current =
+        await getCurrentUsername();
+
+
+      if (!current) {
 
         showMessage(
           "ログインしてください。"
@@ -315,19 +496,14 @@
         return;
       }
 
+
       const username =
-        user.user_metadata?.username;
+        current.username;
 
-      if (!username) {
 
-        showMessage(
-          "ユーザー情報を取得できませんでした。"
-        );
-
-        return;
-      }
-
-      // profiles取得
+      /* =========================
+         profiles取得
+      ========================= */
 
       const {
         data: profile,
@@ -336,12 +512,19 @@
         await supabaseClient
           .from("profiles")
           .select("*")
-          .eq("user_id", username)
+          .eq(
+            "user_id",
+            username
+          )
           .maybeSingle();
+
 
       if (error) {
 
-        console.error(error);
+        console.error(
+          "PROFILE LOAD ERROR:",
+          error
+        );
 
         showMessage(
           "プロフィールを読み込めませんでした。"
@@ -350,47 +533,216 @@
         return;
       }
 
+
       if (!profile) {
 
         showMessage(
           "プロフィールがまだありません。"
         );
 
-        return;
-      }
+      } else {
 
-      // 名前
-
-      document
-        .getElementById("name")
-        .value =
-          profile.name || username;
-
-      // 自己紹介
-
-      document
-        .getElementById("bio")
-        .value =
-          profile.bio || "";
-
-      // プロフィール画像
-
-      if (profile.avatar_url) {
+        /* 名前 */
 
         document
-          .getElementById("avatarPreview")
-          .innerHTML =
-            `<img src="${profile.avatar_url}" alt="プロフィール画像">`;
+          .getElementById("name")
+          .value =
+            profile.name ||
+            username;
+
+
+        /* 自己紹介 */
+
+        document
+          .getElementById("bio")
+          .value =
+            profile.bio || "";
+
+
+        /* プロフィール画像 */
+
+        if (
+          profile.avatar_url
+        ) {
+
+          document
+            .getElementById(
+              "avatarPreview"
+            )
+            .innerHTML =
+              `<img src="${profile.avatar_url}" alt="プロフィール画像">`;
+
+        }
 
       }
+
+
+      /* =========================
+         交換アイテム読み込み
+      ========================= */
+
+      await loadProfileItems(
+        username
+      );
+
 
       showMessage("");
 
     }
 
-    // =========================
-    // プロフィール保存
-    // =========================
+
+    /* =========================
+       交換アイテム読み込み
+    ========================= */
+
+    async function loadProfileItems(
+      username
+    ) {
+
+      const container =
+        document.getElementById(
+          "profileItems"
+        );
+
+
+      container.innerHTML =
+        `<div class="no-items">読み込み中…</div>`;
+
+
+      /*
+        user_coin_items と
+        coin_items を取得
+      */
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient
+          .from("user_coin_items")
+          .select(
+            `
+              item_key,
+              coin_items (
+                name,
+                icon
+              )
+            `
+          )
+          .eq(
+            "user_id",
+            username
+          );
+
+
+      if (error) {
+
+        console.error(
+          "ITEM LOAD ERROR:",
+          error
+        );
+
+        container.innerHTML =
+          `<div class="no-items">
+            アイテムを読み込めませんでした
+          </div>`;
+
+        return;
+      }
+
+
+      if (
+        !data ||
+        data.length === 0
+      ) {
+
+        container.innerHTML =
+          `<div class="no-items">
+            まだ交換したアイテムはありません
+          </div>`;
+
+        return;
+      }
+
+
+      /* =========================
+         アイテム表示
+      ========================= */
+
+      container.innerHTML =
+        data
+          .map(
+            item => {
+
+              const itemInfo =
+                item.coin_items;
+
+
+              if (!itemInfo) {
+                return "";
+              }
+
+
+              return `
+                <div
+                  class="profile-item"
+                  title="${escapeHtml(itemInfo.name)}"
+                >
+
+                  <span
+                    class="profile-item-icon"
+                  >
+                    ${itemInfo.icon}
+                  </span>
+
+                  <span>
+                    ${escapeHtml(itemInfo.name)}
+                  </span>
+
+                </div>
+              `;
+
+            }
+          )
+          .join("");
+
+    }
+
+
+    /* =========================
+       HTML安全化
+    ========================= */
+
+    function escapeHtml(value) {
+
+      return String(value)
+        .replace(
+          /&/g,
+          "&amp;"
+        )
+        .replace(
+          /</g,
+          "&lt;"
+        )
+        .replace(
+          />/g,
+          "&gt;"
+        )
+        .replace(
+          /"/g,
+          "&quot;"
+        )
+        .replace(
+          /'/g,
+          "&#039;"
+        );
+
+    }
+
+
+    /* =========================
+       プロフィール保存
+    ========================= */
 
     async function saveProfile() {
 
@@ -400,19 +752,27 @@
           .value
           .trim();
 
+
       const bio =
         document
           .getElementById("bio")
           .value
           .trim();
 
+
       const message =
-        document.getElementById("message");
+        document.getElementById(
+          "message"
+        );
+
 
       const saveButton =
-        document.getElementById("saveButton");
+        document.getElementById(
+          "saveButton"
+        );
 
-      // 名前チェック
+
+      /* 名前チェック */
 
       if (!name) {
 
@@ -422,15 +782,14 @@
         return;
       }
 
-      // ログインユーザー取得
 
-      const {
-        data: { user },
-        error: userError
-      } =
-        await supabaseClient.auth.getUser();
+      /* ログインユーザー */
 
-      if (userError || !user) {
+      const current =
+        await getCurrentUsername();
+
+
+      if (!current) {
 
         message.textContent =
           "ログイン情報を取得できませんでした。";
@@ -438,27 +797,29 @@
         return;
       }
 
+
+      const user =
+        current.user;
+
       const username =
-        user.user_metadata?.username;
+        current.username;
 
-      if (!username) {
 
-        message.textContent =
-          "ユーザーIDを取得できませんでした。";
+      saveButton.disabled =
+        true;
 
-        return;
-      }
-
-      saveButton.disabled = true;
 
       message.textContent =
         "保存中…";
 
-      let avatarUrl = null;
 
-      // =========================
-      // 画像アップロード
-      // =========================
+      let avatarUrl =
+        null;
+
+
+      /* =========================
+         画像アップロード
+      ========================= */
 
       if (selectedFile) {
 
@@ -468,8 +829,10 @@
             .pop()
             .toLowerCase();
 
+
         const fileName =
           `${user.id}/${Date.now()}.${fileExt}`;
+
 
         const {
           error: uploadError
@@ -481,9 +844,11 @@
               selectedFile,
               {
                 upsert: true,
-                contentType: selectedFile.type
+                contentType:
+                  selectedFile.type
               }
             );
+
 
         if (uploadError) {
 
@@ -495,28 +860,34 @@
           message.textContent =
             "画像アップロードに失敗しました。";
 
-          saveButton.disabled = false;
+          saveButton.disabled =
+            false;
 
           return;
         }
 
-        // 公開URL取得
+
+        /* 公開URL */
 
         const {
           data: publicData
         } =
           supabaseClient.storage
             .from("avatars")
-            .getPublicUrl(fileName);
+            .getPublicUrl(
+              fileName
+            );
+
 
         avatarUrl =
           publicData.publicUrl;
 
       }
 
-      // =========================
-      // 更新データ
-      // =========================
+
+      /* =========================
+         更新データ
+      ========================= */
 
       const updateData = {
 
@@ -526,6 +897,7 @@
 
       };
 
+
       if (avatarUrl) {
 
         updateData.avatar_url =
@@ -533,20 +905,24 @@
 
       }
 
-      // =========================
-      // profiles更新
-      // =========================
+
+      /* =========================
+         profiles更新
+      ========================= */
 
       const {
         error: profileError
       } =
         await supabaseClient
           .from("profiles")
-          .update(updateData)
+          .update(
+            updateData
+          )
           .eq(
             "user_id",
             username
           );
+
 
       if (profileError) {
 
@@ -558,27 +934,34 @@
         message.textContent =
           "プロフィールの保存に失敗しました。";
 
-        saveButton.disabled = false;
+        saveButton.disabled =
+          false;
 
         return;
       }
 
-      // =========================
-      // 完了
-      // =========================
 
-      selectedFile = null;
+      /* =========================
+         完了
+      ========================= */
+
+      selectedFile =
+        null;
+
 
       message.textContent =
         "プロフィールを保存したよ！🎉";
 
-      saveButton.disabled = false;
+
+      saveButton.disabled =
+        false;
 
     }
 
-    // =========================
-    // ページ開始
-    // =========================
+
+    /* =========================
+       開始
+    ========================= */
 
     loadProfile();
 
