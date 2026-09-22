@@ -1661,6 +1661,140 @@ function setupButtons() {
     });
 }
 
+
+/* ========================================
+サイト統計
+======================================== */
+
+async function loadSiteStats() {
+  const loading = document.getElementById("statsLoading");
+  const grid = document.getElementById("statsGrid");
+
+  if (!loading || !grid) return;
+
+  loading.classList.remove("hidden");
+  grid.innerHTML = "";
+
+  const targets = [
+    ["profiles", "👤 ユーザー"],
+    ["messages", "💬 1対1メッセージ"],
+    ["groups", "👥 グループ"],
+    ["group_messages", "💬 グループメッセージ"],
+    ["board_messages", "📢 掲示板"],
+    ["coin_items", "🖼️ フレーム"]
+  ];
+
+  try {
+    const results = await Promise.all(
+      targets.map(async ([table, label]) => {
+        const { count, error } = await supabaseClient
+          .from(table)
+          .select("*", { count: "exact", head: true });
+
+        if (error) {
+          console.warn(`統計取得失敗 (${table}):`, error.message);
+          return { label, value: "取得失敗" };
+        }
+
+        return {
+          label,
+          value: Number.isFinite(count) ? count.toLocaleString("ja-JP") : "0"
+        };
+      })
+    );
+
+    results.forEach(item => {
+      const card = document.createElement("div");
+      card.className = "stat-card";
+      card.innerHTML = `
+        <div class="stat-label">${escapeHtml(item.label)}</div>
+        <div class="stat-value">${escapeHtml(item.value)}</div>
+      `;
+      grid.appendChild(card);
+    });
+
+    loading.classList.add("hidden");
+  } catch (error) {
+    loading.textContent =
+      "❌ サイト統計の読み込みに失敗しました：\n" +
+      (error.message || error);
+  }
+}
+
+/* ========================================
+フレーム一覧
+======================================== */
+
+async function loadFrameList() {
+  const loading = document.getElementById("framesLoading");
+  const list = document.getElementById("framesList");
+
+  if (!loading || !list) return;
+
+  loading.classList.remove("hidden");
+  list.innerHTML = "";
+
+  try {
+    const { data, error } = await supabaseClient
+      .from("coin_items")
+      .select("item_key,name,icon,price,frame_color")
+      .neq("item_key", "admin")
+      .order("price", { ascending: true });
+
+    if (error) throw error;
+
+    loading.classList.add("hidden");
+
+    if (!data?.length) {
+      list.innerHTML = `<div class="empty">フレームがありません。</div>`;
+      return;
+    }
+
+    data.forEach(item => {
+      const card = document.createElement("div");
+      card.className = "reward-code-card";
+
+      const icon = item.icon || "🖼️";
+      const frameColor = item.frame_color || "#ffd0e7";
+
+      card.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="
+            width:52px;
+            height:52px;
+            border-radius:50%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:26px;
+            background:${escapeAttribute(frameColor)};
+            border:4px solid ${escapeAttribute(frameColor)};
+          ">${escapeHtml(icon)}</div>
+
+          <div style="flex:1;min-width:0;">
+            <div class="reward-code-title">
+              ${escapeHtml(item.name || item.item_key)}
+            </div>
+            <div class="reward-code-info">
+              ID：${escapeHtml(item.item_key)}
+              <br>
+              価格：${Number(item.price || 0).toLocaleString("ja-JP")} COIN
+              <br>
+              フレーム色：${escapeHtml(frameColor)}
+            </div>
+          </div>
+        </div>
+      `;
+
+      list.appendChild(card);
+    });
+  } catch (error) {
+    loading.textContent =
+      "❌ フレーム一覧の読み込みに失敗しました：\n" +
+      (error.message || error);
+  }
+}
+
 async function init() {
   try {
     setStatus(
