@@ -100,6 +100,7 @@
       margin-top: 18px;
       font-weight: bold;
       color: #666;
+      white-space: pre-line;
     }
 
     .note {
@@ -172,8 +173,6 @@
 
   </div>
 
-  <!-- Supabase -->
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
@@ -184,21 +183,63 @@
     const SUPABASE_KEY =
       "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 
-    const supabaseClient = supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_KEY
-    );
+    const supabaseClient =
+      supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
+
+    /* =========================
+       BANチェック
+    ========================= */
+
+    async function checkBanned(username) {
+
+      const {
+        data,
+        error
+      } = await supabaseClient.rpc(
+        "check_user_banned",
+        {
+          target_username: username
+        }
+      );
+
+      if (error) {
+
+        console.error(
+          "BANチェックエラー:",
+          error
+        );
+
+        throw error;
+      }
+
+      return data === true;
+    }
+
+
+    /* =========================
+       新規登録
+    ========================= */
 
     async function register() {
 
       const id =
-        document.getElementById("userId").value.trim();
+        document
+          .getElementById("userId")
+          .value
+          .trim();
 
       const password =
-        document.getElementById("password").value;
+        document
+          .getElementById("password")
+          .value;
 
       const message =
         document.getElementById("message");
+
 
       if (!id || !password) {
 
@@ -208,6 +249,7 @@
         return;
       }
 
+
       if (!/^[A-Za-z0-9_]{3,20}$/.test(id)) {
 
         message.textContent =
@@ -215,6 +257,7 @@
 
         return;
       }
+
 
       if (password.length < 6) {
 
@@ -224,20 +267,45 @@
         return;
       }
 
-      message.textContent = "登録中…";
+
+      message.textContent =
+        "登録中…";
+
 
       try {
 
-        const { data, error } =
-          await supabaseClient.functions.invoke("auth", {
+        /* BAN中のIDでは登録できない */
 
-            body: {
-              action: "register",
-              username: id,
-              password: password
-            }
+        const banned =
+          await checkBanned(id);
 
-          });
+
+        if (banned) {
+
+          message.textContent =
+            "🚫 このユーザーIDはBANされています。";
+
+          return;
+        }
+
+
+        const {
+          data,
+          error
+        } =
+          await supabaseClient
+            .functions
+            .invoke(
+              "auth",
+              {
+                body: {
+                  action: "register",
+                  username: id,
+                  password: password
+                }
+              }
+            );
+
 
         if (error) {
 
@@ -249,13 +317,16 @@
           return;
         }
 
+
         if (!data || !data.ok) {
 
           message.textContent =
-            data?.error || "登録できませんでした。";
+            data?.error ||
+            "登録できませんでした。";
 
           return;
         }
+
 
         message.textContent =
           "登録成功！🎉 ログインしてね。";
@@ -267,22 +338,33 @@
         console.error(error);
 
         message.textContent =
-          "通信エラーが発生しました。";
+          "BAN確認または通信中にエラーが発生しました。";
 
       }
 
     }
 
+
+    /* =========================
+       ログイン
+    ========================= */
+
     async function login() {
 
       const id =
-        document.getElementById("userId").value.trim();
+        document
+          .getElementById("userId")
+          .value
+          .trim();
 
       const password =
-        document.getElementById("password").value;
+        document
+          .getElementById("password")
+          .value;
 
       const message =
         document.getElementById("message");
+
 
       if (!id || !password) {
 
@@ -292,20 +374,52 @@
         return;
       }
 
-      message.textContent = "ログイン中…";
+
+      message.textContent =
+        "ログイン中…";
+
 
       try {
 
-        const { data, error } =
-          await supabaseClient.functions.invoke("auth", {
+        /* =========================
+           まずBAN確認
+        ========================= */
 
-            body: {
-              action: "login",
-              username: id,
-              password: password
-            }
+        const banned =
+          await checkBanned(id);
 
-          });
+
+        if (banned) {
+
+          message.textContent =
+            "🚫 このアカウントはBANされています。\n" +
+            "管理者に確認してください。";
+
+          return;
+        }
+
+
+        /* =========================
+           ログイン
+        ========================= */
+
+        const {
+          data,
+          error
+        } =
+          await supabaseClient
+            .functions
+            .invoke(
+              "auth",
+              {
+                body: {
+                  action: "login",
+                  username: id,
+                  password: password
+                }
+              }
+            );
+
 
         if (error) {
 
@@ -317,28 +431,42 @@
           return;
         }
 
+
         if (!data || !data.session) {
 
           message.textContent =
-            data?.error || "ログインできませんでした。";
+            data?.error ||
+            "ログインできませんでした。";
 
           return;
         }
 
-        const { error: sessionError } =
-          await supabaseClient.auth.setSession({
 
-            access_token:
-              data.session.access_token,
+        /* =========================
+           セッション保存
+        ========================= */
 
-            refresh_token:
-              data.session.refresh_token
+        const {
+          error: sessionError
+        } =
+          await supabaseClient
+            .auth
+            .setSession({
 
-          });
+              access_token:
+                data.session.access_token,
+
+              refresh_token:
+                data.session.refresh_token
+
+            });
+
 
         if (sessionError) {
 
-          console.error(sessionError);
+          console.error(
+            sessionError
+          );
 
           message.textContent =
             "ログイン情報の保存に失敗しました。";
@@ -346,7 +474,28 @@
           return;
         }
 
-        window.location.href = "home.html";
+
+        /* =========================
+           最終BAN確認
+        ========================= */
+
+        const bannedAfterLogin =
+          await checkBanned(id);
+
+
+        if (bannedAfterLogin) {
+
+          await supabaseClient.auth.signOut();
+
+          message.textContent =
+            "🚫 このアカウントはBANされています。";
+
+          return;
+        }
+
+
+        window.location.href =
+          "home.html";
 
       }
 
