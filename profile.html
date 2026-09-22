@@ -7,13 +7,6 @@
   <title>プロフィール</title>
 
   <style>
-    :root {
-      --theme: #8f7cff;
-      --theme-light: #eeeaff;
-      --theme-bg: #f7f5ff;
-      --theme-border: #b8afff;
-    }
-
     * {
       box-sizing: border-box;
     }
@@ -23,24 +16,24 @@
       min-height: 100vh;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
         "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
-      background:
-        linear-gradient(135deg, var(--theme-bg), #eef7ff);
+      background: linear-gradient(135deg, #fff4fb, #eef7ff);
       display: flex;
       justify-content: center;
       align-items: center;
       padding: 20px;
       color: #333;
-      transition: background 0.25s;
     }
 
     .home-button {
       position: fixed;
       top: 15px;
       left: 15px;
+      width: auto;
+      margin: 0;
       padding: 10px 15px;
       border-radius: 14px;
       background: white;
-      color: var(--theme);
+      color: #6556d8;
       text-decoration: none;
       font-weight: bold;
       box-shadow: 0 4px 15px rgba(0,0,0,0.08);
@@ -53,7 +46,7 @@
       background: white;
       border-radius: 24px;
       padding: 30px 24px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
     }
 
     h1 {
@@ -66,14 +59,13 @@
       width: 120px;
       height: 120px;
       border-radius: 50%;
-      background: var(--theme-light);
+      background: #ffe2f1;
       display: flex;
       align-items: center;
       justify-content: center;
       margin: 0 auto 15px;
       font-size: 55px;
       overflow: hidden;
-      transition: background 0.25s;
     }
 
     .avatar img {
@@ -87,8 +79,8 @@
       width: 100%;
       padding: 12px;
       border-radius: 12px;
-      background: var(--theme-light);
-      color: var(--theme);
+      background: #eeeaff;
+      color: #6556d8;
       text-align: center;
       font-weight: bold;
       cursor: pointer;
@@ -123,102 +115,7 @@
 
     input:focus,
     textarea:focus {
-      border-color: var(--theme);
-    }
-
-    /* =========================
-       テーマカラー
-    ========================= */
-
-    .theme-section {
-      margin-top: 22px;
-    }
-
-    .theme-title {
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-
-    .theme-colors {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 10px;
-    }
-
-    .theme-color {
-      width: 100%;
-      aspect-ratio: 1;
-      border: 3px solid transparent;
-      border-radius: 50%;
-      cursor: pointer;
-      position: relative;
-      padding: 0;
-    }
-
-    .theme-color.selected {
-      border-color: #333;
-      transform: scale(1.08);
-    }
-
-    .theme-color.selected::after {
-      content: "✓";
-      position: absolute;
-      inset: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      font-size: 17px;
-      font-weight: bold;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.4);
-    }
-
-    .color-purple {
-      background: #8f7cff;
-    }
-
-    .color-pink {
-      background: #ff6fae;
-    }
-
-    .color-blue {
-      background: #4d8dff;
-    }
-
-    .color-sky {
-      background: #35bde8;
-    }
-
-    .color-green {
-      background: #42b883;
-    }
-
-    .color-orange {
-      background: #ff9f43;
-    }
-
-    .color-red {
-      background: #ff5c6c;
-    }
-
-    .color-yellow {
-      background: #f2c94c;
-    }
-
-    .color-teal {
-      background: #20bfa9;
-    }
-
-    .color-indigo {
-      background: #5964d8;
-    }
-
-    .color-brown {
-      background: #b87852;
-    }
-
-    .color-black {
-      background: #444;
+      border-color: #9b8cff;
     }
 
     button.save-button {
@@ -227,7 +124,7 @@
       margin-top: 20px;
       border: none;
       border-radius: 12px;
-      background: var(--theme);
+      background: #8f7cff;
       color: white;
       font-size: 16px;
       font-weight: bold;
@@ -291,66 +188,6 @@
       maxlength="200"
     ></textarea>
 
-    <div class="theme-section">
-
-      <div class="theme-title">
-        🎨 テーマカラー
-      </div>
-
-      <div class="theme-colors">
-
-        <button class="theme-color color-purple"
-          data-color="#8f7cff"
-          type="button"></button>
-
-        <button class="theme-color color-pink"
-          data-color="#ff6fae"
-          type="button"></button>
-
-        <button class="theme-color color-blue"
-          data-color="#4d8dff"
-          type="button"></button>
-
-        <button class="theme-color color-sky"
-          data-color="#35bde8"
-          type="button"></button>
-
-        <button class="theme-color color-green"
-          data-color="#42b883"
-          type="button"></button>
-
-        <button class="theme-color color-orange"
-          data-color="#ff9f43"
-          type="button"></button>
-
-        <button class="theme-color color-red"
-          data-color="#ff5c6c"
-          type="button"></button>
-
-        <button class="theme-color color-yellow"
-          data-color="#f2c94c"
-          type="button"></button>
-
-        <button class="theme-color color-teal"
-          data-color="#20bfa9"
-          type="button"></button>
-
-        <button class="theme-color color-indigo"
-          data-color="#5964d8"
-          type="button"></button>
-
-        <button class="theme-color color-brown"
-          data-color="#b87852"
-          type="button"></button>
-
-        <button class="theme-color color-black"
-          data-color="#444444"
-          type="button"></button>
-
-      </div>
-
-    </div>
-
     <button
       type="button"
       class="save-button"
@@ -380,120 +217,7 @@
         SUPABASE_KEY
       );
 
-
     let selectedFile = null;
-
-    let selectedTheme =
-      "#8f7cff";
-
-
-    // =========================
-    // テーマカラー
-    // =========================
-
-    function hexToRgba(hex, alpha) {
-
-      const clean =
-        hex.replace("#", "");
-
-      const r =
-        parseInt(clean.substring(0, 2), 16);
-
-      const g =
-        parseInt(clean.substring(2, 4), 16);
-
-      const b =
-        parseInt(clean.substring(4, 6), 16);
-
-      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-
-    }
-
-
-    function applyTheme(color) {
-
-      selectedTheme =
-        color || "#8f7cff";
-
-      document.documentElement
-        .style
-        .setProperty(
-          "--theme",
-          selectedTheme
-        );
-
-      document.documentElement
-        .style
-        .setProperty(
-          "--theme-light",
-          hexToRgba(
-            selectedTheme,
-            0.12
-          )
-        );
-
-      document.documentElement
-        .style
-        .setProperty(
-          "--theme-bg",
-          hexToRgba(
-            selectedTheme,
-            0.08
-          )
-        );
-
-      document.documentElement
-        .style
-        .setProperty(
-          "--theme-border",
-          hexToRgba(
-            selectedTheme,
-            0.45
-          )
-        );
-
-
-      document
-        .querySelectorAll(".theme-color")
-        .forEach(
-          function(button) {
-
-            button.classList.toggle(
-              "selected",
-              button.dataset.color
-                .toLowerCase() ===
-              selectedTheme.toLowerCase()
-            );
-
-          }
-        );
-
-    }
-
-
-    document
-      .querySelectorAll(".theme-color")
-      .forEach(
-        function(button) {
-
-          button.addEventListener(
-            "click",
-            function() {
-
-              applyTheme(
-                button.dataset.color
-              );
-
-              showMessage(
-                "テーマカラーを選択したよ！"
-              );
-
-            }
-          );
-
-        }
-      );
-
 
     // =========================
     // メッセージ表示
@@ -506,7 +230,6 @@
         .textContent = text;
 
     }
-
 
     // =========================
     // 画像選択
@@ -525,6 +248,7 @@
             return;
           }
 
+          // 画像かチェック
 
           if (!file.type.startsWith("image/")) {
 
@@ -535,6 +259,8 @@
             return;
           }
 
+          // サイズチェック
+          // 5MBまで
 
           if (file.size > 5 * 1024 * 1024) {
 
@@ -545,9 +271,9 @@
             return;
           }
 
-
           selectedFile = file;
 
+          // プレビュー表示
 
           const imageUrl =
             URL.createObjectURL(file);
@@ -557,14 +283,12 @@
             .innerHTML =
               `<img src="${imageUrl}" alt="アイコン">`;
 
-
           showMessage(
             "画像を選択したよ！"
           );
 
         }
       );
-
 
     // =========================
     // プロフィール読み込み
@@ -574,13 +298,13 @@
 
       showMessage("読み込み中…");
 
+      // ログインユーザー取得
 
       const {
         data: { user },
         error: userError
       } =
         await supabaseClient.auth.getUser();
-
 
       if (userError || !user) {
 
@@ -591,10 +315,8 @@
         return;
       }
 
-
       const username =
         user.user_metadata?.username;
-
 
       if (!username) {
 
@@ -605,6 +327,7 @@
         return;
       }
 
+      // profiles取得
 
       const {
         data: profile,
@@ -615,7 +338,6 @@
           .select("*")
           .eq("user_id", username)
           .maybeSingle();
-
 
       if (error) {
 
@@ -628,7 +350,6 @@
         return;
       }
 
-
       if (!profile) {
 
         showMessage(
@@ -638,18 +359,21 @@
         return;
       }
 
+      // 名前
 
       document
         .getElementById("name")
         .value =
           profile.name || username;
 
+      // 自己紹介
 
       document
         .getElementById("bio")
         .value =
           profile.bio || "";
 
+      // プロフィール画像
 
       if (profile.avatar_url) {
 
@@ -660,18 +384,9 @@
 
       }
 
-
-      /* 保存済みテーマ */
-      applyTheme(
-        profile.theme_color ||
-        "#8f7cff"
-      );
-
-
       showMessage("");
 
     }
-
 
     // =========================
     // プロフィール保存
@@ -697,6 +412,7 @@
       const saveButton =
         document.getElementById("saveButton");
 
+      // 名前チェック
 
       if (!name) {
 
@@ -706,13 +422,13 @@
         return;
       }
 
+      // ログインユーザー取得
 
       const {
         data: { user },
         error: userError
       } =
         await supabaseClient.auth.getUser();
-
 
       if (userError || !user) {
 
@@ -722,10 +438,8 @@
         return;
       }
 
-
       const username =
         user.user_metadata?.username;
-
 
       if (!username) {
 
@@ -735,15 +449,12 @@
         return;
       }
 
-
       saveButton.disabled = true;
 
       message.textContent =
         "保存中…";
 
-
       let avatarUrl = null;
-
 
       // =========================
       // 画像アップロード
@@ -757,10 +468,8 @@
             .pop()
             .toLowerCase();
 
-
         const fileName =
           `${user.id}/${Date.now()}.${fileExt}`;
-
 
         const {
           error: uploadError
@@ -775,7 +484,6 @@
                 contentType: selectedFile.type
               }
             );
-
 
         if (uploadError) {
 
@@ -792,6 +500,7 @@
           return;
         }
 
+        // 公開URL取得
 
         const {
           data: publicData
@@ -800,12 +509,10 @@
             .from("avatars")
             .getPublicUrl(fileName);
 
-
         avatarUrl =
           publicData.publicUrl;
 
       }
-
 
       // =========================
       // 更新データ
@@ -815,13 +522,9 @@
 
         name: name,
 
-        bio: bio,
-
-        theme_color:
-          selectedTheme
+        bio: bio
 
       };
-
 
       if (avatarUrl) {
 
@@ -829,7 +532,6 @@
           avatarUrl;
 
       }
-
 
       // =========================
       // profiles更新
@@ -846,7 +548,6 @@
             username
           );
 
-
       if (profileError) {
 
         console.error(
@@ -855,28 +556,28 @@
         );
 
         message.textContent =
-          "プロフィールの保存に失敗しました。\n" +
-          profileError.message;
+          "プロフィールの保存に失敗しました。";
 
         saveButton.disabled = false;
 
         return;
       }
 
+      // =========================
+      // 完了
+      // =========================
 
       selectedFile = null;
 
       message.textContent =
         "プロフィールを保存したよ！🎉";
 
-
       saveButton.disabled = false;
 
     }
 
-
     // =========================
-    // 開始
+    // ページ開始
     // =========================
 
     loadProfile();
