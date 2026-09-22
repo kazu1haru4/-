@@ -23,7 +23,13 @@
         "Yu Gothic",
         "Noto Sans JP",
         sans-serif;
-      background: linear-gradient(135deg, #fff4fb, #eef7ff);
+
+      background: linear-gradient(
+        135deg,
+        #fff4fb,
+        #eef7ff
+      );
+
       color: #333;
       padding: 20px;
     }
@@ -57,40 +63,42 @@
       color: #7158cf;
     }
 
+    /* =========================
+       アバター
+    ========================= */
+
     .avatar-area {
       display: flex;
       justify-content: center;
-      margin-bottom: 20px;
+      margin-bottom: 25px;
     }
-
-    /* =================================
-       基本フレーム
-    ================================= */
 
     .avatar-frame {
       position: relative;
+
       width: 150px;
       height: 150px;
+
       border-radius: 50%;
+
       padding: 7px;
 
       background: #ffd9ec;
 
       box-shadow:
         0 5px 18px rgba(0,0,0,.12),
-        0 0 0 3px rgba(255,255,255,.9);
+        0 0 0 3px white;
 
       transition:
         background .3s ease,
-        box-shadow .3s ease,
-        filter .3s ease;
+        box-shadow .3s ease;
     }
 
-    /* =================================
-       🌸 桜
-    ================================= */
+    /* =========================
+       🌸 桜フレーム
+    ========================= */
 
-    .avatar-frame.frame-sakura {
+    .frame-sakura {
       background:
         linear-gradient(
           135deg,
@@ -101,16 +109,15 @@
         );
 
       box-shadow:
-        0 5px 18px rgba(255,80,160,.28),
         0 0 0 3px white,
-        0 0 20px rgba(255,120,190,.35);
+        0 0 18px rgba(255,100,180,.45);
     }
 
-    /* =================================
-       ⭐ 星
-    ================================= */
+    /* =========================
+       ⭐ 星フレーム
+    ========================= */
 
-    .avatar-frame.frame-star {
+    .frame-star {
       background:
         linear-gradient(
           135deg,
@@ -121,16 +128,15 @@
         );
 
       box-shadow:
-        0 5px 18px rgba(244,191,63,.30),
         0 0 0 3px white,
-        0 0 20px rgba(255,220,90,.40);
+        0 0 20px rgba(244,191,63,.45);
     }
 
-    /* =================================
-       💎 ダイヤ
-    ================================= */
+    /* =========================
+       💎 ダイヤフレーム
+    ========================= */
 
-    .avatar-frame.frame-diamond {
+    .frame-diamond {
       background:
         linear-gradient(
           135deg,
@@ -141,16 +147,15 @@
         );
 
       box-shadow:
-        0 5px 18px rgba(60,180,235,.30),
         0 0 0 3px white,
-        0 0 20px rgba(80,200,255,.45);
+        0 0 20px rgba(50,190,255,.45);
     }
 
-    /* =================================
-       💖 ハート
-    ================================= */
+    /* =========================
+       💖 ハートフレーム
+    ========================= */
 
-    .avatar-frame.frame-heart {
+    .frame-heart {
       background:
         linear-gradient(
           135deg,
@@ -161,19 +166,18 @@
         );
 
       box-shadow:
-        0 5px 18px rgba(255,60,140,.32),
         0 0 0 3px white,
         0 0 22px rgba(255,60,150,.45);
     }
 
-    /* =================================
-       🌈 虹
-    ================================= */
+    /* =========================
+       🌈 虹フレーム
+       ※画像には適用しない
+    ========================= */
 
-    .avatar-frame.frame-rainbow {
+    .frame-rainbow {
       background:
         conic-gradient(
-          from 0deg,
           #ff0000,
           #ff7a00,
           #ffe600,
@@ -187,15 +191,15 @@
 
       box-shadow:
         0 0 0 3px white,
-        0 0 15px rgba(255,80,180,.45),
-        0 0 30px rgba(80,160,255,.45);
+        0 0 15px rgba(80,150,255,.45),
+        0 0 30px rgba(255,80,180,.35);
     }
 
-    /* =================================
-       🔥 炎
-    ================================= */
+    /* =========================
+       🔥 炎フレーム
+    ========================= */
 
-    .avatar-frame.frame-flame {
+    .frame-flame {
       background:
         linear-gradient(
           135deg,
@@ -208,15 +212,14 @@
 
       box-shadow:
         0 0 0 3px white,
-        0 0 18px rgba(255,80,0,.55),
-        0 0 30px rgba(255,160,0,.35);
+        0 0 20px rgba(255,80,0,.55);
     }
 
-    /* =================================
-       🌊 海
-    ================================= */
+    /* =========================
+       🌊 海フレーム
+    ========================= */
 
-    .avatar-frame.frame-sea {
+    .frame-sea {
       background:
         linear-gradient(
           135deg,
@@ -228,15 +231,15 @@
 
       box-shadow:
         0 0 0 3px white,
-        0 0 18px rgba(0,180,255,.45),
-        0 0 30px rgba(0,100,255,.30);
+        0 0 20px rgba(0,170,255,.45);
     }
 
-    /* =================================
-       💡 ネオン
-    ================================= */
+    /* =========================
+       💡 ネオンフレーム
+       ※画像には適用しない
+    ========================= */
 
-    .avatar-frame.frame-neon {
+    .frame-neon {
       background:
         linear-gradient(
           135deg,
@@ -260,7 +263,6 @@
     }
 
     @keyframes neonMove {
-
       0% {
         background-position: 0% 50%;
       }
@@ -272,14 +274,13 @@
       100% {
         background-position: 0% 50%;
       }
-
     }
 
-    /* =================================
-       🌌 宇宙
-    ================================= */
+    /* =========================
+       🌌 宇宙フレーム
+    ========================= */
 
-    .avatar-frame.frame-space {
+    .frame-space {
       background:
         radial-gradient(
           circle at 20% 20%,
@@ -311,15 +312,15 @@
 
       box-shadow:
         0 0 0 3px white,
-        0 0 20px rgba(100,70,255,.60),
+        0 0 20px rgba(100,70,255,.6),
         0 0 35px rgba(120,80,255,.35);
     }
 
-    /* =================================
+    /* =========================
        👑 管理者
-    ================================= */
+    ========================= */
 
-    .avatar-frame.admin-frame {
+    .admin-frame {
       background:
         linear-gradient(
           135deg,
@@ -331,43 +332,61 @@
         );
 
       box-shadow:
-        0 5px 18px rgba(218,165,0,.30),
-        0 0 0 3px rgba(255,255,255,.95),
-        0 0 18px rgba(255,215,0,.45);
+        0 0 0 3px white,
+        0 0 18px rgba(255,215,0,.5);
     }
 
-    /* =================================
-       プロフィール画像
-    ================================= */
+    /* =========================
+       ★重要
+       画像そのものは必ず普通に表示
+    ========================= */
 
     .avatar-image {
       width: 100%;
       height: 100%;
+
       border-radius: 50%;
-      background: #fff3f9;
+
       object-fit: cover;
+
       display: block;
+
       border: 3px solid white;
+
+      /*
+        虹・ネオンなどが
+        画像に影響しないようにする
+      */
+
+      filter: none !important;
+      mix-blend-mode: normal !important;
+      opacity: 1 !important;
     }
 
     .avatar-placeholder {
       width: 100%;
       height: 100%;
+
       border-radius: 50%;
+
       background: #fff3f9;
+
       border: 3px solid white;
+
       display: flex;
       align-items: center;
       justify-content: center;
+
       font-size: 58px;
     }
 
-    /* =================================
+    /* =========================
        装備バッジ
-    ================================= */
+    ========================= */
 
     .equipped-badge {
       position: absolute;
+
       top: -8px;
       right: -8px;
 
@@ -375,9 +394,11 @@
       height: 48px;
 
       border-radius: 50%;
+
       background: white;
 
       display: none;
+
       align-items: center;
       justify-content: center;
 
@@ -394,22 +415,33 @@
       display: flex;
     }
 
-    /* =================================
+    /* =========================
        画像ボタン
-    ================================= */
+    ========================= */
 
     .image-button {
       display: block;
+
       width: 100%;
+
       padding: 14px;
+
       border: none;
+
       border-radius: 15px;
+
       background: #f0eaff;
+
       color: #7158cf;
+
       font-size: 16px;
+
       font-weight: bold;
+
       cursor: pointer;
+
       text-align: center;
+
       margin-bottom: 24px;
     }
 
@@ -421,31 +453,104 @@
       display: none;
     }
 
-    /* =================================
-       アイテム
-    ================================= */
+    /* =========================
+       🎁 折りたたみ
+    ========================= */
 
-    .item-title {
-      font-weight: bold;
-      font-size: 18px;
-      margin: 8px 0 12px;
+    .items-section {
+      margin-bottom: 25px;
+    }
+
+    .items-toggle {
+      width: 100%;
+
+      border: none;
+
+      border-radius: 16px;
+
+      background:
+        linear-gradient(
+          135deg,
+          #fff7fc,
+          #f3efff
+        );
+
       color: #555;
+
+      padding: 15px 16px;
+
+      font-size: 17px;
+
+      font-weight: bold;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      cursor: pointer;
+
+      box-shadow:
+        0 3px 10px rgba(100,80,150,.08);
+    }
+
+    .items-toggle:active {
+      transform: scale(.99);
+    }
+
+    .toggle-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toggle-arrow {
+      font-size: 18px;
+      transition: transform .25s ease;
+    }
+
+    .items-toggle.open .toggle-arrow {
+      transform: rotate(180deg);
+    }
+
+    .items-content {
+      display: none;
+
+      margin-top: 12px;
+
+      padding: 5px 0 2px;
+    }
+
+    .items-content.open {
+      display: block;
     }
 
     .items {
       display: flex;
+
       gap: 12px;
+
       flex-wrap: wrap;
-      margin-bottom: 25px;
     }
+
+    /* =========================
+       アイテムカード
+    ========================= */
 
     .item-card {
       width: 94px;
+
       min-height: 118px;
+
       border-radius: 18px;
+
       background: #fafafa;
+
       border: 2px solid #eee;
+
       padding: 10px 7px;
+
       text-align: center;
     }
 
@@ -460,18 +565,21 @@
         );
 
       box-shadow:
-        0 3px 12px rgba(255,215,0,.20);
+        0 3px 12px rgba(255,215,0,.2);
     }
 
     .item-icon {
       position: relative;
+
       width: 62px;
       height: 62px;
+
       margin: 0 auto 7px;
 
       border-radius: 16px;
 
       display: flex;
+
       align-items: center;
       justify-content: center;
 
@@ -480,9 +588,7 @@
       background: white;
     }
 
-    /* 虹アイコン */
-
-    .item-icon.icon-rainbow {
+    .item-icon.rainbow-icon {
       background:
         conic-gradient(
           #ff0000,
@@ -499,9 +605,7 @@
       border-color: white !important;
     }
 
-    /* ネオンアイコン */
-
-    .item-icon.icon-neon {
+    .item-icon.neon-icon {
       background:
         linear-gradient(
           135deg,
@@ -521,6 +625,7 @@
 
     .item-small-badge {
       position: absolute;
+
       top: -9px;
       right: -9px;
 
@@ -528,9 +633,11 @@
       height: 25px;
 
       border-radius: 50%;
+
       background: white;
 
       display: flex;
+
       align-items: center;
       justify-content: center;
 
@@ -542,21 +649,33 @@
 
     .item-name {
       font-size: 12px;
+
       margin-bottom: 6px;
+
       white-space: nowrap;
+
       overflow: hidden;
+
       text-overflow: ellipsis;
     }
 
     .equip-button {
       width: 100%;
+
       border: none;
+
       border-radius: 9px;
+
       padding: 6px 3px;
+
       background: #7658d9;
+
       color: white;
+
       font-size: 11px;
+
       font-weight: bold;
+
       cursor: pointer;
     }
 
@@ -566,31 +685,44 @@
 
     .no-items {
       color: #999;
+
       text-align: center;
+
       font-size: 14px;
+
       padding: 15px 0;
     }
 
-    /* =================================
+    /* =========================
        入力
-    ================================= */
+    ========================= */
 
     label {
       display: block;
+
       font-weight: bold;
+
       margin: 18px 0 7px;
+
       color: #444;
     }
 
     input[type="text"],
     textarea {
       width: 100%;
+
       border: 2px solid #eee;
+
       border-radius: 14px;
+
       padding: 13px;
+
       font-size: 16px;
+
       font-family: inherit;
+
       outline: none;
+
       background: #fff;
     }
 
@@ -601,19 +733,29 @@
 
     textarea {
       min-height: 120px;
+
       resize: vertical;
     }
 
     .save-button {
       width: 100%;
+
       margin-top: 25px;
+
       border: none;
+
       border-radius: 16px;
+
       padding: 15px;
+
       background: #7658d9;
+
       color: white;
+
       font-size: 17px;
+
       font-weight: bold;
+
       cursor: pointer;
     }
 
@@ -623,9 +765,13 @@
 
     #message {
       text-align: center;
+
       margin-top: 15px;
+
       min-height: 22px;
+
       font-size: 14px;
+
       color: #7658d9;
     }
   </style>
@@ -633,7 +779,10 @@
 
 <body>
 
-<a class="home-link" href="home.html">
+<a
+  class="home-link"
+  href="home.html"
+>
   🏠 ホーム
 </a>
 
@@ -642,6 +791,10 @@
   <h1>
     👤 プロフィール
   </h1>
+
+  <!-- =====================
+       アバター
+  ====================== -->
 
   <div class="avatar-area">
 
@@ -666,18 +819,57 @@
 
   </div>
 
-  <div class="item-title">
-    🎁 交換したアイテム
+
+  <!-- =====================
+       🎁 アイテム折りたたみ
+  ====================== -->
+
+  <div class="items-section">
+
+    <button
+      id="itemsToggle"
+      class="items-toggle"
+      type="button"
+    >
+
+      <span class="toggle-left">
+        🎁 交換したアイテム
+      </span>
+
+      <span
+        id="toggleArrow"
+        class="toggle-arrow"
+      >
+        ▼
+      </span>
+
+    </button>
+
+
+    <div
+      id="itemsContent"
+      class="items-content"
+    >
+
+      <div
+        id="items"
+        class="items"
+      >
+
+        <div class="no-items">
+          読み込み中...
+        </div>
+
+      </div>
+
+    </div>
+
   </div>
 
-  <div
-    id="items"
-    class="items"
-  >
-    <div class="no-items">
-      読み込み中...
-    </div>
-  </div>
+
+  <!-- =====================
+       画像
+  ====================== -->
 
   <label
     for="imageInput"
@@ -692,6 +884,11 @@
     accept="image/*"
   >
 
+
+  <!-- =====================
+       名前
+  ====================== -->
+
   <label for="name">
     名前
   </label>
@@ -703,6 +900,11 @@
     maxlength="30"
   >
 
+
+  <!-- =====================
+       自己紹介
+  ====================== -->
+
   <label for="bio">
     自己紹介
   </label>
@@ -712,6 +914,11 @@
     placeholder="自己紹介を書こう！"
     maxlength="300"
   ></textarea>
+
+
+  <!-- =====================
+       保存
+  ====================== -->
 
   <button
     id="saveButton"
@@ -724,6 +931,7 @@
   <div id="message"></div>
 
 </div>
+
 
 <script>
 
@@ -740,26 +948,30 @@ const supabaseClient =
   );
 
 
-/* =================================
-   👑 管理者
-================================= */
+/* =========================
+   管理者
+========================= */
 
-const ADMIN_USERNAMES = new Set([
-  "kazu1haru100",
-  "kazu1haru4sub"
-]);
+const ADMIN_USERNAMES =
+  new Set([
+    "kazu1haru100",
+    "kazu1haru4sub"
+  ]);
 
-const ADMIN_ITEM_KEY = "admin";
+const ADMIN_ITEM_KEY =
+  "admin";
 
 
 let currentUsername = "";
+
 let currentProfile = null;
+
 let ownedItems = [];
 
 
-/* =================================
+/* =========================
    メッセージ
-================================= */
+========================= */
 
 function showMessage(
   text,
@@ -767,7 +979,9 @@ function showMessage(
 ) {
 
   const el =
-    document.getElementById("message");
+    document.getElementById(
+      "message"
+    );
 
   el.textContent = text;
 
@@ -778,9 +992,9 @@ function showMessage(
 }
 
 
-/* =================================
-   管理者確認
-================================= */
+/* =========================
+   管理者
+========================= */
 
 function isAdmin() {
 
@@ -790,9 +1004,9 @@ function isAdmin() {
 }
 
 
-/* =================================
-   ログインユーザー
-================================= */
+/* =========================
+   ユーザー取得
+========================= */
 
 async function getCurrentUser() {
 
@@ -830,9 +1044,9 @@ async function getCurrentUser() {
 }
 
 
-/* =================================
+/* =========================
    プロフィール読み込み
-================================= */
+========================= */
 
 async function loadProfile() {
 
@@ -885,9 +1099,9 @@ async function loadProfile() {
 }
 
 
-/* =================================
-   アバター
-================================= */
+/* =========================
+   アバター表示
+========================= */
 
 function displayAvatar(url) {
 
@@ -921,9 +1135,9 @@ function displayAvatar(url) {
 }
 
 
-/* =================================
+/* =========================
    アイテム読み込み
-================================= */
+========================= */
 
 async function loadItems() {
 
@@ -953,8 +1167,7 @@ async function loadItems() {
 
     document
       .getElementById("items")
-      .innerHTML =
-      `
+      .innerHTML = `
         <div class="no-items">
           アイテムを読み込めませんでした
         </div>
@@ -972,9 +1185,9 @@ async function loadItems() {
 }
 
 
-/* =================================
+/* =========================
    アイテム表示
-================================= */
+========================= */
 
 function renderItems() {
 
@@ -985,12 +1198,11 @@ function renderItems() {
 
   if (!ownedItems.length) {
 
-    container.innerHTML =
-      `
-        <div class="no-items">
-          まだ交換したアイテムはありません
-        </div>
-      `;
+    container.innerHTML = `
+      <div class="no-items">
+        まだ交換したアイテムはありません
+      </div>
+    `;
 
     return;
   }
@@ -1022,6 +1234,8 @@ function renderItems() {
     const isAdminItem =
       key === ADMIN_ITEM_KEY;
 
+    /* 管理者アイテム */
+
     if (
       isAdminItem &&
       !isAdmin()
@@ -1047,14 +1261,18 @@ function renderItems() {
 
     let specialClass = "";
 
-    if (key === "rainbow") {
+    if (
+      key === "rainbow"
+    ) {
       specialClass =
-        " icon-rainbow";
+        " rainbow-icon";
     }
 
-    if (key === "neon") {
+    if (
+      key === "neon"
+    ) {
       specialClass =
-        " icon-neon";
+        " neon-icon";
     }
 
     card.innerHTML = `
@@ -1109,43 +1327,43 @@ function renderItems() {
     );
   });
 
-  const buttons =
-    document.querySelectorAll(
+
+  document
+    .querySelectorAll(
       ".equip-button"
-    );
+    )
+    .forEach(button => {
 
-  buttons.forEach(button => {
+      button.addEventListener(
+        "click",
+        () => {
 
-    button.addEventListener(
-      "click",
-      () => {
+          equipItem(
+            button.dataset.key
+          );
 
-        equipItem(
-          button.dataset.key
-        );
+        }
+      );
 
-      }
-    );
+    });
 
-  });
 
   if (
     !container.children.length
   ) {
 
-    container.innerHTML =
-      `
-        <div class="no-items">
-          まだ交換したアイテムはありません
-        </div>
-      `;
+    container.innerHTML = `
+      <div class="no-items">
+        まだ交換したアイテムはありません
+      </div>
+    `;
   }
 }
 
 
-/* =================================
+/* =========================
    アイテム装備
-================================= */
+========================= */
 
 async function equipItem(
   itemKey
@@ -1164,6 +1382,7 @@ async function equipItem(
     return;
   }
 
+
   const ownsItem =
     ownedItems.some(row => {
 
@@ -1179,6 +1398,7 @@ async function equipItem(
 
     });
 
+
   if (!ownsItem) {
 
     showMessage(
@@ -1189,9 +1409,11 @@ async function equipItem(
     return;
   }
 
+
   showMessage(
     "装備しています..."
   );
+
 
   const {
     error
@@ -1207,6 +1429,7 @@ async function equipItem(
         currentUsername
       );
 
+
   if (error) {
 
     console.error(error);
@@ -1219,16 +1442,20 @@ async function equipItem(
     return;
   }
 
+
   if (!currentProfile) {
     currentProfile = {};
   }
 
+
   currentProfile.equipped_item_key =
     itemKey;
+
 
   renderItems();
 
   updateEquippedDisplay();
+
 
   showMessage(
     "装備しました！✨"
@@ -1236,9 +1463,9 @@ async function equipItem(
 }
 
 
-/* =================================
-   ⭐ 装備フレーム表示
-================================= */
+/* =========================
+   装備フレーム表示
+========================= */
 
 function updateEquippedDisplay() {
 
@@ -1252,16 +1479,21 @@ function updateEquippedDisplay() {
       "equippedBadge"
     );
 
-  /* 初期状態 */
+
+  /* 初期化 */
 
   frame.className =
     "avatar-frame";
 
-  frame.style.background = "";
+  frame.style.background =
+    "";
 
-  frame.style.boxShadow = "";
+  frame.style.boxShadow =
+    "";
 
-  frame.style.animation = "";
+  frame.style.animation =
+    "";
+
 
   badge.classList.remove(
     "show"
@@ -1269,14 +1501,19 @@ function updateEquippedDisplay() {
 
   badge.textContent = "";
 
-  badge.style.border = "";
+  badge.style.border =
+    "";
 
-  badge.style.boxShadow = "";
+  badge.style.boxShadow =
+    "";
+
 
   const key =
     currentProfile?.equipped_item_key;
 
+
   if (!key) return;
+
 
   const ownedRow =
     ownedItems.find(row => {
@@ -1293,20 +1530,23 @@ function updateEquippedDisplay() {
 
     });
 
+
   if (!ownedRow) return;
+
 
   const item =
     ownedRow.coin_items;
 
+
   if (!item) return;
 
 
-  /* =========================
+  /* =====================
      👑 管理者
-  ========================= */
+  ===================== */
 
   if (
-    key === "admin" &&
+    key === ADMIN_ITEM_KEY &&
     isAdmin()
   ) {
 
@@ -1328,9 +1568,9 @@ function updateEquippedDisplay() {
   }
 
 
-  /* =========================
-     通常フレーム
-  ========================= */
+  /* =====================
+     フレーム種類
+  ===================== */
 
   const frameClassMap = {
 
@@ -1363,8 +1603,10 @@ function updateEquippedDisplay() {
 
   };
 
+
   const className =
     frameClassMap[key];
+
 
   if (className) {
 
@@ -1374,9 +1616,6 @@ function updateEquippedDisplay() {
 
   } else {
 
-    /* 未知のフレームは
-       DBの色を使用 */
-
     const color =
       item.frame_color ||
       "#ffd9ec";
@@ -1385,15 +1624,15 @@ function updateEquippedDisplay() {
       color;
 
     frame.style.boxShadow = `
-      0 5px 18px rgba(0,0,0,.12),
-      0 0 0 3px white
+      0 0 0 3px white,
+      0 0 15px ${color}
     `;
   }
 
 
-  /* =========================
+  /* =====================
      バッジ
-  ========================= */
+  ===================== */
 
   badge.textContent =
     item.icon || "🎁";
@@ -1435,14 +1674,66 @@ function updateEquippedDisplay() {
 
     badge.style.border =
       `3px solid ${color}`;
-
   }
 }
 
 
-/* =================================
+/* =========================
+   折りたたみ
+========================= */
+
+document
+  .getElementById(
+    "itemsToggle"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      const button =
+        document.getElementById(
+          "itemsToggle"
+        );
+
+      const content =
+        document.getElementById(
+          "itemsContent"
+        );
+
+      const isOpen =
+        content.classList.contains(
+          "open"
+        );
+
+
+      if (isOpen) {
+
+        content.classList.remove(
+          "open"
+        );
+
+        button.classList.remove(
+          "open"
+        );
+
+      } else {
+
+        content.classList.add(
+          "open"
+        );
+
+        button.classList.add(
+          "open"
+        );
+      }
+
+    }
+  );
+
+
+/* =========================
    画像アップロード
-================================= */
+========================= */
 
 document
   .getElementById(
@@ -1456,6 +1747,7 @@ document
         this.files?.[0];
 
       if (!file) return;
+
 
       if (
         !file.type.startsWith(
@@ -1471,6 +1763,7 @@ document
         return;
       }
 
+
       if (
         file.size >
         5 * 1024 * 1024
@@ -1484,9 +1777,11 @@ document
         return;
       }
 
+
       showMessage(
         "画像をアップロードしています..."
       );
+
 
       const extension =
         file.name
@@ -1494,8 +1789,10 @@ document
           .pop()
           .toLowerCase();
 
+
       const path =
         `${currentUsername}/${Date.now()}.${extension}`;
+
 
       const {
         error: uploadError
@@ -1513,6 +1810,7 @@ document
             }
           );
 
+
       if (uploadError) {
 
         console.error(
@@ -1527,6 +1825,7 @@ document
         return;
       }
 
+
       const {
         data
       } =
@@ -1537,19 +1836,24 @@ document
             path
           );
 
+
       const imageUrl =
         data.publicUrl;
+
 
       displayAvatar(
         imageUrl
       );
 
+
       if (!currentProfile) {
         currentProfile = {};
       }
 
+
       currentProfile.avatar_url =
         imageUrl;
+
 
       showMessage(
         "画像を選びました。最後に「プロフィールを保存」を押してください。"
@@ -1558,9 +1862,9 @@ document
   );
 
 
-/* =================================
+/* =========================
    プロフィール保存
-================================= */
+========================= */
 
 document
   .getElementById(
@@ -1580,19 +1884,23 @@ async function saveProfile() {
       .value
       .trim();
 
+
   const bio =
     document
       .getElementById("bio")
       .value
       .trim();
 
+
   const avatar =
     currentProfile?.avatar_url ||
     null;
 
+
   showMessage(
     "プロフィールを保存しています..."
   );
+
 
   const {
     error
@@ -1624,6 +1932,7 @@ async function saveProfile() {
         }
       );
 
+
   if (error) {
 
     console.error(error);
@@ -1636,15 +1945,16 @@ async function saveProfile() {
     return;
   }
 
+
   showMessage(
     "プロフィールを保存しました！✨"
   );
 }
 
 
-/* =================================
+/* =========================
    HTMLエスケープ
-================================= */
+========================= */
 
 function escapeHtml(
   value
@@ -1656,6 +1966,7 @@ function escapeHtml(
   ) {
     return "";
   }
+
 
   return String(value)
     .replace(
@@ -1681,9 +1992,9 @@ function escapeHtml(
 }
 
 
-/* =================================
+/* =========================
    初期化
-================================= */
+========================= */
 
 async function init() {
 
@@ -1692,12 +2003,14 @@ async function init() {
 
   if (!user) return;
 
+
   await loadProfile();
 
   await loadItems();
 
   updateEquippedDisplay();
 }
+
 
 init();
 
