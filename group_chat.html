@@ -1334,6 +1334,77 @@ return groupMembersCache;
 }
 
 /* =========================
+   副管理者設定
+========================= */
+
+async function setDeputyAdmin(
+userId,
+makeAdmin
+){
+
+if(
+currentUsername !==
+groupOwnerId
+){
+
+alert(
+"管理者のみ設定できます。"
+);
+
+return;
+}
+
+if(
+!userId ||
+userId === groupOwnerId
+){
+
+return;
+}
+
+const {error} =
+await supabaseClient
+.from("group_members")
+.update({
+role:
+makeAdmin
+? "admin"
+: "member"
+})
+.eq(
+"group_id",
+Number(groupId)
+)
+.eq(
+"user_id",
+userId
+);
+
+if(error){
+
+console.error(
+"副管理者設定エラー:",
+error
+);
+
+alert(
+"副管理者の設定を変更できませんでした。\n\n" +
+error.message
+);
+
+await getGroupMembers();
+await loadMembers();
+
+return;
+}
+
+await getGroupMembers();
+
+await loadMembers();
+
+}
+
+/* =========================
    発言禁止読み込み
 ========================= */
 
@@ -2154,12 +2225,21 @@ scrollToBottom(true);
 }
 
 /* =========================
-   送信取り消し
+   メッセージ削除
 ========================= */
 
 async function deleteMessage(
 messageId
 ){
+
+if(currentUsername !== groupOwnerId){
+
+alert(
+"メッセージを削除できるのは管理者だけです。"
+);
+
+return;
+}
 
 if(
 !window.confirm(
@@ -2178,16 +2258,12 @@ is_deleted:true
 .eq(
 "id",
 messageId
-)
-.eq(
-"sender_id",
-currentUsername
 );
 
 if(error){
 
 alert(
-"送信取り消しに失敗しました。\n\n" +
+"メッセージの削除に失敗しました。\n\n" +
 error.message
 );
 
@@ -2568,9 +2644,13 @@ editButton
 
 }
 
+/* =========================
+   管理者だけ削除可能
+========================= */
+
 if(
-message.sender_id ===
-currentUsername
+currentUsername ===
+groupOwnerId
 ){
 
 const deleteButton =
@@ -2583,7 +2663,10 @@ deleteButton.className =
 "delete-button";
 
 deleteButton.textContent =
-"🗑️ 送信取り消し";
+message.sender_id ===
+currentUsername
+? "🗑️ 送信取り消し"
+: "🗑️ メッセージを削除（管理者）";
 
 deleteButton.addEventListener(
 "click",
@@ -2886,222 +2969,78 @@ messageInput.placeholder =
 messageInput.focus();
 
 }
+  /* =========================
+   返信キャンセル
+========================= */
 
 cancelReplyButton.addEventListener(
 "click",
-event => {
+() => {
 
-event.preventDefault();
-
-replyingToMessage =
-null;
-
-editingMessage =
-null;
+replyingToMessage = null;
 
 replyArea.style.display =
 "none";
 
+replyText.textContent = "";
+
 messageInput.placeholder =
 "メッセージを入力...";
 
-messageInput.focus();
-
 }
 );
 
 /* =========================
-   通知
+   メンション候補
 ========================= */
 
-async function createGroupReplyNotification(
-message
-){
+async function showMentionSuggestions(){
 
-if(
-!message ||
-!currentUsername ||
-message.sender_id ===
-currentUsername
-){
-return;
-}
-
-await supabaseClient
-.from("notifications")
-.insert({
-user_id:
-message.sender_id,
-type:
-"group_reply",
-title:
-"↩️ グループで返信がありました",
-message:
-currentUsername +
-"さんがあなたのメッセージに返信しました",
-link:
-"group_chat.html?id=" +
-encodeURIComponent(groupId),
-is_read:false
-});
-
-}
-
-async function createGroupNotifications(){
-
-if(
-!currentUsername ||
-!groupId
-){
-return;
-}
-
-const {data:group} =
-await supabaseClient
-.from("groups")
-.select("name")
-.eq(
-"id",
-Number(groupId)
-)
-.maybeSingle();
-
-const {data:members} =
-await supabaseClient
-.from("group_members")
-.select("user_id")
-.eq(
-"group_id",
-Number(groupId)
-);
-
-if(!members) return;
-
-const notifications =
-members
-.filter(
-member =>
-member.user_id !==
-currentUsername
-)
-.map(
-member => ({
-user_id:
-member.user_id,
-type:
-"group",
-title:
-"👥 グループに新しいメッセージ",
-message:
-currentUsername +
-"さんが「" +
-(
-group?.name ||
-"グループ"
-) +
-"」にメッセージを送信しました",
-link:
-"group_chat.html?id=" +
-encodeURIComponent(groupId),
-is_read:false
-})
-);
-
-if(!notifications.length){
-return;
-}
-
-await supabaseClient
-.from("notifications")
-.insert(
-notifications
-);
-
-}
-
-/* =========================
-   メンション
-========================= */
-
-function getMentionQuery(){
-
-const text =
+const value =
 messageInput.value;
 
 const cursor =
-messageInput.selectionStart;
+messageInput.selectionStart || 0;
 
 const beforeCursor =
-text.slice(
+value.slice(
 0,
 cursor
 );
 
 const match =
 beforeCursor.match(
-/(?:^|\s)@([A-Za-z0-9_]*)$/
+/@([A-Za-z0-9_]*)$/
 );
 
-if(!match) return null;
-
-return match[1].toLowerCase();
-
-}
-
-async function showMentionSuggestions(){
-
-if(isCurrentUserMuted()){
+if(!match){
 
 mentionList.classList.remove(
 "show"
 );
 
-mentionList.innerHTML =
-"";
-
 return;
 }
 
-const query =
-getMentionQuery();
+const keyword =
+match[1].toLowerCase();
 
-if(query === null){
+const members =
+groupMembersCache.length
+? groupMembersCache
+: await getGroupMembers();
 
-mentionList.classList.remove(
-"show"
-);
-
-mentionList.innerHTML =
-"";
-
-return;
-}
-
-if(!groupMembersCache.length){
-
-await getGroupMembers();
-
-}
-
-const candidates =
-groupMembersCache
-.filter(
-member =>
-member.user_id !==
-currentUsername
-)
-.filter(
+const filtered =
+members.filter(
 member =>
 member.user_id
 .toLowerCase()
-.startsWith(query)
-)
-.slice(0,8);
+.includes(keyword)
+);
 
-mentionList.innerHTML =
-"";
+mentionList.innerHTML = "";
 
-if(!candidates.length){
+if(!filtered.length){
 
 mentionList.classList.remove(
 "show"
@@ -3111,7 +3050,7 @@ return;
 }
 
 for(
-const member of candidates
+const member of filtered
 ){
 
 const profile =
@@ -3120,9 +3059,7 @@ member.user_id
 );
 
 const button =
-document.createElement(
-"button"
-);
+document.createElement("button");
 
 button.type =
 "button";
@@ -3131,9 +3068,7 @@ button.className =
 "mention-item";
 
 const avatar =
-document.createElement(
-"div"
-);
+document.createElement("div");
 
 avatar.className =
 "mention-avatar";
@@ -3141,15 +3076,13 @@ avatar.className =
 if(profile?.avatar_url){
 
 const img =
-document.createElement(
-"img"
-);
+document.createElement("img");
 
 img.src =
 profile.avatar_url;
 
 img.alt =
-"プロフィール画像";
+"";
 
 avatar.appendChild(img);
 
@@ -3160,15 +3093,15 @@ avatar.textContent =
 
 }
 
-const info =
-document.createElement(
-"div"
+button.appendChild(
+avatar
 );
 
+const info =
+document.createElement("div");
+
 const name =
-document.createElement(
-"div"
-);
+document.createElement("div");
 
 name.className =
 "mention-name";
@@ -3178,9 +3111,7 @@ profile?.name ||
 member.user_id;
 
 const id =
-document.createElement(
-"div"
-);
+document.createElement("div");
 
 id.className =
 "mention-id";
@@ -3190,10 +3121,7 @@ id.textContent =
 member.user_id;
 
 info.appendChild(name);
-
 info.appendChild(id);
-
-button.appendChild(avatar);
 
 button.appendChild(info);
 
@@ -3204,9 +3132,59 @@ event => {
 event.preventDefault();
 event.stopPropagation();
 
-insertMention(
-member.user_id
+const currentValue =
+messageInput.value;
+
+const currentCursor =
+messageInput.selectionStart ||
+currentValue.length;
+
+const before =
+currentValue.slice(
+0,
+currentCursor
 );
+
+const after =
+currentValue.slice(
+currentCursor
+);
+
+const mentionMatch =
+before.match(
+/@[A-Za-z0-9_]*$/
+);
+
+if(!mentionMatch){
+return;
+}
+
+const start =
+before.length -
+mentionMatch[0].length;
+
+messageInput.value =
+before.slice(0,start) +
+"@" +
+member.user_id +
+" " +
+after;
+
+const newCursor =
+start +
+member.user_id.length +
+2;
+
+messageInput.setSelectionRange(
+newCursor,
+newCursor
+);
+
+mentionList.classList.remove(
+"show"
+);
+
+messageInput.focus();
 
 }
 );
@@ -3223,332 +3201,64 @@ mentionList.classList.add(
 
 }
 
-function insertMention(
-username
-){
-
-const cursor =
-messageInput.selectionStart;
-
-const text =
-messageInput.value;
-
-const before =
-text.slice(
-0,
-cursor
-);
-
-const after =
-text.slice(cursor);
-
-const match =
-before.match(
-/(?:^|\s)@([A-Za-z0-9_]*)$/
-);
-
-if(!match) return;
-
-const start =
-match.index +
-(
-match[0].startsWith(" ")
-? 1
-: 0
-);
-
-messageInput.value =
-text.slice(0,start) +
-"@" +
-username +
-" " +
-after;
-
-const newCursor =
-start +
-username.length +
-2;
-
-messageInput.setSelectionRange(
-newCursor,
-newCursor
-);
-
-mentionList.classList.remove(
-"show"
-);
-
-messageInput.focus();
-
-}
+/* =========================
+   入力イベント
+========================= */
 
 messageInput.addEventListener(
 "input",
 showMentionSuggestions
 );
 
-function extractMentionUsernames(
-text
+messageInput.addEventListener(
+"keydown",
+event => {
+
+if(
+event.key === "Escape"
 ){
-
-if(!text) return [];
-
-const matches =
-text.match(
-/@[A-Za-z0-9_]+/g
-) || [];
-
-return [
-...new Set(
-matches.map(
-mention =>
-mention.slice(1)
-)
-)
-];
-
-}
-
-async function createMentionNotifications(
-text
-){
-
-const mentioned =
-extractMentionUsernames(
-text
-);
-
-if(!mentioned.length){
-return;
-}
-
-const members =
-groupMembersCache.length
-? groupMembersCache
-: await getGroupMembers();
-
-const memberIds =
-new Set(
-members.map(
-member =>
-member.user_id
-)
-);
-
-const targets =
-mentioned.filter(
-username =>
-username !==
-currentUsername &&
-memberIds.has(username)
-);
-
-if(!targets.length){
-return;
-}
-
-const {data:group} =
-await supabaseClient
-.from("groups")
-.select("name")
-.eq(
-"id",
-Number(groupId)
-)
-.maybeSingle();
-
-const notifications =
-targets.map(
-username => ({
-user_id:
-username,
-type:
-"group_mention",
-title:
-"🔔 グループでメンションされました",
-message:
-currentUsername +
-"さんが「" +
-(
-group?.name ||
-"グループ"
-) +
-"」であなたをメンションしました",
-link:
-"group_chat.html?id=" +
-encodeURIComponent(groupId),
-is_read:false
-})
-);
-
-await supabaseClient
-.from("notifications")
-.insert(
-notifications
-);
-
-}
-
-/* =========================
-   送信
-========================= */
-
-async function sendMessage(){
-
-if(isCurrentUserMuted()){
-
-alert(
-"🔇 現在発言禁止中です。\nあと " +
-formatMuteRemaining(
-currentMute.muted_until
-) +
-" 発言できません。"
-);
-
-updateMuteUI();
-
-return;
-}
-
-const text =
-messageInput.value.trim();
-
-if(!text) return;
-
-if(!currentUsername){
-
-alert(
-"ユーザー情報を取得できていません。"
-);
-
-return;
-}
-
-sendButton.disabled =
-true;
 
 mentionList.classList.remove(
 "show"
 );
 
-if(replyingToMessage){
-
-if(isCurrentUserMuted()){
-
-sendButton.disabled =
-false;
-
 return;
 }
 
-const targetMessage =
-replyingToMessage;
+if(
+event.key === "Enter" &&
+!event.shiftKey
+){
 
-const {error} =
-await supabaseClient
-.from("group_replies")
-.insert({
-group_message_id:
-targetMessage.id,
-sender_id:
-currentUsername,
-content:
-text
-});
+event.preventDefault();
 
-if(error){
+sendMessage();
 
-alert(
-"返信を送信できませんでした。\n\n" +
-error.message
-);
-
-sendButton.disabled =
-false;
-
-return;
 }
 
-messageInput.value =
-"";
-
-replyingToMessage =
-null;
-
-replyArea.style.display =
-"none";
-
-messageInput.placeholder =
-"メッセージを入力...";
-
-await loadMessages();
-
-scrollToBottom(true);
-
-createGroupReplyNotification(
-targetMessage
-);
-
-sendButton.disabled =
-false;
-
-messageInput.focus();
-
-return;
 }
-
-const {error} =
-await supabaseClient
-.from("group_messages")
-.insert({
-group_id:
-Number(groupId),
-sender_id:
-currentUsername,
-content:
-text,
-image_url:"",
-is_deleted:false
-});
-
-if(error){
-
-console.error(
-"グループメッセージ送信エラー:",
-error
 );
 
-alert(
-"送信できませんでした。\n\n" +
-error.message
-);
+document.addEventListener(
+"click",
+event => {
 
-}else{
+if(
+!mentionList.contains(event.target) &&
+event.target !== messageInput
+){
 
-messageInput.value =
-"";
-
-await loadMessages();
-
-scrollToBottom(true);
-
-createGroupNotifications();
-
-createMentionNotifications(
-text
+mentionList.classList.remove(
+"show"
 );
 
 }
 
-sendButton.disabled =
-false;
-
-messageInput.focus();
-
 }
+);
 
 /* =========================
-   画像
+   画像選択
 ========================= */
 
 imageButton.addEventListener(
@@ -3573,89 +3283,101 @@ imageInput.addEventListener(
 "change",
 async () => {
 
+const file =
+imageInput.files?.[0];
+
+if(!file){
+return;
+}
+
 if(isCurrentUserMuted()){
 
 alert(
 "🔇 現在発言禁止中のため、画像を送信できません。"
 );
 
-imageInput.value =
-"";
+imageInput.value = "";
 
 return;
 }
 
-const file =
-imageInput.files?.[0];
+if(!file.type.startsWith("image/")){
 
-if(!file) return;
+alert(
+"画像ファイルを選択してください。"
+);
+
+imageInput.value = "";
+
+return;
+}
 
 if(
-!file.type.startsWith("image/")
+file.size >
+10 * 1024 * 1024
 ){
 
 alert(
-"画像ファイルを選んでください。"
+"画像は10MB以下にしてください。"
 );
 
-imageInput.value =
-"";
+imageInput.value = "";
 
 return;
 }
 
-imageButton.disabled =
-true;
-
-sendButton.disabled =
-true;
+sendButton.disabled = true;
+imageButton.disabled = true;
 
 try{
 
 const extension =
-file.name.split(".").pop() ||
-"jpg";
+file.name.split(".").pop()
+?.toLowerCase() || "jpg";
 
-const filePath =
-"groups/" +
-groupId +
-"/" +
-currentUsername +
-"/" +
+const fileName =
 Date.now() +
 "_" +
 Math.random()
 .toString(36)
-.slice(2) +
+.substring(2) +
 "." +
 extension;
 
-const {
-error:uploadError
-} =
+const path =
+"group-" +
+groupId +
+"/" +
+fileName;
+
+const {error:uploadError} =
 await supabaseClient.storage
 .from("chat-images")
 .upload(
-filePath,
+path,
 file,
 {
-contentType:
-file.type,
+cacheControl:"3600",
 upsert:false
 }
 );
 
 if(uploadError){
 
+console.error(
+"画像アップロードエラー:",
+uploadError
+);
+
 alert(
-"画像をアップロードできませんでした。\n\n" +
+"画像のアップロードに失敗しました。\n\n" +
 uploadError.message
 );
 
 return;
 }
 
-const {error} =
+const {error:insertError} =
 await supabaseClient
 .from("group_messages")
 .insert({
@@ -3665,15 +3387,23 @@ sender_id:
 currentUsername,
 content:"",
 image_url:
-filePath,
-is_deleted:false
+path
 });
 
-if(error){
+if(insertError){
+
+console.error(
+"画像メッセージ登録エラー:",
+insertError
+);
+
+await supabaseClient.storage
+.from("chat-images")
+.remove([path]);
 
 alert(
-"画像メッセージを保存できませんでした。\n\n" +
-error.message
+"画像を送信できませんでした。\n\n" +
+insertError.message
 );
 
 return;
@@ -3683,20 +3413,28 @@ await loadMessages();
 
 scrollToBottom(true);
 
-createGroupNotifications();
+}catch(error){
+
+console.error(
+"画像送信エラー:",
+error
+);
+
+alert(
+"画像の送信に失敗しました。\n\n" +
+error.message
+);
 
 }finally{
 
-imageButton.disabled =
-false;
+imageInput.value = "";
 
-sendButton.disabled =
-false;
+if(!isCurrentUserMuted()){
 
-imageInput.value =
-"";
+sendButton.disabled = false;
+imageButton.disabled = false;
 
-updateMuteUI();
+}
 
 }
 
@@ -3704,148 +3442,309 @@ updateMuteUI();
 );
 
 /* =========================
-   リアルタイム
+   メッセージ送信
 ========================= */
 
-function startRealtime(){
+async function sendMessage(){
 
-supabaseClient
-.channel(
-"group-chat-" +
-groupId +
-"-" +
-Date.now()
-)
+if(isCurrentUserMuted()){
 
-.on(
-"postgres_changes",
-{
-event:"INSERT",
-schema:"public",
-table:"group_messages",
-filter:
-"group_id=eq." +
-groupId
-},
-async () => {
+alert(
+"🔇 現在発言禁止中のため、送信できません。"
+);
+
+return;
+}
+
+const text =
+messageInput.value.trim();
+
+if(!text){
+return;
+}
+
+if(!currentUsername){
+
+alert(
+"ユーザー情報を取得できていません。"
+);
+
+return;
+}
+
+sendButton.disabled = true;
+
+try{
+
+/* 返信 */
+
+if(replyingToMessage){
+
+const target =
+replyingToMessage;
+
+const {error} =
+await supabaseClient
+.from("group_replies")
+.insert({
+group_message_id:
+target.id,
+sender_id:
+currentUsername,
+content:
+text
+});
+
+if(error){
+
+console.error(
+"返信送信エラー:",
+error
+);
+
+alert(
+"返信を送信できませんでした。\n\n" +
+error.message
+);
+
+return;
+}
+
+messageInput.value = "";
+
+replyingToMessage = null;
+
+replyArea.style.display =
+"none";
+
+messageInput.placeholder =
+"メッセージを入力...";
+
+mentionList.classList.remove(
+"show"
+);
 
 await loadMessages();
 
 scrollToBottom(true);
 
-}
-)
+/* 通知は返信成功後に別処理 */
 
-.on(
-"postgres_changes",
-{
-event:"UPDATE",
-schema:"public",
-table:"group_messages",
-filter:
-"group_id=eq." +
-groupId
-},
-async () => {
+createReplyNotification(
+target
+);
+
+return;
+}
+
+/* 通常メッセージ */
+
+const {error} =
+await supabaseClient
+.from("group_messages")
+.insert({
+group_id:
+Number(groupId),
+sender_id:
+currentUsername,
+content:
+text,
+image_url:null
+});
+
+if(error){
+
+console.error(
+"メッセージ送信エラー:",
+error
+);
+
+alert(
+"メッセージを送信できませんでした。\n\n" +
+error.message
+);
+
+return;
+}
+
+messageInput.value = "";
+
+mentionList.classList.remove(
+"show"
+);
 
 await loadMessages();
 
+scrollToBottom(true);
+
+}catch(error){
+
+console.error(
+"送信エラー:",
+error
+);
+
+alert(
+"送信に失敗しました。\n\n" +
+error.message
+);
+
+}finally{
+
+if(!isCurrentUserMuted()){
+
+sendButton.disabled =
+false;
+
 }
-)
 
-.on(
-"postgres_changes",
-{
-event:"INSERT",
-schema:"public",
-table:"group_message_reads"
-},
-async payload => {
+}
 
-const read =
-payload.new;
+}
 
-if(!read) return;
+/* =========================
+   返信通知
+========================= */
 
-const {data:message} =
-await supabaseClient
-.from("group_messages")
-.select(
-"id,group_id,sender_id"
-)
-.eq(
-"id",
-read.group_message_id
-)
-.maybeSingle();
-
-if(
-!message ||
-String(message.group_id) !==
-String(groupId)
+async function createReplyNotification(
+message
 ){
+
+if(!message){
 return;
 }
 
 if(
-message.sender_id !==
-currentUsername ||
-read.user_id ===
+message.sender_id ===
 currentUsername
 ){
 return;
 }
 
-const id =
-String(
-read.group_message_id
+const {error} =
+await supabaseClient
+.from("notifications")
+.insert({
+user_id:
+message.sender_id,
+type:
+"group_reply",
+title:
+"グループチャット",
+message:
+"@" +
+currentUsername +
+" さんがあなたのメッセージに返信しました。",
+link:
+"group_chat.html?id=" +
+groupId,
+is_read:false
+});
+
+if(error){
+
+console.error(
+"返信通知エラー:",
+error
 );
-
-if(!groupReadCounts[id]){
-
-groupReadCounts[id] =
-new Set();
 
 }
 
-groupReadCounts[id].add(
-read.user_id
-);
-
-await loadMessages();
-
 }
-)
 
-.on(
-"postgres_changes",
-{
-event:"*",
-schema:"public",
-table:"group_mutes",
-filter:
-"group_id=eq." +
-groupId
-},
-async () => {
+/* =========================
+   メンション通知
+========================= */
 
-await loadGroupMutes();
-
-if(
-memberModal.style.display ===
-"flex"
+async function createMentionNotifications(
+text
 ){
 
-await loadMembers();
-
+if(!text){
+return;
 }
 
+const matches =
+text.match(
+/@([A-Za-z0-9_]+)/g
+);
+
+if(!matches?.length){
+return;
 }
+
+const usernames =
+[
+...new Set(
+matches.map(
+value =>
+value.substring(1)
 )
+)
+];
 
-.subscribe();
+for(
+const username of usernames
+){
+
+if(
+username ===
+currentUsername
+){
+continue;
+}
+
+if(
+!groupMembersCache.some(
+member =>
+member.user_id ===
+username
+)
+){
+continue;
+}
+
+const {error} =
+await supabaseClient
+.from("notifications")
+.insert({
+user_id:
+username,
+type:
+"group_mention",
+title:
+"メンションされました",
+message:
+"@" +
+currentUsername +
+" さんがグループであなたをメンションしました。",
+link:
+"group_chat.html?id=" +
+groupId,
+is_read:false
+});
+
+if(error){
+
+console.error(
+"メンション通知エラー:",
+error
+);
 
 }
+
+}
+
+}
+
+/* =========================
+   送信ボタン
+========================= */
+
+sendButton.addEventListener(
+"click",
+sendMessage
+);
 
 /* =========================
    メンバー一覧
@@ -3856,78 +3755,28 @@ async function loadMembers(){
 memberList.innerHTML =
 '<div class="member-loading">読み込み中...</div>';
 
-const {
-data:members,
-error
-} =
-await supabaseClient
-.from("group_members")
-.select(
-"user_id,role"
-)
-.eq(
-"group_id",
-Number(groupId)
-);
+const members =
+await getGroupMembers();
 
-if(error){
-
-console.error(
-"メンバー取得エラー:",
-error
-);
+if(!members?.length){
 
 memberList.innerHTML =
-'<div class="member-empty">メンバーを読み込めませんでした。</div>';
+'<div class="member-empty">メンバーがいません。</div>';
 
 return;
 }
 
-groupMembersCache =
-members || [];
+memberList.innerHTML = "";
 
-const me =
-groupMembersCache.find(
-member =>
-member.user_id ===
-currentUsername
-);
-
-if(currentUsername === groupOwnerId){
-
-currentGroupRole =
-"admin";
-
-}else{
-
-currentGroupRole =
-me?.role || "member";
-
-}
-
-updateGroupAdminState();
-
-if(
-!members ||
-!members.length
-){
-
-memberList.innerHTML =
-'<div class="member-empty">まだメンバーがいません。</div>';
-
-return;
-}
-
-const memberIds =
+const userIds =
 members.map(
 member =>
 member.user_id
 );
 
-const {
-data:presenceData,
-error:presenceError
-} =
+let presenceData = [];
+
+const {data:presence,error} =
 await supabaseClient
 .from("user_presence")
 .select(
@@ -3935,34 +3784,15 @@ await supabaseClient
 )
 .in(
 "user_id",
-memberIds
+userIds
 );
 
-if(presenceError){
+if(!error){
 
-console.error(
-"オンライン状態取得エラー:",
-presenceError
-);
+presenceData =
+presence || [];
 
 }
-
-const presenceMap = {};
-
-for(
-const presence of
-presenceData || []
-){
-
-presenceMap[
-presence.user_id
-] =
-presence.last_seen;
-
-}
-
-memberList.innerHTML =
-"";
 
 for(
 const member of members
@@ -3973,36 +3803,35 @@ await getProfile(
 member.user_id
 );
 
-const item =
-document.createElement(
-"div"
+const presenceRow =
+presenceData.find(
+item =>
+item.user_id ===
+member.user_id
 );
 
-item.className =
+const row =
+document.createElement("div");
+
+row.className =
 "member-item";
 
 const icon =
-document.createElement(
-"div"
-);
+document.createElement("div");
 
 icon.className =
 "member-icon";
 
-if(
-profile?.avatar_url
-){
+if(profile?.avatar_url){
 
 const img =
-document.createElement(
-"img"
-);
+document.createElement("img");
 
 img.src =
 profile.avatar_url;
 
 img.alt =
-"プロフィール画像";
+"";
 
 icon.appendChild(img);
 
@@ -4013,18 +3842,16 @@ icon.textContent =
 
 }
 
+row.appendChild(icon);
+
 const info =
-document.createElement(
-"div"
-);
+document.createElement("div");
 
 info.className =
 "member-info";
 
 const name =
-document.createElement(
-"div"
-);
+document.createElement("div");
 
 name.className =
 "member-name";
@@ -4033,10 +3860,10 @@ name.textContent =
 profile?.name ||
 member.user_id;
 
+info.appendChild(name);
+
 const id =
-document.createElement(
-"div"
-);
+document.createElement("div");
 
 id.className =
 "member-id";
@@ -4045,87 +3872,59 @@ id.textContent =
 "@" +
 member.user_id;
 
-const status =
-document.createElement(
-"div"
+info.appendChild(id);
+
+const online =
+document.createElement("div");
+
+online.className =
+"member-status " +
+(
+isOnline(
+presenceRow?.last_seen
+)
+? "online"
+: "offline"
 );
 
-status.className =
-"member-status";
+online.textContent =
+isOnline(
+presenceRow?.last_seen
+)
+? "🟢 オンライン"
+: "⚪ オフライン";
 
-const lastSeen =
-presenceMap[
-member.user_id
-];
-
-if(isOnline(lastSeen)){
-
-status.classList.add("online");
-
-status.textContent =
-"🟢 オンライン";
-
-}else{
-
-status.classList.add("offline");
-
-status.textContent =
-"⚪ オフライン";
-
-}
+info.appendChild(online);
 
 const lastOnline =
-document.createElement(
-"div"
-);
+document.createElement("div");
 
 lastOnline.className =
 "last-online";
 
-if(isOnline(lastSeen)){
-
 lastOnline.textContent =
-"最終オンライン：今";
-
-}else{
-
-lastOnline.textContent =
-formatLastOnline(
-lastSeen
+isOnline(
+presenceRow?.last_seen
+)
+? "最終オンライン：今"
+: formatLastOnline(
+presenceRow?.last_seen
 );
-
-}
-
-info.appendChild(name);
-
-info.appendChild(id);
-
-info.appendChild(status);
 
 info.appendChild(lastOnline);
 
-/* =========================
-   役割
-========================= */
+/* 役割 */
 
 const roleBadge =
-document.createElement(
-"div"
-);
+document.createElement("div");
 
 roleBadge.className =
 "role-badge";
 
-const isOwner =
+if(
 member.user_id ===
-groupOwnerId;
-
-const isDeputy =
-member.role ===
-"admin" &&
-!isOwner;
-
-if(isOwner){
+groupOwnerId
+){
 
 roleBadge.classList.add(
 "role-owner"
@@ -4134,7 +3933,10 @@ roleBadge.classList.add(
 roleBadge.textContent =
 "👑 管理者";
 
-}else if(isDeputy){
+}else if(
+member.role ===
+"admin"
+){
 
 roleBadge.classList.add(
 "role-admin"
@@ -4158,9 +3960,7 @@ info.appendChild(
 roleBadge
 );
 
-/* =========================
-   現在の発言禁止
-========================= */
+/* 発言禁止表示 */
 
 const mute =
 groupMutesCache.find(
@@ -4176,15 +3976,13 @@ Date.now()
 if(mute){
 
 const muteStatus =
-document.createElement(
-"div"
-);
+document.createElement("div");
 
 muteStatus.className =
 "member-mute-status";
 
 muteStatus.textContent =
-"🔇 発言禁止中・あと " +
+"🔇 発言禁止：あと " +
 formatMuteRemaining(
 mute.muted_until
 );
@@ -4196,27 +3994,24 @@ muteStatus
 }
 
 /* =========================
-   副管理者設定
+   管理者専用操作
 ========================= */
 
 if(
 currentUsername ===
 groupOwnerId &&
-!isOwner
+member.user_id !==
+groupOwnerId
 ){
 
-const roleSelect =
-document.createElement(
-"select"
-);
+const roleControl =
+document.createElement("select");
 
-roleSelect.className =
+roleControl.className =
 "role-control";
 
 const memberOption =
-document.createElement(
-"option"
-);
+document.createElement("option");
 
 memberOption.value =
 "member";
@@ -4225,9 +4020,7 @@ memberOption.textContent =
 "👤 メンバー";
 
 const adminOption =
-document.createElement(
-"option"
-);
+document.createElement("option");
 
 adminOption.value =
 "admin";
@@ -4235,175 +4028,118 @@ adminOption.value =
 adminOption.textContent =
 "🛡️ 副管理者";
 
-roleSelect.appendChild(
+roleControl.appendChild(
 memberOption
 );
 
-roleSelect.appendChild(
+roleControl.appendChild(
 adminOption
 );
 
-roleSelect.value =
-member.role === "admin"
+roleControl.value =
+member.role ===
+"admin"
 ? "admin"
 : "member";
 
-roleSelect.addEventListener(
+roleControl.addEventListener(
 "change",
 async () => {
 
-const makeAdmin =
-roleSelect.value ===
-"admin";
-
-roleSelect.disabled =
-true;
-
 await setDeputyAdmin(
 member.user_id,
-makeAdmin
+roleControl.value ===
+"admin"
 );
-
-roleSelect.disabled =
-false;
 
 }
 );
 
 info.appendChild(
-roleSelect
+roleControl
 );
 
-}
+/* 発言禁止 */
 
-/* =========================
-   発言禁止設定
-========================= */
+const muteControl =
+document.createElement("select");
 
-if(
-isGroupAdmin &&
-!isOwner &&
-member.user_id !==
-currentUsername
-){
-
-const muteSelect =
-document.createElement(
-"select"
-);
-
-muteSelect.className =
+muteControl.className =
 "mute-control";
 
-const defaultOption =
-document.createElement(
-"option"
-);
+const noMuteOption =
+document.createElement("option");
 
-defaultOption.value =
+noMuteOption.value =
 "";
 
-defaultOption.textContent =
-"🔇 発言禁止を設定";
+noMuteOption.textContent =
+"🔊 発言禁止なし";
 
-muteSelect.appendChild(
-defaultOption
+muteControl.appendChild(
+noMuteOption
 );
 
-const durations = [
-{
-value:10,
-label:"10分"
-},
-{
-value:30,
-label:"30分"
-},
-{
-value:60,
-label:"1時間"
-},
-{
-value:180,
-label:"3時間"
-},
-{
-value:1440,
-label:"1日"
-},
-{
-value:10080,
-label:"7日"
-}
+const muteOptions = [
+["10","🔇 10分"],
+["30","🔇 30分"],
+["60","🔇 1時間"],
+["180","🔇 3時間"],
+["1440","🔇 1日"],
+["10080","🔇 7日"]
 ];
 
 for(
-const duration of durations
+const [value,label]
+of muteOptions
 ){
 
 const option =
-document.createElement(
-"option"
-);
+document.createElement("option");
 
 option.value =
-String(duration.value);
+value;
 
 option.textContent =
-"🔇 " +
-duration.label +
-" 発言禁止";
+label;
 
-muteSelect.appendChild(
+muteControl.appendChild(
 option
 );
 
 }
 
-muteSelect.addEventListener(
+muteControl.addEventListener(
 "change",
 async () => {
 
 const minutes =
 Number(
-muteSelect.value
+muteControl.value
 );
 
 if(!minutes){
 return;
 }
 
-muteSelect.disabled =
-true;
+muteControl.value = "";
 
 await setMute(
 member.user_id,
 minutes
 );
 
-muteSelect.value =
-"";
-
-muteSelect.disabled =
-false;
-
 }
 );
 
 info.appendChild(
-muteSelect
+muteControl
 );
-
-/* =========================
-   発言禁止解除
-========================= */
 
 if(mute){
 
 const clearButton =
-document.createElement(
-"button"
-);
+document.createElement("button");
 
 clearButton.type =
 "button";
@@ -4412,14 +4148,11 @@ clearButton.className =
 "mute-clear-button";
 
 clearButton.textContent =
-"🔓 発言禁止を解除";
+"🔊 発言禁止を解除";
 
 clearButton.addEventListener(
 "click",
-async event => {
-
-event.preventDefault();
-event.stopPropagation();
+async () => {
 
 await clearMute(
 member.user_id
@@ -4436,11 +4169,9 @@ clearButton
 
 }
 
-item.appendChild(icon);
+row.appendChild(info);
 
-item.appendChild(info);
-
-memberList.appendChild(item);
+memberList.appendChild(row);
 
 }
 
@@ -4450,27 +4181,32 @@ memberList.appendChild(item);
    メンバー追加
 ========================= */
 
-async function addMember(){
+addMemberButton.addEventListener(
+"click",
+async () => {
 
-const friendId =
+const userId =
 memberInput.value.trim();
 
-if(!friendId){
+if(!userId){
 
 alert(
-"追加するユーザーIDを入力してね。"
+"追加するユーザーIDを入力してください。"
 );
 
 return;
 }
 
 if(
-friendId ===
-currentUsername
+groupMembersCache.some(
+member =>
+member.user_id ===
+userId
+)
 ){
 
 alert(
-"自分はすでにメンバーだよ。"
+"そのユーザーはすでにメンバーです。"
 );
 
 return;
@@ -4479,68 +4215,26 @@ return;
 addMemberButton.disabled =
 true;
 
-const {
-data:profile,
-error:profileError
-} =
+try{
+
+const {data:profile,error:profileError} =
 await supabaseClient
 .from("profiles")
-.select(
-"user_id,name"
-)
+.select("user_id")
 .eq(
 "user_id",
-friendId
+userId
 )
 .maybeSingle();
 
-if(profileError){
+if(
+profileError ||
+!profile
+){
 
 alert(
-"ユーザーを確認できませんでした。\n" +
-profileError.message
+"そのユーザーは見つかりませんでした。"
 );
-
-addMemberButton.disabled =
-false;
-
-return;
-}
-
-if(!profile){
-
-alert(
-"そのユーザーIDは見つかりません。"
-);
-
-addMemberButton.disabled =
-false;
-
-return;
-}
-
-const {data:existing} =
-await supabaseClient
-.from("group_members")
-.select("id")
-.eq(
-"group_id",
-Number(groupId)
-)
-.eq(
-"user_id",
-friendId
-)
-.maybeSingle();
-
-if(existing){
-
-alert(
-"そのユーザーはすでにメンバーだよ。"
-);
-
-addMemberButton.disabled =
-false;
 
 return;
 }
@@ -4552,44 +4246,56 @@ await supabaseClient
 group_id:
 Number(groupId),
 user_id:
-friendId,
+userId,
 role:
 "member"
 });
 
 if(error){
 
-alert(
-"メンバーを追加できませんでした。\n" +
-error.message
+console.error(
+"メンバー追加エラー:",
+error
 );
 
-addMemberButton.disabled =
-false;
+alert(
+"メンバーを追加できませんでした。\n\n" +
+error.message
+);
 
 return;
 }
 
-alert(
-"@" +
-friendId +
-" をグループに追加したよ！"
-);
-
-memberInput.value =
-"";
-
-addMemberButton.disabled =
-false;
+memberInput.value = "";
 
 await getGroupMembers();
 
 await loadMembers();
 
+}catch(error){
+
+console.error(
+"メンバー追加エラー:",
+error
+);
+
+alert(
+"メンバー追加に失敗しました。\n\n" +
+error.message
+);
+
+}finally{
+
+addMemberButton.disabled =
+false;
+
 }
 
+}
+);
+
 /* =========================
-   メンバー画面
+   メンバーモーダル
 ========================= */
 
 memberButton.addEventListener(
@@ -4599,15 +4305,9 @@ async () => {
 memberModal.style.display =
 "flex";
 
-await updateMyPresence();
-
-await getGroupMembers();
-
 await loadGroupMutes();
 
 await loadMembers();
-
-memberInput.focus();
 
 }
 );
@@ -4639,112 +4339,183 @@ memberModal.style.display =
 }
 );
 
-addMemberButton.addEventListener(
-"click",
-addMember
-);
-
-memberInput.addEventListener(
-"keydown",
-event => {
-
-if(event.key === "Enter"){
-
-event.preventDefault();
-
-addMember();
-
-}
-
-}
-);
-
 /* =========================
-   送信
+   リアルタイム
 ========================= */
 
-sendButton.addEventListener(
-"click",
-sendMessage
+let realtimeChannel = null;
+
+function setupRealtime(){
+
+if(realtimeChannel){
+
+supabaseClient.removeChannel(
+realtimeChannel
 );
 
-messageInput.addEventListener(
-"keydown",
-event => {
+realtimeChannel = null;
 
-if(event.key === "Enter"){
+}
 
-event.preventDefault();
+realtimeChannel =
+supabaseClient
+.channel(
+"group-chat-" +
+groupId
+)
 
-sendMessage();
+.on(
+"postgres_changes",
+{
+event:"INSERT",
+schema:"public",
+table:"group_messages",
+filter:
+"group_id=eq." +
+Number(groupId)
+},
+async payload => {
+
+await loadMessages();
+
+scrollToBottom(true);
+
+}
+)
+
+.on(
+"postgres_changes",
+{
+event:"UPDATE",
+schema:"public",
+table:"group_messages",
+filter:
+"group_id=eq." +
+Number(groupId)
+},
+async payload => {
+
+await loadMessages();
+
+}
+)
+
+.on(
+"postgres_changes",
+{
+event:"INSERT",
+schema:"public",
+table:"group_message_reads"
+},
+async payload => {
+
+const row =
+payload.new;
+
+if(
+String(row.group_message_id)
+){
+
+await loadMessages();
 
 }
 
 }
+)
+
+.on(
+"postgres_changes",
+{
+event:"INSERT",
+schema:"public",
+table:"group_mutes",
+filter:
+"group_id=eq." +
+Number(groupId)
+},
+async payload => {
+
+await loadGroupMutes();
+
+await loadMembers();
+
+}
+)
+
+.on(
+"postgres_changes",
+{
+event:"UPDATE",
+schema:"public",
+table:"group_mutes",
+filter:
+"group_id=eq." +
+Number(groupId)
+},
+async payload => {
+
+await loadGroupMutes();
+
+await loadMembers();
+
+}
+)
+
+.on(
+"postgres_changes",
+{
+event:"DELETE",
+schema:"public",
+table:"group_mutes",
+filter:
+"group_id=eq." +
+Number(groupId)
+},
+async payload => {
+
+await loadGroupMutes();
+
+await loadMembers();
+
+}
+)
+
+.subscribe(
+status => {
+
+console.log(
+"Realtime status:",
+status
 );
+
+}
+);
+
+}
 
 /* =========================
-   画面外タップ
-========================= */
-
-document.addEventListener(
-"click",
-() => {
-
-document
-.querySelectorAll(
-".message-menu"
-)
-.forEach(
-menu => {
-
-menu.style.display =
-"none";
-
-}
-);
-
-document
-.querySelectorAll(
-".reaction-picker"
-)
-.forEach(
-picker => {
-
-picker.style.display =
-"none";
-
-}
-);
-
-}
-);
-
-/* =========================
-   起動
+   開始
 ========================= */
 
 async function start(){
 
 if(!groupId){
 
-groupName.textContent =
-"グループが見つかりません";
+document.body.innerHTML =
+'<div style="padding:30px;text-align:center">グループIDがありません。</div>';
 
 return;
 }
 
 const {
-data,
-error
+data:sessionData
 } =
-await supabaseClient.auth
-.getSession();
+await supabaseClient.auth.getSession();
 
-if(
-error ||
-!data.session
-){
+const session =
+sessionData?.session;
+
+if(!session){
 
 window.location.href =
 "index.html";
@@ -4753,15 +4524,19 @@ return;
 }
 
 currentUsername =
-data.session.user
+session.user
 .user_metadata
-?.username || "";
+?.username ||
+"";
 
 if(!currentUsername){
 
 alert(
 "ユーザー情報を取得できませんでした。"
 );
+
+window.location.href =
+"index.html";
 
 return;
 }
@@ -4778,26 +4553,13 @@ restartMuteTimer();
 
 await loadMessages();
 
-scrollToBottom(false);
-
-startRealtime();
+setupRealtime();
 
 presenceTimer =
 setInterval(
 async () => {
 
 await updateMyPresence();
-
-await loadGroupMutes();
-
-if(
-memberModal.style.display ===
-"flex"
-){
-
-await loadMembers();
-
-}
 
 },
 30000
@@ -4827,6 +4589,17 @@ muteTimer
 );
 
 muteTimer =
+null;
+
+}
+
+if(realtimeChannel){
+
+supabaseClient.removeChannel(
+realtimeChannel
+);
+
+realtimeChannel =
 null;
 
 }
