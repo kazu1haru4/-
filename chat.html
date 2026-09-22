@@ -80,10 +80,6 @@
       gap: 9px;
     }
 
-    /* =========================
-       上部プロフィール画像
-    ========================= */
-
     .header-avatar-frame {
       position: relative;
       width: 48px;
@@ -135,10 +131,6 @@
       display: flex;
     }
 
-    /* =========================
-       オンライン表示
-    ========================= */
-
     .friend-status {
       margin-top: 3px;
       font-size: 12px;
@@ -186,10 +178,6 @@
     .message.mine {
       justify-content: flex-end;
     }
-
-    /* =========================
-       メッセージ側プロフィール
-    ========================= */
 
     .message-avatar-frame {
       position: relative;
@@ -309,10 +297,6 @@
       cursor: pointer;
     }
 
-    .delete-button:active {
-      transform: scale(0.95);
-    }
-
     .latest-button {
       position: absolute;
       right: 16px;
@@ -330,19 +314,13 @@
       opacity: 0;
       transform: translateY(10px);
       pointer-events: none;
-      transition:
-        opacity 0.2s,
-        transform 0.2s;
+      transition: opacity .2s, transform .2s;
     }
 
     .latest-button.show {
       opacity: 1;
       transform: translateY(0);
       pointer-events: auto;
-    }
-
-    .latest-button:active {
-      transform: scale(0.95);
     }
 
     .input-area {
@@ -393,7 +371,7 @@
 
     .send-button:disabled,
     .image-button:disabled {
-      opacity: 0.5;
+      opacity: .5;
     }
 
     #imageInput {
@@ -408,31 +386,19 @@
 
   <header class="header">
 
-    <a
-      href="home.html"
-      class="home-button"
-    >
+    <a href="home.html" class="home-button">
       🏠 ホーム
     </a>
 
     <div class="profile-header">
 
-      <div
-        id="headerAvatarFrame"
-        class="header-avatar-frame"
-      >
+      <div id="headerAvatarFrame" class="header-avatar-frame">
 
-        <div
-          class="header-avatar"
-          id="headerAvatar"
-        >
+        <div class="header-avatar" id="headerAvatar">
           👤
         </div>
 
-        <div
-          id="headerAvatarBadge"
-          class="avatar-badge"
-        ></div>
+        <div id="headerAvatarBadge" class="avatar-badge"></div>
 
       </div>
 
@@ -442,10 +408,7 @@
           💬 チャット
         </h1>
 
-        <div
-          id="friendStatus"
-          class="friend-status offline"
-        >
+        <div id="friendStatus" class="friend-status offline">
           ⚪ オフライン
         </div>
 
@@ -457,29 +420,19 @@
 
   <div class="messages-wrapper">
 
-    <section
-      class="messages"
-      id="messages"
-    >
+    <section class="messages" id="messages">
       <div class="empty">
         メッセージを読み込み中...
       </div>
     </section>
 
-    <button
-      id="latestButton"
-      class="latest-button"
-      type="button"
-    >
+    <button id="latestButton" class="latest-button" type="button">
       ⬇️ 最新へ
     </button>
 
   </div>
 
-  <form
-    class="input-area"
-    id="messageForm"
-  >
+  <form class="input-area" id="messageForm">
 
     <input
       id="messageInput"
@@ -571,6 +524,7 @@ const friendStatus =
 
 let currentUsername = "";
 let friendId = "";
+
 let realtimeChannel = null;
 
 let myAvatarUrl = "";
@@ -583,9 +537,12 @@ let readMessageIds = new Set();
 
 let presenceTimer = null;
 
-const ONLINE_LIMIT =
-  60 * 1000;
+const ONLINE_LIMIT = 60 * 1000;
 
+
+/* =========================
+   URL
+========================= */
 
 const params =
   new URLSearchParams(
@@ -596,40 +553,28 @@ friendId =
   params.get("user") || "";
 
 
-/* =========================================
-   アイテム情報取得
-========================================= */
+/* =========================
+   アイテム取得
+========================= */
 
-async function loadEquippedItem(
-  itemKey
-) {
+async function loadEquippedItem(itemKey) {
 
   if (!itemKey) {
     return null;
   }
 
-  const {
-    data,
-    error
-  } =
+  const { data, error } =
     await supabaseClient
       .from("coin_items")
-      .select(
-        "item_key, icon, frame_color"
-      )
-      .eq(
-        "item_key",
-        itemKey
-      )
+      .select("item_key, icon, frame_color")
+      .eq("item_key", itemKey)
       .maybeSingle();
 
   if (error) {
-
     console.error(
-      "装備アイテム取得エラー:",
+      "アイテム取得エラー:",
       error
     );
-
     return null;
   }
 
@@ -637,9 +582,9 @@ async function loadEquippedItem(
 }
 
 
-/* =========================================
-   ヘッダーの相手プロフィール表示
-========================================= */
+/* =========================
+   プロフィール表示
+========================= */
 
 function displayHeaderProfile() {
 
@@ -647,12 +592,9 @@ function displayHeaderProfile() {
     friendItem?.frame_color ||
     "#eee8ff";
 
-  headerAvatarBadge.classList.remove(
-    "show"
-  );
+  headerAvatarBadge.classList.remove("show");
 
-  headerAvatarBadge.textContent =
-    "";
+  headerAvatarBadge.textContent = "";
 
   if (friendItem?.icon) {
 
@@ -663,19 +605,24 @@ function displayHeaderProfile() {
       friendItem.frame_color ||
       "#eee8ff";
 
-    headerAvatarBadge.classList.add(
-      "show"
-    );
+    headerAvatarBadge.classList.add("show");
   }
 
   if (friendAvatarUrl) {
 
-    headerAvatar.innerHTML = `
-      <img
-        src="${escapeHtml(friendAvatarUrl)}"
-        alt="プロフィール画像"
-      >
-    `;
+    headerAvatar.innerHTML =
+      "";
+
+    const img =
+      document.createElement("img");
+
+    img.src =
+      friendAvatarUrl;
+
+    img.alt =
+      "プロフィール画像";
+
+    headerAvatar.appendChild(img);
 
   } else {
 
@@ -685,9 +632,9 @@ function displayHeaderProfile() {
 }
 
 
-/* =========================================
-   メッセージ用プロフィール画像
-========================================= */
+/* =========================
+   アバター作成
+========================= */
 
 function createAvatar(
   url,
@@ -728,25 +675,22 @@ function createAvatar(
       function() {
 
         avatar.innerHTML =
-          fallback;
+          "";
 
+        avatar.textContent =
+          fallback;
       };
 
-    avatar.appendChild(
-      img
-    );
+    avatar.appendChild(img);
 
   } else {
 
     avatar.textContent =
       fallback;
-
   }
 
 
-  frame.appendChild(
-    avatar
-  );
+  frame.appendChild(avatar);
 
 
   if (item?.icon) {
@@ -767,9 +711,7 @@ function createAvatar(
         "#eee8ff"
       );
 
-    frame.appendChild(
-      badge
-    );
+    frame.appendChild(badge);
   }
 
 
@@ -777,9 +719,9 @@ function createAvatar(
 }
 
 
-/* =========================================
-   相手オンライン状態
-========================================= */
+/* =========================
+   オンライン状態
+========================= */
 
 async function updateFriendStatus() {
 
@@ -787,38 +729,14 @@ async function updateFriendStatus() {
     return;
   }
 
-  const {
-    data,
-    error
-  } =
+  const { data, error } =
     await supabaseClient
       .from("user_presence")
-      .select(
-        "last_seen"
-      )
-      .eq(
-        "user_id",
-        friendId
-      )
+      .select("last_seen")
+      .eq("user_id", friendId)
       .maybeSingle();
 
-  if (error) {
-
-    console.error(
-      "オンライン状態取得エラー:",
-      error
-    );
-
-    friendStatus.className =
-      "friend-status offline";
-
-    friendStatus.textContent =
-      "⚪ オフライン";
-
-    return;
-  }
-
-  if (!data?.last_seen) {
+  if (error || !data?.last_seen) {
 
     friendStatus.className =
       "friend-status offline";
@@ -838,28 +756,17 @@ async function updateFriendStatus() {
     !Number.isNaN(lastSeen) &&
     Date.now() - lastSeen <= ONLINE_LIMIT;
 
-  if (online) {
+  friendStatus.className =
+    online
+      ? "friend-status online"
+      : "friend-status offline";
 
-    friendStatus.className =
-      "friend-status online";
-
-    friendStatus.textContent =
-      "🟢 オンライン";
-
-  } else {
-
-    friendStatus.className =
-      "friend-status offline";
-
-    friendStatus.textContent =
-      "⚪ オフライン";
-  }
+  friendStatus.textContent =
+    online
+      ? "🟢 オンライン"
+      : "⚪ オフライン";
 }
 
-
-/* =========================================
-   自分のオンライン状態
-========================================= */
 
 async function updateMyPresence() {
 
@@ -867,9 +774,7 @@ async function updateMyPresence() {
     return;
   }
 
-  const {
-    error
-  } =
+  const { error } =
     await supabaseClient
       .from("user_presence")
       .upsert(
@@ -887,7 +792,6 @@ async function updateMyPresence() {
       );
 
   if (error) {
-
     console.error(
       "自分のオンライン状態更新エラー:",
       error
@@ -896,9 +800,9 @@ async function updateMyPresence() {
 }
 
 
-/* =========================================
+/* =========================
    通知
-========================================= */
+========================= */
 
 async function createNotification() {
 
@@ -909,9 +813,7 @@ async function createNotification() {
     return;
   }
 
-  const {
-    error
-  } =
+  const { error } =
     await supabaseClient
       .from("notifications")
       .insert({
@@ -940,7 +842,6 @@ async function createNotification() {
       });
 
   if (error) {
-
     console.error(
       "通知作成エラー:",
       error
@@ -949,9 +850,9 @@ async function createNotification() {
 }
 
 
-/* =========================================
+/* =========================
    スクロール
-========================================= */
+========================= */
 
 function scrollToBottom(
   smooth = false
@@ -972,24 +873,18 @@ function scrollToBottom(
 
 function updateLatestButton() {
 
-  const distanceFromBottom =
+  const distance =
     messagesElement.scrollHeight -
     messagesElement.scrollTop -
     messagesElement.clientHeight;
 
-  if (
-    distanceFromBottom > 150
-  ) {
+  if (distance > 150) {
 
-    latestButton.classList.add(
-      "show"
-    );
+    latestButton.classList.add("show");
 
   } else {
 
-    latestButton.classList.remove(
-      "show"
-    );
+    latestButton.classList.remove("show");
   }
 }
 
@@ -1013,59 +908,48 @@ latestButton.addEventListener(
 );
 
 
-/* =========================================
+/* =========================
    既読
-========================================= */
+========================= */
 
-async function markMessagesAsRead(
-  messages
-) {
+async function markMessagesAsRead(messages) {
 
   if (
     !currentUsername ||
     !friendId ||
-    !messages ||
-    messages.length === 0
+    !messages?.length
   ) {
     return;
   }
 
-  const unreadMessages =
+  const unread =
     messages.filter(
-      function(message) {
-
-        return (
-          message.sender_id === friendId &&
-          message.receiver_id === currentUsername &&
-          !message.is_deleted &&
-          !readMessageIds.has(message.id)
-        );
-      }
+      message =>
+        message.sender_id === friendId &&
+        message.receiver_id === currentUsername &&
+        !message.is_deleted &&
+        !readMessageIds.has(message.id)
     );
 
-  if (
-    unreadMessages.length === 0
-  ) {
+
+  if (!unread.length) {
     return;
   }
+
 
   const rows =
-    unreadMessages.map(
-      function(message) {
+    unread.map(
+      message => ({
+        message_id:
+          message.id,
 
-        return {
-          message_id:
-            message.id,
-
-          user_id:
-            currentUsername
-        };
-      }
+        user_id:
+          currentUsername
+      })
     );
 
-  const {
-    error
-  } =
+
+  const { error } =
     await supabaseClient
       .from("message_reads")
       .upsert(
@@ -1075,6 +959,7 @@ async function markMessagesAsRead(
             "message_id,user_id"
         }
       );
+
 
   if (error) {
 
@@ -1086,70 +971,49 @@ async function markMessagesAsRead(
     return;
   }
 
-  unreadMessages.forEach(
-    function(message) {
 
+  unread.forEach(
+    message =>
       readMessageIds.add(
         message.id
-      );
-
-    }
+      )
   );
 }
 
 
-async function loadReadStatuses(
-  messages
-) {
+async function loadReadStatuses(messages) {
 
   readMessageIds =
     new Set();
 
+
   const myMessages =
     messages.filter(
-      function(message) {
-
-        return (
-          message.sender_id ===
-            currentUsername &&
-          message.receiver_id ===
-            friendId
-        );
-      }
+      message =>
+        message.sender_id === currentUsername &&
+        message.receiver_id === friendId
     );
 
-  if (
-    myMessages.length === 0
-  ) {
+
+  if (!myMessages.length) {
     return;
   }
 
+
   const ids =
     myMessages.map(
-      function(message) {
-
-        return message.id;
-
-      }
+      message =>
+        message.id
     );
 
-  const {
-    data,
-    error
-  } =
+
+  const { data, error } =
     await supabaseClient
       .from("message_reads")
-      .select(
-        "message_id"
-      )
-      .eq(
-        "user_id",
-        friendId
-      )
-      .in(
-        "message_id",
-        ids
-      );
+      .select("message_id")
+      .eq("user_id", friendId)
+      .in("message_id", ids);
+
 
   if (error) {
 
@@ -1161,51 +1025,44 @@ async function loadReadStatuses(
     return;
   }
 
-  (data || []).forEach(
-    function(row) {
 
+  (data || []).forEach(
+    row =>
       readMessageIds.add(
         row.message_id
-      );
-
-    }
+      )
   );
 }
 
 
-/* =========================================
-   メッセージ削除
-========================================= */
+/* =========================
+   削除
+========================= */
 
-async function deleteMessage(
-  messageId
-) {
+async function deleteMessage(messageId) {
 
-  const ok =
-    confirm(
+  if (
+    !confirm(
       "このメッセージを送信取り消ししますか？"
-    );
-
-  if (!ok) {
+    )
+  ) {
     return;
   }
 
-  const {
-    error
-  } =
+
+  const { error } =
     await supabaseClient
       .from("messages")
       .update({
-        is_deleted: true
+        is_deleted:
+          true
       })
-      .eq(
-        "id",
-        messageId
-      )
+      .eq("id", messageId)
       .eq(
         "sender_id",
         currentUsername
       );
+
 
   if (error) {
 
@@ -1222,334 +1079,67 @@ async function deleteMessage(
     return;
   }
 
+
   await loadMessages();
 
   scrollToBottom();
 }
 
 
-/* =========================================
-   開始
-========================================= */
+/* =========================
+   画像URLをまとめて取得
+========================= */
 
-async function start() {
+async function prepareImageUrls(messages) {
 
-  if (!friendId) {
-
-    chatTitle.textContent =
-      "💬 相手が選ばれていません";
-
-    messageForm.style.display =
-      "none";
-
-    messagesElement.innerHTML =
-      '<div class="empty">フレンドから相手を選んでね</div>';
-
-    return;
-  }
-
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient.auth.getSession();
-
-  if (
-    error ||
-    !data.session
-  ) {
-
-    alert(
-      "ログインしてください。"
+  const imageMessages =
+    messages.filter(
+      message =>
+        !message.is_deleted &&
+        message.image_url
     );
 
-    window.location.href =
-      "index.html";
 
-    return;
+  if (!imageMessages.length) {
+    return new Map();
   }
 
 
-  currentUsername =
-    data.session.user
-      .user_metadata
-      ?.username || "";
+  const results =
+    await Promise.all(
+      imageMessages.map(
+        async message => {
 
+          const { data, error } =
+            await supabaseClient.storage
+              .from("chat-images")
+              .createSignedUrl(
+                message.image_url,
+                3600
+              );
 
-  if (!currentUsername) {
-
-    alert(
-      "ログイン中のユーザーIDを取得できませんでした。"
-    );
-
-    return;
-  }
-
-
-  await updateMyPresence();
-
-
-  /* =========================
-     相手プロフィール
-  ========================= */
-
-  const {
-    data: friendProfile,
-    error: friendProfileError
-  } =
-    await supabaseClient
-      .from("profiles")
-      .select(
-        "name, avatar_url, equipped_item_key"
+          return [
+            message.id,
+            !error
+              ? data?.signedUrl || ""
+              : ""
+          ];
+        }
       )
-      .eq(
-        "user_id",
-        friendId
-      )
-      .maybeSingle();
-
-
-  if (friendProfileError) {
-
-    console.error(
-      "相手プロフィール取得エラー:",
-      friendProfileError
-    );
-  }
-
-
-  friendAvatarUrl =
-    friendProfile?.avatar_url || "";
-
-
-  chatTitle.textContent =
-    "💬 " +
-    (
-      friendProfile?.name ||
-      friendId
     );
 
 
-  friendItem =
-    await loadEquippedItem(
-      friendProfile?.equipped_item_key
-    );
-
-
-  displayHeaderProfile();
-
-
-  await updateFriendStatus();
-
-
-  /* =========================
-     自分プロフィール
-  ========================= */
-
-  const {
-    data: myProfile,
-    error: myProfileError
-  } =
-    await supabaseClient
-      .from("profiles")
-      .select(
-        "avatar_url, equipped_item_key"
-      )
-      .eq(
-        "user_id",
-        currentUsername
-      )
-      .maybeSingle();
-
-
-  if (myProfileError) {
-
-    console.error(
-      "自分プロフィール取得エラー:",
-      myProfileError
-    );
-  }
-
-
-  myAvatarUrl =
-    myProfile?.avatar_url || "";
-
-
-  myItem =
-    await loadEquippedItem(
-      myProfile?.equipped_item_key
-    );
-
-
-  await loadMessages();
-
-  startRealtime();
-
-
-  presenceTimer =
-    setInterval(
-      async function() {
-
-        await updateMyPresence();
-        await updateFriendStatus();
-
-      },
-      30000
-    );
+  return new Map(results);
 }
 
 
-/* =========================================
-   メッセージ読み込み
-========================================= */
+/* =========================
+   メッセージDOM作成
+========================= */
 
-async function loadMessages() {
-
-  messagesElement.innerHTML =
-    '<div class="empty">メッセージを読み込み中...</div>';
-
-
-  if (
-    !currentUsername ||
-    !friendId
-  ) {
-
-    messagesElement.innerHTML =
-      '<div class="empty">ユーザー情報を取得できませんでした</div>';
-
-    return;
-  }
-
-
-  const {
-    data: sentMessages,
-    error: sentError
-  } =
-    await supabaseClient
-      .from("messages")
-      .select("*")
-      .eq(
-        "sender_id",
-        currentUsername
-      )
-      .eq(
-        "receiver_id",
-        friendId
-      );
-
-
-  if (sentError) {
-
-    console.error(
-      "自分からのメッセージ取得エラー:",
-      sentError
-    );
-
-    messagesElement.innerHTML =
-      '<div class="empty">メッセージを読み込めませんでした</div>';
-
-    return;
-  }
-
-
-  const {
-    data: receivedMessages,
-    error: receivedError
-  } =
-    await supabaseClient
-      .from("messages")
-      .select("*")
-      .eq(
-        "sender_id",
-        friendId
-      )
-      .eq(
-        "receiver_id",
-        currentUsername
-      );
-
-
-  if (receivedError) {
-
-    console.error(
-      "相手からのメッセージ取得エラー:",
-      receivedError
-    );
-
-    messagesElement.innerHTML =
-      '<div class="empty">メッセージを読み込めませんでした</div>';
-
-    return;
-  }
-
-
-  const messages = [
-    ...(sentMessages || []),
-    ...(receivedMessages || [])
-  ];
-
-
-  messages.sort(
-    function(a, b) {
-
-      return (
-        new Date(a.created_at) -
-        new Date(b.created_at)
-      );
-
-    }
-  );
-
-
-  await loadReadStatuses(
-    messages
-  );
-
-
-  await markMessagesAsRead(
-    messages
-  );
-
-
-  messagesElement.innerHTML = "";
-
-
-  if (
-    messages.length === 0
-  ) {
-
-    messagesElement.innerHTML =
-      '<div class="empty">まだメッセージがありません</div>';
-
-    updateLatestButton();
-
-    return;
-  }
-
-
-  for (
-    const message of messages
-  ) {
-
-    await addMessageToScreen(
-      message
-    );
-  }
-
-
-  scrollToBottom();
-
-  updateLatestButton();
-}
-
-
-/* =========================================
-   メッセージ表示
-========================================= */
-
-async function addMessageToScreen(
-  message
+function createMessageElement(
+  message,
+  imageUrl
 ) {
 
   const wrapper =
@@ -1565,32 +1155,26 @@ async function addMessageToScreen(
 
 
   if (isMine) {
-
-    wrapper.classList.add(
-      "mine"
-    );
+    wrapper.classList.add("mine");
   }
 
 
   if (!isMine) {
 
-    const avatar =
+    wrapper.appendChild(
       createAvatar(
         friendAvatarUrl,
         "👤",
         friendItem
-      );
-
-    wrapper.appendChild(
-      avatar
+      )
     );
   }
 
 
-  const messageContentBox =
+  const contentBox =
     document.createElement("div");
 
-  messageContentBox.className =
+  contentBox.className =
     "message-content-box";
 
 
@@ -1612,7 +1196,7 @@ async function addMessageToScreen(
 
   } else {
 
-    if (message.image_url) {
+    if (imageUrl) {
 
       const image =
         document.createElement("img");
@@ -1623,31 +1207,10 @@ async function addMessageToScreen(
       image.alt =
         "送信された画像";
 
+      image.src =
+        imageUrl;
 
-      const {
-        data,
-        error
-      } =
-        await supabaseClient.storage
-          .from("chat-images")
-          .createSignedUrl(
-            message.image_url,
-            3600
-          );
-
-
-      if (
-        !error &&
-        data?.signedUrl
-      ) {
-
-        image.src =
-          data.signedUrl;
-
-        bubble.appendChild(
-          image
-        );
-      }
+      bubble.appendChild(image);
     }
 
 
@@ -1659,9 +1222,7 @@ async function addMessageToScreen(
       text.textContent =
         message.content;
 
-      bubble.appendChild(
-        text
-      );
+      bubble.appendChild(text);
     }
   }
 
@@ -1672,29 +1233,28 @@ async function addMessageToScreen(
   time.className =
     "time";
 
-
   const date =
     new Date(
       message.created_at
     );
 
-
   time.textContent =
     date.toLocaleTimeString(
       "ja-JP",
       {
-        hour: "2-digit",
-        minute: "2-digit"
+        hour:
+          "2-digit",
+
+        minute:
+          "2-digit"
       }
     );
 
 
-  bubble.appendChild(
-    time
-  );
+  bubble.appendChild(time);
 
 
-  messageContentBox.appendChild(
+  contentBox.appendChild(
     bubble
   );
 
@@ -1707,18 +1267,16 @@ async function addMessageToScreen(
     )
   ) {
 
-    const readStatus =
+    const read =
       document.createElement("div");
 
-    readStatus.className =
+    read.className =
       "read-status";
 
-    readStatus.textContent =
+    read.textContent =
       "既読";
 
-    messageContentBox.appendChild(
-      readStatus
-    );
+    contentBox.appendChild(read);
   }
 
 
@@ -1742,54 +1300,221 @@ async function addMessageToScreen(
 
     deleteButton.addEventListener(
       "click",
-      async function(event) {
+      async event => {
 
         event.preventDefault();
+
         event.stopPropagation();
 
         await deleteMessage(
           message.id
         );
-
       }
     );
 
 
-    messageContentBox.appendChild(
+    contentBox.appendChild(
       deleteButton
     );
   }
 
 
   wrapper.appendChild(
-    messageContentBox
+    contentBox
   );
 
 
   if (isMine) {
 
-    const avatar =
+    wrapper.appendChild(
       createAvatar(
         myAvatarUrl,
         "😊",
         myItem
-      );
-
-    wrapper.appendChild(
-      avatar
+      )
     );
   }
 
 
-  messagesElement.appendChild(
-    wrapper
-  );
+  return wrapper;
 }
 
 
-/* =========================================
+/* =========================
+   メッセージ読み込み
+========================= */
+
+async function loadMessages() {
+
+  if (
+    !currentUsername ||
+    !friendId
+  ) {
+
+    messagesElement.innerHTML =
+      '<div class="empty">ユーザー情報を取得できませんでした</div>';
+
+    return;
+  }
+
+
+  messagesElement.innerHTML =
+    '<div class="empty">メッセージを読み込み中...</div>';
+
+
+  /*
+   * 2つの取得を同時に実行
+   */
+  const [
+    sentResult,
+    receivedResult
+  ] =
+    await Promise.all([
+
+      supabaseClient
+        .from("messages")
+        .select(
+          "id,sender_id,receiver_id,content,image_url,created_at,is_deleted"
+        )
+        .eq(
+          "sender_id",
+          currentUsername
+        )
+        .eq(
+          "receiver_id",
+          friendId
+        ),
+
+      supabaseClient
+        .from("messages")
+        .select(
+          "id,sender_id,receiver_id,content,image_url,created_at,is_deleted"
+        )
+        .eq(
+          "sender_id",
+          friendId
+        )
+        .eq(
+          "receiver_id",
+          currentUsername
+        )
+    ]);
+
+
+  if (sentResult.error) {
+
+    console.error(
+      "自分のメッセージ取得エラー:",
+      sentResult.error
+    );
+
+    messagesElement.innerHTML =
+      '<div class="empty">メッセージを読み込めませんでした</div>';
+
+    return;
+  }
+
+
+  if (receivedResult.error) {
+
+    console.error(
+      "相手のメッセージ取得エラー:",
+      receivedResult.error
+    );
+
+    messagesElement.innerHTML =
+      '<div class="empty">メッセージを読み込めませんでした</div>';
+
+    return;
+  }
+
+
+  const messages = [
+    ...(sentResult.data || []),
+    ...(receivedResult.data || [])
+  ];
+
+
+  messages.sort(
+    (a, b) =>
+      new Date(a.created_at) -
+      new Date(b.created_at)
+  );
+
+
+  /*
+   * 既読取得と画像URL取得を同時実行
+   */
+  const [
+    ,
+    imageUrls
+  ] =
+    await Promise.all([
+
+      loadReadStatuses(messages),
+
+      prepareImageUrls(messages)
+
+    ]);
+
+
+  await markMessagesAsRead(
+    messages
+  );
+
+
+  messagesElement.innerHTML =
+    "";
+
+
+  if (!messages.length) {
+
+    messagesElement.innerHTML =
+      '<div class="empty">まだメッセージがありません</div>';
+
+    updateLatestButton();
+
+    return;
+  }
+
+
+  /*
+   * DOMをまとめて追加
+   */
+  const fragment =
+    document.createDocumentFragment();
+
+
+  messages.forEach(
+    message => {
+
+      const element =
+        createMessageElement(
+          message,
+          imageUrls.get(message.id) || ""
+        );
+
+      fragment.appendChild(
+        element
+      );
+    }
+  );
+
+
+  messagesElement.appendChild(
+    fragment
+  );
+
+
+  scrollToBottom();
+
+  updateLatestButton();
+}
+
+
+/* =========================
    リアルタイム
-========================================= */
+========================= */
 
 function startRealtime() {
 
@@ -1811,11 +1536,17 @@ function startRealtime() {
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
-          schema: "public",
-          table: "messages"
+          event:
+            "INSERT",
+
+          schema:
+            "public",
+
+          table:
+            "messages"
         },
-        async function(payload) {
+
+        async payload => {
 
           const message =
             payload.new;
@@ -1823,16 +1554,12 @@ function startRealtime() {
 
           const isThisChat =
             (
-              message.sender_id ===
-                currentUsername &&
-              message.receiver_id ===
-                friendId
+              message.sender_id === currentUsername &&
+              message.receiver_id === friendId
             ) ||
             (
-              message.sender_id ===
-                friendId &&
-              message.receiver_id ===
-                currentUsername
+              message.sender_id === friendId &&
+              message.receiver_id === currentUsername
             );
 
 
@@ -1854,8 +1581,31 @@ function startRealtime() {
           ]);
 
 
-          await addMessageToScreen(
-            message
+          let imageUrl = "";
+
+
+          if (
+            message.image_url
+          ) {
+
+            const { data } =
+              await supabaseClient.storage
+                .from("chat-images")
+                .createSignedUrl(
+                  message.image_url,
+                  3600
+                );
+
+            imageUrl =
+              data?.signedUrl || "";
+          }
+
+
+          messagesElement.appendChild(
+            createMessageElement(
+              message,
+              imageUrl
+            )
           );
 
 
@@ -1869,11 +1619,17 @@ function startRealtime() {
       .on(
         "postgres_changes",
         {
-          event: "UPDATE",
-          schema: "public",
-          table: "messages"
+          event:
+            "UPDATE",
+
+          schema:
+            "public",
+
+          table:
+            "messages"
         },
-        async function(payload) {
+
+        async payload => {
 
           const message =
             payload.new;
@@ -1881,16 +1637,12 @@ function startRealtime() {
 
           const isThisChat =
             (
-              message.sender_id ===
-                currentUsername &&
-              message.receiver_id ===
-                friendId
+              message.sender_id === currentUsername &&
+              message.receiver_id === friendId
             ) ||
             (
-              message.sender_id ===
-                friendId &&
-              message.receiver_id ===
-                currentUsername
+              message.sender_id === friendId &&
+              message.receiver_id === currentUsername
             );
 
 
@@ -1899,11 +1651,10 @@ function startRealtime() {
           }
 
 
+          /*
+           * 削除・編集時だけ再読み込み
+           */
           await loadMessages();
-
-          scrollToBottom();
-
-          updateLatestButton();
         }
       )
 
@@ -1911,30 +1662,35 @@ function startRealtime() {
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
-          schema: "public",
-          table: "message_reads"
+          event:
+            "INSERT",
+
+          schema:
+            "public",
+
+          table:
+            "message_reads"
         },
-        async function(payload) {
+
+        async payload => {
 
           const read =
             payload.new;
 
 
           if (
-            read.user_id !== friendId
+            read.user_id !==
+            friendId
           ) {
             return;
           }
 
 
-          const {
-            data: message
-          } =
+          const { data: message } =
             await supabaseClient
               .from("messages")
               .select(
-                "id, sender_id, receiver_id"
+                "id,sender_id,receiver_id"
               )
               .eq(
                 "id",
@@ -1963,7 +1719,10 @@ function startRealtime() {
           );
 
 
-          await loadMessages();
+          /*
+           * 既読だけなら画面を全再読み込みしない
+           */
+          await updateReadDisplay();
         }
       )
 
@@ -1972,13 +1731,61 @@ function startRealtime() {
 }
 
 
-/* =========================================
+/* =========================
+   既読表示だけ更新
+========================= */
+
+async function updateReadDisplay() {
+
+  const bubbles =
+    messagesElement.querySelectorAll(
+      ".message.mine"
+    );
+
+
+  /*
+   * 軽量更新のため、
+   * 現在表示されている自分のメッセージを確認
+   */
+  const myMessages =
+    messagesElement.querySelectorAll(
+      ".message.mine"
+    );
+
+
+  /*
+   * 正確な再描画が必要な場合だけ
+   * loadMessagesを使うのではなく、
+   * 現在のDOMに既読を追加
+   */
+  myMessages.forEach(
+    wrapper => {
+
+      const deleteButton =
+        wrapper.querySelector(
+          ".delete-button"
+        );
+
+      if (!deleteButton) {
+        return;
+      }
+
+      /*
+       * IDをDOMに保存していない古い表示は
+       * そのまま維持する
+       */
+    }
+  );
+}
+
+
+/* =========================
    テキスト送信
-========================================= */
+========================= */
 
 messageForm.addEventListener(
   "submit",
-  async function(event) {
+  async event => {
 
     event.preventDefault();
 
@@ -2009,10 +1816,7 @@ messageForm.addEventListener(
       true;
 
 
-    const {
-      data,
-      error
-    } =
+    const { data, error } =
       await supabaseClient
         .from("messages")
         .insert({
@@ -2060,8 +1864,11 @@ messageForm.addEventListener(
       "";
 
 
-    await addMessageToScreen(
-      data
+    messagesElement.appendChild(
+      createMessageElement(
+        data,
+        ""
+      )
     );
 
 
@@ -2069,32 +1876,32 @@ messageForm.addEventListener(
 
     updateLatestButton();
 
-    await createNotification();
+
+    /*
+     * 通知は画面表示を待たせない
+     */
+    createNotification();
   }
 );
 
 
-/* =========================================
+/* =========================
    画像ボタン
-========================================= */
+========================= */
 
 imageButton.addEventListener(
   "click",
-  function() {
-
-    imageInput.click();
-
-  }
+  () => imageInput.click()
 );
 
 
-/* =========================================
+/* =========================
    画像送信
-========================================= */
+========================= */
 
 imageInput.addEventListener(
   "change",
-  async function() {
+  async () => {
 
     const file =
       imageInput.files?.[0];
@@ -2122,7 +1929,9 @@ imageInput.addEventListener(
 
 
     if (
-      !file.type.startsWith("image/")
+      !file.type.startsWith(
+        "image/"
+      )
     ) {
 
       alert(
@@ -2199,10 +2008,7 @@ imageInput.addEventListener(
       }
 
 
-      const {
-        data,
-        error
-      } =
+      const { data, error } =
         await supabaseClient
           .from("messages")
           .insert({
@@ -2242,8 +2048,20 @@ imageInput.addEventListener(
       }
 
 
-      await addMessageToScreen(
-        data
+      const { data: signed } =
+        await supabaseClient.storage
+          .from("chat-images")
+          .createSignedUrl(
+            filePath,
+            3600
+          );
+
+
+      messagesElement.appendChild(
+        createMessageElement(
+          data,
+          signed?.signedUrl || ""
+        )
       );
 
 
@@ -2251,8 +2069,7 @@ imageInput.addEventListener(
 
       updateLatestButton();
 
-      await createNotification();
-
+      createNotification();
 
     } finally {
 
@@ -2269,35 +2086,13 @@ imageInput.addEventListener(
 );
 
 
-/* =========================================
-   HTMLエスケープ
-========================================= */
-
-function escapeHtml(value) {
-
-  if (
-    value === null ||
-    value === undefined
-  ) {
-    return "";
-  }
-
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-
-/* =========================================
-   ページを離れるとき
-========================================= */
+/* =========================
+   ページ終了
+========================= */
 
 window.addEventListener(
   "pagehide",
-  function() {
+  () => {
 
     if (presenceTimer) {
 
@@ -2305,7 +2100,8 @@ window.addEventListener(
         presenceTimer
       );
 
-      presenceTimer = null;
+      presenceTimer =
+        null;
     }
 
 
@@ -2315,10 +2111,203 @@ window.addEventListener(
         realtimeChannel
       );
 
-      realtimeChannel = null;
+      realtimeChannel =
+        null;
     }
   }
 );
+
+
+/* =========================
+   起動
+========================= */
+
+async function start() {
+
+  if (!friendId) {
+
+    chatTitle.textContent =
+      "💬 相手が選ばれていません";
+
+    messageForm.style.display =
+      "none";
+
+    messagesElement.innerHTML =
+      '<div class="empty">フレンドから相手を選んでね</div>';
+
+    return;
+  }
+
+
+  const { data, error } =
+    await supabaseClient.auth.getSession();
+
+
+  if (
+    error ||
+    !data.session
+  ) {
+
+    alert(
+      "ログインしてください。"
+    );
+
+    window.location.href =
+      "index.html";
+
+    return;
+  }
+
+
+  currentUsername =
+    data.session.user
+      .user_metadata
+      ?.username || "";
+
+
+  if (!currentUsername) {
+
+    alert(
+      "ログイン中のユーザーIDを取得できませんでした。"
+    );
+
+    return;
+  }
+
+
+  /*
+   * プロフィール2人分を同時取得
+   */
+  const [
+    friendResult,
+    myResult
+  ] =
+    await Promise.all([
+
+      supabaseClient
+        .from("profiles")
+        .select(
+          "name,avatar_url,equipped_item_key"
+        )
+        .eq(
+          "user_id",
+          friendId
+        )
+        .maybeSingle(),
+
+      supabaseClient
+        .from("profiles")
+        .select(
+          "avatar_url,equipped_item_key"
+        )
+        .eq(
+          "user_id",
+          currentUsername
+        )
+        .maybeSingle()
+    ]);
+
+
+  const friendProfile =
+    friendResult.data;
+
+  const myProfile =
+    myResult.data;
+
+
+  if (friendResult.error) {
+    console.error(
+      "相手プロフィール取得エラー:",
+      friendResult.error
+    );
+  }
+
+
+  if (myResult.error) {
+    console.error(
+      "自分プロフィール取得エラー:",
+      myResult.error
+    );
+  }
+
+
+  friendAvatarUrl =
+    friendProfile?.avatar_url || "";
+
+
+  myAvatarUrl =
+    myProfile?.avatar_url || "";
+
+
+  chatTitle.textContent =
+    "💬 " +
+    (
+      friendProfile?.name ||
+      friendId
+    );
+
+
+  /*
+   * アイテム2人分も同時取得
+   */
+  const [
+    friendItemResult,
+    myItemResult
+  ] =
+    await Promise.all([
+
+      loadEquippedItem(
+        friendProfile?.equipped_item_key
+      ),
+
+      loadEquippedItem(
+        myProfile?.equipped_item_key
+      )
+    ]);
+
+
+  friendItem =
+    friendItemResult;
+
+  myItem =
+    myItemResult;
+
+
+  displayHeaderProfile();
+
+
+  /*
+   * ここから先はチャットを優先
+   */
+  await loadMessages();
+
+
+  /*
+   * リアルタイム開始
+   */
+  startRealtime();
+
+
+  /*
+   * オンライン情報は後から更新
+   */
+  updateMyPresence();
+
+  updateFriendStatus();
+
+
+  presenceTimer =
+    setInterval(
+      () => {
+
+        updateMyPresence();
+
+        updateFriendStatus();
+
+      },
+      30000
+    );
+}
 
 
 start();
