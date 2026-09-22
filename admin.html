@@ -1,14 +1,21 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
 
 <title>管理者パネル</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
+
 * {
   box-sizing: border-box;
 }
@@ -21,50 +28,116 @@ body {
     "Hiragino Kaku Gothic ProN",
     "Yu Gothic",
     sans-serif;
-  background: linear-gradient(135deg,#fff4fb,#eef7ff);
+
+  background:
+    linear-gradient(
+      135deg,
+      #fff4fb,
+      #eef7ff
+    );
+
   color: #333;
 }
 
 .container {
-  width: min(100% - 24px,900px);
-  margin: 24px auto 50px;
+  width: min(
+    calc(100% - 24px),
+    900px
+  );
+
+  margin:
+    24px auto 50px;
 }
 
-header,
-.panel {
-  background: white;
-  border-radius: 24px;
-  margin-bottom: 18px;
-  box-shadow: 0 8px 30px rgba(100,80,130,.10);
-}
+/* =========================
+   ヘッダー
+========================= */
 
 header {
+  background: white;
+  border-radius: 24px;
+
   padding: 20px;
+
+  margin-bottom: 18px;
+
+  box-shadow:
+    0 8px 30px
+    rgba(100,80,130,.10);
 }
 
 header h1 {
   margin: 0;
+
   font-size: 26px;
 }
 
 .admin-name {
   margin-top: 8px;
+
   color: #777;
+
   font-size: 14px;
 }
 
-.panel h2 {
-  margin: 0 0 16px;
-  font-size: 20px;
+/* =========================
+   ホーム
+========================= */
+
+.home-button {
+  display: block;
+
+  width: 100%;
+
+  margin-top: 16px;
+
+  padding: 14px;
+
+  border-radius: 15px;
+
+  background: #8f7cff;
+
+  color: white;
+
+  text-align: center;
+
+  text-decoration: none;
+
+  font-size: 16px;
+
+  font-weight: bold;
+
+  transition:
+    transform .15s,
+    opacity .15s;
 }
+
+.home-button:active {
+  transform: scale(.98);
+  opacity: .85;
+}
+
+/* =========================
+   ステータス
+========================= */
 
 .status {
   padding: 14px;
+
   border-radius: 14px;
-  background: #f5f5f8;
+
   margin-bottom: 18px;
+
   white-space: pre-wrap;
+
   word-break: break-word;
+
+  background: #f1f3f8;
+}
+
+.status.info {
+  background: #eef0ff;
+  color: #3949ab;
 }
 
 .status.success {
@@ -77,123 +150,359 @@ header h1 {
   color: #c62828;
 }
 
-.status.info {
-  background: #e8eaf6;
-  color: #3949ab;
-}
+/* =========================
+   折りたたみ
+========================= */
 
-/* ========================================
-折りたたみ
-======================================== */
+details.panel {
+  background: white;
 
-.panel.collapsible-panel {
-  padding: 0;
+  border-radius: 22px;
+
+  margin-bottom: 18px;
+
+  box-shadow:
+    0 8px 30px
+    rgba(100,80,130,.10);
+
   overflow: hidden;
 }
 
-.panel.collapsible-panel > summary {
+details.panel > summary {
   list-style: none;
+
   cursor: pointer;
+
   padding: 20px;
+
   font-size: 20px;
+
   font-weight: bold;
-  user-select: none;
 
   display: flex;
+
   align-items: center;
+
   justify-content: space-between;
 
-  transition: background .15s;
+  user-select: none;
 }
 
-.panel.collapsible-panel > summary::-webkit-details-marker {
+details.panel > summary::-webkit-details-marker {
   display: none;
 }
 
-.panel.collapsible-panel > summary::after {
+details.panel > summary::after {
   content: "＋";
-  font-size: 25px;
+
   color: #8f7cff;
+
+  font-size: 26px;
+
   line-height: 1;
 }
 
-.panel.collapsible-panel[open] > summary::after {
+details.panel[open] > summary::after {
   content: "−";
 }
 
-.panel.collapsible-panel > summary:active {
-  background: #f8f6ff;
+details.panel > summary:active {
+  background: #f8f7ff;
 }
 
-.panel.collapsible-panel > :not(summary) {
-  margin-left: 20px;
-  margin-right: 20px;
+.panel-content {
+  padding:
+    0 20px 20px;
 }
 
-.panel.collapsible-panel > :last-child {
-  margin-bottom: 20px;
-}
+/* =========================
+   カード
+========================= */
 
-.user-card,
-.board-message,
-.event-card,
-.reward-code-card {
-  padding: 14px;
-  border-radius: 16px;
+.card {
   background: #f7f8fc;
+
+  border-radius: 16px;
+
+  padding: 14px;
+
   margin-bottom: 12px;
 }
 
 .user-card {
   display: flex;
+
   align-items: center;
+
   gap: 12px;
+
+  flex-wrap: wrap;
 }
 
 .avatar {
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
+
   border-radius: 50%;
+
   object-fit: cover;
+
   background: #eee;
+
   flex-shrink: 0;
 }
 
 .user-info {
   flex: 1;
-  min-width: 0;
+
+  min-width: 150px;
 }
 
 .user-name {
   font-weight: bold;
+
+  font-size: 16px;
 }
 
 .user-id {
   color: #777;
+
   font-size: 13px;
+
   word-break: break-all;
+
+  margin-top: 3px;
+}
+
+.admin-label {
+  color: #9b7700;
+
+  font-size: 13px;
+
+  font-weight: bold;
+
+  margin-top: 3px;
 }
 
 .banned {
   color: #e53935;
-  font-weight: bold;
+
   font-size: 13px;
+
+  font-weight: bold;
+
   margin-top: 3px;
 }
 
+/* =========================
+   掲示板
+========================= */
+
+.board-header {
+  display: flex;
+
+  justify-content: space-between;
+
+  gap: 10px;
+
+  margin-bottom: 8px;
+}
+
+.board-user {
+  font-weight: bold;
+}
+
+.board-date {
+  color: #888;
+
+  font-size: 12px;
+}
+
+.board-content {
+  white-space: pre-wrap;
+
+  word-break: break-word;
+
+  line-height: 1.6;
+}
+
+/* =========================
+   配布コード
+========================= */
+
+.reward-code-title {
+  font-size: 19px;
+
+  font-weight: bold;
+
+  word-break: break-word;
+}
+
+.reward-code-info {
+  color: #666;
+
+  font-size: 13px;
+
+  line-height: 1.8;
+
+  margin-top: 8px;
+}
+
+.reward-users {
+  margin-top: 14px;
+
+  padding-top: 14px;
+
+  border-top:
+    1px solid #ddd;
+}
+
+.reward-users-title {
+  font-weight: bold;
+
+  margin-bottom: 10px;
+}
+
+.reward-user {
+  background: white;
+
+  border-radius: 12px;
+
+  padding: 10px;
+
+  margin-bottom: 7px;
+}
+
+.reward-user-name {
+  font-weight: bold;
+}
+
+.reward-user-date {
+  color: #888;
+
+  font-size: 12px;
+
+  margin-top: 3px;
+}
+
+/* =========================
+   イベント
+========================= */
+
+.event-title {
+  font-size: 18px;
+
+  font-weight: bold;
+
+  word-break: break-word;
+}
+
+.event-description {
+  margin-top: 7px;
+
+  white-space: pre-wrap;
+
+  word-break: break-word;
+
+  line-height: 1.6;
+}
+
+.event-info {
+  color: #777;
+
+  font-size: 13px;
+
+  line-height: 1.8;
+
+  margin-top: 8px;
+}
+
+.active {
+  color: #2e7d32;
+
+  font-weight: bold;
+}
+
+.inactive {
+  color: #e53935;
+
+  font-weight: bold;
+}
+
+/* =========================
+   フォーム
+========================= */
+
+.form-row {
+  margin-bottom: 14px;
+}
+
+.form-row label {
+  display: block;
+
+  font-weight: bold;
+
+  margin-bottom: 6px;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+
+  padding: 12px;
+
+  border:
+    1px solid #ddd;
+
+  border-radius: 13px;
+
+  background: white;
+
+  font-size: 16px;
+
+  font-family: inherit;
+}
+
+textarea {
+  min-height: 100px;
+
+  resize: vertical;
+}
+
+.hint {
+  color: #888;
+
+  font-size: 12px;
+
+  margin-top: 5px;
+}
+
+/* =========================
+   ボタン
+========================= */
+
 button {
   border: none;
+
   border-radius: 12px;
+
   padding: 10px 14px;
-  font-weight: bold;
-  cursor: pointer;
+
   background: #8f7cff;
+
   color: white;
+
+  font-weight: bold;
+
   font-size: 14px;
+
+  cursor: pointer;
 }
 
 button:disabled {
   opacity: .45;
+
   cursor: not-allowed;
 }
 
@@ -211,149 +520,105 @@ button.gray {
 
 button.small {
   padding: 8px 11px;
+
   font-size: 13px;
-}
-
-textarea,
-input,
-select {
-  width: 100%;
-  border: 1px solid #ddd;
-  border-radius: 13px;
-  padding: 12px;
-  font-size: 16px;
-  font-family: inherit;
-  background: white;
-}
-
-textarea {
-  min-height: 100px;
-  resize: vertical;
-}
-
-.form-row {
-  margin-bottom: 12px;
-}
-
-.form-row label {
-  display: block;
-  font-weight: bold;
-  margin-bottom: 6px;
-}
-
-.hint {
-  color: #888;
-  font-size: 12px;
-  margin-top: 5px;
 }
 
 .actions {
   display: flex;
+
   gap: 8px;
+
   flex-wrap: wrap;
-  margin-top: 10px;
+
+  margin-top: 12px;
 }
 
-.board-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.board-user {
-  font-weight: bold;
-}
-
-.board-date {
-  color: #888;
-  font-size: 12px;
-}
-
-.board-content {
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.event-title,
-.reward-code-title {
-  font-size: 18px;
-  font-weight: bold;
-  word-break: break-word;
-}
-
-.event-description {
-  margin-top: 7px;
-  white-space: pre-wrap;
-}
-
-.event-info,
-.reward-code-info {
-  color: #777;
-  font-size: 13px;
-  margin-top: 8px;
-  line-height: 1.7;
-}
-
-.active {
-  color: #2e7d32;
-  font-weight: bold;
-}
-
-.inactive {
-  color: #e53935;
-  font-weight: bold;
-}
-
-.loading {
-  text-align: center;
-  color: #777;
-  padding: 20px;
-}
-
-.empty {
-  color: #888;
-  padding: 10px 0;
-}
+/* =========================
+   フレーム読み込み状態
+========================= */
 
 .frame-status {
+  margin-top: 7px;
+
   padding: 10px 12px;
+
   border-radius: 12px;
-  background: #f5f5f8;
+
+  background: #f3f3f7;
+
   color: #666;
+
   font-size: 13px;
-  margin-top: 8px;
+
   white-space: pre-wrap;
-  word-break: break-word;
 }
 
 .frame-status.success {
   background: #e8f5e9;
+
   color: #2e7d32;
 }
 
 .frame-status.error {
   background: #ffebee;
+
   color: #c62828;
 }
 
+/* =========================
+   ローディング
+========================= */
+
+.loading {
+  color: #777;
+
+  padding: 12px 0;
+}
+
+.empty {
+  color: #888;
+
+  padding: 10px 0;
+}
+
+/* =========================
+   モーダル
+========================= */
+
 .modal {
   position: fixed;
+
   inset: 0;
-  background: rgba(0,0,0,.45);
+
+  background:
+    rgba(0,0,0,.45);
+
   display: flex;
+
   align-items: center;
+
   justify-content: center;
+
   padding: 18px;
+
   z-index: 9999;
 }
 
 .modal-box {
-  width: min(100%,520px);
+  width: min(
+    100%,
+    520px
+  );
+
   max-height: 90vh;
+
   overflow: auto;
+
   background: white;
+
   border-radius: 24px;
+
   padding: 22px;
 }
 
@@ -365,408 +630,561 @@ textarea {
   display: none !important;
 }
 
+/* =========================
+   スマホ
+========================= */
+
 @media(max-width:600px) {
+
+  .container {
+    width:
+      calc(100% - 16px);
+
+    margin-top: 12px;
+  }
+
+  header h1 {
+    font-size: 23px;
+  }
+
+  details.panel > summary {
+    padding: 17px;
+
+    font-size: 18px;
+  }
+
+  .panel-content {
+    padding:
+      0 15px 15px;
+  }
 
   .user-card {
     align-items: flex-start;
-    flex-wrap: wrap;
   }
 
   .user-card .actions {
     width: 100%;
   }
 
-  .user-card button {
+  .user-card .actions button {
     width: 100%;
   }
 
   .board-header {
     flex-direction: column;
   }
+
 }
+
 </style>
+
 </head>
+
 
 <body>
 
+
 <div class="container">
 
-<header>
-  <h1>👑 管理者パネル</h1>
 
-  <div id="adminName" class="admin-name">
+<!-- =====================================
+     ヘッダー
+===================================== -->
+
+<header>
+
+  <h1>
+    👑 管理者パネル
+  </h1>
+
+  <div
+    id="adminName"
+    class="admin-name"
+  >
     起動しています...
   </div>
+
+  <a
+    href="home.html"
+    class="home-button"
+  >
+    🏠 ホームに戻る
+  </a>
+
 </header>
 
-<div id="status" class="status info">
+
+<div
+  id="status"
+  class="status info"
+>
   🔄 管理者パネルを起動しています...
 </div>
 
 
-<!-- ========================================
-ユーザー管理
-======================================== -->
+<!-- =====================================
+     ユーザー管理
+===================================== -->
 
-<section class="panel">
+<details
+  class="panel"
+  open
+>
 
-<h2>👤 ユーザー管理</h2>
+  <summary>
+    👤 ユーザー管理
+  </summary>
 
-<div id="usersLoading" class="loading">
-ユーザーを読み込んでいます...
+  <div class="panel-content">
+
+    <div
+      id="usersLoading"
+      class="loading"
+    >
+      ユーザーを読み込んでいます...
+    </div>
+
+    <div id="usersList"></div>
+
+  </div>
+
+</details>
+
+
+<!-- =====================================
+     掲示板管理
+===================================== -->
+
+<details
+  class="panel"
+  open
+>
+
+  <summary>
+    💬 掲示板管理
+  </summary>
+
+  <div class="panel-content">
+
+    <div
+      id="boardLoading"
+      class="loading"
+    >
+      掲示板を読み込んでいます...
+    </div>
+
+    <div id="boardList"></div>
+
+  </div>
+
+</details>
+
+
+<!-- =====================================
+     配布コード作成
+===================================== -->
+
+<details
+  class="panel"
+  open
+>
+
+  <summary>
+    🎁 配布コードを作成
+  </summary>
+
+  <div class="panel-content">
+
+
+    <div class="form-row">
+
+      <label>
+        配布コード
+      </label>
+
+      <input
+        id="rewardCode"
+        type="text"
+        maxlength="100"
+        placeholder="例：WELCOME2026"
+      >
+
+    </div>
+
+
+    <div class="form-row">
+
+      <label>
+        🪙 コイン報酬
+      </label>
+
+      <input
+        id="rewardCodeCoins"
+        type="number"
+        min="0"
+        step="1"
+        value="0"
+      >
+
+    </div>
+
+
+    <div class="form-row">
+
+      <label>
+        🖼️ フレーム報酬
+      </label>
+
+      <select
+        id="rewardCodeItem"
+      >
+
+        <option value="">
+          なし
+        </option>
+
+      </select>
+
+      <div
+        id="rewardFrameStatus"
+        class="frame-status"
+      >
+        🔄 フレーム一覧を読み込んでいます...
+      </div>
+
+    </div>
+
+
+    <div class="form-row">
+
+      <label>
+        👥 最大利用人数
+      </label>
+
+      <input
+        id="rewardCodeMaxUses"
+        type="number"
+        min="0"
+        step="1"
+        value="0"
+      >
+
+      <div class="hint">
+        0なら無制限です。
+      </div>
+
+    </div>
+
+
+    <button
+      id="createRewardCodeButton"
+      type="button"
+    >
+      🎁 配布コードを作成
+    </button>
+
+
+  </div>
+
+</details>
+
+
+<!-- =====================================
+     配布コード一覧
+===================================== -->
+
+<details
+  class="panel"
+  open
+>
+
+  <summary>
+    📦 配布コード一覧・受取履歴
+  </summary>
+
+  <div class="panel-content">
+
+    <div
+      id="rewardCodesLoading"
+      class="loading"
+    >
+      配布コードを読み込んでいます...
+    </div>
+
+    <div id="rewardCodesList"></div>
+
+  </div>
+
+</details>
+
+
+<!-- =====================================
+     イベント作成
+===================================== -->
+
+<details
+  class="panel"
+>
+
+  <summary>
+    🎉 イベント作成
+  </summary>
+
+  <div class="panel-content">
+
+
+    <div class="form-row">
+
+      <label>
+        イベント名
+      </label>
+
+      <input
+        id="eventTitle"
+        type="text"
+        placeholder="例：秋のコインイベント"
+      >
+
+    </div>
+
+
+    <div class="form-row">
+
+      <label>
+        説明
+      </label>
+
+      <textarea
+        id="eventDescription"
+        placeholder="イベントの説明"
+      ></textarea>
+
+    </div>
+
+
+    <div class="form-row">
+
+      <label>
+        開始日時
+      </label>
+
+      <input
+        id="eventStart"
+        type="datetime-local"
+      >
+
+    </div>
+
+
+    <div class="form-row">
+
+      <label>
+        終了日時
+      </label>
+
+      <input
+        id="eventEnd"
+        type="datetime-local"
+      >
+
+    </div>
+
+
+    <div class="form-row">
+
+      <label>
+        🪙 コイン報酬
+      </label>
+
+      <input
+        id="eventCoins"
+        type="number"
+        min="0"
+        step="1"
+        value="0"
+      >
+
+    </div>
+
+
+    <div class="form-row">
+
+      <label>
+        🖼️ フレーム報酬
+      </label>
+
+      <select
+        id="eventItem"
+      >
+
+        <option value="">
+          なし
+        </option>
+
+      </select>
+
+    </div>
+
+
+    <button
+      id="createEventButton"
+      type="button"
+    >
+      🎉 イベントを作成
+    </button>
+
+
+  </div>
+
+</details>
+
+
+<!-- =====================================
+     イベント管理
+===================================== -->
+
+<details
+  class="panel"
+>
+
+  <summary>
+    📋 イベント管理
+  </summary>
+
+  <div class="panel-content">
+
+    <div
+      id="eventsLoading"
+      class="loading"
+    >
+      イベントを読み込んでいます...
+    </div>
+
+    <div id="eventsList"></div>
+
+  </div>
+
+</details>
+
+
 </div>
 
-<div id="usersList"></div>
 
-</section>
-
-
-<!-- ========================================
-掲示板管理
-======================================== -->
-
-<section class="panel">
-
-<h2>💬 掲示板管理</h2>
-
-<div id="boardLoading" class="loading">
-掲示板を読み込んでいます...
-</div>
-
-<div id="boardList"></div>
-
-</section>
-
-
-<!-- ========================================
-配布コード作成
-======================================== -->
-
-<section class="panel">
-
-<h2>🎁 配布コードを作成</h2>
-
-<div class="form-row">
-
-<label>配布コード</label>
-
-<input
-  id="rewardCode"
-  type="text"
-  maxlength="100"
-  placeholder="例：WELCOME2026">
-
-</div>
-
-
-<div class="form-row">
-
-<label>🪙 コイン報酬</label>
-
-<input
-  id="rewardCodeCoins"
-  type="number"
-  min="0"
-  step="1"
-  value="0">
-
-</div>
-
-
-<div class="form-row">
-
-<label>🖼️ フレーム報酬</label>
-
-<select id="rewardCodeItem">
-
-<option value="">なし</option>
-
-</select>
+<!-- =====================================
+     BANモーダル
+===================================== -->
 
 <div
-id="rewardFrameStatus"
-class="frame-status">
+  id="banModal"
+  class="modal hidden"
+>
 
-🔄 フレーム一覧を読み込んでいます...
+  <div class="modal-box">
+
+    <h3>
+      🚫 ユーザーをBAN
+    </h3>
+
+    <p id="banTarget"></p>
+
+    <div class="form-row">
+
+      <label>
+        BAN理由
+      </label>
+
+      <textarea
+        id="banReason"
+        placeholder="BAN理由を入力"
+      ></textarea>
+
+    </div>
+
+    <div class="actions">
+
+      <button
+        id="confirmBanButton"
+        class="danger"
+        type="button"
+      >
+        🚫 BANする
+      </button>
+
+      <button
+        id="cancelBanButton"
+        class="gray"
+        type="button"
+      >
+        キャンセル
+      </button>
+
+    </div>
+
+  </div>
 
 </div>
 
-</div>
 
-
-<div class="form-row">
-
-<label>👥 最大利用人数</label>
-
-<input
-  id="rewardCodeMaxUses"
-  type="number"
-  min="0"
-  step="1"
-  value="0">
-
-<div class="hint">
-0なら無制限です。
-</div>
-
-</div>
-
-
-<button
-id="createRewardCodeButton"
-type="button">
-
-🎁 配布コードを作成
-
-</button>
-
-</section>
-
-
-<!-- ========================================
-配布コード一覧
-======================================== -->
-
-<section class="panel">
-
-<h2>📦 配布コード一覧</h2>
+<!-- =====================================
+     編集モーダル
+===================================== -->
 
 <div
-id="rewardCodesLoading"
-class="loading">
+  id="editModal"
+  class="modal hidden"
+>
 
-配布コードを読み込んでいます...
+  <div class="modal-box">
 
-</div>
+    <h3>
+      ✏️ 掲示板メッセージを編集
+    </h3>
 
-<div id="rewardCodesList"></div>
+    <div class="form-row">
 
-</section>
+      <textarea
+        id="editContent"
+        placeholder="メッセージ"
+      ></textarea>
 
+    </div>
 
-<!-- ========================================
-イベント作成
-======================================== -->
+    <div class="actions">
 
-<section class="panel">
+      <button
+        id="saveEditButton"
+        type="button"
+      >
+        💾 保存
+      </button>
 
-<h2>🎉 イベント作成</h2>
+      <button
+        id="cancelEditButton"
+        class="gray"
+        type="button"
+      >
+        キャンセル
+      </button>
 
-<div class="form-row">
+    </div>
 
-<label>イベント名</label>
+  </div>
 
-<input
-id="eventTitle"
-type="text"
-placeholder="例：秋のコインイベント">
-
-</div>
-
-
-<div class="form-row">
-
-<label>説明</label>
-
-<textarea
-id="eventDescription"
-placeholder="イベントの説明を入力">
-</textarea>
-
-</div>
-
-
-<div class="form-row">
-
-<label>開始日時</label>
-
-<input
-id="eventStart"
-type="datetime-local">
-
-</div>
-
-
-<div class="form-row">
-
-<label>終了日時</label>
-
-<input
-id="eventEnd"
-type="datetime-local">
-
-</div>
-
-
-<div class="form-row">
-
-<label>🪙 コイン報酬</label>
-
-<input
-id="eventCoins"
-type="number"
-min="0"
-step="1"
-value="0">
-
-</div>
-
-
-<div class="form-row">
-
-<label>🖼️ フレーム報酬</label>
-
-<select id="eventItem">
-
-<option value="">なし</option>
-
-</select>
-
-</div>
-
-
-<button
-id="createEventButton"
-type="button">
-
-🎉 イベントを作成
-
-</button>
-
-</section>
-
-
-<!-- ========================================
-イベント管理
-======================================== -->
-
-<section class="panel">
-
-<h2>📋 イベント管理</h2>
-
-<div
-id="eventsLoading"
-class="loading">
-
-イベントを読み込んでいます...
-
-</div>
-
-<div id="eventsList"></div>
-
-</section>
-
-</div>
-
-
-<!-- ========================================
-BANモーダル
-======================================== -->
-
-<div
-id="banModal"
-class="modal hidden">
-
-<div class="modal-box">
-
-<h3>🚫 ユーザーをBAN</h3>
-
-<p id="banTarget"></p>
-
-<div class="form-row">
-
-<label>理由</label>
-
-<textarea
-id="banReason"
-placeholder="BAN理由を入力">
-</textarea>
-
-</div>
-
-<div class="actions">
-
-<button
-id="confirmBanButton"
-class="danger"
-type="button">
-
-🚫 BANする
-
-</button>
-
-<button
-id="cancelBanButton"
-class="gray"
-type="button">
-
-キャンセル
-
-</button>
-
-</div>
-
-</div>
-</div>
-
-
-<!-- ========================================
-編集モーダル
-======================================== -->
-
-<div
-id="editModal"
-class="modal hidden">
-
-<div class="modal-box">
-
-<h3>✏️ 掲示板メッセージを編集</h3>
-
-<div class="form-row">
-
-<textarea
-id="editContent"
-placeholder="メッセージ">
-</textarea>
-
-</div>
-
-<div class="actions">
-
-<button
-id="saveEditButton"
-type="button">
-
-💾 保存
-
-</button>
-
-<button
-id="cancelEditButton"
-class="gray"
-type="button">
-
-キャンセル
-
-</button>
-
-</div>
-
-</div>
 </div>
 
 
 <script>
 
-/* ========================================
-Supabase
-======================================== */
+/* =====================================
+   Supabase
+===================================== */
 
 const SUPABASE_URL =
-"https://yxonmqdyekwenyzekjwj.supabase.co";
+  "https://yxonmqdyekwenyzekjwj.supabase.co";
 
 const SUPABASE_KEY =
-"sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+  "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+
 
 let supabaseClient = null;
 
@@ -776,16 +1194,63 @@ let banTargetUsername = "";
 
 let editTargetMessageId = null;
 
+
 const ADMIN_USERNAMES =
-new Set([
-  "kazu1haru100",
-  "kazu1haru4sub"
-]);
+  new Set([
+    "kazu1haru100",
+    "kazu1haru4sub"
+  ]);
 
 
-/* ========================================
-共通
-======================================== */
+/* =====================================
+   エラー表示
+===================================== */
+
+window.addEventListener(
+  "error",
+  event => {
+
+    console.error(
+      "JavaScript Error:",
+      event.error || event.message
+    );
+
+    const status =
+      document.getElementById("status");
+
+    if (status) {
+
+      status.textContent =
+        "❌ JavaScriptエラー\n\n" +
+        (
+          event.message ||
+          "不明なエラー"
+        );
+
+      status.className =
+        "status error";
+    }
+
+  }
+);
+
+
+window.addEventListener(
+  "unhandledrejection",
+  event => {
+
+    console.error(
+      "Promise Error:",
+      event.reason
+    );
+
+  }
+);
+
+
+/* =====================================
+   共通
+===================================== */
 
 function setStatus(
   text,
@@ -806,28 +1271,61 @@ function setStatus(
 
 function escapeHtml(value) {
 
-  return String(value ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+  return String(
+    value ?? ""
+  )
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
+    .replaceAll(
+      ">",
+      "&gt;"
+    )
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
+    .replaceAll(
+      "'",
+      "&#039;"
+    );
 }
 
 
 function escapeAttribute(value) {
 
-  return String(value ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;");
+  return String(
+    value ?? ""
+  )
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
+    .replaceAll(
+      ">",
+      "&gt;"
+    );
 }
 
 
 function formatDate(value) {
 
-  if (!value) return "";
+  if (!value) {
+    return "";
+  }
 
   const date =
     new Date(value);
@@ -846,9 +1344,9 @@ function formatDate(value) {
 }
 
 
-/* ========================================
-Supabase初期化
-======================================== */
+/* =====================================
+   Supabase初期化
+===================================== */
 
 function createSupabaseClient() {
 
@@ -868,9 +1366,9 @@ function createSupabaseClient() {
 }
 
 
-/* ========================================
-ログイン確認
-======================================== */
+/* =====================================
+   ログイン・管理者確認
+===================================== */
 
 async function checkLogin() {
 
@@ -880,24 +1378,36 @@ async function checkLogin() {
   } =
     await supabaseClient.auth.getSession();
 
+
   if (error) {
     throw error;
   }
 
+
   const session =
     data.session;
+
 
   if (!session) {
 
     document.body.innerHTML = `
+
       <div style="
         padding:40px;
         text-align:center;
         font-family:sans-serif;
       ">
-        <h2>🔐 ログインが必要です</h2>
-        <p>管理者アカウントでログインしてください。</p>
+
+        <h2>
+          🔐 ログインが必要です
+        </h2>
+
+        <p>
+          管理者アカウントでログインしてください。
+        </p>
+
       </div>
+
     `;
 
     return false;
@@ -912,18 +1422,10 @@ async function checkLogin() {
 
   if (!currentUsername) {
 
-    document.body.innerHTML = `
-      <div style="
-        padding:40px;
-        text-align:center;
-        font-family:sans-serif;
-      ">
-        <h2>❌ ユーザーIDを取得できません</h2>
-        <p>ログイン情報を確認してください。</p>
-      </div>
-    `;
+    throw new Error(
+      "ログインユーザーIDを取得できません。"
+    );
 
-    return false;
   }
 
 
@@ -934,14 +1436,23 @@ async function checkLogin() {
   ) {
 
     document.body.innerHTML = `
+
       <div style="
         padding:40px;
         text-align:center;
         font-family:sans-serif;
       ">
-        <h2>🚫 アクセスできません</h2>
-        <p>このページは管理者専用です。</p>
+
+        <h2>
+          🚫 アクセスできません
+        </h2>
+
+        <p>
+          このページは管理者専用です。
+        </p>
+
       </div>
+
     `;
 
     return false;
@@ -951,16 +1462,17 @@ async function checkLogin() {
   document.getElementById(
     "adminName"
   ).textContent =
-    `ログイン中：${currentUsername}`;
+    "ログイン中：" +
+    currentUsername;
 
 
   return true;
 }
 
 
-/* ========================================
-BAN確認
-======================================== */
+/* =====================================
+   BAN確認
+===================================== */
 
 async function checkBan() {
 
@@ -970,20 +1482,19 @@ async function checkBan() {
       data,
       error
     } =
-      await supabaseClient
-        .rpc(
-          "check_user_banned",
-          {
-            target_username:
-              currentUsername
-          }
-        );
+      await supabaseClient.rpc(
+        "check_user_banned",
+        {
+          target_username:
+            currentUsername
+        }
+      );
 
 
     if (error) {
 
       console.warn(
-        "BAN確認をスキップ:",
+        "BAN確認エラー:",
         error.message
       );
 
@@ -993,20 +1504,30 @@ async function checkBan() {
 
     if (data === true) {
 
-      await supabaseClient.auth.signOut();
+      await supabaseClient
+        .auth
+        .signOut();
+
 
       document.body.innerHTML = `
+
         <div style="
           padding:40px;
           text-align:center;
           font-family:sans-serif;
         ">
-          <h2>🚫 このアカウントはBANされています</h2>
+
+          <h2>
+            🚫 このアカウントはBANされています
+          </h2>
+
         </div>
+
       `;
 
       return true;
     }
+
 
   } catch(error) {
 
@@ -1017,13 +1538,14 @@ async function checkBan() {
 
   }
 
+
   return false;
 }
 
 
-/* ========================================
-ユーザー
-======================================== */
+/* =====================================
+   ユーザー管理
+===================================== */
 
 async function loadUsers() {
 
@@ -1037,13 +1559,19 @@ async function loadUsers() {
       "usersList"
     );
 
-  loading.classList.remove("hidden");
+
+  loading.textContent =
+    "ユーザーを読み込んでいます...";
+
+  loading.classList.remove(
+    "hidden"
+  );
 
   list.innerHTML = "";
 
 
   const {
-    data:profiles,
+    data: profiles,
     error
   } =
     await supabaseClient
@@ -1054,7 +1582,7 @@ async function loadUsers() {
       .order(
         "created_at",
         {
-          ascending:false
+          ascending: false
         }
       );
 
@@ -1062,7 +1590,7 @@ async function loadUsers() {
   if (error) {
 
     loading.textContent =
-      "❌ ユーザー読み込みエラー：\n" +
+      "❌ ユーザー読み込みエラー\n\n" +
       error.message;
 
     return;
@@ -1070,8 +1598,8 @@ async function loadUsers() {
 
 
   const {
-    data:bans,
-    error:banError
+    data: bans,
+    error: banError
   } =
     await supabaseClient
       .from("user_bans")
@@ -1083,7 +1611,7 @@ async function loadUsers() {
   if (banError) {
 
     loading.textContent =
-      "❌ BAN情報読み込みエラー：\n" +
+      "❌ BAN情報読み込みエラー\n\n" +
       banError.message;
 
     return;
@@ -1106,15 +1634,21 @@ async function loadUsers() {
   );
 
 
-  loading.classList.add("hidden");
+  loading.classList.add(
+    "hidden"
+  );
 
 
-  if (!profiles?.length) {
+  if (
+    !profiles ||
+    profiles.length === 0
+  ) {
 
-    list.innerHTML =
-      `<div class="empty">
+    list.innerHTML = `
+      <div class="empty">
         ユーザーがいません。
-      </div>`;
+      </div>
+    `;
 
     return;
   }
@@ -1126,20 +1660,26 @@ async function loadUsers() {
       const username =
         profile.user_id || "";
 
+
       const isAdmin =
         ADMIN_USERNAMES.has(
           username
         );
 
+
       const ban =
-        banMap.get(username);
+        banMap.get(
+          username
+        );
 
 
       const card =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       card.className =
-        "user-card";
+        "card user-card";
 
 
       const avatar =
@@ -1151,8 +1691,12 @@ async function loadUsers() {
 
         <img
           class="avatar"
-          src="${escapeAttribute(avatar)}"
-          alt="">
+          src="${escapeAttribute(
+            avatar
+          )}"
+          alt=""
+        >
+
 
         <div class="user-info">
 
@@ -1165,38 +1709,39 @@ async function loadUsers() {
 
           <div class="user-id">
             ID：
-            ${escapeHtml(username)}
+            ${escapeHtml(
+              username
+            )}
           </div>
+
 
           ${
             isAdmin
             ?
             `
-            <div style="
-              color:#8f6b00;
-              font-weight:bold;
-              font-size:13px;
-            ">
-              👑 管理者
-            </div>
+              <div class="admin-label">
+                👑 管理者
+              </div>
             `
             :
             ""
           }
 
+
           ${
             ban
             ?
             `
-            <div class="banned">
-              🚫 BAN中
-            </div>
+              <div class="banned">
+                🚫 BAN中
+              </div>
             `
             :
             ""
           }
 
         </div>
+
 
         <div class="actions">
 
@@ -1208,21 +1753,27 @@ async function loadUsers() {
             ban
             ?
             `
-            <button
-              class="success small"
-              data-unban="${escapeAttribute(username)}"
-              type="button">
-              🔓 BAN解除
-            </button>
+              <button
+                class="success small"
+                data-unban="${escapeAttribute(
+                  username
+                )}"
+                type="button"
+              >
+                🔓 BAN解除
+              </button>
             `
             :
             `
-            <button
-              class="danger small"
-              data-ban="${escapeAttribute(username)}"
-              type="button">
-              🚫 BAN
-            </button>
+              <button
+                class="danger small"
+                data-ban="${escapeAttribute(
+                  username
+                )}"
+                type="button"
+              >
+                🚫 BAN
+              </button>
             `
           }
 
@@ -1231,71 +1782,89 @@ async function loadUsers() {
       `;
 
 
-      list.appendChild(card);
+      list.appendChild(
+        card
+      );
 
     }
   );
 
 
   list
-    .querySelectorAll("[data-ban]")
-    .forEach(button => {
+    .querySelectorAll(
+      "[data-ban]"
+    )
+    .forEach(
+      button => {
 
-      button.addEventListener(
-        "click",
-        () => {
+        button.addEventListener(
+          "click",
+          () => {
 
-          openBanModal(
-            button.dataset.ban
-          );
+            openBanModal(
+              button.dataset.ban
+            );
 
-        }
-      );
+          }
+        );
 
-    });
+      }
+    );
 
 
   list
-    .querySelectorAll("[data-unban]")
-    .forEach(button => {
+    .querySelectorAll(
+      "[data-unban]"
+    )
+    .forEach(
+      button => {
 
-      button.addEventListener(
-        "click",
-        () => {
+        button.addEventListener(
+          "click",
+          () => {
 
-          unbanUser(
-            button.dataset.unban
-          );
+            unbanUser(
+              button.dataset.unban
+            );
 
-        }
-      );
+          }
+        );
 
-    });
+      }
+    );
 
 }
 
 
-/* ========================================
-BAN
-======================================== */
+/* =====================================
+   BANモーダル
+===================================== */
 
-function openBanModal(username) {
+function openBanModal(
+  username
+) {
 
   banTargetUsername =
     username;
 
+
   document.getElementById(
     "banTarget"
   ).textContent =
-    `対象ユーザー：${username}`;
+    "対象ユーザー：" +
+    username;
+
 
   document.getElementById(
     "banReason"
   ).value = "";
 
+
   document.getElementById(
     "banModal"
-  ).classList.remove("hidden");
+  ).classList.remove(
+    "hidden"
+  );
 }
 
 
@@ -1303,15 +1872,20 @@ function closeBanModal() {
 
   document.getElementById(
     "banModal"
-  ).classList.add("hidden");
+  ).classList.add(
+    "hidden"
+  );
 
-  banTargetUsername = "";
+  banTargetUsername =
+    "";
 }
 
 
 async function banUser() {
 
-  if (!banTargetUsername) return;
+  if (!banTargetUsername) {
+    return;
+  }
 
 
   if (
@@ -1340,18 +1914,22 @@ async function banUser() {
     await supabaseClient
       .from("user_bans")
       .insert({
+
         user_id:
           banTargetUsername,
+
         reason,
+
         banned_by:
           currentUsername
+
       });
 
 
   if (error) {
 
     alert(
-      "BANに失敗しました：\n" +
+      "BANに失敗しました。\n\n" +
       error.message
     );
 
@@ -1362,21 +1940,27 @@ async function banUser() {
   const target =
     banTargetUsername;
 
+
   closeBanModal();
 
   await loadUsers();
 
+
   alert(
-    `${target} をBANしました。`
+    target +
+    " をBANしました。"
   );
 }
 
 
-async function unbanUser(username) {
+async function unbanUser(
+  username
+) {
 
   if (
     !confirm(
-      `${username} のBANを解除しますか？`
+      username +
+      " のBANを解除しますか？"
     )
   ) {
     return;
@@ -1398,7 +1982,7 @@ async function unbanUser(username) {
   if (error) {
 
     alert(
-      "BAN解除に失敗しました：\n" +
+      "BAN解除に失敗しました。\n\n" +
       error.message
     );
 
@@ -1408,15 +1992,17 @@ async function unbanUser(username) {
 
   await loadUsers();
 
+
   alert(
-    `${username} のBANを解除しました。`
+    username +
+    " のBANを解除しました。"
   );
 }
 
 
-/* ========================================
-掲示板
-======================================== */
+/* =====================================
+   掲示板
+===================================== */
 
 async function loadBoardMessages() {
 
@@ -1431,7 +2017,12 @@ async function loadBoardMessages() {
     );
 
 
-  loading.classList.remove("hidden");
+  loading.textContent =
+    "掲示板を読み込んでいます...";
+
+  loading.classList.remove(
+    "hidden"
+  );
 
   list.innerHTML = "";
 
@@ -1448,7 +2039,7 @@ async function loadBoardMessages() {
       .order(
         "created_at",
         {
-          ascending:false
+          ascending: false
         }
       )
       .limit(100);
@@ -1457,179 +2048,202 @@ async function loadBoardMessages() {
   if (error) {
 
     loading.textContent =
-      "❌ 掲示板読み込みエラー：\n" +
+      "❌ 掲示板読み込みエラー\n\n" +
       error.message;
 
     return;
   }
 
 
-  loading.classList.add("hidden");
+  loading.classList.add(
+    "hidden"
+  );
 
 
-  if (!data?.length) {
+  if (
+    !data ||
+    data.length === 0
+  ) {
 
-    list.innerHTML =
-      `<div class="empty">
+    list.innerHTML = `
+      <div class="empty">
         掲示板メッセージがありません。
-      </div>`;
+      </div>
+    `;
 
     return;
   }
 
 
-  data.forEach(message => {
+  data.forEach(
+    message => {
 
-    const card =
-      document.createElement("div");
+      const card =
+        document.createElement(
+          "div"
+        );
 
-    card.className =
-      "board-message";
+      card.className =
+        "card";
 
 
-    card.innerHTML = `
+      card.innerHTML = `
 
-      <div class="board-header">
+        <div class="board-header">
 
-        <div class="board-user">
-          👤
+          <div class="board-user">
+            👤
+            ${escapeHtml(
+              message.sender_id
+            )}
+          </div>
+
+          <div class="board-date">
+            ${escapeHtml(
+              formatDate(
+                message.created_at
+              )
+            )}
+          </div>
+
+        </div>
+
+
+        <div class="board-content">
           ${escapeHtml(
-            message.sender_id
+            message.content
           )}
         </div>
 
-        <div class="board-date">
-          ${escapeHtml(
-            formatDate(
-              message.created_at
-            )
-          )}
-        </div>
-
-      </div>
-
-      <div class="board-content">
-        ${escapeHtml(
-          message.content
-        )}
-      </div>
-
-      ${
-        message.is_deleted
-        ?
-        `
-        <div style="
-          color:#e53935;
-          font-weight:bold;
-          margin-top:8px;
-        ">
-          🗑️ 削除済み
-        </div>
-        `
-        :
-        ""
-      }
-
-      <div class="actions">
 
         ${
           message.is_deleted
           ?
-          ""
+          `
+            <div class="banned">
+              🗑️ 削除済み
+            </div>
+          `
           :
           `
-          <button
-            class="small"
-            data-edit="${message.id}"
-            type="button">
-            ✏️ 編集
-          </button>
+            <div class="actions">
 
-          <button
-            class="danger small"
-            data-delete="${message.id}"
-            type="button">
-            🗑️ 削除
-          </button>
+              <button
+                class="small"
+                data-edit="${message.id}"
+                type="button"
+              >
+                ✏️ 編集
+              </button>
+
+              <button
+                class="danger small"
+                data-delete="${message.id}"
+                type="button"
+              >
+                🗑️ 削除
+              </button>
+
+            </div>
           `
         }
 
-      </div>
-
-    `;
+      `;
 
 
-    list.appendChild(card);
+      list.appendChild(
+        card
+      );
 
-  });
+    }
+  );
 
 
   list
-    .querySelectorAll("[data-edit]")
-    .forEach(button => {
+    .querySelectorAll(
+      "[data-edit]"
+    )
+    .forEach(
+      button => {
 
-      button.addEventListener(
-        "click",
-        () => {
+        button.addEventListener(
+          "click",
+          () => {
 
-          const message =
-            data.find(
-              x =>
-                Number(x.id) ===
-                Number(
-                  button.dataset.edit
-                )
+            const message =
+              data.find(
+                row =>
+                  Number(row.id) ===
+                  Number(
+                    button.dataset.edit
+                  )
+              );
+
+
+            if (message) {
+
+              openEditModal(
+                message
+              );
+
+            }
+
+          }
+        );
+
+      }
+    );
+
+
+  list
+    .querySelectorAll(
+      "[data-delete]"
+    )
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            deleteBoardMessage(
+              Number(
+                button.dataset.delete
+              )
             );
 
-          if (message) {
-            openEditModal(message);
           }
+        );
 
-        }
-      );
-
-    });
-
-
-  list
-    .querySelectorAll("[data-delete]")
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          deleteBoardMessage(
-            Number(
-              button.dataset.delete
-            )
-          );
-
-        }
-      );
-
-    });
+      }
+    );
 
 }
 
 
-/* ========================================
-掲示板編集
-======================================== */
+/* =====================================
+   掲示板編集
+===================================== */
 
-function openEditModal(message) {
+function openEditModal(
+  message
+) {
 
   editTargetMessageId =
     message.id;
+
 
   document.getElementById(
     "editContent"
   ).value =
     message.content || "";
 
+
   document.getElementById(
     "editModal"
-  ).classList.remove("hidden");
+  ).classList.remove(
+    "hidden"
+  );
 }
 
 
@@ -1637,7 +2251,9 @@ function closeEditModal() {
 
   document.getElementById(
     "editModal"
-  ).classList.add("hidden");
+  ).classList.add(
+    "hidden"
+  );
 
   editTargetMessageId =
     null;
@@ -1687,7 +2303,7 @@ async function saveBoardEdit() {
   if (error) {
 
     alert(
-      "編集に失敗しました：\n" +
+      "編集に失敗しました。\n\n" +
       error.message
     );
 
@@ -1699,13 +2315,16 @@ async function saveBoardEdit() {
 
   await loadBoardMessages();
 
+
   alert(
     "編集しました。"
   );
 }
 
 
-async function deleteBoardMessage(id) {
+async function deleteBoardMessage(
+  id
+) {
 
   if (
     !confirm(
@@ -1731,7 +2350,7 @@ async function deleteBoardMessage(id) {
   if (error) {
 
     alert(
-      "削除に失敗しました：\n" +
+      "削除に失敗しました。\n\n" +
       error.message
     );
 
@@ -1741,15 +2360,16 @@ async function deleteBoardMessage(id) {
 
   await loadBoardMessages();
 
+
   alert(
     "削除しました。"
   );
 }
 
 
-/* ========================================
-フレーム読み込み
-======================================== */
+/* =====================================
+   フレーム一覧
+===================================== */
 
 async function loadItems() {
 
@@ -1763,24 +2383,34 @@ async function loadItems() {
       "eventItem"
     );
 
-  const frameStatus =
+  const status =
     document.getElementById(
       "rewardFrameStatus"
     );
 
 
-  frameStatus.className =
-    "frame-status";
-
-  frameStatus.textContent =
-    "🔄 coin_itemsからフレームを取得しています...";
-
-
   rewardSelect.innerHTML =
-    `<option value="">なし</option>`;
+    `
+      <option value="">
+        なし
+      </option>
+    `;
+
 
   eventSelect.innerHTML =
-    `<option value="">なし</option>`;
+    `
+      <option value="">
+        なし
+      </option>
+    `;
+
+
+  status.className =
+    "frame-status";
+
+
+  status.textContent =
+    "🔄 フレーム一覧を取得しています...";
 
 
   const {
@@ -1799,7 +2429,7 @@ async function loadItems() {
       .order(
         "price",
         {
-          ascending:true
+          ascending: true
         }
       );
 
@@ -1807,28 +2437,19 @@ async function loadItems() {
   if (error) {
 
     console.error(
-      "coin_items error:",
+      "coin_items:",
       error
     );
 
 
-    frameStatus.className =
+    status.className =
       "frame-status error";
 
-    frameStatus.textContent =
+
+    status.textContent =
       "❌ フレーム取得失敗\n\n" +
       error.message;
 
-
-    rewardSelect.innerHTML =
-      `<option value="">
-        ❌ 取得失敗
-      </option>`;
-
-    eventSelect.innerHTML =
-      `<option value="">
-        ❌ 取得失敗
-      </option>`;
 
     return;
   }
@@ -1839,63 +2460,85 @@ async function loadItems() {
     data.length === 0
   ) {
 
-    frameStatus.className =
+    status.className =
       "frame-status error";
 
-    frameStatus.textContent =
-      "⚠️ coin_itemsにフレームがありません。";
+
+    status.textContent =
+      "⚠️ フレームがありません。";
+
 
     return;
   }
 
 
-  data.forEach(item => {
+  data.forEach(
+    item => {
 
-    const icon =
-      item.icon || "🖼️";
-
-
-    const rewardOption =
-      document.createElement("option");
-
-    rewardOption.value =
-      item.item_key;
-
-    rewardOption.textContent =
-      `${icon} ${item.name}`;
-
-    rewardSelect.appendChild(
-      rewardOption
-    );
+      const icon =
+        item.icon ||
+        "🖼️";
 
 
-    const eventOption =
-      document.createElement("option");
-
-    eventOption.value =
-      item.item_key;
-
-    eventOption.textContent =
-      `${icon} ${item.name}`;
-
-    eventSelect.appendChild(
-      eventOption
-    );
-
-  });
+      const rewardOption =
+        document.createElement(
+          "option"
+        );
 
 
-  frameStatus.className =
+      rewardOption.value =
+        item.item_key;
+
+
+      rewardOption.textContent =
+        icon +
+        " " +
+        item.name;
+
+
+      rewardSelect.appendChild(
+        rewardOption
+      );
+
+
+      const eventOption =
+        document.createElement(
+          "option"
+        );
+
+
+      eventOption.value =
+        item.item_key;
+
+
+      eventOption.textContent =
+        icon +
+        " " +
+        item.name;
+
+
+      eventSelect.appendChild(
+        eventOption
+      );
+
+    }
+  );
+
+
+  status.className =
     "frame-status success";
 
-  frameStatus.textContent =
-    `✅ ${data.length}個のフレームを読み込みました。`;
+
+  status.textContent =
+    "✅ " +
+    data.length +
+    "個のフレームを読み込みました。";
 }
 
 
-/* ========================================
-配布コード作成
-======================================== */
+/* =====================================
+   配布コード作成
+===================================== */
 
 async function createRewardCode() {
 
@@ -1909,22 +2552,18 @@ async function createRewardCode() {
 
     button.disabled = true;
 
+
     button.textContent =
       "⏳ 作成しています...";
-
-
-    setStatus(
-      "🎁 配布コードを作成しています...",
-      "info"
-    );
 
 
     const code =
       document.getElementById(
         "rewardCode"
-      ).value
-        .trim()
-        .toUpperCase();
+      )
+      .value
+      .trim()
+      .toUpperCase();
 
 
     const rewardCoins =
@@ -1938,7 +2577,8 @@ async function createRewardCode() {
     const rewardItem =
       document.getElementById(
         "rewardCodeItem"
-      ).value || null;
+      ).value ||
+      null;
 
 
     const maxUses =
@@ -1954,6 +2594,7 @@ async function createRewardCode() {
       throw new Error(
         "配布コードを入力してください。"
       );
+
     }
 
 
@@ -1967,6 +2608,7 @@ async function createRewardCode() {
       throw new Error(
         "コイン報酬が正しくありません。"
       );
+
     }
 
 
@@ -1980,6 +2622,7 @@ async function createRewardCode() {
       throw new Error(
         "最大利用人数が正しくありません。"
       );
+
     }
 
 
@@ -1989,15 +2632,10 @@ async function createRewardCode() {
     ) {
 
       throw new Error(
-        "コインまたはフレームを1つ以上設定してください。"
+        "コインまたはフレームを設定してください。"
       );
+
     }
-
-
-    setStatus(
-      "📡 Supabaseに保存しています...",
-      "info"
-    );
 
 
     const {
@@ -2011,17 +2649,13 @@ async function createRewardCode() {
           code,
 
           reward_coins:
-            Math.floor(
-              rewardCoins
-            ),
+            rewardCoins,
 
           reward_item_key:
             rewardItem,
 
           max_uses:
-            Math.floor(
-              maxUses
-            ),
+            maxUses,
 
           is_active:
             true,
@@ -2036,19 +2670,15 @@ async function createRewardCode() {
 
     if (error) {
 
-      console.error(
-        "reward code error:",
-        error
-      );
-
       throw new Error(
         error.message
       );
+
     }
 
 
     console.log(
-      "作成成功:",
+      "配布コード作成:",
       data
     );
 
@@ -2057,30 +2687,39 @@ async function createRewardCode() {
       "rewardCode"
     ).value = "";
 
+
     document.getElementById(
       "rewardCodeCoins"
-    ).value = "0";
+    ).value =
+      "0";
+
 
     document.getElementById(
       "rewardCodeItem"
-    ).value = "";
+    ).value =
+      "";
+
 
     document.getElementById(
       "rewardCodeMaxUses"
-    ).value = "0";
+    ).value =
+      "0";
 
 
     await loadRewardCodes();
 
 
     setStatus(
-      `✅ 配布コード「${code}」を作成しました！`,
+      "✅ 配布コード「" +
+      code +
+      "」を作成しました！",
       "success"
     );
 
 
     alert(
-      `🎁 配布コードを作成しました！\n\n${code}`
+      "🎁 配布コードを作成しました！\n\n" +
+      code
     );
 
 
@@ -2094,14 +2733,20 @@ async function createRewardCode() {
 
     setStatus(
       "❌ 配布コード作成エラー\n\n" +
-      (error.message || error),
+      (
+        error.message ||
+        error
+      ),
       "error"
     );
 
 
     alert(
       "❌ 配布コードを作成できませんでした。\n\n" +
-      (error.message || error)
+      (
+        error.message ||
+        error
+      )
     );
 
 
@@ -2117,9 +2762,9 @@ async function createRewardCode() {
 }
 
 
-/* ========================================
-配布コード一覧
-======================================== */
+/* =====================================
+   配布コード一覧＋受取ユーザー
+===================================== */
 
 async function loadRewardCodes() {
 
@@ -2134,13 +2779,20 @@ async function loadRewardCodes() {
     );
 
 
-  loading.classList.remove("hidden");
+  loading.classList.remove(
+    "hidden"
+  );
+
+
+  loading.textContent =
+    "配布コードを読み込んでいます...";
+
 
   list.innerHTML = "";
 
 
   const {
-    data:codes,
+    data: codes,
     error
   } =
     await supabaseClient
@@ -2162,7 +2814,7 @@ async function loadRewardCodes() {
       .order(
         "created_at",
         {
-          ascending:false
+          ascending: false
         }
       );
 
@@ -2170,7 +2822,7 @@ async function loadRewardCodes() {
   if (error) {
 
     loading.textContent =
-      "❌ 配布コード読み込みエラー：\n" +
+      "❌ 配布コード読み込みエラー\n\n" +
       error.message;
 
     return;
@@ -2178,22 +2830,52 @@ async function loadRewardCodes() {
 
 
   const {
-    data:uses,
-    error:usesError
+    data: uses,
+    error: usesError
   } =
     await supabaseClient
       .from("coin_reward_code_uses")
-      .select(
-        "reward_code_id"
+      .select(`
+        id,
+        reward_code_id,
+        user_id,
+        used_at
+      `)
+      .order(
+        "used_at",
+        {
+          ascending: false
+        }
       );
 
 
   if (usesError) {
 
-    console.warn(
-      "使用数取得エラー:",
-      usesError.message
-    );
+    loading.textContent =
+      "❌ 配布コード受取履歴の読み込みエラー\n\n" +
+      usesError.message;
+
+    return;
+  }
+
+
+  loading.classList.add(
+    "hidden"
+  );
+
+
+  if (
+    !codes ||
+    codes.length === 0
+  ) {
+
+    list.innerHTML = `
+      <div class="empty">
+        配布コードはまだありません。
+      </div>
+    `;
+
+    return;
   }
 
 
@@ -2201,250 +2883,371 @@ async function loadRewardCodes() {
     new Map();
 
 
-  (uses || []).forEach(row => {
+  (uses || []).forEach(
+    use => {
 
-    const id =
-      Number(
-        row.reward_code_id
-      );
-
-    useMap.set(
-      id,
-      (useMap.get(id) || 0) + 1
-    );
-
-  });
+      const id =
+        Number(
+          use.reward_code_id
+        );
 
 
-  loading.classList.add("hidden");
+      if (
+        !useMap.has(id)
+      ) {
+
+        useMap.set(
+          id,
+          []
+        );
+
+      }
 
 
-  if (!codes?.length) {
+      useMap
+        .get(id)
+        .push(use);
 
-    list.innerHTML =
-      `<div class="empty">
-        配布コードはまだありません。
-      </div>`;
-
-    return;
-  }
+    }
+  );
 
 
-  codes.forEach(code => {
+  codes.forEach(
+    code => {
 
-    const used =
-      useMap.get(
-        Number(code.id)
-      ) || 0;
-
-
-    const limit =
-      Number(
-        code.max_uses || 0
-      );
+      const usedUsers =
+        useMap.get(
+          Number(code.id)
+        ) || [];
 
 
-    const item =
-      code.coin_items;
+      const usedCount =
+        usedUsers.length;
 
 
-    const rewards = [];
+      const maxUses =
+        Number(
+          code.max_uses || 0
+        );
 
 
-    if (
-      Number(
-        code.reward_coins
-      ) > 0
-    ) {
+      const item =
+        code.coin_items;
 
-      rewards.push(
-        `🪙 ${
+
+      const rewards = [];
+
+
+      if (
+        Number(
+          code.reward_coins
+        ) > 0
+      ) {
+
+        rewards.push(
+          "🪙 " +
           Number(
             code.reward_coins
-          ).toLocaleString()
-        } COIN`
-      );
+          ).toLocaleString() +
+          " COIN"
+        );
 
-    }
-
-
-    if (item) {
-
-      rewards.push(
-        `${item.icon || "🖼️"} ${
-          escapeHtml(item.name)
-        }`
-      );
-
-    }
+      }
 
 
-    const card =
-      document.createElement(
-        "div"
-      );
+      if (item) {
 
-    card.className =
-      "reward-code-card";
-
-
-    card.innerHTML = `
-
-      <div class="reward-code-title">
-        🎁 ${escapeHtml(code.code)}
-      </div>
-
-      <div class="reward-code-info">
-
-        報酬：
-        ${
-          rewards.length
-          ?
-          rewards.join(" ＋ ")
-          :
-          "なし"
-        }
-
-        <br>
-
-        利用：
-        ${used} /
-        ${
-          limit === 0
-          ?
-          "無制限"
-          :
-          limit
-        }
-
-        <br>
-
-        状態：
-        <span class="${
-          code.is_active
-          ?
-          "active"
-          :
-          "inactive"
-        }">
-
-          ${
-            code.is_active
-            ?
-            "🟢 有効"
-            :
-            "🔴 無効"
-          }
-
-        </span>
-
-        <br>
-
-        作成者：
-        ${escapeHtml(
-          code.created_by
-        )}
-
-        <br>
-
-        作成日：
-        ${escapeHtml(
-          formatDate(
-            code.created_at
+        rewards.push(
+          (
+            item.icon ||
+            "🖼️"
+          ) +
+          " " +
+          escapeHtml(
+            item.name
           )
-        )}
+        );
 
-      </div>
+      }
 
-      <div class="actions">
 
-        <button
-          class="small"
-          data-toggle-code="${code.id}"
-          type="button">
+      let usersHtml = "";
 
+
+      if (
+        usedUsers.length === 0
+      ) {
+
+        usersHtml = `
+
+          <div
+            class="reward-users"
+          >
+
+            <div class="reward-users-title">
+              👥 受け取ったユーザー
+            </div>
+
+            <div class="empty">
+              まだ誰も受け取っていません。
+            </div>
+
+          </div>
+
+        `;
+
+      } else {
+
+        usersHtml = `
+
+          <div
+            class="reward-users"
+          >
+
+            <div class="reward-users-title">
+              👥 受け取ったユーザー
+              (${usedCount}人)
+            </div>
+
+
+            ${usedUsers
+              .map(
+                use => `
+
+                  <div
+                    class="reward-user"
+                  >
+
+                    <div
+                      class="reward-user-name"
+                    >
+                      👤
+                      ${escapeHtml(
+                        use.user_id
+                      )}
+                    </div>
+
+
+                    <div
+                      class="reward-user-date"
+                    >
+                      受取日時：
+                      ${escapeHtml(
+                        formatDate(
+                          use.used_at
+                        )
+                      )}
+                    </div>
+
+                  </div>
+
+                `
+              )
+              .join("")
+            }
+
+          </div>
+
+        `;
+
+      }
+
+
+      const card =
+        document.createElement(
+          "div"
+        );
+
+
+      card.className =
+        "card";
+
+
+      card.innerHTML = `
+
+        <div
+          class="reward-code-title"
+        >
+          🎁
+          ${escapeHtml(
+            code.code
+          )}
+        </div>
+
+
+        <div
+          class="reward-code-info"
+        >
+
+          報酬：
           ${
-            code.is_active
+            rewards.length
             ?
-            "⏸️ 無効にする"
+            rewards.join(
+              " ＋ "
+            )
             :
-            "▶️ 有効にする"
+            "なし"
           }
 
-        </button>
+          <br>
 
-        <button
-          class="danger small"
-          data-delete-code="${code.id}"
-          type="button">
+          利用人数：
+          ${usedCount}
+          /
+          ${
+            maxUses === 0
+            ?
+            "無制限"
+            :
+            maxUses
+          }
 
-          🗑️ 削除
+          <br>
 
-        </button>
+          状態：
 
-      </div>
+          <span
+            class="${
+              code.is_active
+              ?
+              "active"
+              :
+              "inactive"
+            }"
+          >
 
-    `;
+            ${
+              code.is_active
+              ?
+              "🟢 有効"
+              :
+              "🔴 無効"
+            }
+
+          </span>
+
+          <br>
+
+          作成者：
+          ${escapeHtml(
+            code.created_by
+          )}
+
+          <br>
+
+          作成日：
+          ${escapeHtml(
+            formatDate(
+              code.created_at
+            )
+          )}
+
+        </div>
 
 
-    list.appendChild(card);
+        ${usersHtml}
 
-  });
+
+        <div class="actions">
+
+          <button
+            class="small"
+            data-toggle-code="${code.id}"
+            type="button"
+          >
+
+            ${
+              code.is_active
+              ?
+              "⏸️ 無効にする"
+              :
+              "▶️ 有効にする"
+            }
+
+          </button>
+
+
+          <button
+            class="danger small"
+            data-delete-code="${code.id}"
+            type="button"
+          >
+            🗑️ 削除
+          </button>
+
+        </div>
+
+      `;
+
+
+      list.appendChild(
+        card
+      );
+
+    }
+  );
 
 
   list
     .querySelectorAll(
       "[data-toggle-code]"
     )
-    .forEach(button => {
+    .forEach(
+      button => {
 
-      button.addEventListener(
-        "click",
-        () => {
+        button.addEventListener(
+          "click",
+          () => {
 
-          toggleRewardCode(
-            Number(
-              button.dataset
-                .toggleCode
-            )
-          );
+            toggleRewardCode(
+              Number(
+                button.dataset
+                  .toggleCode
+              )
+            );
 
-        }
-      );
+          }
+        );
 
-    });
+      }
+    );
 
 
   list
     .querySelectorAll(
       "[data-delete-code]"
     )
-    .forEach(button => {
+    .forEach(
+      button => {
 
-      button.addEventListener(
-        "click",
-        () => {
+        button.addEventListener(
+          "click",
+          () => {
 
-          deleteRewardCode(
-            Number(
-              button.dataset
-                .deleteCode
-            )
-          );
+            deleteRewardCode(
+              Number(
+                button.dataset
+                  .deleteCode
+              )
+            );
 
-        }
-      );
+          }
+        );
 
-    });
+      }
+    );
 
 }
 
 
-/* ========================================
-配布コード ON/OFF
-======================================== */
+/* =====================================
+   配布コードON/OFF
+===================================== */
 
-async function toggleRewardCode(id) {
+async function toggleRewardCode(
+  id
+) {
 
   const {
     data,
@@ -2465,7 +3268,7 @@ async function toggleRewardCode(id) {
   if (error) {
 
     alert(
-      "配布コード取得に失敗しました：\n" +
+      "配布コード取得エラー\n\n" +
       error.message
     );
 
@@ -2474,13 +3277,15 @@ async function toggleRewardCode(id) {
 
 
   const {
-    error:updateError
+    error: updateError
   } =
     await supabaseClient
       .from("coin_reward_codes")
       .update({
+
         is_active:
           !data.is_active
+
       })
       .eq(
         "id",
@@ -2491,7 +3296,7 @@ async function toggleRewardCode(id) {
   if (updateError) {
 
     alert(
-      "変更に失敗しました：\n" +
+      "変更に失敗しました。\n\n" +
       updateError.message
     );
 
@@ -2503,15 +3308,17 @@ async function toggleRewardCode(id) {
 }
 
 
-/* ========================================
-配布コード削除
-======================================== */
+/* =====================================
+   配布コード削除
+===================================== */
 
-async function deleteRewardCode(id) {
+async function deleteRewardCode(
+  id
+) {
 
   if (
     !confirm(
-      "この配布コードを削除しますか？"
+      "この配布コードを削除しますか？\n\n受取履歴も削除されます。"
     )
   ) {
     return;
@@ -2533,7 +3340,7 @@ async function deleteRewardCode(id) {
   if (error) {
 
     alert(
-      "削除に失敗しました：\n" +
+      "削除に失敗しました。\n\n" +
       error.message
     );
 
@@ -2550,9 +3357,9 @@ async function deleteRewardCode(id) {
 }
 
 
-/* ========================================
-イベント作成
-======================================== */
+/* =====================================
+   イベント作成
+===================================== */
 
 async function createEvent() {
 
@@ -2591,7 +3398,8 @@ async function createEvent() {
   const rewardItem =
     document.getElementById(
       "eventItem"
-    ).value || null;
+    ).value ||
+    null;
 
 
   if (!title) {
@@ -2618,10 +3426,15 @@ async function createEvent() {
 
 
   const start =
-    new Date(startValue);
+    new Date(
+      startValue
+    );
+
 
   const end =
-    new Date(endValue);
+    new Date(
+      endValue
+    );
 
 
   if (
@@ -2684,9 +3497,7 @@ async function createEvent() {
           end.toISOString(),
 
         reward_coins:
-          Math.floor(
-            rewardCoins
-          ),
+          rewardCoins,
 
         reward_item_key:
           rewardItem,
@@ -2703,7 +3514,7 @@ async function createEvent() {
   if (error) {
 
     alert(
-      "イベント作成に失敗しました：\n" +
+      "イベント作成に失敗しました。\n\n" +
       error.message
     );
 
@@ -2715,25 +3526,32 @@ async function createEvent() {
     "eventTitle"
   ).value = "";
 
+
   document.getElementById(
     "eventDescription"
   ).value = "";
+
 
   document.getElementById(
     "eventStart"
   ).value = "";
 
+
   document.getElementById(
     "eventEnd"
   ).value = "";
 
+
   document.getElementById(
     "eventCoins"
-  ).value = "0";
+  ).value =
+    "0";
+
 
   document.getElementById(
     "eventItem"
-  ).value = "";
+  ).value =
+    "";
 
 
   await loadEvents();
@@ -2745,9 +3563,9 @@ async function createEvent() {
 }
 
 
-/* ========================================
-イベント一覧
-======================================== */
+/* =====================================
+   イベント一覧
+===================================== */
 
 async function loadEvents() {
 
@@ -2762,7 +3580,14 @@ async function loadEvents() {
     );
 
 
-  loading.classList.remove("hidden");
+  loading.classList.remove(
+    "hidden"
+  );
+
+
+  loading.textContent =
+    "イベントを読み込んでいます...";
+
 
   list.innerHTML = "";
 
@@ -2792,7 +3617,7 @@ async function loadEvents() {
       .order(
         "created_at",
         {
-          ascending:false
+          ascending: false
         }
       );
 
@@ -2800,196 +3625,244 @@ async function loadEvents() {
   if (error) {
 
     loading.textContent =
-      "❌ イベント読み込みエラー：\n" +
+      "❌ イベント読み込みエラー\n\n" +
       error.message;
 
     return;
   }
 
 
-  loading.classList.add("hidden");
+  loading.classList.add(
+    "hidden"
+  );
 
 
-  if (!data?.length) {
+  if (
+    !data ||
+    data.length === 0
+  ) {
 
-    list.innerHTML =
-      `<div class="empty">
+    list.innerHTML = `
+      <div class="empty">
         イベントはまだありません。
-      </div>`;
+      </div>
+    `;
 
     return;
   }
 
 
-  data.forEach(event => {
+  data.forEach(
+    event => {
 
-    const card =
-      document.createElement("div");
-
-    card.className =
-      "event-card";
-
-
-    const item =
-      event.coin_items;
+      const card =
+        document.createElement(
+          "div"
+        );
 
 
-    card.innerHTML = `
+      card.className =
+        "card";
 
-      <div class="event-title">
-        ${escapeHtml(
-          event.title
-        )}
-      </div>
 
-      <div class="event-description">
-        ${escapeHtml(
-          event.description
-        )}
-      </div>
+      const item =
+        event.coin_items;
 
-      <div class="event-info">
 
-        📅
-        ${escapeHtml(
-          formatDate(
-            event.start_at
-          )
-        )}
+      card.innerHTML = `
 
-        〜
-
-        ${escapeHtml(
-          formatDate(
-            event.end_at
-          )
-        )}
-
-        <br>
-
-        🪙 コイン：
-        ${event.reward_coins || 0}
-
-        ${
-          item
-          ?
-          `
-          <br>
-          ${item.icon || "🖼️"}
-          フレーム：
+        <div
+          class="event-title"
+        >
           ${escapeHtml(
-            item.name
+            event.title
           )}
-          `
-          :
-          ""
-        }
+        </div>
 
-        <br>
 
-        ${
-          event.is_active
-          ?
-          "🟢 公開中"
-          :
-          "⚪ 非公開"
-        }
+        <div
+          class="event-description"
+        >
+          ${escapeHtml(
+            event.description
+          )}
+        </div>
 
-      </div>
 
-      <div class="actions">
+        <div
+          class="event-info"
+        >
 
-        <button
-          class="small"
-          data-toggle-event="${event.id}"
-          type="button">
+          📅
+          ${escapeHtml(
+            formatDate(
+              event.start_at
+            )
+          )}
+
+          〜
+
+          ${escapeHtml(
+            formatDate(
+              event.end_at
+            )
+          )}
+
+          <br>
+
+          🪙 コイン：
+          ${Number(
+            event.reward_coins ||
+            0
+          ).toLocaleString()}
+
 
           ${
-            event.is_active
+            item
             ?
-            "⏸️ 非公開"
+            `
+              <br>
+              ${item.icon || "🖼️"}
+              フレーム：
+              ${escapeHtml(
+                item.name
+              )}
+            `
             :
-            "▶️ 公開"
+            ""
           }
 
-        </button>
 
-        <button
-          class="danger small"
-          data-delete-event="${event.id}"
-          type="button">
+          <br>
 
-          🗑️ 削除
+          状態：
 
-        </button>
+          <span
+            class="${
+              event.is_active
+              ?
+              "active"
+              :
+              "inactive"
+            }"
+          >
 
-      </div>
+            ${
+              event.is_active
+              ?
+              "🟢 公開中"
+              :
+              "⚪ 非公開"
+            }
 
-    `;
+          </span>
+
+        </div>
 
 
-    list.appendChild(card);
+        <div class="actions">
 
-  });
+          <button
+            class="small"
+            data-toggle-event="${event.id}"
+            type="button"
+          >
+
+            ${
+              event.is_active
+              ?
+              "⏸️ 非公開"
+              :
+              "▶️ 公開"
+            }
+
+          </button>
+
+
+          <button
+            class="danger small"
+            data-delete-event="${event.id}"
+            type="button"
+          >
+            🗑️ 削除
+          </button>
+
+        </div>
+
+      `;
+
+
+      list.appendChild(
+        card
+      );
+
+    }
+  );
 
 
   list
     .querySelectorAll(
       "[data-toggle-event]"
     )
-    .forEach(button => {
+    .forEach(
+      button => {
 
-      button.addEventListener(
-        "click",
-        () => {
+        button.addEventListener(
+          "click",
+          () => {
 
-          toggleEvent(
-            Number(
-              button.dataset
-                .toggleEvent
-            )
-          );
+            toggleEvent(
+              Number(
+                button.dataset
+                  .toggleEvent
+              )
+            );
 
-        }
-      );
+          }
+        );
 
-    });
+      }
+    );
 
 
   list
     .querySelectorAll(
       "[data-delete-event]"
     )
-    .forEach(button => {
+    .forEach(
+      button => {
 
-      button.addEventListener(
-        "click",
-        () => {
+        button.addEventListener(
+          "click",
+          () => {
 
-          deleteEvent(
-            Number(
-              button.dataset
-                .deleteEvent
-            )
-          );
+            deleteEvent(
+              Number(
+                button.dataset
+                  .deleteEvent
+              )
+            );
 
-        }
-      );
+          }
+        );
 
-    });
+      }
+    );
 
 }
 
 
-/* ========================================
-イベント切替
-======================================== */
+/* =====================================
+   イベントON/OFF
+===================================== */
 
-async function toggleEvent(id) {
+async function toggleEvent(
+  id
+) {
 
   const {
-    data:event,
-    error:getError
+    data,
+    error
   } =
     await supabaseClient
       .from("events")
@@ -3003,11 +3876,11 @@ async function toggleEvent(id) {
       .single();
 
 
-  if (getError) {
+  if (error) {
 
     alert(
-      "イベント取得に失敗しました：\n" +
-      getError.message
+      "イベント取得に失敗しました。\n\n" +
+      error.message
     );
 
     return;
@@ -3015,13 +3888,15 @@ async function toggleEvent(id) {
 
 
   const {
-    error
+    error: updateError
   } =
     await supabaseClient
       .from("events")
       .update({
+
         is_active:
-          !event.is_active
+          !data.is_active
+
       })
       .eq(
         "id",
@@ -3029,11 +3904,11 @@ async function toggleEvent(id) {
       );
 
 
-  if (error) {
+  if (updateError) {
 
     alert(
-      "変更に失敗しました：\n" +
-      error.message
+      "変更に失敗しました。\n\n" +
+      updateError.message
     );
 
     return;
@@ -3044,11 +3919,13 @@ async function toggleEvent(id) {
 }
 
 
-/* ========================================
-イベント削除
-======================================== */
+/* =====================================
+   イベント削除
+===================================== */
 
-async function deleteEvent(id) {
+async function deleteEvent(
+  id
+) {
 
   if (
     !confirm(
@@ -3074,7 +3951,7 @@ async function deleteEvent(id) {
   if (error) {
 
     alert(
-      "イベント削除に失敗しました：\n" +
+      "イベント削除に失敗しました。\n\n" +
       error.message
     );
 
@@ -3091,208 +3968,123 @@ async function deleteEvent(id) {
 }
 
 
-/* ========================================
-折りたたみ設定
-======================================== */
+/* =====================================
+   イベント作成ボタン
+===================================== */
 
-function setupCollapsiblePanels() {
-
-  document
-    .querySelectorAll(
-      ".panel"
-    )
-    .forEach(panel => {
-
-      const title =
-        panel.querySelector("h2");
-
-      if (!title) {
-        return;
-      }
+document.getElementById(
+  "createEventButton"
+).addEventListener(
+  "click",
+  createEvent
+);
 
 
-      const details =
-        document.createElement(
-          "details"
-        );
+/* =====================================
+   配布コード作成ボタン
+===================================== */
 
-      details.className =
-        "panel collapsible-panel";
-
-      /*
-        初期状態は全部閉じる
-      */
-      details.open = false;
+document.getElementById(
+  "createRewardCodeButton"
+).addEventListener(
+  "click",
+  createRewardCode
+);
 
 
-      const summary =
-        document.createElement(
-          "summary"
-        );
+/* =====================================
+   BAN
+===================================== */
 
-      summary.innerHTML =
-        title.innerHTML;
-
-
-      details.appendChild(
-        summary
-      );
+document.getElementById(
+  "confirmBanButton"
+).addEventListener(
+  "click",
+  banUser
+);
 
 
-      /*
-        h2以外の中身を移動
-      */
-      Array.from(
-        panel.children
-      ).forEach(child => {
-
-        if (
-          child === title
-        ) {
-          return;
-        }
-
-        details.appendChild(
-          child
-        );
-
-      });
+document.getElementById(
+  "cancelBanButton"
+).addEventListener(
+  "click",
+  closeBanModal
+);
 
 
-      panel.replaceWith(
-        details
-      );
+/* =====================================
+   編集
+===================================== */
 
-    });
-
-}
-
-
-/* ========================================
-ボタン設定
-======================================== */
-
-function setupButtons() {
-
-  document
-    .getElementById(
-      "confirmBanButton"
-    )
-    .addEventListener(
-      "click",
-      banUser
-    );
+document.getElementById(
+  "saveEditButton"
+).addEventListener(
+  "click",
+  saveBoardEdit
+);
 
 
-  document
-    .getElementById(
-      "cancelBanButton"
-    )
-    .addEventListener(
-      "click",
-      closeBanModal
-    );
+document.getElementById(
+  "cancelEditButton"
+).addEventListener(
+  "click",
+  closeEditModal
+);
 
 
-  document
-    .getElementById(
-      "saveEditButton"
-    )
-    .addEventListener(
-      "click",
-      saveBoardEdit
-    );
+/* =====================================
+   モーダル外側クリック
+===================================== */
 
+document.getElementById(
+  "banModal"
+).addEventListener(
+  "click",
+  event => {
 
-  document
-    .getElementById(
-      "cancelEditButton"
-    )
-    .addEventListener(
-      "click",
-      closeEditModal
-    );
-
-
-  document
-    .getElementById(
-      "createRewardCodeButton"
-    )
-    .addEventListener(
-      "click",
-      createRewardCode
-    );
-
-
-  document
-    .getElementById(
-      "createEventButton"
-    )
-    .addEventListener(
-      "click",
-      createEvent
-    );
-
-
-  document
-    .getElementById(
+    if (
+      event.target.id ===
       "banModal"
-    )
-    .addEventListener(
-      "click",
-      event => {
+    ) {
 
-        if (
-          event.target ===
-          document.getElementById(
-            "banModal"
-          )
-        ) {
+      closeBanModal();
 
-          closeBanModal();
+    }
 
-        }
-
-      }
-    );
+  }
+);
 
 
-  document
-    .getElementById(
+document.getElementById(
+  "editModal"
+).addEventListener(
+  "click",
+  event => {
+
+    if (
+      event.target.id ===
       "editModal"
-    )
-    .addEventListener(
-      "click",
-      event => {
+    ) {
 
-        if (
-          event.target ===
-          document.getElementById(
-            "editModal"
-          )
-        ) {
+      closeEditModal();
 
-          closeEditModal();
+    }
 
-        }
-
-      }
-    );
-
-}
+  }
+);
 
 
-/* ========================================
-メイン
-======================================== */
+/* =====================================
+   初期化
+===================================== */
 
 async function init() {
 
   try {
 
     setStatus(
-      "🔄 Supabaseを起動しています...",
-      "info"
+      "🟢 JavaScriptを開始しました。",
+      "success"
     );
 
 
@@ -3300,7 +4092,7 @@ async function init() {
 
 
     setStatus(
-      "🔄 ログイン状態を確認しています...",
+      "🔐 ログイン情報を確認しています...",
       "info"
     );
 
@@ -3324,49 +4116,24 @@ async function init() {
 
 
     setStatus(
-      "✅ 管理者としてログインしています。読み込みを開始します。",
-      "success"
-    );
-
-
-    setStatus(
-      "👤 ユーザーを読み込んでいます...",
+      "📦 管理データを読み込んでいます...",
       "info"
     );
 
-    await loadUsers();
 
+    await Promise.all([
 
-    setStatus(
-      "💬 掲示板を読み込んでいます...",
-      "info"
-    );
+      loadUsers(),
 
-    await loadBoardMessages();
+      loadBoardMessages(),
 
+      loadItems(),
 
-    setStatus(
-      "🖼️ フレーム一覧を読み込んでいます...",
-      "info"
-    );
+      loadRewardCodes(),
 
-    await loadItems();
+      loadEvents()
 
-
-    setStatus(
-      "🎁 配布コードを読み込んでいます...",
-      "info"
-    );
-
-    await loadRewardCodes();
-
-
-    setStatus(
-      "🎉 イベントを読み込んでいます...",
-      "info"
-    );
-
-    await loadEvents();
+    ]);
 
 
     setStatus(
@@ -3378,14 +4145,17 @@ async function init() {
   } catch(error) {
 
     console.error(
-      "管理者パネルエラー:",
+      "管理者パネル初期化エラー:",
       error
     );
 
 
     setStatus(
-      "❌ エラーが発生しました\n\n" +
-      (error.message || error),
+      "❌ 読み込みエラー\n\n" +
+      (
+        error.message ||
+        error
+      ),
       "error"
     );
 
@@ -3394,36 +4164,23 @@ async function init() {
 }
 
 
-/* ========================================
-開始
-======================================== */
+/* =====================================
+   起動
+===================================== */
 
-try {
+if (
+  document.readyState ===
+  "loading"
+) {
 
-  /*
-    先に折りたたみを作る
-  */
-  setupCollapsiblePanels();
-
-  /*
-    ボタンを設定
-  */
-  setupButtons();
-
-  /*
-    管理者パネル開始
-  */
-  init();
-
-} catch(error) {
-
-  console.error(error);
-
-  setStatus(
-    "❌ ページ起動エラー\n\n" +
-    (error.message || error),
-    "error"
+  document.addEventListener(
+    "DOMContentLoaded",
+    init
   );
+
+} else {
+
+  init();
 
 }
 
