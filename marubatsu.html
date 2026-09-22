@@ -110,6 +110,28 @@
       margin-top: 10px;
     }
 
+    .rematch-button {
+      width: 100%;
+      border: none;
+      border-radius: 15px;
+      padding: 14px;
+      font-size: 17px;
+      font-weight: bold;
+      background: #ff6f91;
+      color: white;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .rematch-button:active {
+      transform: scale(0.97);
+    }
+
+    .rematch-button:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
     .message {
       text-align: center;
       color: #666;
@@ -461,6 +483,16 @@
         ></div>
 
 
+        <!-- 再戦ボタン -->
+        <button
+          class="rematch-button hidden"
+          id="rematchButton"
+          type="button"
+        >
+          🔄 もう一度対戦する
+        </button>
+
+
         <button
           class="secondary-button"
           id="leaveButton"
@@ -542,6 +574,9 @@
     const xPlayer =
       document.getElementById("xPlayer");
 
+    const rematchButton =
+      document.getElementById("rematchButton");
+
     const cells =
       document.querySelectorAll(".cell");
 
@@ -550,11 +585,11 @@
       [0,1,2],
       [3,4,5],
       [6,7,8],
+      [0,4,8],
+      [2,4,6],
       [0,3,6],
       [1,4,7],
-      [2,5,8],
-      [0,4,8],
-      [2,4,6]
+      [2,5,8]
     ];
 
 
@@ -730,7 +765,6 @@
 
       await subscribeRoom();
 
-
       showWaiting();
 
     }
@@ -817,7 +851,9 @@
         .update({
           guest_id: currentUsername,
           status: "playing",
-          updated_at: new Date().toISOString()
+          current_player: "O",
+          updated_at:
+            new Date().toISOString()
         })
         .eq("id", room.id)
         .is("guest_id", null)
@@ -940,6 +976,7 @@
               "",
               "",
               "",
+              "",
               ""
             ];
 
@@ -975,15 +1012,11 @@
           );
 
           if (value === "O") {
-
             cell.classList.add("o");
-
           }
 
           if (value === "X") {
-
             cell.classList.add("x");
-
           }
 
           cell.disabled =
@@ -1000,16 +1033,9 @@
       resultElement.textContent = "";
 
 
-      if (
-        gameRoom.status === "waiting"
-      ) {
-
-        turnElement.textContent =
-          "⏳ 友達の参加を待っています";
-
-        return;
-      }
-
+      /*
+       * ゲーム終了
+       */
 
       if (
         gameRoom.status === "finished"
@@ -1017,6 +1043,7 @@
 
         turnElement.textContent =
           "ゲーム終了";
+
 
         if (
           gameRoom.winner === "draw"
@@ -1040,6 +1067,37 @@
             "🎉 ❌の勝ち！";
 
         }
+
+
+        /*
+         * 再戦ボタンを表示
+         */
+
+        rematchButton.classList.remove(
+          "hidden"
+        );
+
+        rematchButton.disabled = false;
+
+        return;
+      }
+
+
+      /*
+       * ゲーム中は再戦ボタンを隠す
+       */
+
+      rematchButton.classList.add(
+        "hidden"
+      );
+
+
+      if (
+        gameRoom.status === "waiting"
+      ) {
+
+        turnElement.textContent =
+          "⏳ 友達の参加を待っています";
 
         return;
       }
@@ -1223,6 +1281,117 @@
     }
 
 
+    /*
+     * 🔄 再戦
+     *
+     * 同じ部屋・同じ2人で
+     * ボードだけリセットする。
+     *
+     * 次のゲームも⭕が先攻。
+     */
+
+    async function rematch() {
+
+      if (!gameRoom) {
+        return;
+      }
+
+
+      if (
+        gameRoom.status !== "finished"
+      ) {
+        return;
+      }
+
+
+      rematchButton.disabled = true;
+
+      rematchButton.textContent =
+        "🔄 再戦しています…";
+
+
+      const emptyBoard = [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ];
+
+
+      const {
+        data,
+        error
+      } = await supabaseClient
+        .from("game_rooms")
+        .update({
+          board: emptyBoard,
+          current_player: "O",
+          status: "playing",
+          winner: null,
+          updated_at:
+            new Date().toISOString()
+        })
+        .eq("id", currentRoomId)
+        .eq("status", "finished")
+        .select()
+        .maybeSingle();
+
+
+      if (error) {
+
+        console.error(
+          "再戦エラー:",
+          error
+        );
+
+        alert(
+          "再戦できませんでした。\n\n" +
+          error.message
+        );
+
+        rematchButton.disabled = false;
+
+        rematchButton.textContent =
+          "🔄 もう一度対戦する";
+
+        return;
+      }
+
+
+      if (data) {
+
+        gameRoom =
+          data;
+
+        resultElement.textContent = "";
+
+        rematchButton.classList.add(
+          "hidden"
+        );
+
+        renderGame();
+
+      } else {
+
+        /*
+         * 相手が先に再戦した場合は
+         * Realtimeでゲーム状態が更新される。
+         */
+
+        rematchButton.disabled = false;
+
+        rematchButton.textContent =
+          "🔄 もう一度対戦する";
+
+      }
+
+    }
+
+
     async function copyRoomCode() {
 
       const code =
@@ -1281,11 +1450,6 @@
 
       }
 
-
-      /*
-       * 自分がホストなら部屋を削除。
-       * 自分がゲストならguest_idを空に戻す。
-       */
 
       if (
         currentRole === "host"
@@ -1389,6 +1553,16 @@
         "click",
         leaveRoom
       );
+
+
+    /*
+     * 再戦ボタン
+     */
+
+    rematchButton.addEventListener(
+      "click",
+      rematch
+    );
 
 
     document
