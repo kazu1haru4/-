@@ -69,14 +69,275 @@
       height: 150px;
       border-radius: 50%;
       padding: 7px;
+
       background: #ffd9ec;
+
       box-shadow:
         0 5px 18px rgba(0,0,0,.12),
         0 0 0 3px rgba(255,255,255,.9);
-      transition: .25s;
+
+      transition:
+        .3s ease;
     }
 
-    /* 👑 管理者枠 */
+    /* =========================
+       🌸 桜フレーム
+    ========================= */
+
+    .avatar-frame.frame-sakura {
+      background:
+        linear-gradient(
+          135deg,
+          #ffb7d8,
+          #ff77b7,
+          #ffd0e7,
+          #ff91c4
+        );
+
+      box-shadow:
+        0 5px 18px rgba(255,80,160,.28),
+        0 0 0 3px white,
+        0 0 18px rgba(255,120,190,.35);
+    }
+
+    /* =========================
+       ⭐ 星フレーム
+    ========================= */
+
+    .avatar-frame.frame-star {
+      background:
+        linear-gradient(
+          135deg,
+          #fff0a6,
+          #f4bf3f,
+          #fff8c9,
+          #e9a900
+        );
+
+      box-shadow:
+        0 5px 18px rgba(244,191,63,.30),
+        0 0 0 3px white,
+        0 0 18px rgba(255,220,90,.40);
+    }
+
+    /* =========================
+       💎 ダイヤフレーム
+    ========================= */
+
+    .avatar-frame.frame-diamond {
+      background:
+        linear-gradient(
+          135deg,
+          #9be8ff,
+          #4db9ee,
+          #d8f7ff,
+          #68cfff
+        );
+
+      box-shadow:
+        0 5px 18px rgba(60,180,235,.30),
+        0 0 0 3px white,
+        0 0 18px rgba(80,200,255,.45);
+    }
+
+    /* =========================
+       💖 ハートフレーム
+    ========================= */
+
+    .avatar-frame.frame-heart {
+      background:
+        linear-gradient(
+          135deg,
+          #ffb1d4,
+          #ff4f9a,
+          #ff8fc2,
+          #ff2f86
+        );
+
+      box-shadow:
+        0 5px 18px rgba(255,60,140,.32),
+        0 0 0 3px white,
+        0 0 20px rgba(255,60,150,.45);
+    }
+
+    /* =========================
+       🌈 虹フレーム
+    ========================= */
+
+    .avatar-frame.frame-rainbow {
+      background:
+        conic-gradient(
+          from 0deg,
+          #ff3b30,
+          #ff9500,
+          #ffd60a,
+          #34c759,
+          #00c7be,
+          #0a84ff,
+          #5856d6,
+          #af52de,
+          #ff2d55,
+          #ff3b30
+        );
+
+      box-shadow:
+        0 5px 18px rgba(120,100,220,.28),
+        0 0 0 3px white,
+        0 0 24px rgba(100,180,255,.45);
+
+      animation: rainbowRotate 5s linear infinite;
+    }
+
+    @keyframes rainbowRotate {
+      from {
+        filter: hue-rotate(0deg);
+      }
+
+      to {
+        filter: hue-rotate(360deg);
+      }
+    }
+
+    /* =========================
+       🔥 炎フレーム
+    ========================= */
+
+    .avatar-frame.frame-flame {
+      background:
+        linear-gradient(
+          135deg,
+          #ff2d00,
+          #ff6b00,
+          #ffd000,
+          #ff3b00,
+          #ff9500
+        );
+
+      box-shadow:
+        0 5px 18px rgba(255,80,0,.35),
+        0 0 0 3px white,
+        0 0 22px rgba(255,100,0,.55);
+
+      animation: flameGlow 1.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes flameGlow {
+      from {
+        filter: brightness(1);
+      }
+
+      to {
+        filter: brightness(1.15);
+      }
+    }
+
+    /* =========================
+       🌊 海フレーム
+    ========================= */
+
+    .avatar-frame.frame-sea {
+      background:
+        linear-gradient(
+          135deg,
+          #00c6ff,
+          #0072ff,
+          #00e5ff,
+          #0066cc
+        );
+
+      box-shadow:
+        0 5px 18px rgba(0,130,255,.30),
+        0 0 0 3px white,
+        0 0 20px rgba(0,190,255,.45);
+    }
+
+    /* =========================
+       💡 ネオンフレーム
+    ========================= */
+
+    .avatar-frame.frame-neon {
+      background:
+        linear-gradient(
+          135deg,
+          #00ff87,
+          #00e5ff,
+          #ff00d4,
+          #7b00ff,
+          #00ff87
+        );
+
+      background-size: 300% 300%;
+
+      box-shadow:
+        0 0 0 3px white,
+        0 0 8px #00ff87,
+        0 0 18px #00e5ff,
+        0 0 30px #ff00d4;
+
+      animation: neonMove 3s ease infinite;
+    }
+
+    @keyframes neonMove {
+      0% {
+        background-position: 0% 50%;
+        filter: brightness(1);
+      }
+
+      50% {
+        background-position: 100% 50%;
+        filter: brightness(1.25);
+      }
+
+      100% {
+        background-position: 0% 50%;
+        filter: brightness(1);
+      }
+    }
+
+    /* =========================
+       🌌 宇宙フレーム
+    ========================= */
+
+    .avatar-frame.frame-space {
+      background:
+        radial-gradient(
+          circle at 20% 20%,
+          #ffffff 0 2px,
+          transparent 3px
+        ),
+        radial-gradient(
+          circle at 70% 30%,
+          #ffffff 0 1px,
+          transparent 3px
+        ),
+        radial-gradient(
+          circle at 40% 75%,
+          #8de7ff 0 2px,
+          transparent 3px
+        ),
+        radial-gradient(
+          circle at 85% 80%,
+          #ffffff 0 1px,
+          transparent 3px
+        ),
+        linear-gradient(
+          135deg,
+          #08001f,
+          #21105f,
+          #5b21b6,
+          #09001c
+        );
+
+      box-shadow:
+        0 5px 18px rgba(70,20,150,.40),
+        0 0 0 3px white,
+        0 0 24px rgba(120,70,255,.60);
+    }
+
+    /* =========================
+       👑 管理者フレーム
+    ========================= */
+
     .avatar-frame.admin-frame {
       background:
         linear-gradient(
@@ -87,6 +348,7 @@
           #e8ad00,
           #fff4a8
         );
+
       box-shadow:
         0 5px 18px rgba(218,165,0,.30),
         0 0 0 3px rgba(255,255,255,.95),
@@ -190,15 +452,16 @@
       text-align: center;
     }
 
-    /* 👑 管理者アイテムカード */
     .item-card.admin-item {
       border-color: #ffd700;
+
       background:
         linear-gradient(
           135deg,
           #fffdf0,
           #fff8cf
         );
+
       box-shadow:
         0 3px 12px rgba(255,215,0,.20);
     }
@@ -218,6 +481,45 @@
       font-size: 35px;
 
       background: white;
+    }
+
+    /* 🌈 アイテムカード */
+
+    .item-icon.icon-rainbow {
+      background:
+        conic-gradient(
+          #ff3b30,
+          #ff9500,
+          #ffd60a,
+          #34c759,
+          #00c7be,
+          #0a84ff,
+          #af52de,
+          #ff2d55,
+          #ff3b30
+        ) !important;
+
+      border-color: transparent !important;
+    }
+
+    /* 💡 アイテムカード */
+
+    .item-icon.icon-neon {
+      background:
+        linear-gradient(
+          135deg,
+          #00ff87,
+          #00e5ff,
+          #ff00d4,
+          #7b00ff
+        ) !important;
+
+      box-shadow:
+        0 0 8px #00ff87,
+        0 0 15px #00e5ff,
+        0 0 20px #ff00d4;
+
+      border-color: white !important;
     }
 
     .item-small-badge {
@@ -336,6 +638,7 @@
   <h1>👤 プロフィール</h1>
 
   <div class="avatar-area">
+
     <div id="avatarFrame" class="avatar-frame">
 
       <div id="avatarContent" class="avatar-placeholder">
@@ -345,15 +648,23 @@
       <div id="equippedBadge" class="equipped-badge"></div>
 
     </div>
+
   </div>
 
-  <div class="item-title">🎁 交換したアイテム</div>
+  <div class="item-title">
+    🎁 交換したアイテム
+  </div>
 
   <div id="items" class="items">
-    <div class="no-items">読み込み中...</div>
+    <div class="no-items">
+      読み込み中...
+    </div>
   </div>
 
-  <label for="imageInput" class="image-button">
+  <label
+    for="imageInput"
+    class="image-button"
+  >
     📷 アイコン画像を選ぶ
   </label>
 
@@ -363,7 +674,9 @@
     accept="image/*"
   >
 
-  <label for="name">名前</label>
+  <label for="name">
+    名前
+  </label>
 
   <input
     id="name"
@@ -372,7 +685,9 @@
     maxlength="30"
   >
 
-  <label for="bio">自己紹介</label>
+  <label for="bio">
+    自己紹介
+  </label>
 
   <textarea
     id="bio"
@@ -424,9 +739,9 @@ let currentProfile = null;
 let ownedItems = [];
 
 
-// ================================
-// メッセージ
-// ================================
+/* ================================
+   メッセージ
+================================ */
 
 function showMessage(text, error = false) {
 
@@ -440,9 +755,9 @@ function showMessage(text, error = false) {
 }
 
 
-// ================================
-// 管理者かどうか
-// ================================
+/* ================================
+   管理者
+================================ */
 
 function isAdmin() {
 
@@ -452,9 +767,9 @@ function isAdmin() {
 }
 
 
-// ================================
-// ログインユーザー
-// ================================
+/* ================================
+   ログインユーザー
+================================ */
 
 async function getCurrentUser() {
 
@@ -487,9 +802,9 @@ async function getCurrentUser() {
 }
 
 
-// ================================
-// プロフィール読み込み
-// ================================
+/* ================================
+   プロフィール読み込み
+================================ */
 
 async function loadProfile() {
 
@@ -531,9 +846,9 @@ async function loadProfile() {
 }
 
 
-// ================================
-// プロフィール画像
-// ================================
+/* ================================
+   プロフィール画像
+================================ */
 
 function displayAvatar(url) {
 
@@ -565,9 +880,9 @@ function displayAvatar(url) {
 }
 
 
-// ================================
-// アイテム読み込み
-// ================================
+/* ================================
+   アイテム読み込み
+================================ */
 
 async function loadItems() {
 
@@ -607,9 +922,37 @@ async function loadItems() {
 }
 
 
-// ================================
-// アイテム表示
-// ================================
+/* ================================
+   フレーム用クラス
+================================ */
+
+function getFrameClass(itemKey) {
+
+  const allowed = [
+    "sakura",
+    "star",
+    "diamond",
+    "heart",
+    "rainbow",
+    "flame",
+    "sea",
+    "neon",
+    "space"
+  ];
+
+  if (
+    allowed.includes(itemKey)
+  ) {
+    return `frame-${itemKey}`;
+  }
+
+  return "";
+}
+
+
+/* ================================
+   アイテム表示
+================================ */
 
 function renderItems() {
 
@@ -650,11 +993,10 @@ function renderItems() {
     const isAdminItem =
       key === ADMIN_ITEM_KEY;
 
-    /*
-      👑 管理者アイテムは
-      管理者本人だけ表示・装備可能
-    */
-    if (isAdminItem && !isAdmin()) {
+    if (
+      isAdminItem &&
+      !isAdmin()
+    ) {
       return;
     }
 
@@ -668,10 +1010,17 @@ function renderItems() {
       "item-card" +
       (isAdminItem ? " admin-item" : "");
 
+    const specialIconClass =
+      key === "rainbow"
+        ? " icon-rainbow"
+        : key === "neon"
+          ? " icon-neon"
+          : "";
+
     card.innerHTML = `
 
       <div
-        class="item-icon"
+        class="item-icon ${specialIconClass}"
         style="
           border: 4px solid ${escapeHtml(frameColor)};
           background: ${escapeHtml(frameColor)}22;
@@ -736,16 +1085,11 @@ function renderItems() {
 }
 
 
-// ================================
-// アイテム装備
-// ================================
+/* ================================
+   アイテム装備
+================================ */
 
 async function equipItem(itemKey) {
-
-  /*
-    👑 管理者アイテムは
-    管理者2人以外は絶対に装備させない
-  */
 
   if (
     itemKey === ADMIN_ITEM_KEY &&
@@ -759,10 +1103,6 @@ async function equipItem(itemKey) {
 
     return;
   }
-
-  /*
-    自分が所有しているアイテムか確認
-  */
 
   const ownsItem =
     ownedItems.some(row => {
@@ -787,7 +1127,9 @@ async function equipItem(itemKey) {
     return;
   }
 
-  showMessage("装備しています...");
+  showMessage(
+    "装備しています..."
+  );
 
   const {
     error
@@ -821,13 +1163,15 @@ async function equipItem(itemKey) {
 
   updateEquippedDisplay();
 
-  showMessage("装備しました！✨");
+  showMessage(
+    "装備しました！✨"
+  );
 }
 
 
-// ================================
-// 装備中の枠を自動表示
-// ================================
+/* ================================
+   装備中フレーム表示
+================================ */
 
 function updateEquippedDisplay() {
 
@@ -837,10 +1181,12 @@ function updateEquippedDisplay() {
   const badge =
     document.getElementById("equippedBadge");
 
-  frame.classList.remove("admin-frame");
+  frame.className =
+    "avatar-frame";
 
-  frame.style.background =
-    "#ffd9ec";
+  frame.style.background = "";
+
+  frame.style.boxShadow = "";
 
   badge.classList.remove("show");
 
@@ -870,18 +1216,22 @@ function updateEquippedDisplay() {
 
   if (!item) return;
 
-  /*
-    👑 管理者枠
-  */
+
+  /* =========================
+     👑 管理者
+  ========================= */
 
   if (
     key === ADMIN_ITEM_KEY &&
     isAdmin()
   ) {
 
-    frame.classList.add("admin-frame");
+    frame.classList.add(
+      "admin-frame"
+    );
 
-    badge.textContent = "👑";
+    badge.textContent =
+      "👑";
 
     badge.style.border =
       "3px solid #ffd700";
@@ -891,28 +1241,77 @@ function updateEquippedDisplay() {
     return;
   }
 
+
+  /* =========================
+     通常フレーム
+  ========================= */
+
+  const frameClass =
+    getFrameClass(key);
+
+  if (frameClass) {
+
+    frame.classList.add(
+      frameClass
+    );
+
+  } else {
+
+    const frameColor =
+      item.frame_color || "#ffd9ec";
+
+    frame.style.background =
+      frameColor;
+
+    badge.style.border =
+      `3px solid ${frameColor}`;
+  }
+
+
   const icon =
     item.icon || "🎁";
-
-  const frameColor =
-    item.frame_color || "#ffd9ec";
-
-  frame.style.background =
-    frameColor;
 
   badge.textContent =
     icon;
 
-  badge.style.border =
-    `3px solid ${frameColor}`;
-
   badge.classList.add("show");
+
+
+  /* バッジの色 */
+
+  const frameColor =
+    item.frame_color || "#ffd9ec";
+
+  if (
+    key !== "rainbow" &&
+    key !== "neon"
+  ) {
+
+    badge.style.border =
+      `3px solid ${frameColor}`;
+
+  } else {
+
+    badge.style.border =
+      "3px solid white";
+
+    badge.style.boxShadow =
+      key === "neon"
+        ? `
+          0 0 8px #00ff87,
+          0 0 14px #00e5ff,
+          0 0 18px #ff00d4
+        `
+        : `
+          0 0 10px rgba(80,150,255,.6)
+        `;
+  }
 }
 
 
-// ================================
-// 画像アップロード
-// ================================
+/* ================================
+   画像アップロード
+================================ */
 
 document
   .getElementById("imageInput")
@@ -925,7 +1324,9 @@ document
 
       if (!file) return;
 
-      if (!file.type.startsWith("image/")) {
+      if (
+        !file.type.startsWith("image/")
+      ) {
 
         showMessage(
           "画像ファイルを選んでください。",
@@ -935,7 +1336,10 @@ document
         return;
       }
 
-      if (file.size > 5 * 1024 * 1024) {
+      if (
+        file.size >
+        5 * 1024 * 1024
+      ) {
 
         showMessage(
           "画像は5MB以下にしてください。",
@@ -1010,9 +1414,9 @@ document
   );
 
 
-// ================================
-// プロフィール保存
-// ================================
+/* ================================
+   プロフィール保存
+================================ */
 
 document
   .getElementById("saveButton")
@@ -1079,9 +1483,9 @@ async function saveProfile() {
 }
 
 
-// ================================
-// HTMLエスケープ
-// ================================
+/* ================================
+   HTMLエスケープ
+================================ */
 
 function escapeHtml(value) {
 
@@ -1101,9 +1505,9 @@ function escapeHtml(value) {
 }
 
 
-// ================================
-// 初期化
-// ================================
+/* ================================
+   初期化
+================================ */
 
 async function init() {
 
