@@ -169,6 +169,23 @@
       cursor: pointer;
     }
 
+    .gift-button {
+      border: none;
+      background: #fff4d8;
+      color: #a06a00;
+      border-radius: 12px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: bold;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+      cursor: pointer;
+    }
+
+    .gift-button:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
     .delete-button {
       border: none;
       background: #fff0f0;
@@ -228,27 +245,20 @@
       right: 18px;
       bottom: 15px;
       z-index: 15;
-
       border: none;
       border-radius: 999px;
       padding: 10px 15px;
-
       background: white;
       color: #555;
-
       font-size: 13px;
       font-weight: bold;
-
       box-shadow: 0 5px 18px rgba(0,0,0,0.15);
-
       opacity: 0;
       pointer-events: none;
       transform: translateY(10px);
-
       transition:
         opacity 0.2s,
         transform 0.2s;
-
       cursor: pointer;
     }
 
@@ -362,6 +372,115 @@
       display: none;
     }
 
+    /* ギフトモーダル */
+    .gift-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(0,0,0,0.4);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .gift-box {
+      width: 100%;
+      max-width: 380px;
+      background: white;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+    }
+
+    .gift-title {
+      text-align: center;
+      font-size: 21px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .gift-target {
+      text-align: center;
+      color: #888;
+      font-size: 14px;
+      margin-bottom: 20px;
+      word-break: break-word;
+    }
+
+    .gift-label {
+      display: block;
+      font-size: 13px;
+      font-weight: bold;
+      color: #777;
+      margin-bottom: 7px;
+    }
+
+    .gift-amount-input {
+      width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      padding: 13px;
+      font-size: 17px;
+      outline: none;
+      margin-bottom: 12px;
+    }
+
+    .gift-presets {
+      display: flex;
+      gap: 7px;
+      margin-bottom: 16px;
+    }
+
+    .gift-preset {
+      flex: 1;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 5px;
+      background: #fff4d8;
+      color: #8a6200;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .gift-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .gift-cancel,
+    .gift-send {
+      flex: 1;
+      border: none;
+      border-radius: 14px;
+      padding: 13px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .gift-cancel {
+      background: #eee;
+      color: #555;
+    }
+
+    .gift-send {
+      background: #ffbd45;
+      color: white;
+    }
+
+    .gift-send:disabled {
+      opacity: 0.5;
+    }
+
+    .gift-message {
+      min-height: 20px;
+      margin-bottom: 10px;
+      text-align: center;
+      font-size: 13px;
+      color: #e25555;
+    }
+
     @media (max-width: 500px) {
 
       #messages {
@@ -375,6 +494,16 @@
       .latest-button {
         right: 12px;
         bottom: 12px;
+      }
+
+      .message-actions {
+        gap: 5px;
+      }
+
+      .action-button,
+      .gift-button,
+      .delete-button {
+        padding: 6px 8px;
       }
     }
   </style>
@@ -451,6 +580,100 @@
   </div>
 
 
+  <!-- コインギフトモーダル -->
+
+  <div
+    class="gift-modal"
+    id="giftModal"
+  >
+
+    <div class="gift-box">
+
+      <div class="gift-title">
+        🎁 コインギフト
+      </div>
+
+      <div
+        class="gift-target"
+        id="giftTarget"
+      >
+      </div>
+
+      <label
+        class="gift-label"
+        for="giftAmount"
+      >
+        送るコイン
+      </label>
+
+      <input
+        id="giftAmount"
+        class="gift-amount-input"
+        type="number"
+        min="1"
+        step="1"
+        inputmode="numeric"
+        placeholder="コイン数を入力"
+      >
+
+      <div class="gift-presets">
+
+        <button
+          type="button"
+          class="gift-preset"
+          data-amount="10"
+        >
+          10
+        </button>
+
+        <button
+          type="button"
+          class="gift-preset"
+          data-amount="50"
+        >
+          50
+        </button>
+
+        <button
+          type="button"
+          class="gift-preset"
+          data-amount="100"
+        >
+          100
+        </button>
+
+      </div>
+
+      <div
+        class="gift-message"
+        id="giftMessage"
+      ></div>
+
+      <div class="gift-buttons">
+
+        <button
+          type="button"
+          class="gift-cancel"
+          id="giftCancel"
+        >
+          キャンセル
+        </button>
+
+        <button
+          type="button"
+          class="gift-send"
+          id="giftSend"
+        >
+          🎁 送る
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
   <div class="input-area">
 
     <div class="input-inner">
@@ -517,6 +740,8 @@
 
     let replyMessage = null;
 
+    let giftTargetUsername = "";
+
 
     const boardTitle =
       document.getElementById(
@@ -566,6 +791,39 @@
     const cancelReply =
       document.getElementById(
         "cancelReply"
+      );
+
+
+    /* ギフト */
+
+    const giftModal =
+      document.getElementById(
+        "giftModal"
+      );
+
+    const giftTarget =
+      document.getElementById(
+        "giftTarget"
+      );
+
+    const giftAmount =
+      document.getElementById(
+        "giftAmount"
+      );
+
+    const giftMessage =
+      document.getElementById(
+        "giftMessage"
+      );
+
+    const giftCancel =
+      document.getElementById(
+        "giftCancel"
+      );
+
+    const giftSend =
+      document.getElementById(
+        "giftSend"
       );
 
 
@@ -1042,6 +1300,68 @@
 
 
       /*
+        🎁 コインギフト
+      */
+      const giftButton =
+        document.createElement(
+          "button"
+        );
+
+      giftButton.type =
+        "button";
+
+      giftButton.className =
+        "gift-button";
+
+      giftButton.textContent =
+        "🎁 ギフト";
+
+
+      /*
+        自分のメッセージにはギフト不可
+      */
+      if (
+        message.sender_id ===
+        currentUsername
+      ) {
+
+        giftButton.disabled =
+          true;
+
+        giftButton.textContent =
+          "🎁 ギフト";
+
+      }
+
+
+      /*
+        ギフトボタン
+      */
+      giftButton.addEventListener(
+        "click",
+        event => {
+
+          event.preventDefault();
+          event.stopPropagation();
+
+          if (
+            message.sender_id ===
+            currentUsername
+          ) {
+
+            return;
+
+          }
+
+          openGiftModal(
+            message.sender_id
+          );
+
+        }
+      );
+
+
+      /*
         自分のメッセージだけ送信取り消し
       */
       if (
@@ -1205,6 +1525,11 @@
       );
 
 
+      /*
+        ボタンの順番
+        リアクション → 返信 → ギフト
+      */
+
       actions.insertBefore(
         reactionButton,
         actions.firstChild
@@ -1213,6 +1538,11 @@
       actions.insertBefore(
         replyButton,
         actions.children[1]
+      );
+
+      actions.insertBefore(
+        giftButton,
+        actions.children[2]
       );
 
 
@@ -1327,6 +1657,236 @@
       );
 
     }
+
+
+    /*
+      🎁 ギフトモーダルを開く
+    */
+    function openGiftModal(
+      username
+    ) {
+
+      if (
+        !username ||
+        username === currentUsername
+      ) {
+
+        return;
+
+      }
+
+
+      giftTargetUsername =
+        username;
+
+      giftTarget.textContent =
+        "@" +
+        username +
+        " さんにコインを送ります";
+
+
+      giftAmount.value =
+        "";
+
+      giftMessage.textContent =
+        "";
+
+      giftSend.disabled =
+        false;
+
+      giftSend.textContent =
+        "🎁 送る";
+
+
+      giftModal.style.display =
+        "flex";
+
+      setTimeout(
+        () => {
+          giftAmount.focus();
+        },
+        50
+      );
+
+    }
+
+
+    /*
+      🎁 ギフトモーダルを閉じる
+    */
+    function closeGiftModal() {
+
+      giftModal.style.display =
+        "none";
+
+      giftTargetUsername =
+        "";
+
+      giftAmount.value =
+        "";
+
+      giftMessage.textContent =
+        "";
+
+      giftSend.disabled =
+        false;
+
+      giftSend.textContent =
+        "🎁 送る";
+
+    }
+
+
+    /*
+      🎁 コインを送る
+    */
+    async function sendGift() {
+
+      if (
+        !giftTargetUsername
+      ) {
+
+        return;
+
+      }
+
+
+      const amount =
+        Number(
+          giftAmount.value
+        );
+
+
+      if (
+        !Number.isInteger(amount) ||
+        amount <= 0
+      ) {
+
+        giftMessage.textContent =
+          "1枚以上のコインを入力してね。";
+
+        return;
+
+      }
+
+
+      giftSend.disabled =
+        true;
+
+      giftSend.textContent =
+        "送信中...";
+
+      giftMessage.textContent =
+        "";
+
+
+      const {
+        error
+      } =
+        await supabaseClient.rpc(
+          "send_coin_gift",
+          {
+            target_username:
+              giftTargetUsername,
+
+            gift_amount:
+              amount
+          }
+        );
+
+
+      if (error) {
+
+        console.error(
+          "コインギフトエラー:",
+          error
+        );
+
+        giftSend.disabled =
+          false;
+
+        giftSend.textContent =
+          "🎁 送る";
+
+        giftMessage.textContent =
+          error.message ||
+          "コインを送れませんでした。";
+
+        return;
+
+      }
+
+
+      alert(
+        "🎁 @" +
+        giftTargetUsername +
+        " さんに " +
+        amount +
+        " コインを送りました！"
+      );
+
+
+      closeGiftModal();
+
+    }
+
+
+    /*
+      ギフト金額ボタン
+    */
+    document
+      .querySelectorAll(
+        ".gift-preset"
+      )
+      .forEach(
+        button => {
+
+          button.addEventListener(
+            "click",
+            () => {
+
+              giftAmount.value =
+                button.dataset.amount;
+
+              giftAmount.focus();
+
+            }
+          );
+
+        }
+      );
+
+
+    giftCancel.addEventListener(
+      "click",
+      closeGiftModal
+    );
+
+
+    giftSend.addEventListener(
+      "click",
+      sendGift
+    );
+
+
+    /*
+      モーダル外側をタップして閉じる
+    */
+    giftModal.addEventListener(
+      "click",
+      event => {
+
+        if (
+          event.target ===
+          giftModal
+        ) {
+
+          closeGiftModal();
+
+        }
+
+      }
+    );
 
 
     /*
