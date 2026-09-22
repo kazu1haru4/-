@@ -1,207 +1,201 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>フレンドコイン</title>
+<title>フレンドコイン</title>
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+<style>
+* {
+  box-sizing: border-box;
+}
 
-    body {
-      margin: 0;
-      font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Hiragino Kaku Gothic ProN",
-        "Yu Gothic",
-        sans-serif;
-      background: linear-gradient(135deg, #fff4fb, #eef7ff);
-      color: #333;
-    }
+body {
+  margin: 0;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Hiragino Kaku Gothic ProN",
+    "Yu Gothic",
+    sans-serif;
+  background: linear-gradient(135deg, #fff4fb, #eef7ff);
+  color: #333;
+}
 
-    .container {
-      width: min(92%, 460px);
-      margin: 0 auto;
-      padding: 24px 0 40px;
-    }
+.container {
+  width: min(92%, 460px);
+  margin: 0 auto;
+  padding: 24px 0 40px;
+}
 
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
 
-    .back {
-      border: none;
-      background: white;
-      width: 42px;
-      height: 42px;
-      border-radius: 14px;
-      font-size: 26px;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,.08);
-    }
+.back {
+  border: none;
+  background: white;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  font-size: 26px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,.08);
+}
 
-    .header h1 {
-      margin: 0;
-      font-size: 24px;
-    }
+.header h1 {
+  margin: 0;
+  font-size: 24px;
+}
 
-    .balance-card {
-      background: linear-gradient(135deg, #8f7cff, #b49cff);
-      color: white;
-      border-radius: 24px;
-      padding: 26px;
-      box-shadow: 0 10px 25px rgba(143,124,255,.25);
-      margin-bottom: 18px;
-    }
+.balance-card {
+  background: linear-gradient(135deg, #8f7cff, #b49cff);
+  color: white;
+  border-radius: 24px;
+  padding: 26px;
+  box-shadow: 0 10px 25px rgba(143,124,255,.25);
+  margin-bottom: 18px;
+}
 
-    .balance-label {
-      font-size: 14px;
-      opacity: .9;
-    }
+.balance-label {
+  font-size: 14px;
+  opacity: .9;
+}
 
-    .balance {
-      font-size: 42px;
-      font-weight: bold;
-      margin-top: 5px;
-    }
+.balance {
+  font-size: 42px;
+  font-weight: bold;
+  margin-top: 5px;
+}
 
-    .coin {
-      font-size: 18px;
-      margin-left: 4px;
-    }
+.coin {
+  font-size: 18px;
+  margin-left: 4px;
+}
 
-    .card {
-      background: rgba(255,255,255,.94);
-      border-radius: 22px;
-      padding: 20px;
-      margin-bottom: 16px;
-      box-shadow: 0 6px 18px rgba(0,0,0,.07);
-    }
+.card {
+  background: rgba(255,255,255,.94);
+  border-radius: 22px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.07);
+}
 
-    .card h2 {
-      margin: 0 0 8px;
-      font-size: 20px;
-    }
+.card h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
 
-    .description {
-      margin: 0 0 16px;
-      color: #777;
-      font-size: 14px;
-      line-height: 1.6;
-    }
+.description {
+  margin: 0 0 16px;
+  color: #777;
+  font-size: 14px;
+  line-height: 1.6;
+}
 
-    .slot {
-      background: #faf9ff;
-      border: 2px solid #e8e3ff;
-      border-radius: 20px;
-      padding: 18px;
-      text-align: center;
-    }
+.slot {
+  background: #faf9ff;
+  border: 2px solid #e8e3ff;
+  border-radius: 20px;
+  padding: 18px;
+  text-align: center;
+}
 
-    .slot-machine {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin: 10px 0 18px;
-    }
+.slot-machine {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 10px 0 18px;
+}
 
-    .reel {
-      width: 72px;
-      height: 72px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: white;
-      border-radius: 16px;
-      font-size: 40px;
-      box-shadow: inset 0 0 0 2px #eee;
-    }
+.reel {
+  width: 72px;
+  height: 72px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: white;
+  border-radius: 16px;
+  font-size: 40px;
+  box-shadow: inset 0 0 0 2px #eee;
+}
 
-    .result {
-      min-height: 26px;
-      margin: 10px 0;
-      font-weight: bold;
-    }
+button.main-button {
+  width: 100%;
+  border: none;
+  border-radius: 16px;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  background: #8f7cff;
+  color: white;
+}
 
-    .main-button {
-      width: 100%;
-      border: none;
-      border-radius: 16px;
-      padding: 14px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      background: #8f7cff;
-      color: white;
-    }
+button.main-button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
 
-    .main-button:disabled {
-      opacity: .5;
-      cursor: not-allowed;
-    }
+.result {
+  min-height: 26px;
+  margin: 10px 0;
+  font-weight: bold;
+}
 
-    .actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
 
-    .action {
-      border: none;
-      background: #f7f5ff;
-      border-radius: 18px;
-      padding: 18px 10px;
-      cursor: pointer;
-      text-align: center;
-    }
+.action {
+  border: none;
+  background: #f7f5ff;
+  border-radius: 18px;
+  padding: 18px 10px;
+  cursor: pointer;
+  text-align: center;
+}
 
-    .action .icon {
-      font-size: 30px;
-      margin-bottom: 7px;
-    }
+.action .icon {
+  font-size: 30px;
+  margin-bottom: 7px;
+}
 
-    .action strong {
-      display: block;
-      font-size: 15px;
-    }
+.action strong {
+  display: block;
+  font-size: 15px;
+}
 
-    .action span {
-      display: block;
-      color: #777;
-      font-size: 12px;
-      margin-top: 4px;
-    }
+.action span {
+  display: block;
+  color: #777;
+  font-size: 12px;
+  margin-top: 4px;
+}
 
-    .notice {
-      background: #fff8df;
-      border-radius: 16px;
-      padding: 13px;
-      font-size: 13px;
-      color: #735f19;
-      line-height: 1.6;
-    }
+.notice {
+  background: #fff8df;
+  border-radius: 16px;
+  padding: 13px;
+  font-size: 13px;
+  color: #735f19;
+  line-height: 1.6;
+}
 
-    .message {
-      text-align: center;
-      margin-top: 12px;
-      min-height: 22px;
-      font-size: 14px;
-      font-weight: bold;
-    }
-
-    .loading {
-      text-align: center;
-      color: #777;
-      padding: 10px;
-    }
-  </style>
+.message {
+  text-align: center;
+  margin-top: 12px;
+  min-height: 22px;
+  font-size: 14px;
+  font-weight: bold;
+}
+</style>
 </head>
 
 <body>
@@ -212,7 +206,6 @@
     <button class="back" onclick="history.back()">‹</button>
     <h1>🪙 フレンドコイン</h1>
   </div>
-
 
   <!-- コイン残高 -->
 
@@ -230,7 +223,7 @@
   </div>
 
 
-  <!-- 運試し -->
+  <!-- 今日の運試し -->
 
   <div class="card">
 
@@ -296,14 +289,8 @@
         onclick="showComingSoon()"
       >
         <div class="icon">🎮</div>
-
-        <strong>
-          ゲーム
-        </strong>
-
-        <span>
-          ゲームで獲得
-        </span>
+        <strong>ゲーム</strong>
+        <span>ゲームで獲得</span>
       </button>
 
 
@@ -312,30 +299,18 @@
         onclick="showComingSoon()"
       >
         <div class="icon">🎯</div>
-
-        <strong>
-          チャレンジ
-        </strong>
-
-        <span>
-          達成して獲得
-        </span>
+        <strong>チャレンジ</strong>
+        <span>達成して獲得</span>
       </button>
 
 
       <button
         class="action"
-        onclick="showComingSoon()"
+        onclick="claimLoginBonus()"
       >
         <div class="icon">📅</div>
-
-        <strong>
-          ログイン
-        </strong>
-
-        <span>
-          ログインボーナス
-        </span>
+        <strong>ログイン</strong>
+        <span>+10 COIN</span>
       </button>
 
 
@@ -344,14 +319,8 @@
         onclick="showComingSoon()"
       >
         <div class="icon">🎁</div>
-
-        <strong>
-          交換
-        </strong>
-
-        <span>
-          アイテムと交換
-        </span>
+        <strong>交換</strong>
+        <span>アイテムと交換</span>
       </button>
 
     </div>
@@ -411,7 +380,7 @@ let balance = 0;
 
 
 /* =========================
-   表示更新
+   残高表示
 ========================= */
 
 function updateBalance() {
@@ -420,164 +389,6 @@ function updateBalance() {
     .getElementById("balance")
     .textContent = balance;
 
-}
-
-
-/* =========================
-   コイン読み込み
-========================= */
-
-async function loadCoins() {
-
-  const {
-    data: userData,
-    error: userError
-  } = await supabaseClient.auth.getUser();
-
-
-  if (
-    userError ||
-    !userData.user
-  ) {
-
-    document
-      .getElementById("balance")
-      .textContent = "ログインしてください";
-
-    return false;
-  }
-
-
-  currentUsername =
-    userData.user
-      .user_metadata
-      ?.username || "";
-
-
-  if (!currentUsername) {
-
-    document
-      .getElementById("balance")
-      .textContent = "エラー";
-
-    return false;
-  }
-
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient
-      .from("user_coins")
-      .select("coins")
-      .eq(
-        "user_id",
-        currentUsername
-      )
-      .maybeSingle();
-
-
-  if (error) {
-
-    console.error(
-      "コイン取得エラー:",
-      error
-    );
-
-    document
-      .getElementById("balance")
-      .textContent = "エラー";
-
-    return false;
-  }
-
-
-  if (!data) {
-
-    const {
-      data: created,
-      error: createError
-    } =
-      await supabaseClient
-        .from("user_coins")
-        .insert({
-          user_id: currentUsername,
-          coins: 0
-        })
-        .select("coins")
-        .single();
-
-
-    if (createError) {
-
-      console.error(
-        "コイン作成エラー:",
-        createError
-      );
-
-      document
-        .getElementById("balance")
-        .textContent = "エラー";
-
-      return false;
-    }
-
-
-    balance =
-      Number(created.coins || 0);
-
-  } else {
-
-    balance =
-      Number(data.coins || 0);
-
-  }
-
-
-  updateBalance();
-
-  document
-    .getElementById("slotButton")
-    .disabled = false;
-
-  return true;
-}
-
-
-/* =========================
-   コイン保存
-========================= */
-
-async function saveCoins() {
-
-  const {
-    error
-  } =
-    await supabaseClient
-      .from("user_coins")
-      .update({
-        coins: balance,
-        updated_at: new Date().toISOString()
-      })
-      .eq(
-        "user_id",
-        currentUsername
-      );
-
-
-  if (error) {
-
-    console.error(
-      "コイン保存エラー:",
-      error
-    );
-
-    return false;
-  }
-
-
-  return true;
 }
 
 
@@ -609,7 +420,302 @@ function getToday() {
     "-" +
     day
   );
+}
 
+
+/* =========================
+   コイン読み込み
+========================= */
+
+async function loadCoins() {
+
+  const {
+    data: userData,
+    error: userError
+  } =
+    await supabaseClient.auth.getUser();
+
+
+  if (
+    userError ||
+    !userData.user
+  ) {
+
+    document
+      .getElementById("balance")
+      .textContent =
+      "ログインしてください";
+
+    return false;
+  }
+
+
+  currentUsername =
+    userData.user
+      .user_metadata
+      ?.username || "";
+
+
+  if (!currentUsername) {
+
+    document
+      .getElementById("balance")
+      .textContent =
+      "エラー";
+
+    return false;
+  }
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("user_coins")
+      .select(
+        "coins,last_login_bonus_date"
+      )
+      .eq(
+        "user_id",
+        currentUsername
+      )
+      .maybeSingle();
+
+
+  if (error) {
+
+    console.error(
+      "コイン取得エラー:",
+      error
+    );
+
+    document
+      .getElementById("balance")
+      .textContent =
+      "エラー";
+
+    return false;
+  }
+
+
+  if (!data) {
+
+    const {
+      data: created,
+      error: createError
+    } =
+      await supabaseClient
+        .from("user_coins")
+        .insert({
+          user_id:
+            currentUsername,
+
+          coins: 0
+        })
+        .select(
+          "coins,last_login_bonus_date"
+        )
+        .single();
+
+
+    if (createError) {
+
+      console.error(
+        "コイン作成エラー:",
+        createError
+      );
+
+      document
+        .getElementById("balance")
+        .textContent =
+        "エラー";
+
+      return false;
+    }
+
+
+    balance =
+      Number(
+        created.coins || 0
+      );
+
+  } else {
+
+    balance =
+      Number(
+        data.coins || 0
+      );
+  }
+
+
+  updateBalance();
+
+
+  document
+    .getElementById("slotButton")
+    .disabled = false;
+
+
+  return true;
+}
+
+
+/* =========================
+   コイン保存
+========================= */
+
+async function saveCoins() {
+
+  const {
+    error
+  } =
+    await supabaseClient
+      .from("user_coins")
+      .update({
+        coins: balance,
+        updated_at:
+          new Date().toISOString()
+      })
+      .eq(
+        "user_id",
+        currentUsername
+      );
+
+
+  if (error) {
+
+    console.error(
+      "コイン保存エラー:",
+      error
+    );
+
+    return false;
+  }
+
+
+  return true;
+}
+
+
+/* =========================
+   ログインボーナス
+========================= */
+
+async function claimLoginBonus() {
+
+  const message =
+    document.getElementById(
+      "message"
+    );
+
+
+  if (!currentUsername) {
+
+    message.textContent =
+      "❌ ログインしてください";
+
+    return;
+  }
+
+
+  const today =
+    getToday();
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("user_coins")
+      .select(
+        "coins,last_login_bonus_date"
+      )
+      .eq(
+        "user_id",
+        currentUsername
+      )
+      .maybeSingle();
+
+
+  if (error || !data) {
+
+    console.error(
+      "ログインボーナス取得エラー:",
+      error
+    );
+
+    message.textContent =
+      "❌ コイン情報を取得できませんでした";
+
+    return;
+  }
+
+
+  /* 今日すでに受け取っている */
+
+  if (
+    data.last_login_bonus_date ===
+    today
+  ) {
+
+    message.textContent =
+      "📅 今日のログインボーナスは受け取り済みだよ！";
+
+    return;
+  }
+
+
+  const newCoins =
+    Number(data.coins || 0) + 10;
+
+
+  const {
+    error: updateError
+  } =
+    await supabaseClient
+      .from("user_coins")
+      .update({
+
+        coins: newCoins,
+
+        last_login_bonus_date:
+          today,
+
+        updated_at:
+          new Date().toISOString()
+
+      })
+      .eq(
+        "user_id",
+        currentUsername
+      );
+
+
+  if (updateError) {
+
+    console.error(
+      "ログインボーナス保存エラー:",
+      updateError
+    );
+
+    message.textContent =
+      "❌ ボーナスの受け取りに失敗しました";
+
+    return;
+  }
+
+
+  balance =
+    newCoins;
+
+
+  updateBalance();
+
+
+  message.textContent =
+    "🎉 ログインボーナス +10 COIN！";
 }
 
 
@@ -640,7 +746,9 @@ async function playSlot() {
     );
 
 
-  if (lastPlay === today) {
+  if (
+    lastPlay === today
+  ) {
 
     result.textContent =
       "今日はもう運試し済みだよ！😊";
@@ -675,34 +783,34 @@ async function playSlot() {
         document
           .getElementById("reel1")
           .textContent =
-            symbols[
-              Math.floor(
-                Math.random() *
-                symbols.length
-              )
-            ];
+          symbols[
+            Math.floor(
+              Math.random() *
+              symbols.length
+            )
+          ];
 
 
         document
           .getElementById("reel2")
           .textContent =
-            symbols[
-              Math.floor(
-                Math.random() *
-                symbols.length
-              )
-            ];
+          symbols[
+            Math.floor(
+              Math.random() *
+              symbols.length
+            )
+          ];
 
 
         document
           .getElementById("reel3")
           .textContent =
-            symbols[
-              Math.floor(
-                Math.random() *
-                symbols.length
-              )
-            ];
+          symbols[
+            Math.floor(
+              Math.random() *
+              symbols.length
+            )
+          ];
 
 
         count++;
@@ -787,7 +895,6 @@ async function playSlot() {
 
             result.textContent =
               "🍀 参加賞！ +10 COIN";
-
           }
 
 
@@ -829,7 +936,6 @@ async function playSlot() {
       },
       100
     );
-
 }
 
 
@@ -842,8 +948,7 @@ function showComingSoon() {
   document
     .getElementById("message")
     .textContent =
-      "🚧 この機能はこれから追加するよ！";
-
+    "🚧 この機能はこれから追加するよ！";
 }
 
 
