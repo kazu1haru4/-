@@ -80,9 +80,23 @@
       gap: 9px;
     }
 
+    /* =========================
+       上部プロフィール画像
+    ========================= */
+
+    .header-avatar-frame {
+      position: relative;
+      width: 48px;
+      height: 48px;
+      padding: 3px;
+      border-radius: 50%;
+      background: #eee8ff;
+      flex-shrink: 0;
+    }
+
     .header-avatar {
-      width: 38px;
-      height: 38px;
+      width: 100%;
+      height: 100%;
       border-radius: 50%;
       background: #eee8ff;
       display: flex;
@@ -90,7 +104,7 @@
       justify-content: center;
       overflow: hidden;
       font-size: 20px;
-      flex-shrink: 0;
+      border: 2px solid white;
     }
 
     .header-avatar img {
@@ -99,7 +113,32 @@
       object-fit: cover;
     }
 
-    /* オンライン表示 */
+    .avatar-badge {
+      position: absolute;
+      top: -7px;
+      right: -7px;
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      background: white;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      box-shadow:
+        0 2px 7px rgba(0,0,0,.18),
+        0 0 0 2px white;
+      z-index: 5;
+    }
+
+    .avatar-badge.show {
+      display: flex;
+    }
+
+    /* =========================
+       オンライン表示
+    ========================= */
+
     .friend-status {
       margin-top: 3px;
       font-size: 12px;
@@ -148,23 +187,59 @@
       justify-content: flex-end;
     }
 
+    /* =========================
+       メッセージ側プロフィール
+    ========================= */
+
+    .message-avatar-frame {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      padding: 3px;
+      border-radius: 50%;
+      background: #eee8ff;
+      flex-shrink: 0;
+    }
+
     .message-avatar {
-      width: 34px;
-      height: 34px;
+      width: 100%;
+      height: 100%;
       border-radius: 50%;
       background: #eee8ff;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      flex-shrink: 0;
       font-size: 18px;
+      border: 2px solid white;
     }
 
     .message-avatar img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+    }
+
+    .message-avatar-badge {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: white;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      box-shadow:
+        0 2px 6px rgba(0,0,0,.18),
+        0 0 0 2px white;
+      z-index: 5;
+    }
+
+    .message-avatar-badge.show {
+      display: flex;
     }
 
     .message-content-box {
@@ -329,18 +404,23 @@
 
 <body>
 
-  <main class="container">
+<main class="container">
 
-    <header class="header">
+  <header class="header">
 
-      <a
-        href="home.html"
-        class="home-button"
+    <a
+      href="home.html"
+      class="home-button"
+    >
+      🏠 ホーム
+    </a>
+
+    <div class="profile-header">
+
+      <div
+        id="headerAvatarFrame"
+        class="header-avatar-frame"
       >
-        🏠 ホーム
-      </a>
-
-      <div class="profile-header">
 
         <div
           class="header-avatar"
@@ -349,1601 +429,1901 @@
           👤
         </div>
 
-        <div>
-          <h1 id="chatTitle">
-            💬 チャット
-          </h1>
+        <div
+          id="headerAvatarBadge"
+          class="avatar-badge"
+        ></div>
 
-          <div
-            id="friendStatus"
-            class="friend-status offline"
-          >
-            ⚪ オフライン
-          </div>
+      </div>
+
+      <div>
+
+        <h1 id="chatTitle">
+          💬 チャット
+        </h1>
+
+        <div
+          id="friendStatus"
+          class="friend-status offline"
+        >
+          ⚪ オフライン
         </div>
 
       </div>
 
-    </header>
-
-    <div class="messages-wrapper">
-
-      <section
-        class="messages"
-        id="messages"
-      >
-
-        <div class="empty">
-          メッセージを読み込み中...
-        </div>
-
-      </section>
-
-      <button
-        id="latestButton"
-        class="latest-button"
-        type="button"
-      >
-        ⬇️ 最新へ
-      </button>
-
     </div>
 
-    <form
-      class="input-area"
-      id="messageForm"
+  </header>
+
+  <div class="messages-wrapper">
+
+    <section
+      class="messages"
+      id="messages"
     >
+      <div class="empty">
+        メッセージを読み込み中...
+      </div>
+    </section>
 
-      <input
-        id="messageInput"
-        type="text"
-        placeholder="メッセージを入力..."
-        autocomplete="off"
-      >
+    <button
+      id="latestButton"
+      class="latest-button"
+      type="button"
+    >
+      ⬇️ 最新へ
+    </button>
 
-      <button
-        class="image-button"
-        id="imageButton"
-        type="button"
-        title="画像を送る"
-      >
-        🖼️
-      </button>
+  </div>
 
-      <button
-        class="send-button"
-        id="sendButton"
-        type="submit"
-      >
-        送信
-      </button>
-
-    </form>
+  <form
+    class="input-area"
+    id="messageForm"
+  >
 
     <input
-      id="imageInput"
-      type="file"
-      accept="image/*"
+      id="messageInput"
+      type="text"
+      placeholder="メッセージを入力..."
+      autocomplete="off"
     >
 
-  </main>
+    <button
+      class="image-button"
+      id="imageButton"
+      type="button"
+      title="画像を送る"
+    >
+      🖼️
+    </button>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <button
+      class="send-button"
+      id="sendButton"
+      type="submit"
+    >
+      送信
+    </button>
 
-  <script>
+  </form>
 
-    const SUPABASE_URL =
-      "https://yxonmqdyekwenyzekjwj.supabase.co";
+  <input
+    id="imageInput"
+    type="file"
+    accept="image/*"
+  >
 
-    const SUPABASE_KEY =
-      "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+</main>
 
-    const supabaseClient =
-      window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL =
+  "https://yxonmqdyekwenyzekjwj.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+
+const messagesElement =
+  document.getElementById("messages");
+
+const messageInput =
+  document.getElementById("messageInput");
+
+const messageForm =
+  document.getElementById("messageForm");
+
+const sendButton =
+  document.getElementById("sendButton");
+
+const imageButton =
+  document.getElementById("imageButton");
+
+const imageInput =
+  document.getElementById("imageInput");
+
+const chatTitle =
+  document.getElementById("chatTitle");
+
+const headerAvatar =
+  document.getElementById("headerAvatar");
+
+const headerAvatarFrame =
+  document.getElementById("headerAvatarFrame");
+
+const headerAvatarBadge =
+  document.getElementById("headerAvatarBadge");
+
+const latestButton =
+  document.getElementById("latestButton");
+
+const friendStatus =
+  document.getElementById("friendStatus");
+
+
+let currentUsername = "";
+let friendId = "";
+let realtimeChannel = null;
+
+let myAvatarUrl = "";
+let friendAvatarUrl = "";
+
+let myItem = null;
+let friendItem = null;
+
+let readMessageIds = new Set();
+
+let presenceTimer = null;
+
+const ONLINE_LIMIT =
+  60 * 1000;
+
+
+const params =
+  new URLSearchParams(
+    window.location.search
+  );
+
+friendId =
+  params.get("user") || "";
+
+
+/* =========================================
+   アイテム情報取得
+========================================= */
+
+async function loadEquippedItem(
+  itemKey
+) {
+
+  if (!itemKey) {
+    return null;
+  }
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("coin_items")
+      .select(
+        "item_key, icon, frame_color"
+      )
+      .eq(
+        "item_key",
+        itemKey
+      )
+      .maybeSingle();
+
+  if (error) {
+
+    console.error(
+      "装備アイテム取得エラー:",
+      error
+    );
+
+    return null;
+  }
+
+  return data || null;
+}
+
+
+/* =========================================
+   ヘッダーの相手プロフィール表示
+========================================= */
+
+function displayHeaderProfile() {
+
+  headerAvatarFrame.style.background =
+    friendItem?.frame_color ||
+    "#eee8ff";
+
+  headerAvatarBadge.classList.remove(
+    "show"
+  );
+
+  headerAvatarBadge.textContent =
+    "";
+
+  if (friendItem?.icon) {
+
+    headerAvatarBadge.textContent =
+      friendItem.icon;
+
+    headerAvatarBadge.style.borderColor =
+      friendItem.frame_color ||
+      "#eee8ff";
+
+    headerAvatarBadge.classList.add(
+      "show"
+    );
+  }
+
+  if (friendAvatarUrl) {
+
+    headerAvatar.innerHTML = `
+      <img
+        src="${escapeHtml(friendAvatarUrl)}"
+        alt="プロフィール画像"
+      >
+    `;
+
+  } else {
+
+    headerAvatar.textContent =
+      "👤";
+  }
+}
+
+
+/* =========================================
+   メッセージ用プロフィール画像
+========================================= */
+
+function createAvatar(
+  url,
+  fallback,
+  item
+) {
+
+  const frame =
+    document.createElement("div");
+
+  frame.className =
+    "message-avatar-frame";
+
+  frame.style.background =
+    item?.frame_color ||
+    "#eee8ff";
+
+
+  const avatar =
+    document.createElement("div");
+
+  avatar.className =
+    "message-avatar";
+
+
+  if (url) {
+
+    const img =
+      document.createElement("img");
+
+    img.src =
+      url;
+
+    img.alt =
+      "プロフィール画像";
+
+    img.onerror =
+      function() {
+
+        avatar.innerHTML =
+          fallback;
+
+      };
+
+    avatar.appendChild(
+      img
+    );
+
+  } else {
+
+    avatar.textContent =
+      fallback;
+
+  }
+
+
+  frame.appendChild(
+    avatar
+  );
+
+
+  if (item?.icon) {
+
+    const badge =
+      document.createElement("div");
+
+    badge.className =
+      "message-avatar-badge show";
+
+    badge.textContent =
+      item.icon;
+
+    badge.style.border =
+      "2px solid " +
+      (
+        item.frame_color ||
+        "#eee8ff"
       );
 
-    const messagesElement =
-      document.getElementById("messages");
+    frame.appendChild(
+      badge
+    );
+  }
 
-    const messageInput =
-      document.getElementById("messageInput");
 
-    const messageForm =
-      document.getElementById("messageForm");
+  return frame;
+}
 
-    const sendButton =
-      document.getElementById("sendButton");
 
-    const imageButton =
-      document.getElementById("imageButton");
+/* =========================================
+   相手オンライン状態
+========================================= */
 
-    const imageInput =
-      document.getElementById("imageInput");
+async function updateFriendStatus() {
 
-    const chatTitle =
-      document.getElementById("chatTitle");
+  if (!friendId) {
+    return;
+  }
 
-    const headerAvatar =
-      document.getElementById("headerAvatar");
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("user_presence")
+      .select(
+        "last_seen"
+      )
+      .eq(
+        "user_id",
+        friendId
+      )
+      .maybeSingle();
 
-    const latestButton =
-      document.getElementById("latestButton");
+  if (error) {
 
-    const friendStatus =
-      document.getElementById("friendStatus");
+    console.error(
+      "オンライン状態取得エラー:",
+      error
+    );
 
-    let currentUsername = "";
-    let friendId = "";
-    let realtimeChannel = null;
+    friendStatus.className =
+      "friend-status offline";
 
-    let myAvatarUrl = "";
-    let friendAvatarUrl = "";
+    friendStatus.textContent =
+      "⚪ オフライン";
 
-    let readMessageIds = new Set();
+    return;
+  }
 
-    let presenceTimer = null;
+  if (!data?.last_seen) {
 
-    const ONLINE_LIMIT =
-      60 * 1000;
+    friendStatus.className =
+      "friend-status offline";
 
-    const params =
-      new URLSearchParams(
-        window.location.search
+    friendStatus.textContent =
+      "⚪ オフライン";
+
+    return;
+  }
+
+  const lastSeen =
+    new Date(
+      data.last_seen
+    ).getTime();
+
+  const online =
+    !Number.isNaN(lastSeen) &&
+    Date.now() - lastSeen <= ONLINE_LIMIT;
+
+  if (online) {
+
+    friendStatus.className =
+      "friend-status online";
+
+    friendStatus.textContent =
+      "🟢 オンライン";
+
+  } else {
+
+    friendStatus.className =
+      "friend-status offline";
+
+    friendStatus.textContent =
+      "⚪ オフライン";
+  }
+}
+
+
+/* =========================================
+   自分のオンライン状態
+========================================= */
+
+async function updateMyPresence() {
+
+  if (!currentUsername) {
+    return;
+  }
+
+  const {
+    error
+  } =
+    await supabaseClient
+      .from("user_presence")
+      .upsert(
+        {
+          user_id:
+            currentUsername,
+
+          last_seen:
+            new Date().toISOString()
+        },
+        {
+          onConflict:
+            "user_id"
+        }
       );
 
-    friendId =
-      params.get("user") || "";
+  if (error) {
 
-    /* =========================================
-       相手のオンライン状態
-    ========================================= */
+    console.error(
+      "自分のオンライン状態更新エラー:",
+      error
+    );
+  }
+}
 
-    async function updateFriendStatus() {
 
-      if (!friendId) {
-        return;
+/* =========================================
+   通知
+========================================= */
+
+async function createNotification() {
+
+  if (
+    !currentUsername ||
+    !friendId
+  ) {
+    return;
+  }
+
+  const {
+    error
+  } =
+    await supabaseClient
+      .from("notifications")
+      .insert({
+
+        user_id:
+          friendId,
+
+        type:
+          "chat",
+
+        title:
+          "💬 新しいメッセージ",
+
+        message:
+          currentUsername +
+          "さんからメッセージが届きました",
+
+        link:
+          "chat.html?user=" +
+          encodeURIComponent(
+            currentUsername
+          ),
+
+        is_read:
+          false
+      });
+
+  if (error) {
+
+    console.error(
+      "通知作成エラー:",
+      error
+    );
+  }
+}
+
+
+/* =========================================
+   スクロール
+========================================= */
+
+function scrollToBottom(
+  smooth = false
+) {
+
+  messagesElement.scrollTo({
+
+    top:
+      messagesElement.scrollHeight,
+
+    behavior:
+      smooth
+        ? "smooth"
+        : "auto"
+  });
+}
+
+
+function updateLatestButton() {
+
+  const distanceFromBottom =
+    messagesElement.scrollHeight -
+    messagesElement.scrollTop -
+    messagesElement.clientHeight;
+
+  if (
+    distanceFromBottom > 150
+  ) {
+
+    latestButton.classList.add(
+      "show"
+    );
+
+  } else {
+
+    latestButton.classList.remove(
+      "show"
+    );
+  }
+}
+
+
+messagesElement.addEventListener(
+  "scroll",
+  updateLatestButton,
+  {
+    passive: true
+  }
+);
+
+
+latestButton.addEventListener(
+  "click",
+  function() {
+
+    scrollToBottom(true);
+
+  }
+);
+
+
+/* =========================================
+   既読
+========================================= */
+
+async function markMessagesAsRead(
+  messages
+) {
+
+  if (
+    !currentUsername ||
+    !friendId ||
+    !messages ||
+    messages.length === 0
+  ) {
+    return;
+  }
+
+  const unreadMessages =
+    messages.filter(
+      function(message) {
+
+        return (
+          message.sender_id === friendId &&
+          message.receiver_id === currentUsername &&
+          !message.is_deleted &&
+          !readMessageIds.has(message.id)
+        );
       }
+    );
+
+  if (
+    unreadMessages.length === 0
+  ) {
+    return;
+  }
+
+  const rows =
+    unreadMessages.map(
+      function(message) {
+
+        return {
+          message_id:
+            message.id,
+
+          user_id:
+            currentUsername
+        };
+      }
+    );
+
+  const {
+    error
+  } =
+    await supabaseClient
+      .from("message_reads")
+      .upsert(
+        rows,
+        {
+          onConflict:
+            "message_id,user_id"
+        }
+      );
+
+  if (error) {
+
+    console.error(
+      "既読保存エラー:",
+      error
+    );
+
+    return;
+  }
+
+  unreadMessages.forEach(
+    function(message) {
+
+      readMessageIds.add(
+        message.id
+      );
+
+    }
+  );
+}
+
+
+async function loadReadStatuses(
+  messages
+) {
+
+  readMessageIds =
+    new Set();
+
+  const myMessages =
+    messages.filter(
+      function(message) {
+
+        return (
+          message.sender_id ===
+            currentUsername &&
+          message.receiver_id ===
+            friendId
+        );
+      }
+    );
+
+  if (
+    myMessages.length === 0
+  ) {
+    return;
+  }
+
+  const ids =
+    myMessages.map(
+      function(message) {
+
+        return message.id;
+
+      }
+    );
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("message_reads")
+      .select(
+        "message_id"
+      )
+      .eq(
+        "user_id",
+        friendId
+      )
+      .in(
+        "message_id",
+        ids
+      );
+
+  if (error) {
+
+    console.error(
+      "既読状態取得エラー:",
+      error
+    );
+
+    return;
+  }
+
+  (data || []).forEach(
+    function(row) {
+
+      readMessageIds.add(
+        row.message_id
+      );
+
+    }
+  );
+}
+
+
+/* =========================================
+   メッセージ削除
+========================================= */
+
+async function deleteMessage(
+  messageId
+) {
+
+  const ok =
+    confirm(
+      "このメッセージを送信取り消ししますか？"
+    );
+
+  if (!ok) {
+    return;
+  }
+
+  const {
+    error
+  } =
+    await supabaseClient
+      .from("messages")
+      .update({
+        is_deleted: true
+      })
+      .eq(
+        "id",
+        messageId
+      )
+      .eq(
+        "sender_id",
+        currentUsername
+      );
+
+  if (error) {
+
+    console.error(
+      "送信取り消しエラー:",
+      error
+    );
+
+    alert(
+      "送信取り消しに失敗しました。\n\n" +
+      error.message
+    );
+
+    return;
+  }
+
+  await loadMessages();
+
+  scrollToBottom();
+}
+
+
+/* =========================================
+   開始
+========================================= */
+
+async function start() {
+
+  if (!friendId) {
+
+    chatTitle.textContent =
+      "💬 相手が選ばれていません";
+
+    messageForm.style.display =
+      "none";
+
+    messagesElement.innerHTML =
+      '<div class="empty">フレンドから相手を選んでね</div>';
+
+    return;
+  }
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient.auth.getSession();
+
+  if (
+    error ||
+    !data.session
+  ) {
+
+    alert(
+      "ログインしてください。"
+    );
+
+    window.location.href =
+      "index.html";
+
+    return;
+  }
+
+
+  currentUsername =
+    data.session.user
+      .user_metadata
+      ?.username || "";
+
+
+  if (!currentUsername) {
+
+    alert(
+      "ログイン中のユーザーIDを取得できませんでした。"
+    );
+
+    return;
+  }
+
+
+  await updateMyPresence();
+
+
+  /* =========================
+     相手プロフィール
+  ========================= */
+
+  const {
+    data: friendProfile,
+    error: friendProfileError
+  } =
+    await supabaseClient
+      .from("profiles")
+      .select(
+        "name, avatar_url, equipped_item_key"
+      )
+      .eq(
+        "user_id",
+        friendId
+      )
+      .maybeSingle();
+
+
+  if (friendProfileError) {
+
+    console.error(
+      "相手プロフィール取得エラー:",
+      friendProfileError
+    );
+  }
+
+
+  friendAvatarUrl =
+    friendProfile?.avatar_url || "";
+
+
+  chatTitle.textContent =
+    "💬 " +
+    (
+      friendProfile?.name ||
+      friendId
+    );
+
+
+  friendItem =
+    await loadEquippedItem(
+      friendProfile?.equipped_item_key
+    );
+
+
+  displayHeaderProfile();
+
+
+  await updateFriendStatus();
+
+
+  /* =========================
+     自分プロフィール
+  ========================= */
+
+  const {
+    data: myProfile,
+    error: myProfileError
+  } =
+    await supabaseClient
+      .from("profiles")
+      .select(
+        "avatar_url, equipped_item_key"
+      )
+      .eq(
+        "user_id",
+        currentUsername
+      )
+      .maybeSingle();
+
+
+  if (myProfileError) {
+
+    console.error(
+      "自分プロフィール取得エラー:",
+      myProfileError
+    );
+  }
+
+
+  myAvatarUrl =
+    myProfile?.avatar_url || "";
+
+
+  myItem =
+    await loadEquippedItem(
+      myProfile?.equipped_item_key
+    );
+
+
+  await loadMessages();
+
+  startRealtime();
+
+
+  presenceTimer =
+    setInterval(
+      async function() {
+
+        await updateMyPresence();
+        await updateFriendStatus();
+
+      },
+      30000
+    );
+}
+
+
+/* =========================================
+   メッセージ読み込み
+========================================= */
+
+async function loadMessages() {
+
+  messagesElement.innerHTML =
+    '<div class="empty">メッセージを読み込み中...</div>';
+
+
+  if (
+    !currentUsername ||
+    !friendId
+  ) {
+
+    messagesElement.innerHTML =
+      '<div class="empty">ユーザー情報を取得できませんでした</div>';
+
+    return;
+  }
+
+
+  const {
+    data: sentMessages,
+    error: sentError
+  } =
+    await supabaseClient
+      .from("messages")
+      .select("*")
+      .eq(
+        "sender_id",
+        currentUsername
+      )
+      .eq(
+        "receiver_id",
+        friendId
+      );
+
+
+  if (sentError) {
+
+    console.error(
+      "自分からのメッセージ取得エラー:",
+      sentError
+    );
+
+    messagesElement.innerHTML =
+      '<div class="empty">メッセージを読み込めませんでした</div>';
+
+    return;
+  }
+
+
+  const {
+    data: receivedMessages,
+    error: receivedError
+  } =
+    await supabaseClient
+      .from("messages")
+      .select("*")
+      .eq(
+        "sender_id",
+        friendId
+      )
+      .eq(
+        "receiver_id",
+        currentUsername
+      );
+
+
+  if (receivedError) {
+
+    console.error(
+      "相手からのメッセージ取得エラー:",
+      receivedError
+    );
+
+    messagesElement.innerHTML =
+      '<div class="empty">メッセージを読み込めませんでした</div>';
+
+    return;
+  }
+
+
+  const messages = [
+    ...(sentMessages || []),
+    ...(receivedMessages || [])
+  ];
+
+
+  messages.sort(
+    function(a, b) {
+
+      return (
+        new Date(a.created_at) -
+        new Date(b.created_at)
+      );
+
+    }
+  );
+
+
+  await loadReadStatuses(
+    messages
+  );
+
+
+  await markMessagesAsRead(
+    messages
+  );
+
+
+  messagesElement.innerHTML = "";
+
+
+  if (
+    messages.length === 0
+  ) {
+
+    messagesElement.innerHTML =
+      '<div class="empty">まだメッセージがありません</div>';
+
+    updateLatestButton();
+
+    return;
+  }
+
+
+  for (
+    const message of messages
+  ) {
+
+    await addMessageToScreen(
+      message
+    );
+  }
+
+
+  scrollToBottom();
+
+  updateLatestButton();
+}
+
+
+/* =========================================
+   メッセージ表示
+========================================= */
+
+async function addMessageToScreen(
+  message
+) {
+
+  const wrapper =
+    document.createElement("div");
+
+  wrapper.className =
+    "message";
+
+
+  const isMine =
+    message.sender_id ===
+    currentUsername;
+
+
+  if (isMine) {
+
+    wrapper.classList.add(
+      "mine"
+    );
+  }
+
+
+  if (!isMine) {
+
+    const avatar =
+      createAvatar(
+        friendAvatarUrl,
+        "👤",
+        friendItem
+      );
+
+    wrapper.appendChild(
+      avatar
+    );
+  }
+
+
+  const messageContentBox =
+    document.createElement("div");
+
+  messageContentBox.className =
+    "message-content-box";
+
+
+  const bubble =
+    document.createElement("div");
+
+  bubble.className =
+    "bubble";
+
+
+  if (message.is_deleted) {
+
+    bubble.classList.add(
+      "deleted-message"
+    );
+
+    bubble.textContent =
+      "このメッセージは取り消されました";
+
+  } else {
+
+    if (message.image_url) {
+
+      const image =
+        document.createElement("img");
+
+      image.className =
+        "chat-image";
+
+      image.alt =
+        "送信された画像";
+
 
       const {
         data,
         error
       } =
-        await supabaseClient
-          .from("user_presence")
-          .select(
-            "last_seen"
-          )
-          .eq(
-            "user_id",
-            friendId
-          )
-          .maybeSingle();
-
-      if (error) {
-
-        console.error(
-          "オンライン状態取得エラー:",
-          error
-        );
-
-        friendStatus.className =
-          "friend-status offline";
-
-        friendStatus.textContent =
-          "⚪ オフライン";
-
-        return;
-      }
-
-      if (!data?.last_seen) {
-
-        friendStatus.className =
-          "friend-status offline";
-
-        friendStatus.textContent =
-          "⚪ オフライン";
-
-        return;
-      }
-
-      const lastSeen =
-        new Date(
-          data.last_seen
-        ).getTime();
-
-      const online =
-        !Number.isNaN(lastSeen) &&
-        Date.now() - lastSeen <= ONLINE_LIMIT;
-
-      if (online) {
-
-        friendStatus.className =
-          "friend-status online";
-
-        friendStatus.textContent =
-          "🟢 オンライン";
-
-      } else {
-
-        friendStatus.className =
-          "friend-status offline";
-
-        friendStatus.textContent =
-          "⚪ オフライン";
-
-      }
-
-    }
-
-    /* =========================================
-       自分のオンライン状態
-    ========================================= */
-
-    async function updateMyPresence() {
-
-      if (!currentUsername) {
-        return;
-      }
-
-      const {
-        error
-      } =
-        await supabaseClient
-          .from("user_presence")
-          .upsert(
-            {
-              user_id:
-                currentUsername,
-
-              last_seen:
-                new Date().toISOString()
-            },
-            {
-              onConflict:
-                "user_id"
-            }
+        await supabaseClient.storage
+          .from("chat-images")
+          .createSignedUrl(
+            message.image_url,
+            3600
           );
 
-      if (error) {
 
-        console.error(
-          "自分のオンライン状態更新エラー:",
-          error
+      if (
+        !error &&
+        data?.signedUrl
+      ) {
+
+        image.src =
+          data.signedUrl;
+
+        bubble.appendChild(
+          image
         );
-
       }
-
     }
 
-    function createAvatar(
-      url,
-      fallback
-    ) {
 
-      const avatar =
+    if (message.content) {
+
+      const text =
         document.createElement("div");
 
-      avatar.className =
-        "message-avatar";
+      text.textContent =
+        message.content;
 
-      if (url) {
-
-        const img =
-          document.createElement("img");
-
-        img.src = url;
-        img.alt = "プロフィール画像";
-
-        img.onerror =
-          function() {
-
-            avatar.innerHTML =
-              fallback;
-
-          };
-
-        avatar.appendChild(img);
-
-      } else {
-
-        avatar.textContent =
-          fallback;
-
-      }
-
-      return avatar;
-
+      bubble.appendChild(
+        text
+      );
     }
+  }
 
-    async function createNotification() {
 
-      if (
-        !currentUsername ||
-        !friendId
-      ) {
-        return;
-      }
+  const time =
+    document.createElement("div");
 
-      const {
-        error
-      } =
-        await supabaseClient
-          .from("notifications")
-          .insert({
+  time.className =
+    "time";
 
-            user_id:
-              friendId,
 
-            type:
-              "chat",
+  const date =
+    new Date(
+      message.created_at
+    );
 
-            title:
-              "💬 新しいメッセージ",
 
-            message:
-              currentUsername +
-              "さんからメッセージが届きました",
-
-            link:
-              "chat.html?user=" +
-              encodeURIComponent(
-                currentUsername
-              ),
-
-            is_read:
-              false
-
-          });
-
-      if (error) {
-
-        console.error(
-          "通知作成エラー:",
-          error
-        );
-
-      }
-
-    }
-
-    function scrollToBottom(
-      smooth = false
-    ) {
-
-      messagesElement.scrollTo({
-
-        top:
-          messagesElement.scrollHeight,
-
-        behavior:
-          smooth
-            ? "smooth"
-            : "auto"
-
-      });
-
-    }
-
-    function updateLatestButton() {
-
-      const distanceFromBottom =
-        messagesElement.scrollHeight -
-        messagesElement.scrollTop -
-        messagesElement.clientHeight;
-
-      if (
-        distanceFromBottom > 150
-      ) {
-
-        latestButton.classList.add("show");
-
-      } else {
-
-        latestButton.classList.remove("show");
-
-      }
-
-    }
-
-    messagesElement.addEventListener(
-      "scroll",
-      function() {
-
-        updateLatestButton();
-
-      },
+  time.textContent =
+    date.toLocaleTimeString(
+      "ja-JP",
       {
-        passive: true
+        hour: "2-digit",
+        minute: "2-digit"
       }
     );
 
-    latestButton.addEventListener(
+
+  bubble.appendChild(
+    time
+  );
+
+
+  messageContentBox.appendChild(
+    bubble
+  );
+
+
+  if (
+    isMine &&
+    !message.is_deleted &&
+    readMessageIds.has(
+      message.id
+    )
+  ) {
+
+    const readStatus =
+      document.createElement("div");
+
+    readStatus.className =
+      "read-status";
+
+    readStatus.textContent =
+      "既読";
+
+    messageContentBox.appendChild(
+      readStatus
+    );
+  }
+
+
+  if (
+    isMine &&
+    !message.is_deleted
+  ) {
+
+    const deleteButton =
+      document.createElement("button");
+
+    deleteButton.type =
+      "button";
+
+    deleteButton.className =
+      "delete-button";
+
+    deleteButton.textContent =
+      "🗑️ 送信取り消し";
+
+
+    deleteButton.addEventListener(
       "click",
-      function() {
+      async function(event) {
 
-        scrollToBottom(true);
+        event.preventDefault();
+        event.stopPropagation();
+
+        await deleteMessage(
+          message.id
+        );
 
       }
     );
 
-    async function markMessagesAsRead(
-      messages
-    ) {
 
-      if (
-        !currentUsername ||
-        !friendId ||
-        !messages ||
-        messages.length === 0
-      ) {
-        return;
-      }
+    messageContentBox.appendChild(
+      deleteButton
+    );
+  }
 
-      const unreadMessages =
-        messages.filter(
-          function(message) {
 
-            return (
-              message.sender_id === friendId &&
-              message.receiver_id === currentUsername &&
-              !message.is_deleted &&
-              !readMessageIds.has(message.id)
-            );
+  wrapper.appendChild(
+    messageContentBox
+  );
 
-          }
-        );
 
-      if (
-        unreadMessages.length === 0
-      ) {
-        return;
-      }
+  if (isMine) {
 
-      const rows =
-        unreadMessages.map(
-          function(message) {
-
-            return {
-              message_id:
-                message.id,
-
-              user_id:
-                currentUsername
-            };
-
-          }
-        );
-
-      const {
-        error
-      } =
-        await supabaseClient
-          .from("message_reads")
-          .upsert(
-            rows,
-            {
-              onConflict:
-                "message_id,user_id"
-            }
-          );
-
-      if (error) {
-
-        console.error(
-          "既読保存エラー:",
-          error
-        );
-
-        return;
-
-      }
-
-      unreadMessages.forEach(
-        function(message) {
-
-          readMessageIds.add(
-            message.id
-          );
-
-        }
+    const avatar =
+      createAvatar(
+        myAvatarUrl,
+        "😊",
+        myItem
       );
 
-    }
+    wrapper.appendChild(
+      avatar
+    );
+  }
 
-    async function loadReadStatuses(
-      messages
-    ) {
 
-      readMessageIds =
-        new Set();
+  messagesElement.appendChild(
+    wrapper
+  );
+}
 
-      const myMessages =
-        messages.filter(
-          function(message) {
 
-            return (
+/* =========================================
+   リアルタイム
+========================================= */
+
+function startRealtime() {
+
+  if (realtimeChannel) {
+    return;
+  }
+
+
+  realtimeChannel =
+    supabaseClient
+      .channel(
+        "chat-" +
+        currentUsername +
+        "-" +
+        friendId
+      )
+
+
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages"
+        },
+        async function(payload) {
+
+          const message =
+            payload.new;
+
+
+          const isThisChat =
+            (
               message.sender_id ===
                 currentUsername &&
               message.receiver_id ===
                 friendId
+            ) ||
+            (
+              message.sender_id ===
+                friendId &&
+              message.receiver_id ===
+                currentUsername
             );
 
+
+          if (!isThisChat) {
+            return;
           }
+
+
+          if (
+            message.sender_id ===
+            currentUsername
+          ) {
+            return;
+          }
+
+
+          await markMessagesAsRead([
+            message
+          ]);
+
+
+          await addMessageToScreen(
+            message
+          );
+
+
+          scrollToBottom();
+
+          updateLatestButton();
+        }
+      )
+
+
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "messages"
+        },
+        async function(payload) {
+
+          const message =
+            payload.new;
+
+
+          const isThisChat =
+            (
+              message.sender_id ===
+                currentUsername &&
+              message.receiver_id ===
+                friendId
+            ) ||
+            (
+              message.sender_id ===
+                friendId &&
+              message.receiver_id ===
+                currentUsername
+            );
+
+
+          if (!isThisChat) {
+            return;
+          }
+
+
+          await loadMessages();
+
+          scrollToBottom();
+
+          updateLatestButton();
+        }
+      )
+
+
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "message_reads"
+        },
+        async function(payload) {
+
+          const read =
+            payload.new;
+
+
+          if (
+            read.user_id !== friendId
+          ) {
+            return;
+          }
+
+
+          const {
+            data: message
+          } =
+            await supabaseClient
+              .from("messages")
+              .select(
+                "id, sender_id, receiver_id"
+              )
+              .eq(
+                "id",
+                read.message_id
+              )
+              .maybeSingle();
+
+
+          if (!message) {
+            return;
+          }
+
+
+          if (
+            message.sender_id !==
+              currentUsername ||
+            message.receiver_id !==
+              friendId
+          ) {
+            return;
+          }
+
+
+          readMessageIds.add(
+            read.message_id
+          );
+
+
+          await loadMessages();
+        }
+      )
+
+
+      .subscribe();
+}
+
+
+/* =========================================
+   テキスト送信
+========================================= */
+
+messageForm.addEventListener(
+  "submit",
+  async function(event) {
+
+    event.preventDefault();
+
+
+    const text =
+      messageInput.value.trim();
+
+
+    if (!text) {
+      return;
+    }
+
+
+    if (
+      !currentUsername ||
+      !friendId
+    ) {
+
+      alert(
+        "ログイン情報または相手の情報を取得できません。"
+      );
+
+      return;
+    }
+
+
+    sendButton.disabled =
+      true;
+
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient
+        .from("messages")
+        .insert({
+
+          sender_id:
+            currentUsername,
+
+          receiver_id:
+            friendId,
+
+          content:
+            text,
+
+          image_url:
+            "",
+
+          is_deleted:
+            false
+        })
+        .select()
+        .single();
+
+
+    sendButton.disabled =
+      false;
+
+
+    if (error) {
+
+      console.error(
+        "送信エラー:",
+        error
+      );
+
+      alert(
+        "メッセージを送信できませんでした。\n\n" +
+        error.message
+      );
+
+      return;
+    }
+
+
+    messageInput.value =
+      "";
+
+
+    await addMessageToScreen(
+      data
+    );
+
+
+    scrollToBottom();
+
+    updateLatestButton();
+
+    await createNotification();
+  }
+);
+
+
+/* =========================================
+   画像ボタン
+========================================= */
+
+imageButton.addEventListener(
+  "click",
+  function() {
+
+    imageInput.click();
+
+  }
+);
+
+
+/* =========================================
+   画像送信
+========================================= */
+
+imageInput.addEventListener(
+  "change",
+  async function() {
+
+    const file =
+      imageInput.files?.[0];
+
+
+    if (!file) {
+      return;
+    }
+
+
+    if (
+      !currentUsername ||
+      !friendId
+    ) {
+
+      alert(
+        "ログイン情報または相手の情報を取得できません。"
+      );
+
+      imageInput.value =
+        "";
+
+      return;
+    }
+
+
+    if (
+      !file.type.startsWith("image/")
+    ) {
+
+      alert(
+        "画像ファイルを選んでください。"
+      );
+
+      imageInput.value =
+        "";
+
+      return;
+    }
+
+
+    imageButton.disabled =
+      true;
+
+    sendButton.disabled =
+      true;
+
+
+    try {
+
+      const extension =
+        file.name
+          .split(".")
+          .pop() ||
+        "jpg";
+
+
+      const filePath =
+        currentUsername +
+        "/" +
+        Date.now() +
+        "_" +
+        Math.random()
+          .toString(36)
+          .slice(2) +
+        "." +
+        extension;
+
+
+      const {
+        error:
+          uploadError
+      } =
+        await supabaseClient.storage
+          .from("chat-images")
+          .upload(
+            filePath,
+            file,
+            {
+              contentType:
+                file.type,
+
+              upsert:
+                false
+            }
+          );
+
+
+      if (uploadError) {
+
+        console.error(
+          "画像アップロードエラー:",
+          uploadError
         );
 
-      if (
-        myMessages.length === 0
-      ) {
+        alert(
+          "画像をアップロードできませんでした。\n\n" +
+          uploadError.message
+        );
+
         return;
       }
 
-      const ids =
-        myMessages.map(
-          function(message) {
-
-            return message.id;
-
-          }
-        );
 
       const {
         data,
         error
       } =
         await supabaseClient
-          .from("message_reads")
-          .select(
-            "message_id"
-          )
-          .eq(
-            "user_id",
-            friendId
-          )
-          .in(
-            "message_id",
-            ids
-          );
-
-      if (error) {
-
-        console.error(
-          "既読状態取得エラー:",
-          error
-        );
-
-        return;
-
-      }
-
-      (data || []).forEach(
-        function(row) {
-
-          readMessageIds.add(
-            row.message_id
-          );
-
-        }
-      );
-
-    }
-
-    async function deleteMessage(
-      messageId
-    ) {
-
-      const ok =
-        confirm(
-          "このメッセージを送信取り消ししますか？"
-        );
-
-      if (!ok) {
-        return;
-      }
-
-      const {
-        error
-      } =
-        await supabaseClient
           .from("messages")
-          .update({
-            is_deleted: true
+          .insert({
+
+            sender_id:
+              currentUsername,
+
+            receiver_id:
+              friendId,
+
+            content:
+              "",
+
+            image_url:
+              filePath,
+
+            is_deleted:
+              false
           })
-          .eq(
-            "id",
-            messageId
-          )
-          .eq(
-            "sender_id",
-            currentUsername
-          );
+          .select()
+          .single();
+
 
       if (error) {
 
         console.error(
-          "送信取り消しエラー:",
+          "画像メッセージ保存エラー:",
           error
         );
 
         alert(
-          "送信取り消しに失敗しました。\n\n" +
+          "画像メッセージを保存できませんでした。\n\n" +
           error.message
         );
 
         return;
-
       }
 
-      await loadMessages();
 
-      scrollToBottom();
-
-    }
-
-    async function start() {
-
-      if (!friendId) {
-
-        chatTitle.textContent =
-          "💬 相手が選ばれていません";
-
-        messageForm.style.display =
-          "none";
-
-        messagesElement.innerHTML =
-          '<div class="empty">フレンドから相手を選んでね</div>';
-
-        return;
-
-      }
-
-      const {
-        data,
-        error
-      } =
-        await supabaseClient.auth.getSession();
-
-      if (
-        error ||
-        !data.session
-      ) {
-
-        alert(
-          "ログインしてください。"
-        );
-
-        window.location.href =
-          "index.html";
-
-        return;
-
-      }
-
-      currentUsername =
-        data.session.user
-          .user_metadata
-          ?.username || "";
-
-      if (!currentUsername) {
-
-        alert(
-          "ログイン中のユーザーIDを取得できませんでした。"
-        );
-
-        return;
-
-      }
-
-      /* 自分をオンラインにする */
-      await updateMyPresence();
-
-      /* 相手プロフィール */
-
-      const {
-        data: friendProfile
-      } =
-        await supabaseClient
-          .from("profiles")
-          .select(
-            "name, avatar_url"
-          )
-          .eq(
-            "user_id",
-            friendId
-          )
-          .maybeSingle();
-
-      friendAvatarUrl =
-        friendProfile?.avatar_url || "";
-
-      chatTitle.textContent =
-        "💬 " +
-        (
-          friendProfile?.name ||
-          friendId
-        );
-
-      if (friendAvatarUrl) {
-
-        headerAvatar.innerHTML =
-          `<img src="${friendAvatarUrl}" alt="プロフィール画像">`;
-
-      }
-
-      /* 相手のオンライン状態 */
-      await updateFriendStatus();
-
-      /* 自分プロフィール */
-
-      const {
-        data: myProfile
-      } =
-        await supabaseClient
-          .from("profiles")
-          .select(
-            "avatar_url"
-          )
-          .eq(
-            "user_id",
-            currentUsername
-          )
-          .maybeSingle();
-
-      myAvatarUrl =
-        myProfile?.avatar_url || "";
-
-      await loadMessages();
-
-      startRealtime();
-
-      /*
-        30秒ごとに
-
-        ・自分をオンライン更新
-        ・相手の状態を確認
-      */
-
-      presenceTimer =
-        setInterval(
-          async function() {
-
-            await updateMyPresence();
-            await updateFriendStatus();
-
-          },
-          30000
-        );
-
-    }
-
-    async function loadMessages() {
-
-      messagesElement.innerHTML =
-        '<div class="empty">メッセージを読み込み中...</div>';
-
-      if (
-        !currentUsername ||
-        !friendId
-      ) {
-
-        messagesElement.innerHTML =
-          '<div class="empty">ユーザー情報を取得できませんでした</div>';
-
-        return;
-
-      }
-
-      const {
-        data: sentMessages,
-        error: sentError
-      } =
-        await supabaseClient
-          .from("messages")
-          .select("*")
-          .eq(
-            "sender_id",
-            currentUsername
-          )
-          .eq(
-            "receiver_id",
-            friendId
-          );
-
-      if (sentError) {
-
-        console.error(
-          "自分からのメッセージ取得エラー:",
-          sentError
-        );
-
-        messagesElement.innerHTML =
-          '<div class="empty">メッセージを読み込めませんでした</div>';
-
-        return;
-
-      }
-
-      const {
-        data: receivedMessages,
-        error: receivedError
-      } =
-        await supabaseClient
-          .from("messages")
-          .select("*")
-          .eq(
-            "sender_id",
-            friendId
-          )
-          .eq(
-            "receiver_id",
-            currentUsername
-          );
-
-      if (receivedError) {
-
-        console.error(
-          "相手からのメッセージ取得エラー:",
-          receivedError
-        );
-
-        messagesElement.innerHTML =
-          '<div class="empty">メッセージを読み込めませんでした</div>';
-
-        return;
-
-      }
-
-      const messages = [
-        ...(sentMessages || []),
-        ...(receivedMessages || [])
-      ];
-
-      messages.sort(
-        function(a, b) {
-
-          return (
-            new Date(a.created_at) -
-            new Date(b.created_at)
-          );
-
-        }
+      await addMessageToScreen(
+        data
       );
 
-      await loadReadStatuses(
-        messages
-      );
-
-      await markMessagesAsRead(
-        messages
-      );
-
-      messagesElement.innerHTML = "";
-
-      if (
-        messages.length === 0
-      ) {
-
-        messagesElement.innerHTML =
-          '<div class="empty">まだメッセージがありません</div>';
-
-        updateLatestButton();
-
-        return;
-
-      }
-
-      for (
-        const message of messages
-      ) {
-
-        await addMessageToScreen(
-          message
-        );
-
-      }
 
       scrollToBottom();
 
       updateLatestButton();
 
+      await createNotification();
+
+
+    } finally {
+
+      imageButton.disabled =
+        false;
+
+      sendButton.disabled =
+        false;
+
+      imageInput.value =
+        "";
+    }
+  }
+);
+
+
+/* =========================================
+   HTMLエスケープ
+========================================= */
+
+function escapeHtml(value) {
+
+  if (
+    value === null ||
+    value === undefined
+  ) {
+    return "";
+  }
+
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
+/* =========================================
+   ページを離れるとき
+========================================= */
+
+window.addEventListener(
+  "pagehide",
+  function() {
+
+    if (presenceTimer) {
+
+      clearInterval(
+        presenceTimer
+      );
+
+      presenceTimer = null;
     }
 
-    async function addMessageToScreen(
-      message
-    ) {
 
-      const wrapper =
-        document.createElement("div");
+    if (realtimeChannel) {
 
-      wrapper.className =
-        "message";
-
-      const isMine =
-        message.sender_id ===
-        currentUsername;
-
-      if (isMine) {
-
-        wrapper.classList.add("mine");
-
-      }
-
-      if (!isMine) {
-
-        const avatar =
-          createAvatar(
-            friendAvatarUrl,
-            "👤"
-          );
-
-        wrapper.appendChild(
-          avatar
-        );
-
-      }
-
-      const messageContentBox =
-        document.createElement("div");
-
-      messageContentBox.className =
-        "message-content-box";
-
-      const bubble =
-        document.createElement("div");
-
-      bubble.className =
-        "bubble";
-
-      if (message.is_deleted) {
-
-        bubble.classList.add(
-          "deleted-message"
-        );
-
-        bubble.textContent =
-          "このメッセージは取り消されました";
-
-      } else {
-
-        if (message.image_url) {
-
-          const image =
-            document.createElement("img");
-
-          image.className =
-            "chat-image";
-
-          image.alt =
-            "送信された画像";
-
-          const {
-            data,
-            error
-          } =
-            await supabaseClient.storage
-              .from("chat-images")
-              .createSignedUrl(
-                message.image_url,
-                3600
-              );
-
-          if (
-            !error &&
-            data?.signedUrl
-          ) {
-
-            image.src =
-              data.signedUrl;
-
-            bubble.appendChild(
-              image
-            );
-
-          }
-
-        }
-
-        if (message.content) {
-
-          const text =
-            document.createElement("div");
-
-          text.textContent =
-            message.content;
-
-          bubble.appendChild(
-            text
-          );
-
-        }
-
-      }
-
-      const time =
-        document.createElement("div");
-
-      time.className =
-        "time";
-
-      const date =
-        new Date(
-          message.created_at
-        );
-
-      time.textContent =
-        date.toLocaleTimeString(
-          "ja-JP",
-          {
-            hour: "2-digit",
-            minute: "2-digit"
-          }
-        );
-
-      bubble.appendChild(
-        time
+      supabaseClient.removeChannel(
+        realtimeChannel
       );
 
-      messageContentBox.appendChild(
-        bubble
-      );
-
-      if (
-        isMine &&
-        !message.is_deleted &&
-        readMessageIds.has(
-          message.id
-        )
-      ) {
-
-        const readStatus =
-          document.createElement("div");
-
-        readStatus.className =
-          "read-status";
-
-        readStatus.textContent =
-          "既読";
-
-        messageContentBox.appendChild(
-          readStatus
-        );
-
-      }
-
-      if (
-        isMine &&
-        !message.is_deleted
-      ) {
-
-        const deleteButton =
-          document.createElement("button");
-
-        deleteButton.type =
-          "button";
-
-        deleteButton.className =
-          "delete-button";
-
-        deleteButton.textContent =
-          "🗑️ 送信取り消し";
-
-        deleteButton.addEventListener(
-          "click",
-          async function(event) {
-
-            event.preventDefault();
-            event.stopPropagation();
-
-            await deleteMessage(
-              message.id
-            );
-
-          }
-        );
-
-        messageContentBox.appendChild(
-          deleteButton
-        );
-
-      }
-
-      wrapper.appendChild(
-        messageContentBox
-      );
-
-      if (isMine) {
-
-        const avatar =
-          createAvatar(
-            myAvatarUrl,
-            "😊"
-          );
-
-        wrapper.appendChild(
-          avatar
-        );
-
-      }
-
-      messagesElement.appendChild(
-        wrapper
-      );
-
+      realtimeChannel = null;
     }
+  }
+);
 
-    function startRealtime() {
 
-      if (realtimeChannel) {
-        return;
-      }
+start();
 
-      realtimeChannel =
-        supabaseClient
-          .channel(
-            "chat-" +
-            currentUsername +
-            "-" +
-            friendId
-          )
-
-          .on(
-            "postgres_changes",
-            {
-              event: "INSERT",
-              schema: "public",
-              table: "messages"
-            },
-            async function(payload) {
-
-              const message =
-                payload.new;
-
-              const isThisChat =
-                (
-                  message.sender_id ===
-                    currentUsername &&
-                  message.receiver_id ===
-                    friendId
-                ) ||
-                (
-                  message.sender_id ===
-                    friendId &&
-                  message.receiver_id ===
-                    currentUsername
-                );
-
-              if (!isThisChat) {
-                return;
-              }
-
-              if (
-                message.sender_id ===
-                currentUsername
-              ) {
-
-                return;
-
-              }
-
-              await markMessagesAsRead([
-                message
-              ]);
-
-              await addMessageToScreen(
-                message
-              );
-
-              scrollToBottom();
-
-              updateLatestButton();
-
-            }
-          )
-
-          .on(
-            "postgres_changes",
-            {
-              event: "UPDATE",
-              schema: "public",
-              table: "messages"
-            },
-            async function(payload) {
-
-              const message =
-                payload.new;
-
-              const isThisChat =
-                (
-                  message.sender_id ===
-                    currentUsername &&
-                  message.receiver_id ===
-                    friendId
-                ) ||
-                (
-                  message.sender_id ===
-                    friendId &&
-                  message.receiver_id ===
-                    currentUsername
-                );
-
-              if (!isThisChat) {
-                return;
-              }
-
-              await loadMessages();
-
-              scrollToBottom();
-
-              updateLatestButton();
-
-            }
-          )
-
-          .on(
-            "postgres_changes",
-            {
-              event: "INSERT",
-              schema: "public",
-              table: "message_reads"
-            },
-            async function(payload) {
-
-              const read =
-                payload.new;
-
-              if (
-                read.user_id !== friendId
-              ) {
-
-                return;
-
-              }
-
-              const {
-                data: message
-              } =
-                await supabaseClient
-                  .from("messages")
-                  .select(
-                    "id, sender_id, receiver_id"
-                  )
-                  .eq(
-                    "id",
-                    read.message_id
-                  )
-                  .maybeSingle();
-
-              if (!message) {
-                return;
-              }
-
-              if (
-                message.sender_id !==
-                  currentUsername ||
-                message.receiver_id !==
-                  friendId
-              ) {
-
-                return;
-
-              }
-
-              readMessageIds.add(
-                read.message_id
-              );
-
-              await loadMessages();
-
-            }
-          )
-
-          .subscribe();
-
-    }
-
-    messageForm.addEventListener(
-      "submit",
-      async function(event) {
-
-        event.preventDefault();
-
-        const text =
-          messageInput.value.trim();
-
-        if (!text) {
-          return;
-        }
-
-        if (
-          !currentUsername ||
-          !friendId
-        ) {
-
-          alert(
-            "ログイン情報または相手の情報を取得できません。"
-          );
-
-          return;
-
-        }
-
-        sendButton.disabled =
-          true;
-
-        const {
-          data,
-          error
-        } =
-          await supabaseClient
-            .from("messages")
-            .insert({
-
-              sender_id:
-                currentUsername,
-
-              receiver_id:
-                friendId,
-
-              content:
-                text,
-
-              image_url:
-                "",
-
-              is_deleted:
-                false
-
-            })
-            .select()
-            .single();
-
-        sendButton.disabled =
-          false;
-
-        if (error) {
-
-          console.error(
-            "送信エラー:",
-            error
-          );
-
-          alert(
-            "メッセージを送信できませんでした。\n\n" +
-            error.message
-          );
-
-          return;
-
-        }
-
-        messageInput.value =
-          "";
-
-        await addMessageToScreen(
-          data
-        );
-
-        scrollToBottom();
-
-        updateLatestButton();
-
-        await createNotification();
-
-      }
-    );
-
-    imageButton.addEventListener(
-      "click",
-      function() {
-
-        imageInput.click();
-
-      }
-    );
-
-    imageInput.addEventListener(
-      "change",
-      async function() {
-
-        const file =
-          imageInput.files?.[0];
-
-        if (!file) {
-          return;
-        }
-
-        if (
-          !currentUsername ||
-          !friendId
-        ) {
-
-          alert(
-            "ログイン情報または相手の情報を取得できません。"
-          );
-
-          imageInput.value =
-            "";
-
-          return;
-
-        }
-
-        if (
-          !file.type.startsWith("image/")
-        ) {
-
-          alert(
-            "画像ファイルを選んでください。"
-          );
-
-          imageInput.value =
-            "";
-
-          return;
-
-        }
-
-        imageButton.disabled =
-          true;
-
-        sendButton.disabled =
-          true;
-
-        try {
-
-          const extension =
-            file.name
-              .split(".")
-              .pop() ||
-            "jpg";
-
-          const filePath =
-            currentUsername +
-            "/" +
-            Date.now() +
-            "_" +
-            Math.random()
-              .toString(36)
-              .slice(2) +
-            "." +
-            extension;
-
-          const {
-            error:
-              uploadError
-          } =
-            await supabaseClient.storage
-              .from("chat-images")
-              .upload(
-                filePath,
-                file,
-                {
-                  contentType:
-                    file.type,
-
-                  upsert:
-                    false
-                }
-              );
-
-          if (uploadError) {
-
-            console.error(
-              "画像アップロードエラー:",
-              uploadError
-            );
-
-            alert(
-              "画像をアップロードできませんでした。\n\n" +
-              uploadError.message
-            );
-
-            return;
-
-          }
-
-          const {
-            data,
-            error
-          } =
-            await supabaseClient
-              .from("messages")
-              .insert({
-
-                sender_id:
-                  currentUsername,
-
-                receiver_id:
-                  friendId,
-
-                content:
-                  "",
-
-                image_url:
-                  filePath,
-
-                is_deleted:
-                  false
-
-              })
-              .select()
-              .single();
-
-          if (error) {
-
-            console.error(
-              "画像メッセージ保存エラー:",
-              error
-            );
-
-            alert(
-              "画像メッセージを保存できませんでした。\n\n" +
-              error.message
-            );
-
-            return;
-
-          }
-
-          await addMessageToScreen(
-            data
-          );
-
-          scrollToBottom();
-
-          updateLatestButton();
-
-          await createNotification();
-
-        } finally {
-
-          imageButton.disabled =
-            false;
-
-          sendButton.disabled =
-            false;
-
-          imageInput.value =
-            "";
-
-        }
-
-      }
-    );
-
-    /* ページを離れたらタイマー停止 */
-
-    window.addEventListener(
-      "pagehide",
-      function() {
-
-        if (presenceTimer) {
-
-          clearInterval(
-            presenceTimer
-          );
-
-          presenceTimer = null;
-
-        }
-
-        if (realtimeChannel) {
-
-          supabaseClient.removeChannel(
-            realtimeChannel
-          );
-
-          realtimeChannel = null;
-
-        }
-
-      }
-    );
-
-    start();
-
-  </script>
+</script>
 
 </body>
 </html>
