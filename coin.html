@@ -97,7 +97,9 @@ body {
   line-height: 1.6;
 }
 
-/* 運試し */
+/* =========================
+   運試し
+========================= */
 
 .slot {
   background: #faf9ff;
@@ -149,7 +151,9 @@ body {
   cursor: not-allowed;
 }
 
-/* コインを集める */
+/* =========================
+   コインを集める
+========================= */
 
 .actions {
   display: grid;
@@ -183,7 +187,79 @@ body {
   margin-top: 4px;
 }
 
-/* 交換ショップ */
+/* =========================
+   フレームショップ
+========================= */
+
+.shop-details {
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.shop-summary {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background: linear-gradient(
+    135deg,
+    #f8f5ff,
+    #fff4fb
+  );
+
+  border: 2px solid #e8e3ff;
+  border-radius: 18px;
+
+  padding: 16px;
+  font-weight: bold;
+}
+
+.shop-summary::-webkit-details-marker {
+  display: none;
+}
+
+.shop-summary-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shop-summary-icon {
+  font-size: 28px;
+}
+
+.shop-summary-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.shop-summary-title {
+  font-size: 16px;
+}
+
+.shop-summary-sub {
+  color: #777;
+  font-size: 12px;
+  font-weight: normal;
+}
+
+.shop-arrow {
+  font-size: 18px;
+  transition: transform .2s;
+}
+
+.shop-details[open] .shop-arrow {
+  transform: rotate(180deg);
+}
+
+.shop-content {
+  padding-top: 14px;
+}
 
 .shop {
   display: grid;
@@ -201,19 +277,150 @@ body {
   gap: 12px;
 }
 
-.shop-icon {
+.shop-preview {
   width: 58px;
   height: 58px;
-  background: white;
-  border-radius: 16px;
+  border-radius: 50%;
+  padding: 4px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  font-size: 34px;
   flex-shrink: 0;
+
+  background: #ffd0e7;
 }
+
+.shop-preview-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 27px;
+}
+
+/* =========================
+   フレームデザイン
+========================= */
+
+.frame-sakura {
+  background:
+    linear-gradient(
+      135deg,
+      #ff9bc9,
+      #ff5da8,
+      #ffd1e7
+    ) !important;
+}
+
+.frame-star {
+  background:
+    linear-gradient(
+      135deg,
+      #ffe98a,
+      #f4bf3f,
+      #fff1a8
+    ) !important;
+}
+
+.frame-diamond {
+  background:
+    linear-gradient(
+      135deg,
+      #a8ecff,
+      #4db9ee,
+      #d4f7ff
+    ) !important;
+}
+
+.frame-heart {
+  background:
+    linear-gradient(
+      135deg,
+      #ff9bb8,
+      #ff4f81,
+      #ffc4d5
+    ) !important;
+}
+
+.frame-rainbow {
+  background:
+    conic-gradient(
+      #ff4d4d,
+      #ffb84d,
+      #ffff66,
+      #5cff8d,
+      #4ddcff,
+      #7b6cff,
+      #ff4dd8,
+      #ff4d4d
+    ) !important;
+}
+
+.frame-flame {
+  background:
+    linear-gradient(
+      135deg,
+      #ff3b1f,
+      #ff8c00,
+      #ffd400
+    ) !important;
+}
+
+.frame-sea {
+  background:
+    linear-gradient(
+      135deg,
+      #0077ff,
+      #00cfff,
+      #9ff5ff
+    ) !important;
+}
+
+.frame-space {
+  background:
+    radial-gradient(
+      circle at 20% 20%,
+      #ffffff 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 70% 35%,
+      #ffffff 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 45% 75%,
+      #ffffff 1px,
+      transparent 2px
+    ),
+    linear-gradient(
+      135deg,
+      #08051c,
+      #25104f,
+      #09031c
+    ) !important;
+}
+
+.frame-neon {
+  background:
+    linear-gradient(
+      135deg,
+      #00ff88,
+      #00e5ff,
+      #ff00d4
+    ) !important;
+}
+
+/* =========================
+   ショップ情報
+========================= */
 
 .shop-info {
   flex: 1;
@@ -254,7 +461,9 @@ body {
   cursor: default;
 }
 
-/* 説明 */
+/* =========================
+   説明
+========================= */
 
 .notice {
   background: #fff8df;
@@ -279,10 +488,13 @@ body {
     padding: 12px;
   }
 
-  .shop-icon {
+  .shop-preview {
     width: 50px;
     height: 50px;
-    font-size: 29px;
+  }
+
+  .shop-preview-inner {
+    font-size: 23px;
   }
 
   .buy-button {
@@ -475,15 +687,15 @@ body {
       >
 
         <div class="icon">
-          🎁
+          🖼️
         </div>
 
         <strong>
-          交換
+          フレーム
         </strong>
 
         <span>
-          アイテムと交換
+          フレームと交換
         </span>
 
       </button>
@@ -493,27 +705,63 @@ body {
   </div>
 
 
-  <!-- 交換ショップ -->
+  <!-- フレームショップ -->
 
   <div
     class="card"
     id="shopCard"
   >
 
-    <h2>
-      🎁 交換ショップ
-    </h2>
-
-    <p class="description">
-      集めたコインでプロフィールアイテムを交換できます！
-    </p>
-
-    <div
-      class="shop"
-      id="shop"
+    <details
+      class="shop-details"
+      id="shopDetails"
     >
-      読み込み中……
-    </div>
+
+      <summary class="shop-summary">
+
+        <div class="shop-summary-left">
+
+          <div class="shop-summary-icon">
+            🖼️
+          </div>
+
+          <div class="shop-summary-text">
+
+            <div class="shop-summary-title">
+              フレームショップ
+            </div>
+
+            <div class="shop-summary-sub">
+              コインでプロフィールフレームを交換
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="shop-arrow">
+          ▼
+        </div>
+
+      </summary>
+
+
+      <div class="shop-content">
+
+        <p class="description">
+          集めたコインでプロフィールのフレームを交換できます！
+        </p>
+
+        <div
+          class="shop"
+          id="shop"
+        >
+          読み込み中……
+        </div>
+
+      </div>
+
+    </details>
 
   </div>
 
@@ -533,7 +781,7 @@ body {
       ゲーム内ポイントです。<br>
 
       ゲームやチャレンジなどで集めて、
-      プロフィールアイテムなどと
+      プロフィールフレームなどと
       交換できます。
 
     </div>
@@ -1173,6 +1421,38 @@ async function playSlot() {
 
 
 /* =========================
+   フレームクラス
+========================= */
+
+function getFrameClass(itemKey) {
+
+  const map = {
+
+    sakura: "frame-sakura",
+
+    star: "frame-star",
+
+    diamond: "frame-diamond",
+
+    space: "frame-space",
+
+    neon: "frame-neon",
+
+    rainbow: "frame-rainbow",
+
+    flame: "frame-flame",
+
+    sea: "frame-sea",
+
+    heart: "frame-heart"
+
+  };
+
+  return map[itemKey] || "";
+}
+
+
+/* =========================
    ショップ読み込み
 ========================= */
 
@@ -1191,7 +1471,7 @@ async function loadShop() {
     await supabaseClient
       .from("coin_items")
       .select(
-        "item_key,name,icon,price"
+        "item_key,name,icon,price,frame_color"
       )
       .order(
         "price",
@@ -1209,14 +1489,26 @@ async function loadShop() {
     );
 
     shop.innerHTML =
-      "❌ ショップを読み込めませんでした";
+      "❌ フレームショップを読み込めませんでした";
 
     return;
   }
 
 
+  /*
+   * フレームショップなので
+   * adminは除外。
+   *
+   * 今後DBに新しいフレームを追加した場合も、
+   * admin以外なら自動でショップに表示される。
+   */
+
   shopItems =
-    items || [];
+    (items || [])
+      .filter(
+        item =>
+          item.item_key !== "admin"
+      );
 
 
   const {
@@ -1237,7 +1529,7 @@ async function loadShop() {
   if (ownedError) {
 
     console.error(
-      "購入済みアイテム取得エラー:",
+      "購入済みフレーム取得エラー:",
       ownedError
     );
 
@@ -1262,7 +1554,7 @@ async function loadShop() {
 
 
 /* =========================
-   ショップ表示
+   フレームショップ表示
 ========================= */
 
 function renderShop() {
@@ -1278,7 +1570,7 @@ function renderShop() {
   ) {
 
     shop.innerHTML =
-      "現在交換できるアイテムはありません。";
+      "現在交換できるフレームはありません。";
 
     return;
   }
@@ -1295,12 +1587,40 @@ function renderShop() {
             );
 
 
+          const frameClass =
+            getFrameClass(
+              item.item_key
+            );
+
+
+          /*
+           * DBにframe_colorがある場合は
+           * 未登録の新フレームでも色を表示できる。
+           */
+
+          const inlineFrameStyle =
+            frameClass
+              ? ""
+              : `style="background:${escapeAttribute(
+                  item.frame_color ||
+                  "#ffd0e7"
+                )}"`;
+
+
           return `
             <div class="shop-item">
 
-              <div class="shop-icon">
-                ${item.icon}
+              <div
+                class="shop-preview ${frameClass}"
+                ${inlineFrameStyle}
+              >
+
+                <div class="shop-preview-inner">
+                  ${escapeHtml(item.icon || "🖼️")}
+                </div>
+
               </div>
+
 
               <div class="shop-info">
 
@@ -1313,6 +1633,7 @@ function renderShop() {
                 </div>
 
               </div>
+
 
               ${
                 owned
@@ -1327,7 +1648,9 @@ function renderShop() {
                   : `
                     <button
                       class="buy-button"
-                      onclick="buyItem('${item.item_key}')"
+                      onclick="buyItem('${escapeAttribute(
+                        item.item_key
+                      )}')"
                     >
                       交換
                     </button>
@@ -1373,8 +1696,30 @@ function escapeHtml(value) {
 }
 
 
+function escapeAttribute(value) {
+
+  return String(value)
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    );
+}
+
+
 /* =========================
-   アイテム交換
+   フレーム交換
 ========================= */
 
 async function buyItem(itemKey) {
@@ -1390,7 +1735,24 @@ async function buyItem(itemKey) {
   if (!item) {
 
     showMessage(
-      "❌ アイテムが見つかりません"
+      "❌ フレームが見つかりません"
+    );
+
+    return;
+  }
+
+
+  /*
+   * 管理者フレームは
+   * ショップから購入できない。
+   */
+
+  if (
+    itemKey === "admin"
+  ) {
+
+    showMessage(
+      "❌ このフレームは交換できません"
     );
 
     return;
@@ -1402,7 +1764,7 @@ async function buyItem(itemKey) {
   ) {
 
     showMessage(
-      "このアイテムはすでに交換済みだよ！"
+      "このフレームはすでに交換済みだよ！"
     );
 
     return;
@@ -1436,8 +1798,6 @@ async function buyItem(itemKey) {
   }
 
 
-  /* ボタンを一時的に止める */
-
   renderShopButtonsDisabled();
 
 
@@ -1449,7 +1809,9 @@ async function buyItem(itemKey) {
     balance - price;
 
 
-  /* コインを減らす */
+  /* =========================
+     コインを減らす
+  ========================= */
 
   const {
     error: coinError
@@ -1458,7 +1820,8 @@ async function buyItem(itemKey) {
       .from("user_coins")
       .update({
 
-        coins: newBalance,
+        coins:
+          newBalance,
 
         updated_at:
           new Date().toISOString()
@@ -1487,7 +1850,9 @@ async function buyItem(itemKey) {
   }
 
 
-  /* 購入済みとして保存 */
+  /* =========================
+     所有フレーム保存
+  ========================= */
 
   const {
     error: itemError
@@ -1508,18 +1873,19 @@ async function buyItem(itemKey) {
   if (itemError) {
 
     console.error(
-      "アイテム保存エラー:",
+      "フレーム保存エラー:",
       itemError
     );
 
 
-    /* アイテム保存に失敗したらコインを戻す */
+    /* コインを元に戻す */
 
     await supabaseClient
       .from("user_coins")
       .update({
 
-        coins: oldBalance,
+        coins:
+          oldBalance,
 
         updated_at:
           new Date().toISOString()
@@ -1541,7 +1907,9 @@ async function buyItem(itemKey) {
   }
 
 
-  /* 成功 */
+  /* =========================
+     成功
+  ========================= */
 
   balance =
     newBalance;
@@ -1575,24 +1943,57 @@ function renderShopButtonsDisabled() {
     )
     .forEach(
       button => {
-        button.disabled = true;
+
+        button.disabled =
+          true;
+
       }
     );
 }
 
 
 /* =========================
-   交換ショップへ移動
+   フレームショップへ移動
 ========================= */
 
 function scrollToShop() {
 
-  document
-    .getElementById("shopCard")
-    .scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
+  const details =
+    document.getElementById(
+      "shopDetails"
+    );
+
+
+  /*
+   * 折りたたまれていたら開く
+   */
+
+  if (details) {
+    details.open = true;
+  }
+
+
+  const card =
+    document.getElementById(
+      "shopCard"
+    );
+
+
+  if (card) {
+
+    setTimeout(
+      function() {
+
+        card.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+
+      },
+      50
+    );
+
+  }
 }
 
 
