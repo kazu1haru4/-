@@ -366,7 +366,6 @@
 
     </header>
 
-
     <div class="messages-wrapper">
 
       <section
@@ -389,7 +388,6 @@
       </button>
 
     </div>
-
 
     <form
       class="input-area"
@@ -430,7 +428,6 @@
 
   </main>
 
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
@@ -446,7 +443,6 @@
         SUPABASE_URL,
         SUPABASE_KEY
       );
-
 
     const messagesElement =
       document.getElementById("messages");
@@ -478,7 +474,6 @@
     const friendStatus =
       document.getElementById("friendStatus");
 
-
     let currentUsername = "";
     let friendId = "";
     let realtimeChannel = null;
@@ -493,7 +488,6 @@
     const ONLINE_LIMIT =
       60 * 1000;
 
-
     const params =
       new URLSearchParams(
         window.location.search
@@ -501,7 +495,6 @@
 
     friendId =
       params.get("user") || "";
-
 
     /* =========================================
        相手のオンライン状態
@@ -528,7 +521,6 @@
           )
           .maybeSingle();
 
-
       if (error) {
 
         console.error(
@@ -545,7 +537,6 @@
         return;
       }
 
-
       if (!data?.last_seen) {
 
         friendStatus.className =
@@ -557,17 +548,14 @@
         return;
       }
 
-
       const lastSeen =
         new Date(
           data.last_seen
         ).getTime();
 
-
       const online =
         !Number.isNaN(lastSeen) &&
         Date.now() - lastSeen <= ONLINE_LIMIT;
-
 
       if (online) {
 
@@ -588,7 +576,6 @@
       }
 
     }
-
 
     /* =========================================
        自分のオンライン状態
@@ -619,7 +606,6 @@
             }
           );
 
-
       if (error) {
 
         console.error(
@@ -631,7 +617,6 @@
 
     }
 
-
     function createAvatar(
       url,
       fallback
@@ -642,7 +627,6 @@
 
       avatar.className =
         "message-avatar";
-
 
       if (url) {
 
@@ -672,7 +656,6 @@
       return avatar;
 
     }
-
 
     async function createNotification() {
 
@@ -714,7 +697,6 @@
 
           });
 
-
       if (error) {
 
         console.error(
@@ -725,7 +707,6 @@
       }
 
     }
-
 
     function scrollToBottom(
       smooth = false
@@ -745,14 +726,12 @@
 
     }
 
-
     function updateLatestButton() {
 
       const distanceFromBottom =
         messagesElement.scrollHeight -
         messagesElement.scrollTop -
         messagesElement.clientHeight;
-
 
       if (
         distanceFromBottom > 150
@@ -768,7 +747,6 @@
 
     }
 
-
     messagesElement.addEventListener(
       "scroll",
       function() {
@@ -781,7 +759,6 @@
       }
     );
 
-
     latestButton.addEventListener(
       "click",
       function() {
@@ -790,7 +767,6 @@
 
       }
     );
-
 
     async function markMessagesAsRead(
       messages
@@ -804,7 +780,6 @@
       ) {
         return;
       }
-
 
       const unreadMessages =
         messages.filter(
@@ -820,13 +795,11 @@
           }
         );
 
-
       if (
         unreadMessages.length === 0
       ) {
         return;
       }
-
 
       const rows =
         unreadMessages.map(
@@ -843,7 +816,6 @@
           }
         );
 
-
       const {
         error
       } =
@@ -857,7 +829,6 @@
             }
           );
 
-
       if (error) {
 
         console.error(
@@ -868,7 +839,6 @@
         return;
 
       }
-
 
       unreadMessages.forEach(
         function(message) {
@@ -882,14 +852,12 @@
 
     }
 
-
     async function loadReadStatuses(
       messages
     ) {
 
       readMessageIds =
         new Set();
-
 
       const myMessages =
         messages.filter(
@@ -905,13 +873,11 @@
           }
         );
 
-
       if (
         myMessages.length === 0
       ) {
         return;
       }
-
 
       const ids =
         myMessages.map(
@@ -921,7 +887,6 @@
 
           }
         );
-
 
       const {
         data,
@@ -941,7 +906,6 @@
             ids
           );
 
-
       if (error) {
 
         console.error(
@@ -952,7 +916,6 @@
         return;
 
       }
-
 
       (data || []).forEach(
         function(row) {
@@ -966,7 +929,6 @@
 
     }
 
-
     async function deleteMessage(
       messageId
     ) {
@@ -976,11 +938,9 @@
           "このメッセージを送信取り消ししますか？"
         );
 
-
       if (!ok) {
         return;
       }
-
 
       const {
         error
@@ -999,7 +959,6 @@
             currentUsername
           );
 
-
       if (error) {
 
         console.error(
@@ -1016,13 +975,11 @@
 
       }
 
-
       await loadMessages();
 
       scrollToBottom();
 
     }
-
 
     async function start() {
 
@@ -1041,13 +998,11 @@
 
       }
 
-
       const {
         data,
         error
       } =
         await supabaseClient.auth.getSession();
-
 
       if (
         error ||
@@ -1065,12 +1020,10 @@
 
       }
 
-
       currentUsername =
         data.session.user
           .user_metadata
           ?.username || "";
-
 
       if (!currentUsername) {
 
@@ -1082,10 +1035,8 @@
 
       }
 
-
       /* 自分をオンラインにする */
       await updateMyPresence();
-
 
       /* 相手プロフィール */
 
@@ -1103,10 +1054,8 @@
           )
           .maybeSingle();
 
-
       friendAvatarUrl =
         friendProfile?.avatar_url || "";
-
 
       chatTitle.textContent =
         "💬 " +
@@ -1115,7 +1064,6 @@
           friendId
         );
 
-
       if (friendAvatarUrl) {
 
         headerAvatar.innerHTML =
@@ -1123,10 +1071,8 @@
 
       }
 
-
       /* 相手のオンライン状態 */
       await updateFriendStatus();
-
 
       /* 自分プロフィール */
 
@@ -1144,15 +1090,12 @@
           )
           .maybeSingle();
 
-
       myAvatarUrl =
         myProfile?.avatar_url || "";
-
 
       await loadMessages();
 
       startRealtime();
-
 
       /*
         30秒ごとに
@@ -1174,12 +1117,10 @@
 
     }
 
-
     async function loadMessages() {
 
       messagesElement.innerHTML =
         '<div class="empty">メッセージを読み込み中...</div>';
-
 
       if (
         !currentUsername ||
@@ -1192,7 +1133,6 @@
         return;
 
       }
-
 
       const {
         data: sentMessages,
@@ -1210,7 +1150,6 @@
             friendId
           );
 
-
       if (sentError) {
 
         console.error(
@@ -1224,7 +1163,6 @@
         return;
 
       }
-
 
       const {
         data: receivedMessages,
@@ -1242,7 +1180,6 @@
             currentUsername
           );
 
-
       if (receivedError) {
 
         console.error(
@@ -1257,12 +1194,10 @@
 
       }
 
-
       const messages = [
         ...(sentMessages || []),
         ...(receivedMessages || [])
       ];
-
 
       messages.sort(
         function(a, b) {
@@ -1275,19 +1210,15 @@
         }
       );
 
-
       await loadReadStatuses(
         messages
       );
-
 
       await markMessagesAsRead(
         messages
       );
 
-
       messagesElement.innerHTML = "";
-
 
       if (
         messages.length === 0
@@ -1302,7 +1233,6 @@
 
       }
 
-
       for (
         const message of messages
       ) {
@@ -1313,13 +1243,11 @@
 
       }
 
-
       scrollToBottom();
 
       updateLatestButton();
 
     }
-
 
     async function addMessageToScreen(
       message
@@ -1328,22 +1256,18 @@
       const wrapper =
         document.createElement("div");
 
-
       wrapper.className =
         "message";
-
 
       const isMine =
         message.sender_id ===
         currentUsername;
-
 
       if (isMine) {
 
         wrapper.classList.add("mine");
 
       }
-
 
       if (!isMine) {
 
@@ -1359,20 +1283,17 @@
 
       }
 
-
       const messageContentBox =
         document.createElement("div");
 
       messageContentBox.className =
         "message-content-box";
 
-
       const bubble =
         document.createElement("div");
 
       bubble.className =
         "bubble";
-
 
       if (message.is_deleted) {
 
@@ -1396,7 +1317,6 @@
           image.alt =
             "送信された画像";
 
-
           const {
             data,
             error
@@ -1407,7 +1327,6 @@
                 message.image_url,
                 3600
               );
-
 
           if (
             !error &&
@@ -1425,7 +1344,6 @@
 
         }
 
-
         if (message.content) {
 
           const text =
@@ -1442,19 +1360,16 @@
 
       }
 
-
       const time =
         document.createElement("div");
 
       time.className =
         "time";
 
-
       const date =
         new Date(
           message.created_at
         );
-
 
       time.textContent =
         date.toLocaleTimeString(
@@ -1465,16 +1380,13 @@
           }
         );
 
-
       bubble.appendChild(
         time
       );
 
-
       messageContentBox.appendChild(
         bubble
       );
-
 
       if (
         isMine &&
@@ -1499,7 +1411,6 @@
 
       }
 
-
       if (
         isMine &&
         !message.is_deleted
@@ -1517,7 +1428,6 @@
         deleteButton.textContent =
           "🗑️ 送信取り消し";
 
-
         deleteButton.addEventListener(
           "click",
           async function(event) {
@@ -1532,18 +1442,15 @@
           }
         );
 
-
         messageContentBox.appendChild(
           deleteButton
         );
 
       }
 
-
       wrapper.appendChild(
         messageContentBox
       );
-
 
       if (isMine) {
 
@@ -1559,20 +1466,17 @@
 
       }
 
-
       messagesElement.appendChild(
         wrapper
       );
 
     }
 
-
     function startRealtime() {
 
       if (realtimeChannel) {
         return;
       }
-
 
       realtimeChannel =
         supabaseClient
@@ -1595,7 +1499,6 @@
               const message =
                 payload.new;
 
-
               const isThisChat =
                 (
                   message.sender_id ===
@@ -1610,11 +1513,9 @@
                     currentUsername
                 );
 
-
               if (!isThisChat) {
                 return;
               }
-
 
               if (
                 message.sender_id ===
@@ -1625,16 +1526,13 @@
 
               }
 
-
               await markMessagesAsRead([
                 message
               ]);
 
-
               await addMessageToScreen(
                 message
               );
-
 
               scrollToBottom();
 
@@ -1655,7 +1553,6 @@
               const message =
                 payload.new;
 
-
               const isThisChat =
                 (
                   message.sender_id ===
@@ -1670,11 +1567,9 @@
                     currentUsername
                 );
 
-
               if (!isThisChat) {
                 return;
               }
-
 
               await loadMessages();
 
@@ -1697,7 +1592,6 @@
               const read =
                 payload.new;
 
-
               if (
                 read.user_id !== friendId
               ) {
@@ -1705,7 +1599,6 @@
                 return;
 
               }
-
 
               const {
                 data: message
@@ -1721,11 +1614,9 @@
                   )
                   .maybeSingle();
 
-
               if (!message) {
                 return;
               }
-
 
               if (
                 message.sender_id !==
@@ -1738,11 +1629,9 @@
 
               }
 
-
               readMessageIds.add(
                 read.message_id
               );
-
 
               await loadMessages();
 
@@ -1753,22 +1642,18 @@
 
     }
 
-
     messageForm.addEventListener(
       "submit",
       async function(event) {
 
         event.preventDefault();
 
-
         const text =
           messageInput.value.trim();
-
 
         if (!text) {
           return;
         }
-
 
         if (
           !currentUsername ||
@@ -1783,10 +1668,8 @@
 
         }
 
-
         sendButton.disabled =
           true;
-
 
         const {
           data,
@@ -1815,10 +1698,8 @@
             .select()
             .single();
 
-
         sendButton.disabled =
           false;
-
 
         if (error) {
 
@@ -1836,26 +1717,21 @@
 
         }
 
-
         messageInput.value =
           "";
-
 
         await addMessageToScreen(
           data
         );
 
-
         scrollToBottom();
 
         updateLatestButton();
-
 
         await createNotification();
 
       }
     );
-
 
     imageButton.addEventListener(
       "click",
@@ -1866,7 +1742,6 @@
       }
     );
 
-
     imageInput.addEventListener(
       "change",
       async function() {
@@ -1874,11 +1749,9 @@
         const file =
           imageInput.files?.[0];
 
-
         if (!file) {
           return;
         }
-
 
         if (
           !currentUsername ||
@@ -1896,7 +1769,6 @@
 
         }
 
-
         if (
           !file.type.startsWith("image/")
         ) {
@@ -1912,13 +1784,11 @@
 
         }
 
-
         imageButton.disabled =
           true;
 
         sendButton.disabled =
           true;
-
 
         try {
 
@@ -1927,7 +1797,6 @@
               .split(".")
               .pop() ||
             "jpg";
-
 
           const filePath =
             currentUsername +
@@ -1939,7 +1808,6 @@
               .slice(2) +
             "." +
             extension;
-
 
           const {
             error:
@@ -1959,7 +1827,6 @@
                 }
               );
 
-
           if (uploadError) {
 
             console.error(
@@ -1975,7 +1842,6 @@
             return;
 
           }
-
 
           const {
             data,
@@ -2004,7 +1870,6 @@
               .select()
               .single();
 
-
           if (error) {
 
             console.error(
@@ -2021,16 +1886,13 @@
 
           }
 
-
           await addMessageToScreen(
             data
           );
 
-
           scrollToBottom();
 
           updateLatestButton();
-
 
           await createNotification();
 
@@ -2049,7 +1911,6 @@
 
       }
     );
-
 
     /* ページを離れたらタイマー停止 */
 
@@ -2079,7 +1940,6 @@
 
       }
     );
-
 
     start();
 
