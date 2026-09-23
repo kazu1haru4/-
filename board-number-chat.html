@@ -545,6 +545,18 @@ async function loadMessages(){
    menu.appendChild(gift);
   }
 
+  if(message.sender_id!==username&&!message.is_deleted){
+   const report=document.createElement("button");
+   report.type="button";
+   report.textContent="🚨 通報";
+   report.onclick=e=>{
+    e.stopPropagation();
+    menu.style.display="none";
+    reportBoardMessage(message);
+   };
+   menu.appendChild(report);
+  }
+
   if(message.sender_id===username&&!message.is_deleted){
    const edit=document.createElement("button");
    edit.textContent="✏️ 編集";
