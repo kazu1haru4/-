@@ -3,13 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>個別チャット - フレンドチャット</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -21,17 +18,13 @@
       padding: 20px;
     }
 
-    .page {
-      width: 100%;
-      max-width: 500px;
-      margin: 0 auto;
-    }
+    .page { width: 100%; max-width: 500px; margin: 0 auto; }
 
     .header {
       background: white;
       border-radius: 24px;
       padding: 18px 20px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
+      box-shadow: 0 8px 25px rgba(0,0,0,.07);
       margin-bottom: 15px;
       position: relative;
       text-align: center;
@@ -52,16 +45,8 @@
       font-size: 22px;
     }
 
-    .header h1 {
-      margin: 2px 0 0;
-      font-size: 22px;
-    }
-
-    .header p {
-      margin: 5px 0 0;
-      color: #999;
-      font-size: 12px;
-    }
+    .header h1 { margin: 2px 0 0; font-size: 22px; }
+    .header p { margin: 5px 0 0; color: #999; font-size: 12px; }
 
     .new-chat {
       display: block;
@@ -78,15 +63,9 @@
       margin-bottom: 14px;
     }
 
-    .new-chat:active {
-      transform: scale(0.98);
-    }
+    .new-chat:active, .chat-item:active { transform: scale(.98); }
 
-    .chat-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
+    .chat-list { display: flex; flex-direction: column; gap: 10px; }
 
     .chat-item {
       width: 100%;
@@ -98,33 +77,122 @@
       align-items: center;
       gap: 13px;
       text-align: left;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 6px 18px rgba(0,0,0,.06);
       cursor: pointer;
     }
 
-    .chat-item:active {
-      transform: scale(0.98);
-    }
+    .avatar-wrap { position: relative; flex: 0 0 auto; }
 
-    .avatar-wrap {
+    /* ===== フレーム ===== */
+    .avatar-frame {
       position: relative;
-      flex: 0 0 auto;
-    }
-
-    .avatar {
       width: 58px;
       height: 58px;
+      padding: 3px;
       border-radius: 50%;
-      object-fit: cover;
-      background: #eeeaff;
-      display: block;
+      background: #ffd9ec;
+      box-shadow: 0 0 0 2px white, 0 4px 12px rgba(0,0,0,.12);
+      flex-shrink: 0;
     }
 
-    .avatar-default {
+    .frame-sakura {
+      background: linear-gradient(135deg,#ffb7d8,#ff65ae,#ffd3e8,#ff8bc0);
+      box-shadow: 0 0 0 2px white,0 0 14px rgba(255,100,180,.45);
+    }
+
+    .frame-star {
+      background: linear-gradient(135deg,#fff0a6,#f4bf3f,#fff8c9,#e9a900);
+      box-shadow: 0 0 0 2px white,0 0 15px rgba(244,191,63,.45);
+    }
+
+    .frame-diamond {
+      background: linear-gradient(135deg,#a8edff,#42b9ee,#e2faff,#48caff);
+      box-shadow: 0 0 0 2px white,0 0 15px rgba(50,190,255,.45);
+    }
+
+    .frame-heart {
+      background: linear-gradient(135deg,#ffb1d4,#ff4f9a,#ff8fc2,#ff2f86);
+      box-shadow: 0 0 0 2px white,0 0 16px rgba(255,60,150,.45);
+    }
+
+    .frame-rainbow {
+      background: conic-gradient(#ff0000,#ff7a00,#ffe600,#00d639,#00d9ff,#0066ff,#7a00ff,#ff00d4,#ff0000);
+      box-shadow: 0 0 0 2px white,0 0 14px rgba(80,150,255,.45);
+    }
+
+    .frame-flame {
+      background: linear-gradient(135deg,#ff2200,#ff6500,#ffd000,#ff3300,#ff9500);
+      box-shadow: 0 0 0 2px white,0 0 16px rgba(255,80,0,.5);
+    }
+
+    .frame-sea {
+      background: linear-gradient(135deg,#00c6ff,#0072ff,#00e5ff,#0066cc);
+      box-shadow: 0 0 0 2px white,0 0 16px rgba(0,170,255,.45);
+    }
+
+    .frame-space {
+      background:
+        radial-gradient(circle at 20% 20%,white 0 1px,transparent 3px),
+        radial-gradient(circle at 70% 30%,white 0 1px,transparent 3px),
+        radial-gradient(circle at 40% 75%,#8de7ff 0 1px,transparent 3px),
+        linear-gradient(135deg,#050014,#26105f,#6d28d9,#09001c);
+      box-shadow: 0 0 0 2px white,0 0 16px rgba(100,70,255,.6);
+    }
+
+    .frame-neon {
+      background: linear-gradient(135deg,#00ff00,#00ffff,#ff00ff,#7a00ff,#00ff00);
+      background-size: 300% 300%;
+      box-shadow: 0 0 0 2px white,0 0 8px #00ff00,0 0 16px #00ffff,0 0 25px #ff00ff;
+      animation: neonMove 2s ease infinite;
+    }
+
+    @keyframes neonMove {
+      0% { background-position: 0 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0 50%; }
+    }
+
+    .admin-frame {
+      background: linear-gradient(135deg,#fff4a8,#ffd700,#fff7bd,#e8ad00,#fff4a8);
+      box-shadow: 0 0 0 2px white,0 0 18px rgba(255,215,0,.55);
+    }
+
+    .avatar-image {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+      background: #eeeaff;
+      border: 2px solid white;
+    }
+
+    .avatar-placeholder {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #eeeaff;
+      border: 2px solid white;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 28px;
+    }
+
+    .equipped-badge {
+      position: absolute;
+      right: -7px;
+      top: -7px;
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      z-index: 5;
+      box-shadow: 0 2px 7px rgba(0,0,0,.18),0 0 0 2px white;
     }
 
     .online-dot {
@@ -136,16 +204,12 @@
       border-radius: 50%;
       background: #bbb;
       border: 3px solid white;
+      z-index: 8;
     }
 
-    .online-dot.online {
-      background: #22c55e;
-    }
+    .online-dot.online { background: #22c55e; }
 
-    .chat-info {
-      min-width: 0;
-      flex: 1;
-    }
+    .chat-info { min-width: 0; flex: 1; }
 
     .top-row {
       display: flex;
@@ -162,265 +226,158 @@
       white-space: nowrap;
     }
 
-    .time {
-      color: #aaa;
-      font-size: 11px;
-      white-space: nowrap;
+    /* ===== 名前装飾 ===== */
+    .name-decoration-sakura { color:#ff4f9b; text-shadow:0 2px 8px rgba(255,80,160,.3); }
+    .name-decoration-star { color:#d79a00; text-shadow:0 2px 8px rgba(244,191,63,.45); }
+    .name-decoration-diamond { color:#159ed6; text-shadow:0 2px 8px rgba(66,185,238,.45); }
+    .name-decoration-heart { color:#ff3d7e; text-shadow:0 2px 8px rgba(255,79,129,.4); }
+    .name-decoration-rainbow {
+      background:linear-gradient(90deg,#ff4d4d,#ffb84d,#5cff8d,#4ddcff,#7b6cff,#ff4dd8);
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
     }
+    .name-decoration-flame { color:#ff5b00; text-shadow:0 2px 10px rgba(255,90,0,.5); }
+    .name-decoration-sea { color:#0077ff; text-shadow:0 2px 8px rgba(0,150,255,.4); }
+    .name-decoration-space { color:#8c63ff; text-shadow:0 0 10px rgba(110,60,255,.65); }
+    .name-decoration-neon { color:#00cfcf; text-shadow:0 0 7px #00ff88,0 0 14px #00e5ff,0 0 20px #ff00d4; }
+    .name-decoration-admin { color:#d49b00; text-shadow:0 0 8px rgba(255,215,0,.8),0 0 18px rgba(255,215,0,.45); }
+    .admin-name-badge { font-size:13px; margin-left:4px; }
 
-    .user-id {
-      margin-top: 2px;
-      color: #9a8de0;
-      font-size: 12px;
-    }
+    .time { color:#aaa; font-size:11px; white-space:nowrap; }
+    .user-id { margin-top:2px; color:#9a8de0; font-size:12px; }
 
     .last-message {
-      margin-top: 6px;
-      color: #777;
-      font-size: 13px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      margin-top:6px;
+      color:#777;
+      font-size:13px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
     }
 
-    .status {
-      margin-top: 3px;
-      font-size: 11px;
-      font-weight: bold;
-    }
-
-    .status.online {
-      color: #22a447;
-    }
-
-    .status.offline {
-      color: #999;
-    }
+    .status { margin-top:3px; font-size:11px; font-weight:bold; }
+    .status.online { color:#22a447; }
+    .status.offline { color:#999; }
 
     .empty {
-      background: white;
-      border-radius: 22px;
-      padding: 35px 20px;
-      text-align: center;
-      color: #999;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+      background:white;
+      border-radius:22px;
+      padding:35px 20px;
+      text-align:center;
+      color:#999;
+      box-shadow:0 6px 18px rgba(0,0,0,.05);
     }
 
-    .empty-icon {
-      font-size: 42px;
-      margin-bottom: 10px;
-    }
-
-    .loading {
-      text-align: center;
-      color: #999;
-      padding: 30px;
-    }
+    .empty-icon { font-size:42px; margin-bottom:10px; }
+    .loading { text-align:center; color:#999; padding:30px; }
 
     .error {
-      background: #fff0f0;
-      color: #d44;
-      border-radius: 18px;
-      padding: 15px;
-      text-align: center;
-      font-size: 13px;
+      background:#fff0f0;
+      color:#d44;
+      border-radius:18px;
+      padding:15px;
+      text-align:center;
+      font-size:13px;
     }
 
-    .footer {
-      text-align: center;
-      margin-top: 25px;
-      color: #aaa;
-      font-size: 12px;
-    }
+    .footer { text-align:center; margin-top:25px; color:#aaa; font-size:12px; }
   </style>
 </head>
 
 <body>
-
   <main class="page">
 
     <section class="header">
-
-      <a
-        href="home.html"
-        class="back-button"
-        aria-label="ホームへ戻る"
-      >
-        ←
-      </a>
-
-      <h1>
-        💬 個別チャット
-      </h1>
-
-      <p>
-        チャットした相手
-      </p>
-
+      <a href="home.html" class="back-button" aria-label="ホームへ戻る">←</a>
+      <h1>💬 個別チャット</h1>
+      <p>チャットした相手</p>
     </section>
 
+    <a href="friends.html" class="new-chat">＋ 新しいチャットを始める</a>
 
-    <a
-      href="friends.html"
-      class="new-chat"
-    >
-      ＋ 新しいチャットを始める
-    </a>
-
-
-    <section
-      id="chatList"
-      class="chat-list"
-    >
-      <div class="loading">
-        読み込み中...
-      </div>
+    <section id="chatList" class="chat-list">
+      <div class="loading">読み込み中...</div>
     </section>
 
-
-    <div class="footer">
-      Friend Chat
-    </div>
-
+    <div class="footer">Friend Chat</div>
   </main>
-
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
+    const SUPABASE_URL = "https://yxonmqdyekwenyzekjwj.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 
-    const SUPABASE_URL =
-      "https://yxonmqdyekwenyzekjwj.supabase.co";
+    const supabaseClient = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
 
-    const SUPABASE_KEY =
-      "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+    const ADMIN_USERNAMES = new Set([
+      "kazu1haru100",
+      "kazu1haru4sub"
+    ]);
 
-    const supabaseClient =
-      window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-      );
-
+    const ADMIN_ITEM_KEYS = new Set([
+      "admin",
+      "admin_name"
+    ]);
 
     let currentUsername = "";
 
-    const ONLINE_LIMIT =
-      60 * 1000;
-
-
-    // =========================
-    // オンライン判定
-    // =========================
+    const ONLINE_LIMIT = 60 * 1000;
 
     function isOnline(lastSeen) {
+      if (!lastSeen) return false;
 
-      if (!lastSeen) {
-        return false;
-      }
+      const time = new Date(lastSeen).getTime();
+      if (Number.isNaN(time)) return false;
 
-      const time =
-        new Date(lastSeen).getTime();
-
-      if (Number.isNaN(time)) {
-        return false;
-      }
-
-      return (
-        Date.now() - time <= ONLINE_LIMIT
-      );
-
+      return Date.now() - time <= ONLINE_LIMIT;
     }
 
-
-    // =========================
-    // 最終オンライン表示
-    // =========================
-
     function formatLastOnline(lastSeen) {
-
-      if (!lastSeen) {
-        return "最終オンライン：不明";
-      }
+      if (!lastSeen) return "最終オンライン：不明";
 
       if (isOnline(lastSeen)) {
         return "最終オンライン：今";
       }
 
-      const diff =
-        Date.now() -
-        new Date(lastSeen).getTime();
-
-      const minute =
-        Math.floor(diff / 60000);
+      const diff = Date.now() - new Date(lastSeen).getTime();
+      const minute = Math.floor(diff / 60000);
 
       if (minute < 60) {
-        return (
-          "最終オンライン：" +
-          Math.max(1, minute) +
-          "分前"
-        );
+        return "最終オンライン：" + Math.max(1, minute) + "分前";
       }
 
-      const hour =
-        Math.floor(minute / 60);
+      const hour = Math.floor(minute / 60);
 
       if (hour < 24) {
-        return (
-          "最終オンライン：" +
-          hour +
-          "時間前"
-        );
+        return "最終オンライン：" + hour + "時間前";
       }
 
-      const day =
-        Math.floor(hour / 24);
+      const day = Math.floor(hour / 24);
 
       if (day < 30) {
-        return (
-          "最終オンライン：" +
-          day +
-          "日前"
-        );
+        return "最終オンライン：" + day + "日前";
       }
 
-      const date =
-        new Date(lastSeen);
+      const date = new Date(lastSeen);
 
-      return (
-        "最終オンライン：" +
-        date.getFullYear() +
-        "/" +
-        String(
-          date.getMonth() + 1
-        ).padStart(2, "0") +
-        "/" +
-        String(
-          date.getDate()
-        ).padStart(2, "0")
-      );
-
+      return "最終オンライン：" +
+        date.getFullYear() + "/" +
+        String(date.getMonth() + 1).padStart(2, "0") + "/" +
+        String(date.getDate()).padStart(2, "0");
     }
 
-
-    // =========================
-    // 時刻表示
-    // =========================
-
     function formatMessageTime(createdAt) {
+      if (!createdAt) return "";
 
-      if (!createdAt) {
-        return "";
-      }
+      const date = new Date(createdAt);
+      if (Number.isNaN(date.getTime())) return "";
 
-      const date =
-        new Date(createdAt);
-
-      if (Number.isNaN(date.getTime())) {
-        return "";
-      }
-
-      const now =
-        new Date();
+      const now = new Date();
 
       const sameDay =
         date.getFullYear() === now.getFullYear() &&
@@ -428,102 +385,151 @@
         date.getDate() === now.getDate();
 
       if (sameDay) {
-
-        return (
-          String(
-            date.getHours()
-          ).padStart(2, "0") +
-          ":" +
-          String(
-            date.getMinutes()
-          ).padStart(2, "0")
-        );
-
+        return String(date.getHours()).padStart(2, "0") + ":" +
+          String(date.getMinutes()).padStart(2, "0");
       }
 
-      return (
-        String(
-          date.getMonth() + 1
-        ).padStart(2, "0") +
-        "/" +
-        String(
-          date.getDate()
-        ).padStart(2, "0")
-      );
-
+      return String(date.getMonth() + 1).padStart(2, "0") + "/" +
+        String(date.getDate()).padStart(2, "0");
     }
 
-
-    // =========================
-    // HTMLエスケープ
-    // =========================
-
     function escapeHtml(value) {
-
       return String(value || "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
-
     }
 
-
-    // =========================
-    // 最新メッセージ
-    // =========================
-
     function getMessagePreview(message) {
+      if (!message) return "まだメッセージはありません";
+      if (message.is_deleted) return "メッセージを削除しました";
 
-      if (!message) {
-        return "まだメッセージはありません";
-      }
-
-      if (message.is_deleted) {
-        return "メッセージを削除しました";
-      }
-
-      if (
-        message.content &&
-        message.content.trim()
-      ) {
+      if (message.content && message.content.trim()) {
         return message.content;
       }
 
-      if (message.image_url) {
-        return "📷 画像";
-      }
+      if (message.image_url) return "📷 画像";
 
       return "メッセージ";
-
     }
 
+    // =========================
+    // フレーム・名前装飾
+    // =========================
 
-    // =========================
-    // チャット相手を取得
-    // =========================
+    function getFrameClass(itemKey) {
+      return {
+        sakura: "frame-sakura",
+        star: "frame-star",
+        diamond: "frame-diamond",
+        heart: "frame-heart",
+        rainbow: "frame-rainbow",
+        flame: "frame-flame",
+        sea: "frame-sea",
+        space: "frame-space",
+        neon: "frame-neon",
+        admin: "admin-frame"
+      }[itemKey] || "";
+    }
+
+    function getNameClass(itemKey) {
+      return {
+        nd_sakura: "name-decoration-sakura",
+        nd_star: "name-decoration-star",
+        nd_diamond: "name-decoration-diamond",
+        nd_heart: "name-decoration-heart",
+        nd_rainbow: "name-decoration-rainbow",
+        nd_flame: "name-decoration-flame",
+        nd_sea: "name-decoration-sea",
+        nd_space: "name-decoration-space",
+        nd_neon: "name-decoration-neon",
+        name_sakura: "name-decoration-sakura",
+        admin_name: "name-decoration-admin"
+      }[itemKey] || "";
+    }
+
+    // フレーム＋名前装飾を反映したアバターを作成
+    function createAvatar(profile, frameItem) {
+      const wrap = document.createElement("div");
+      wrap.className = "avatar-wrap";
+
+      const frame = document.createElement("div");
+      frame.className = "avatar-frame";
+
+      const username = profile.user_id || "";
+      const frameKey = profile.equipped_item_key || "";
+
+      // 管理者フレーム
+      if (
+        frameKey === "admin" &&
+        ADMIN_USERNAMES.has(username)
+      ) {
+        frame.classList.add("admin-frame");
+      } else {
+        const frameClass = getFrameClass(frameKey);
+
+        if (frameClass) {
+          frame.classList.add(frameClass);
+        } else if (frameItem?.frame_color) {
+          // 未知のカスタムフレームだけ色をフォールバック
+          frame.style.background = frameItem.frame_color;
+        }
+      }
+
+      if (profile.avatar_url) {
+        const img = document.createElement("img");
+        img.className = "avatar-image";
+        img.src = profile.avatar_url;
+        img.alt = "プロフィール画像";
+        frame.appendChild(img);
+      } else {
+        const placeholder = document.createElement("div");
+        placeholder.className = "avatar-placeholder";
+        placeholder.textContent = "👤";
+        frame.appendChild(placeholder);
+      }
+
+      // 装備フレームのアイコン
+      if (frameItem?.icon) {
+        const badge = document.createElement("div");
+        badge.className = "equipped-badge";
+        badge.textContent =
+          frameKey === "admin" ? "👑" : frameItem.icon;
+
+        badge.style.border =
+          "2px solid " +
+          (frameKey === "admin"
+            ? "#ffd700"
+            : (frameItem.frame_color || "white"));
+
+        frame.appendChild(badge);
+      }
+
+      wrap.appendChild(frame);
+
+      const onlineDot = document.createElement("span");
+      onlineDot.className = "online-dot";
+      wrap.appendChild(onlineDot);
+
+      return {
+        wrap,
+        onlineDot
+      };
+    }
 
     async function loadChats() {
-
-      const chatList =
-        document.getElementById(
-          "chatList"
-        );
-
+      const chatList = document.getElementById("chatList");
 
       if (!currentUsername) {
-
         chatList.innerHTML = `
           <div class="error">
             ログイン情報を取得できませんでした。
           </div>
         `;
-
         return;
-
       }
-
 
       // =====================
       // 自分が送ったメッセージ
@@ -532,24 +538,15 @@
       const {
         data: sentMessages,
         error: sentError
-      } =
-        await supabaseClient
-          .from("messages")
-          .select(
-            "id, sender_id, receiver_id, content, image_url, created_at, is_deleted"
-          )
-          .eq(
-            "sender_id",
-            currentUsername
-          );
-
+      } = await supabaseClient
+        .from("messages")
+        .select(
+          "id, sender_id, receiver_id, content, image_url, created_at, is_deleted"
+        )
+        .eq("sender_id", currentUsername);
 
       if (sentError) {
-
-        console.error(
-          "送信メッセージ取得エラー:",
-          sentError
-        );
+        console.error("送信メッセージ取得エラー:", sentError);
 
         chatList.innerHTML = `
           <div class="error">
@@ -559,9 +556,7 @@
         `;
 
         return;
-
       }
-
 
       // =====================
       // 自分が受け取ったメッセージ
@@ -570,24 +565,15 @@
       const {
         data: receivedMessages,
         error: receivedError
-      } =
-        await supabaseClient
-          .from("messages")
-          .select(
-            "id, sender_id, receiver_id, content, image_url, created_at, is_deleted"
-          )
-          .eq(
-            "receiver_id",
-            currentUsername
-          );
-
+      } = await supabaseClient
+        .from("messages")
+        .select(
+          "id, sender_id, receiver_id, content, image_url, created_at, is_deleted"
+        )
+        .eq("receiver_id", currentUsername);
 
       if (receivedError) {
-
-        console.error(
-          "受信メッセージ取得エラー:",
-          receivedError
-        );
+        console.error("受信メッセージ取得エラー:", receivedError);
 
         chatList.innerHTML = `
           <div class="error">
@@ -597,78 +583,50 @@
         `;
 
         return;
-
       }
-
 
       const allMessages = [
         ...(sentMessages || []),
         ...(receivedMessages || [])
       ];
 
-
       // =====================
-      // 相手ごとに最新メッセージを整理
+      // 相手ごとに最新メッセージ
       // =====================
 
       const latestByUser = {};
 
-
       for (const message of allMessages) {
-
         const otherUser =
           message.sender_id === currentUsername
             ? message.receiver_id
             : message.sender_id;
 
-
-        if (!otherUser) {
-          continue;
-        }
-
+        if (!otherUser) continue;
 
         if (
           !latestByUser[otherUser] ||
           new Date(message.created_at).getTime() >
-          new Date(
-            latestByUser[otherUser].created_at
-          ).getTime()
+          new Date(latestByUser[otherUser].created_at).getTime()
         ) {
-
-          latestByUser[otherUser] =
-            message;
-
+          latestByUser[otherUser] = message;
         }
-
       }
 
-
-      const otherUserIds =
-        Object.keys(latestByUser);
-
+      const otherUserIds = Object.keys(latestByUser);
 
       if (!otherUserIds.length) {
-
         chatList.innerHTML = `
           <div class="empty">
-            <div class="empty-icon">
-              💬
-            </div>
-
-            <div>
-              まだ個別チャットはありません。
-            </div>
-
+            <div class="empty-icon">💬</div>
+            <div>まだ個別チャットはありません。</div>
             <div style="margin-top:8px;font-size:12px;">
               フレンドから新しいチャットを始めてみよう！
             </div>
           </div>
         `;
-
         return;
-
       }
-
 
       // =====================
       // プロフィール取得
@@ -677,39 +635,58 @@
       const {
         data: profiles,
         error: profileError
-      } =
-        await supabaseClient
-          .from("profiles")
-          .select(
-            "user_id, name, avatar_url"
-          )
-          .in(
-            "user_id",
-            otherUserIds
-          );
-
+      } = await supabaseClient
+        .from("profiles")
+        .select(
+          "user_id, name, avatar_url, equipped_item_key, equipped_name_decoration_key"
+        )
+        .in("user_id", otherUserIds);
 
       if (profileError) {
-
-        console.error(
-          "プロフィール取得エラー:",
-          profileError
-        );
-
+        console.error("プロフィール取得エラー:", profileError);
       }
-
 
       const profileMap = {};
 
-
       for (const profile of profiles || []) {
-
-        profileMap[
-          profile.user_id
-        ] = profile;
-
+        profileMap[profile.user_id] = profile;
       }
 
+      // =====================
+      // 装備中フレームを取得
+      // =====================
+
+      const frameKeys = [
+        ...new Set(
+          (profiles || [])
+            .map(p => p.equipped_item_key)
+            .filter(Boolean)
+        )
+      ];
+
+      let frameItems = [];
+
+      if (frameKeys.length) {
+        const {
+          data,
+          error
+        } = await supabaseClient
+          .from("coin_items")
+          .select("item_key,name,icon,frame_color,item_type")
+          .in("item_key", frameKeys);
+
+        if (error) {
+          console.error("フレーム取得エラー:", error);
+        } else {
+          frameItems = data || [];
+        }
+      }
+
+      const frameMap = {};
+
+      for (const item of frameItems) {
+        frameMap[item.item_key] = item;
+      }
 
       // =====================
       // オンライン状態取得
@@ -718,59 +695,31 @@
       const {
         data: presences,
         error: presenceError
-      } =
-        await supabaseClient
-          .from("user_presence")
-          .select(
-            "user_id, last_seen"
-          )
-          .in(
-            "user_id",
-            otherUserIds
-          );
-
+      } = await supabaseClient
+        .from("user_presence")
+        .select("user_id, last_seen")
+        .in("user_id", otherUserIds);
 
       if (presenceError) {
-
-        console.error(
-          "オンライン状態取得エラー:",
-          presenceError
-        );
-
+        console.error("オンライン状態取得エラー:", presenceError);
       }
-
 
       const presenceMap = {};
 
-
       for (const presence of presences || []) {
-
-        presenceMap[
-          presence.user_id
-        ] = presence.last_seen;
-
+        presenceMap[presence.user_id] = presence.last_seen;
       }
 
-
       // =====================
-      // 最新順に並べる
+      // 最新順
       // =====================
 
-      otherUserIds.sort(
-        function(a, b) {
-
-          return (
-            new Date(
-              latestByUser[b].created_at
-            ).getTime() -
-            new Date(
-              latestByUser[a].created_at
-            ).getTime()
-          );
-
-        }
-      );
-
+      otherUserIds.sort((a, b) => {
+        return (
+          new Date(latestByUser[b].created_at).getTime() -
+          new Date(latestByUser[a].created_at).getTime()
+        );
+      });
 
       // =====================
       // 表示
@@ -778,180 +727,123 @@
 
       chatList.innerHTML = "";
 
-
       for (const userId of otherUserIds) {
+        const profile = profileMap[userId] || {
+          user_id: userId,
+          name: userId,
+          avatar_url: null,
+          equipped_item_key: null,
+          equipped_name_decoration_key: null
+        };
 
-        const profile =
-          profileMap[userId] || {};
+        const latest = latestByUser[userId];
+        const lastSeen = presenceMap[userId];
+        const online = isOnline(lastSeen);
+        const name = profile.name || userId;
 
-        const latest =
-          latestByUser[userId];
+        const frameItem =
+          profile.equipped_item_key
+            ? frameMap[profile.equipped_item_key]
+            : null;
 
-        const lastSeen =
-          presenceMap[userId];
+        const avatar = createAvatar(profile, frameItem);
+        avatar.onlineDot.classList.toggle("online", online);
 
-        const online =
-          isOnline(lastSeen);
-
-
-        const name =
-          profile.name ||
-          userId;
-
-
-        const avatarHtml =
-          profile.avatar_url
-            ? `
-              <img
-                class="avatar"
-                src="${escapeHtml(profile.avatar_url)}"
-                alt=""
-              >
-            `
-            : `
-              <div class="avatar avatar-default">
-                👤
-              </div>
-            `;
-
-
-        const item =
-          document.createElement("button");
-
+        const item = document.createElement("button");
         item.type = "button";
         item.className = "chat-item";
 
+        const info = document.createElement("div");
+        info.className = "chat-info";
 
-        item.innerHTML = `
+        const topRow = document.createElement("div");
+        topRow.className = "top-row";
 
-          <div class="avatar-wrap">
+        // 名前装飾
+        const nameEl = document.createElement("div");
+        const nameClass =
+          getNameClass(profile.equipped_name_decoration_key);
 
-            ${avatarHtml}
+        nameEl.className = "name" + (nameClass ? " " + nameClass : "");
 
-            <span
-              class="online-dot ${
-                online ? "online" : ""
-              }"
-            ></span>
+        nameEl.textContent = name;
 
-          </div>
+        // 管理者限定名前装飾
+        if (
+          profile.equipped_name_decoration_key === "admin_name" &&
+          ADMIN_USERNAMES.has(userId)
+        ) {
+          const crown = document.createElement("span");
+          crown.className = "admin-name-badge";
+          crown.textContent = "👑";
+          nameEl.appendChild(crown);
+        }
 
+        const timeEl = document.createElement("div");
+        timeEl.className = "time";
+        timeEl.textContent = formatMessageTime(latest.created_at);
 
-          <div class="chat-info">
+        topRow.append(nameEl, timeEl);
 
-            <div class="top-row">
+        const idEl = document.createElement("div");
+        idEl.className = "user-id";
+        idEl.textContent = "@" + userId;
 
-              <div class="name">
-                ${escapeHtml(name)}
-              </div>
+        const lastMessageEl = document.createElement("div");
+        lastMessageEl.className = "last-message";
+        lastMessageEl.textContent = getMessagePreview(latest);
 
-              <div class="time">
-                ${formatMessageTime(
-                  latest.created_at
-                )}
-              </div>
+        const statusEl = document.createElement("div");
+        statusEl.className = "status " + (online ? "online" : "offline");
+        statusEl.textContent =
+          online
+            ? "🟢 オンライン"
+            : "⚪ " + formatLastOnline(lastSeen);
 
-            </div>
-
-
-            <div class="user-id">
-              @${escapeHtml(userId)}
-            </div>
-
-
-            <div
-              class="last-message"
-            >
-              ${escapeHtml(
-                getMessagePreview(latest)
-              )}
-            </div>
-
-
-            <div
-              class="status ${
-                online
-                  ? "online"
-                  : "offline"
-              }"
-            >
-              ${
-                online
-                  ? "🟢 オンライン"
-                  : "⚪ " +
-                    formatLastOnline(lastSeen)
-              }
-            </div>
-
-          </div>
-
-        `;
-
-
-        item.addEventListener(
-          "click",
-          function() {
-
-            window.location.href =
-              "chat.html?user=" +
-              encodeURIComponent(userId);
-
-          }
+        info.append(
+          topRow,
+          idEl,
+          lastMessageEl,
+          statusEl
         );
 
+        item.append(
+          avatar.wrap,
+          info
+        );
+
+        item.addEventListener("click", () => {
+          window.location.href =
+            "chat.html?user=" +
+            encodeURIComponent(userId);
+        });
 
         chatList.appendChild(item);
-
       }
-
     }
 
-
-    // =========================
-    // 開始
-    // =========================
-
     async function start() {
-
       const {
         data,
         error
-      } =
-        await supabaseClient.auth.getUser();
+      } = await supabaseClient.auth.getUser();
 
-
-      if (
-        error ||
-        !data.user
-      ) {
-
-        document
-          .getElementById("chatList")
-          .innerHTML = `
-            <div class="error">
-              ログイン情報を確認できません。
-            </div>
-          `;
-
+      if (error || !data.user) {
+        document.getElementById("chatList").innerHTML = `
+          <div class="error">
+            ログイン情報を確認できません。
+          </div>
+        `;
         return;
-
       }
 
-
       currentUsername =
-        data.user
-          .user_metadata
-          ?.username || "";
-
+        data.user.user_metadata?.username || "";
 
       await loadChats();
-
     }
 
-
     start();
-
   </script>
-
 </body>
 </html>
