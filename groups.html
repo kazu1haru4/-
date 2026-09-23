@@ -10,8 +10,10 @@
     .header{background:white;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;box-shadow:0 3px 10px rgba(0,0,0,.06)}
     .title{font-size:22px;font-weight:bold}
     .header-right{display:flex;gap:8px;align-items:center}
-    .manage-button{display:none;border:none;border-radius:12px;background:#333;color:white;padding:10px 12px;font-size:13px;font-weight:bold}
-    .add-button{width:44px;height:44px;border:none;border-radius:50%;background:#8f7cff;color:white;font-size:28px;line-height:44px}
+    .manage-button{display:none;border:none;border-radius:12px;background:#333;color:white;padding:10px 12px;font-size:13px;font-weight:bold;cursor:pointer}
+    .manage-button:active{transform:scale(.97)}
+    .add-button{width:44px;height:44px;border:none;border-radius:50%;background:#8f7cff;color:white;font-size:28px;line-height:44px;cursor:pointer}
+    .add-button:active{transform:scale(.96)}
     .group-list{padding:16px}
     .group{display:block;background:white;border-radius:18px;padding:16px;margin-bottom:12px;box-shadow:0 5px 15px rgba(0,0,0,.05);cursor:pointer;text-decoration:none;color:#333}
     .group:active{transform:scale(.98)}
@@ -22,104 +24,360 @@
   </style>
 </head>
 <body>
+
 <header class="header">
   <div class="title">👥 グループ</div>
+
   <div class="header-right">
-    <button class="manage-button" id="manageButton" type="button">🛡️ 管理</button>
-    <button class="add-button" id="addButton" type="button">＋</button>
+    <!-- 管理者だけ表示 -->
+    <button
+      class="manage-button"
+      id="manageButton"
+      type="button"
+    >
+      🛡️ 管理
+    </button>
+
+    <button
+      class="add-button"
+      id="addButton"
+      type="button"
+    >
+      ＋
+    </button>
   </div>
 </header>
 
-<main class="group-list" id="groupList"><div class="empty">グループを読み込み中...</div></main>
-<a href="home.html" class="home-button">🏠 ホーム</a>
+<main class="group-list" id="groupList">
+  <div class="empty">
+    グループを読み込み中...
+  </div>
+</main>
+
+<a href="home.html" class="home-button">
+  🏠 ホーム
+</a>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="ban-check.js"></script>
-<script>
-const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
-const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
-const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-const groupList=document.getElementById("groupList");
-const addButton=document.getElementById("addButton");
-const manageButton=document.getElementById("manageButton");
-const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
-let currentUsername="";
+<script>
+const SUPABASE_URL =
+  "https://yxonmqdyekwenyzekjwj.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+const groupList =
+  document.getElementById("groupList");
+
+const addButton =
+  document.getElementById("addButton");
+
+const manageButton =
+  document.getElementById("manageButton");
+
+
+/* =========================
+   管理者ID
+========================= */
+
+const ADMIN_USERNAMES =
+  new Set([
+    "kazu1haru100",
+    "kazu1haru4sub"
+  ]);
+
+
+let currentUsername = "";
+
+
+/* =========================
+   開始
+========================= */
 
 async function start(){
-  if(await checkFriendChatBan()) return;
 
-  const {data,error}=await supabaseClient.auth.getSession();
-  if(error||!data.session){
-    alert("ログインしてください。");
-    location.href="index.html";
+  // BAN確認
+  if(
+    typeof checkFriendChatBan === "function"
+  ){
+    const wasBanned =
+      await checkFriendChatBan();
+
+    if(wasBanned){
+      return;
+    }
+  }
+
+
+  // ログイン確認
+  const {
+    data,
+    error
+  } =
+    await supabaseClient.auth.getSession();
+
+
+  if(
+    error ||
+    !data.session
+  ){
+
+    alert(
+      "ログインしてください。"
+    );
+
+    location.href =
+      "index.html";
+
     return;
   }
 
-  currentUsername=data.session.user.user_metadata?.username||"";
+
+  currentUsername =
+    data.session.user
+      .user_metadata?.username || "";
+
+
   if(!currentUsername){
-    alert("ユーザーIDを取得できませんでした。");
+
+    alert(
+      "ユーザーIDを取得できませんでした。"
+    );
+
     return;
   }
 
-  if(ADMIN_USERNAMES.has(currentUsername)){
-    manageButton.style.display="block";
-    manageButton.onclick=()=>location.href="admin-management.html?tab=groups";
+
+  /* =========================
+     管理ボタン
+     管理者2アカウントのみ
+  ========================= */
+
+  if(
+    ADMIN_USERNAMES.has(
+      currentUsername
+    )
+  ){
+
+    manageButton.style.display =
+      "block";
+
+    manageButton.onclick =
+      () => {
+
+        location.href =
+          "admin-groups.html";
+
+      };
   }
+
 
   await loadGroups();
 }
 
-async function loadGroups(){
-  if(await checkFriendChatBan()) return;
 
-  const {data:memberships,error}=await supabaseClient
-    .from("group_members")
-    .select("group_id")
-    .eq("user_id",currentUsername);
+/* =========================
+   グループ読み込み
+========================= */
+
+async function loadGroups(){
+
+  if(
+    typeof checkFriendChatBan === "function"
+  ){
+
+    const wasBanned =
+      await checkFriendChatBan();
+
+    if(wasBanned){
+      return;
+    }
+  }
+
+
+  const {
+    data: memberships,
+    error
+  } =
+    await supabaseClient
+      .from("group_members")
+      .select("group_id")
+      .eq(
+        "user_id",
+        currentUsername
+      );
+
 
   if(error){
-    console.error(error);
-    groupList.innerHTML='<div class="empty">グループを読み込めませんでした</div>';
+
+    console.error(
+      "グループ一覧取得エラー:",
+      error
+    );
+
+    groupList.innerHTML =
+      '<div class="empty">' +
+      'グループを読み込めませんでした' +
+      '</div>';
+
     return;
   }
 
-  if(!memberships||memberships.length===0){
-    groupList.innerHTML='<div class="empty">まだグループがありません</div>';
+
+  if(
+    !memberships ||
+    memberships.length === 0
+  ){
+
+    groupList.innerHTML =
+      '<div class="empty">' +
+      'まだグループがありません' +
+      '</div>';
+
     return;
   }
 
-  groupList.innerHTML="";
-  for(const member of memberships){
-    const {data:group}=await supabaseClient
-      .from("groups").select("id,name,owner_id").eq("id",member.group_id).maybeSingle();
 
-    if(!group) continue;
+  groupList.innerHTML = "";
 
-    const div=document.createElement("a");
-    div.className="group";
-    div.href="group_chat.html?id="+encodeURIComponent(group.id);
 
-    const name=document.createElement("div");
-    name.className="group-name";
-    name.textContent="👥 "+group.name;
+  for(
+    const member of memberships
+  ){
 
-    const info=document.createElement("div");
-    info.className="group-info";
-    info.textContent="グループチャット";
+    const {
+      data: group,
+      error: groupError
+    } =
+      await supabaseClient
+        .from("groups")
+        .select(
+          "id,name,owner_id"
+        )
+        .eq(
+          "id",
+          member.group_id
+        )
+        .maybeSingle();
+
+
+    if(groupError){
+
+      console.error(
+        "グループ取得エラー:",
+        groupError
+      );
+
+      continue;
+    }
+
+
+    if(!group){
+      continue;
+    }
+
+
+    const div =
+      document.createElement("a");
+
+
+    div.className =
+      "group";
+
+
+    div.href =
+      "group_chat.html?id=" +
+      encodeURIComponent(
+        group.id
+      );
+
+
+    const name =
+      document.createElement("div");
+
+
+    name.className =
+      "group-name";
+
+
+    name.textContent =
+      "👥 " +
+      group.name;
+
+
+    const info =
+      document.createElement("div");
+
+
+    info.className =
+      "group-info";
+
+
+    info.textContent =
+      "グループチャット";
+
 
     div.appendChild(name);
+
     div.appendChild(info);
+
     groupList.appendChild(div);
+  }
+
+
+  if(
+    groupList.children.length === 0
+  ){
+
+    groupList.innerHTML =
+      '<div class="empty">' +
+      'まだグループがありません' +
+      '</div>';
   }
 }
 
-addButton.addEventListener("click",async()=>{
-  if(await checkFriendChatBan()) return;
-  location.href="create_group.html";
-});
+
+/* =========================
+   グループ作成
+========================= */
+
+addButton.addEventListener(
+  "click",
+  async () => {
+
+    if(
+      typeof checkFriendChatBan === "function"
+    ){
+
+      const wasBanned =
+        await checkFriendChatBan();
+
+      if(wasBanned){
+        return;
+      }
+    }
+
+
+    location.href =
+      "create_group.html";
+  }
+);
+
+
+/* =========================
+   起動
+========================= */
 
 start();
 </script>
+
 </body>
 </html>
