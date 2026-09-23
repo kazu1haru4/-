@@ -13,6 +13,8 @@ body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Hir
 .header{display:flex;align-items:center;gap:10px;margin-bottom:18px}
 .back-button{border:0;background:white;width:44px;height:44px;border-radius:14px;font-size:20px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.08)}
 h1{margin:0;font-size:25px}.subtitle{margin:4px 0 0;color:#777;font-size:13px}
+.header-main{flex:1;min-width:0}
+.manage-button{display:none;border:0;background:#333;color:#fff;border-radius:12px;padding:10px 11px;font-size:12px;font-weight:bold;white-space:nowrap;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.1)}
 .panel{background:rgba(255,255,255,.94);border-radius:22px;padding:20px;margin-bottom:16px;box-shadow:0 8px 25px rgba(80,80,120,.09)}
 .panel h2{margin:0 0 14px;font-size:18px}
 label{display:block;font-size:13px;font-weight:bold;margin-bottom:7px}
@@ -30,14 +32,15 @@ button.primary:disabled{opacity:.55;cursor:not-allowed}
 .room-code{margin-top:8px;font-size:13px;color:#777}.room-code strong{color:#555;letter-spacing:2px}
 .open-button{width:100%;min-height:43px;margin-top:11px;border:0;border-radius:12px;background:#f0edff;color:#5f51c7;font-weight:bold;cursor:pointer}
 .empty{text-align:center;color:#888;padding:22px 10px;font-size:14px}
-@media(max-width:420px){.container{padding:16px 12px 30px}.panel{padding:17px;border-radius:19px}h1{font-size:22px}}
+@media(max-width:420px){.container{padding:16px 12px 30px}.panel{padding:17px;border-radius:19px}h1{font-size:22px}.manage-button{padding:9px 9px;font-size:11px}}
 </style>
 </head>
 <body>
 <div class="container">
 <div class="header">
 <button class="back-button" type="button" id="backButton" aria-label="ホームに戻る">🏠</button>
-<div><h1>🔢 番号参加掲示板</h1><div class="subtitle">参加番号を知っている人だけ参加できます</div></div>
+<div class="header-main"><h1>🔢 番号参加掲示板</h1><div class="subtitle">参加番号を知っている人だけ参加できます</div></div>
+<button class="manage-button" type="button" id="manageButton">🛡️ 管理</button>
 </div>
 
 <div id="status" class="status"></div>
@@ -71,6 +74,7 @@ button.primary:disabled{opacity:.55;cursor:not-allowed}
 const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
 const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
 let currentUsername="";
 
 function escapeHtml(value){return String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}
@@ -165,6 +169,13 @@ async function initialize(){
   currentUsername=session.user.user_metadata?.username||"";
   if(!currentUsername){alert("ユーザー情報を取得できませんでした。");location.href="index.html";return}
   if(typeof checkFriendChatBan==="function" && await checkFriendChatBan())return;
+
+  if(ADMIN_USERNAMES.has(currentUsername)){
+    const manageButton=document.getElementById("manageButton");
+    manageButton.style.display="block";
+    manageButton.onclick=()=>location.href="admin-management.html?tab=boards";
+  }
+
   await loadBoards();
  }catch(error){
   console.error("初期化エラー:",error);
