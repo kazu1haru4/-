@@ -18,10 +18,11 @@ h1{text-align:center;margin:0 0 22px;color:#7158cf;font-size:27px}
 .add-row input{flex:1;min-width:0;padding:13px;border:2px solid #e4ddff;border-radius:12px;font-size:15px;outline:none}
 .add-row input:focus{border-color:#9a85ed}
 .add-row button{border:0;border-radius:12px;padding:0 16px;background:#7158cf;color:#fff;font-weight:bold;font-size:14px}
+.add-row button:disabled{opacity:.6}
 .add-help{font-size:12px;color:#888;margin-top:8px}
 .status{text-align:center;color:#888;font-size:14px;margin-bottom:15px}
 .friends{display:flex;flex-direction:column;gap:12px}
-.friend-card{display:flex;align-items:center;gap:13px;padding:12px;background:#fff;border:2px solid #eee;border-radius:20px;cursor:pointer;box-shadow:0 4px 12px rgba(100,80,150,.06)}
+.friend-card{display:flex;align-items:center;gap:13px;padding:12px;background:#fff;border:2px solid #eee;border-radius:20px;cursor:pointer;box-shadow:0 4px 12px rgba(100,80,150,.06);transition:transform .1s}
 .friend-card:active{transform:scale(.98)}
 .friend-info{min-width:0;flex:1}
 .friend-name{font-size:17px;font-weight:bold;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -75,10 +76,6 @@ const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
 const ADMIN_ITEM_KEY="admin";
 let currentUsername="";
 let presenceTimer=null;
-
-function escapeHtml(value){
-  return String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
-}
 
 async function getCurrentUser(){
   if(await checkFriendChatBan()) return null;
@@ -203,7 +200,10 @@ async function loadFriends(){
 
     const card=document.createElement("div");
     card.className="friend-card";
-    card.onclick=()=>location.href="chat.html?user="+encodeURIComponent(username);
+
+    // フレンドをタップするとプロフィールを開く
+    card.onclick=()=>location.href="friend_profile.html?user="+encodeURIComponent(username);
+
     card.appendChild(createAvatar(profile,item));
 
     const info=document.createElement("div");
