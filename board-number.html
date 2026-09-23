@@ -74,121 +74,481 @@ button.primary:disabled{opacity:.55;cursor:not-allowed}
 const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
 const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
+
+const ADMIN_USERNAMES=new Set([
+ "kazu1haru100",
+ "kazu1haru4sub"
+]);
+
 let currentUsername="";
 
-function escapeHtml(value){return String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}
-function showStatus(message,type="success"){const status=document.getElementById("status");status.className="status "+type;status.textContent=message}
-function hideStatus(){const status=document.getElementById("status");status.className="status";status.textContent=""}
-function generateJoinCode(){return String(Math.floor(100000+Math.random()*900000))}
+function escapeHtml(value){
+ return String(value??"")
+  .replace(/&/g,"&amp;")
+  .replace(/</g,"&lt;")
+  .replace(/>/g,"&gt;")
+  .replace(/"/g,"&quot;")
+  .replace(/'/g,"&#039;");
+}
+
+function showStatus(message,type="success"){
+ const status=document.getElementById("status");
+ status.className="status "+type;
+ status.textContent=message;
+}
+
+function hideStatus(){
+ const status=document.getElementById("status");
+ status.className="status";
+ status.textContent="";
+}
+
+function generateJoinCode(){
+ return String(Math.floor(100000+Math.random()*900000));
+}
 
 async function createBoard(){
  hideStatus();
+
  const name=document.getElementById("roomName").value.trim();
  const button=document.getElementById("createButton");
- if(!name)return showStatus("掲示板の名前を入力してください。","error");
- if(name.length>50)return showStatus("掲示板の名前は50文字以内にしてください。","error");
- button.disabled=true;button.textContent="⏳ 作成中...";
+
+ if(!name)
+  return showStatus("掲示板の名前を入力してください。","error");
+
+ if(name.length>50)
+  return showStatus("掲示板の名前は50文字以内にしてください。","error");
+
+ button.disabled=true;
+ button.textContent="⏳ 作成中...";
+
  try{
   let createdRoom=null;
+
   for(let i=0;i<5;i++){
    const joinCode=generateJoinCode();
-   const {data,error}=await supabaseClient.from("board_rooms").insert({name,join_code:joinCode,created_by:currentUsername}).select().single();
-   if(!error){createdRoom=data;break}
-   if(!String(error.message||"").toLowerCase().includes("duplicate"))throw error;
+
+   const {data,error}=
+    await supabaseClient
+     .from("board_rooms")
+     .insert({
+      name,
+      join_code:joinCode,
+      created_by:currentUsername
+     })
+     .select()
+     .single();
+
+   if(!error){
+    createdRoom=data;
+    break;
+   }
+
+   if(
+    !String(error.message||"")
+     .toLowerCase()
+     .includes("duplicate")
+   ){
+    throw error;
+   }
   }
-  if(!createdRoom)throw new Error("参加番号の作成に失敗しました。もう一度試してください。");
-  const {error:memberError}=await supabaseClient.from("board_room_members").insert({board_id:createdRoom.id,user_id:currentUsername});
-  if(memberError&&!String(memberError.message||"").toLowerCase().includes("duplicate"))throw memberError;
-  document.getElementById("createdCodeValue").textContent=createdRoom.join_code;
+
+  if(!createdRoom)
+   throw new Error("参加番号の作成に失敗しました。もう一度試してください。");
+
+  const {error:memberError}=
+   await supabaseClient
+    .from("board_room_members")
+    .insert({
+     board_id:createdRoom.id,
+     user_id:currentUsername
+    });
+
+  if(
+   memberError &&
+   !String(memberError.message||"")
+    .toLowerCase()
+    .includes("duplicate")
+  ){
+   throw memberError;
+  }
+
+  document.getElementById("createdCodeValue").textContent=
+   createdRoom.join_code;
+
   document.getElementById("createdCode").style.display="block";
   document.getElementById("roomName").value="";
+
   showStatus("✅ 掲示板を作成しました！","success");
+
   await loadBoards();
+
  }catch(error){
+
   console.error("掲示板作成エラー:",error);
-  showStatus("掲示板の作成に失敗しました。\n\n"+(error.message||"不明なエラー"),"error");
- }finally{button.disabled=false;button.textContent="＋ 掲示板を作成"}
+
+  showStatus(
+   "掲示板の作成に失敗しました。\n\n"+
+   (error.message||"不明なエラー"),
+   "error"
+  );
+
+ }finally{
+
+  button.disabled=false;
+  button.textContent="＋ 掲示板を作成";
+ }
 }
 
 async function joinBoard(){
  hideStatus();
+
  const input=document.getElementById("joinCode");
  const code=input.value.trim();
  const button=document.getElementById("joinButton");
- if(!/^\d{6}$/.test(code))return showStatus("6桁の参加番号を入力してください。","error");
- button.disabled=true;button.textContent="⏳ 参加中...";
+
+ if(!/^\d{6}$/.test(code))
+  return showStatus("6桁の参加番号を入力してください。","error");
+
+ button.disabled=true;
+ button.textContent="⏳ 参加中...";
+
  try{
-  const {data,error}=await supabaseClient.rpc("join_board_by_code",{input_code:code});
-  if(error)throw error;
+
+  const {data,error}=
+   await supabaseClient.rpc(
+    "join_board_by_code",
+    {input_code:code}
+   );
+
+  if(error) throw error;
+
   input.value="";
-  showStatus("✅ 掲示板に参加しました！","success");
+
+  showStatus(
+   "✅ 掲示板に参加しました！",
+   "success"
+  );
+
   await loadBoards();
+
  }catch(error){
-  console.error("掲示板参加エラー:",error);
-  showStatus("掲示板への参加に失敗しました。\n\n"+(error.message||"不明なエラー"),"error");
- }finally{button.disabled=false;button.textContent="🚪 参加する"}
+
+  console.error(
+   "掲示板参加エラー:",
+   error
+  );
+
+  showStatus(
+   "掲示板への参加に失敗しました。\n\n"+
+   (error.message||"不明なエラー"),
+   "error"
+  );
+
+ }finally{
+
+  button.disabled=false;
+  button.textContent="🚪 参加する";
+ }
 }
 
 async function loadBoards(){
- const list=document.getElementById("roomList");
- list.innerHTML='<div class="empty">読み込み中...</div>';
+
+ const list=
+  document.getElementById("roomList");
+
+ list.innerHTML=
+  '<div class="empty">読み込み中...</div>';
+
  try{
-  const {data:memberRows,error:memberError}=await supabaseClient.from("board_room_members").select("board_id").eq("user_id",currentUsername);
-  if(memberError)throw memberError;
-  const memberIds=(memberRows||[]).map(x=>x.board_id);
-  const {data:owned,error:ownedError}=await supabaseClient.from("board_rooms").select("id,name,join_code,created_by,created_at").eq("created_by",currentUsername).order("created_at",{ascending:false});
-  if(ownedError)throw ownedError;
-  const ids=[...new Set([...memberIds,...(owned||[]).map(x=>x.id)])];
-  if(!ids.length){list.innerHTML='<div class="empty">まだ参加している掲示板はありません。</div>';return}
-  const {data:rooms,error}=await supabaseClient.from("board_rooms").select("id,name,join_code,created_by,created_at").in("id",ids).order("created_at",{ascending:false});
-  if(error)throw error;
+
+  const {
+   data:memberRows,
+   error:memberError
+  }=
+   await supabaseClient
+    .from("board_room_members")
+    .select("board_id")
+    .eq(
+     "user_id",
+     currentUsername
+    );
+
+  if(memberError)
+   throw memberError;
+
+  const memberIds=
+   (memberRows||[])
+    .map(x=>x.board_id);
+
+  const {
+   data:owned,
+   error:ownedError
+  }=
+   await supabaseClient
+    .from("board_rooms")
+    .select(
+     "id,name,join_code,created_by,created_at"
+    )
+    .eq(
+     "created_by",
+     currentUsername
+    )
+    .order(
+     "created_at",
+     {ascending:false}
+    );
+
+  if(ownedError)
+   throw ownedError;
+
+  const ids=[
+   ...new Set([
+    ...memberIds,
+    ...(owned||[]).map(x=>x.id)
+   ])
+  ];
+
+  if(!ids.length){
+
+   list.innerHTML=
+    '<div class="empty">'+
+    'まだ参加している掲示板はありません。'+
+    '</div>';
+
+   return;
+  }
+
+  const {
+   data:rooms,
+   error
+  }=
+   await supabaseClient
+    .from("board_rooms")
+    .select(
+     "id,name,join_code,created_by,created_at"
+    )
+    .in(
+     "id",
+     ids
+    )
+    .order(
+     "created_at",
+     {ascending:false}
+    );
+
+  if(error)
+   throw error;
+
   list.innerHTML="";
+
   (rooms||[]).forEach(room=>{
-   const isOwner=room.created_by===currentUsername;
-   const card=document.createElement("div");
+
+   const isOwner=
+    room.created_by===currentUsername;
+
+   const card=
+    document.createElement("div");
+
    card.className="room-card";
-   card.innerHTML=`<div class="room-top"><div class="room-name">${escapeHtml(room.name)}</div><div class="role ${isOwner?"owner":"member"}">${isOwner?"👑 管理者":"👤 メンバー"}</div></div><div class="room-code">参加番号：<strong>${escapeHtml(room.join_code)}</strong></div>`;
-   const button=document.createElement("button");
-   button.className="open-button";button.type="button";button.textContent="💬 掲示板を開く";
-   button.onclick=()=>location.href="board-number-chat.html?board="+encodeURIComponent(room.id);
-   card.appendChild(button);list.appendChild(card);
+
+   card.innerHTML=
+    '<div class="room-top">'+
+      '<div class="room-name">'+
+       escapeHtml(room.name)+
+      '</div>'+
+      '<div class="role '+
+       (isOwner?"owner":"member")+
+      '">'+
+       (isOwner?"👑 管理者":"👤 メンバー")+
+      '</div>'+
+    '</div>'+
+    '<div class="room-code">'+
+     '参加番号：<strong>'+
+     escapeHtml(room.join_code)+
+     '</strong></div>';
+
+   const button=
+    document.createElement("button");
+
+   button.className="open-button";
+   button.type="button";
+   button.textContent=
+    "💬 掲示板を開く";
+
+   button.onclick=()=>{
+    location.href=
+     "board-number-chat.html?board="+
+     encodeURIComponent(room.id);
+   };
+
+   card.appendChild(button);
+   list.appendChild(card);
   });
+
  }catch(error){
-  console.error("掲示板一覧取得エラー:",error);
-  list.innerHTML='<div class="empty">掲示板一覧の読み込みに失敗しました。<br><br>'+escapeHtml(error.message||"不明なエラー")+'</div>';
+
+  console.error(
+   "掲示板一覧取得エラー:",
+   error
+  );
+
+  list.innerHTML=
+   '<div class="empty">'+
+   '掲示板一覧の読み込みに失敗しました。'+
+   '<br><br>'+
+   escapeHtml(
+    error.message||"不明なエラー"
+   )+
+   '</div>';
  }
 }
 
 async function initialize(){
- try{
-  const {data,error}=await supabaseClient.auth.getSession();
-  if(error)throw error;
-  const session=data.session;
-  if(!session){alert("ログインしてください。");location.href="index.html";return}
-  currentUsername=session.user.user_metadata?.username||"";
-  if(!currentUsername){alert("ユーザー情報を取得できませんでした。");location.href="index.html";return}
-  if(typeof checkFriendChatBan==="function" && await checkFriendChatBan())return;
 
-  if(ADMIN_USERNAMES.has(currentUsername)){
-    const manageButton=document.getElementById("manageButton");
-    manageButton.style.display="block";
-    manageButton.onclick=()=>location.href="admin-management.html?tab=boards";
+ try{
+
+  const {
+   data,
+   error
+  }=
+   await supabaseClient
+    .auth
+    .getSession();
+
+  if(error)
+   throw error;
+
+  const session=data.session;
+
+  if(!session){
+
+   alert("ログインしてください。");
+
+   location.href="index.html";
+
+   return;
+  }
+
+  currentUsername=
+   session.user
+    .user_metadata?.username||"";
+
+  if(!currentUsername){
+
+   alert(
+    "ユーザー情報を取得できませんでした。"
+   );
+
+   location.href="index.html";
+
+   return;
+  }
+
+  if(
+   typeof checkFriendChatBan==="function"
+  ){
+
+   if(
+    await checkFriendChatBan()
+   ){
+    return;
+   }
+  }
+
+  /* 管理者だけ管理ボタンを表示 */
+  if(
+   ADMIN_USERNAMES.has(
+    currentUsername
+   )
+  ){
+
+   const manageButton=
+    document.getElementById(
+     "manageButton"
+    );
+
+   manageButton.style.display=
+    "block";
+
+   manageButton.onclick=()=>{
+    location.href=
+     "admin-boards.html";
+   };
   }
 
   await loadBoards();
+
  }catch(error){
-  console.error("初期化エラー:",error);
-  showStatus("読み込みに失敗しました。\n\n"+(error.message||"不明なエラー"),"error");
+
+  console.error(
+   "初期化エラー:",
+   error
+  );
+
+  showStatus(
+   "読み込みに失敗しました。\n\n"+
+   (error.message||"不明なエラー"),
+   "error"
+  );
  }
 }
 
-document.getElementById("createButton").addEventListener("click",createBoard);
-document.getElementById("joinButton").addEventListener("click",joinBoard);
-document.getElementById("backButton").addEventListener("click",()=>{location.href="home.html"});
-document.getElementById("joinCode").addEventListener("keydown",e=>{if(e.key==="Enter")joinBoard()});
-document.getElementById("roomName").addEventListener("keydown",e=>{if(e.key==="Enter")createBoard()});
-document.getElementById("joinCode").addEventListener("input",e=>{e.target.value=e.target.value.replace(/\D/g,"").slice(0,6)});
+document
+ .getElementById("createButton")
+ .addEventListener(
+  "click",
+  createBoard
+ );
+
+document
+ .getElementById("joinButton")
+ .addEventListener(
+  "click",
+  joinBoard
+ );
+
+document
+ .getElementById("backButton")
+ .addEventListener(
+  "click",
+  ()=>{
+   location.href="home.html";
+  }
+ );
+
+document
+ .getElementById("joinCode")
+ .addEventListener(
+  "keydown",
+  e=>{
+   if(e.key==="Enter")
+    joinBoard();
+  }
+ );
+
+document
+ .getElementById("roomName")
+ .addEventListener(
+  "keydown",
+  e=>{
+   if(e.key==="Enter")
+    createBoard();
+  }
+ );
+
+document
+ .getElementById("joinCode")
+ .addEventListener(
+  "input",
+  e=>{
+   e.target.value=
+    e.target.value
+     .replace(/\D/g,"")
+     .slice(0,6);
+  }
+ );
+
 initialize();
 </script>
 </body>
