@@ -213,23 +213,50 @@ async function loadProfile(){
     badge.style.display="flex";
   }
 
-  // プロフィール背景は本人の装備をそのまま表示
+  // 相手が装備しているプロフィール背景を表示
+  const container=document.querySelector(".container");
   document.body.className="";
-  document.querySelector(".container").className="container";
-  const bgClasses={sakura:"background-sakura",star:"background-star",diamond:"background-diamond",heart:"background-heart",rainbow:"background-rainbow",flame:"background-flame",sea:"background-sea",neon:"background-neon",space:"background-space",admin:"background-admin"};
-  if(backgroundKey!=="admin_bg" || ["kazu1haru100","kazu1haru4sub"].includes(friendUsername)){
-    const bgClass=bgClasses[backgroundKey.replace("bg_","")]||"";
-    if(bgClass){
-      document.body.classList.add(bgClass);
-      document.querySelector(".container").classList.add(bgClass);
-    }
+  container.className="container";
+  document.body.style.background="linear-gradient(135deg,#fff4fb,#eef7ff)";
+  container.style.background="white";
+
+  const bgKeyNormalized=backgroundKey.startsWith("bg_")?backgroundKey.slice(3):backgroundKey;
+  const bgClasses={sakura:"background-sakura",star:"background-star",diamond:"background-diamond",heart:"background-heart",rainbow:"background-rainbow",flame:"background-flame",sea:"background-sea",space:"background-space",neon:"background-neon",admin:"background-admin"};
+  const bgGradients={
+    sakura:"radial-gradient(circle at 15% 20%,rgba(255,255,255,.75) 0 6px,transparent 7px),linear-gradient(135deg,#ffe2f0,#ffb8d8,#fff0f8)",
+    star:"radial-gradient(circle at 15% 20%,#fff 0 2px,transparent 3px),radial-gradient(circle at 80% 30%,#fff 0 2px,transparent 3px),linear-gradient(135deg,#fff4a8,#f5cf5c,#fff8cf)",
+    diamond:"linear-gradient(135deg,#dff8ff,#9fe7ff,#effcff)",heart:"linear-gradient(135deg,#ffe0eb,#ff9fbd,#ffd8e6)",
+    rainbow:"linear-gradient(135deg,#ffd7d7,#ffe7b5,#ffffc4,#d8ffd9,#d8f7ff,#ddd8ff,#ffd8f3)",
+    flame:"linear-gradient(135deg,#ffb18b,#ff6b3d,#ffd65c,#fff0a0)",sea:"linear-gradient(135deg,#bff5ff,#55d9f5,#5b9fff,#d8fbff)",
+    space:"radial-gradient(circle at 20% 20%,white 0 2px,transparent 3px),radial-gradient(circle at 75% 35%,#9fe7ff 0 2px,transparent 3px),linear-gradient(135deg,#08051c,#25104f,#09031c)",
+    neon:"linear-gradient(135deg,#c8ffe7,#b9ffff,#ffd0f8,#d9c8ff)",admin:"linear-gradient(135deg,#fff9cf,#ffd700,#fff2a1,#fffbe1)"
+  };
+  const validAdmin=["kazu1haru100","kazu1haru4sub"].includes(friendUsername);
+  if(backgroundKey && (backgroundKey!=="admin_bg" || validAdmin)){
+    const bgName=backgroundKey==="admin_bg"?"admin":bgKeyNormalized;
+    const bgClass=bgClasses[bgName]||"";
+    if(bgClass){document.body.classList.add(bgClass);container.classList.add(bgClass);}
+    if(bgGradients[bgName]){document.body.style.background=bgGradients[bgName];container.style.background=bgGradients[bgName];}
   }
 
+  // 相手が装備している名前装飾を表示
   const nameEl=document.getElementById("name");
-  const nameClasses={nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",nd_neon:"name-decoration-neon",admin_name:"name-decoration-admin"};
-  const validAdmin=["kazu1haru100","kazu1haru4sub"].includes(friendUsername);
+  const nameClasses={
+    nd_sakura:"name-decoration-sakura",name_sakura:"name-decoration-sakura",sakura:"name-decoration-sakura",
+    nd_star:"name-decoration-star",name_star:"name-decoration-star",star:"name-decoration-star",
+    nd_diamond:"name-decoration-diamond",name_diamond:"name-decoration-diamond",diamond:"name-decoration-diamond",
+    nd_heart:"name-decoration-heart",name_heart:"name-decoration-heart",heart:"name-decoration-heart",
+    nd_rainbow:"name-decoration-rainbow",name_rainbow:"name-decoration-rainbow",rainbow:"name-decoration-rainbow",
+    nd_flame:"name-decoration-flame",name_flame:"name-decoration-flame",flame:"name-decoration-flame",
+    nd_sea:"name-decoration-sea",name_sea:"name-decoration-sea",sea:"name-decoration-sea",
+    nd_space:"name-decoration-space",name_space:"name-decoration-space",space:"name-decoration-space",
+    nd_neon:"name-decoration-neon",name_neon:"name-decoration-neon",neon:"name-decoration-neon",
+    admin_name:"name-decoration-admin"
+  };
   const actualNameKey=(nameKey==="admin_name" && !validAdmin)?"":nameKey;
   nameEl.className="name "+(nameClasses[actualNameKey]||"");
+  nameEl.style.color="";nameEl.style.textShadow="";
+  if(actualNameKey==="admin_name"){nameEl.style.color="#d49b00";nameEl.style.textShadow="0 0 8px rgba(255,215,0,.8),0 0 18px rgba(255,215,0,.45)";}
   nameEl.innerHTML=escapeHtml(data.name||data.user_id)+(actualNameKey==="admin_name"?'<span class="admin-name-badge">👑</span>':"");
 
   if(data.avatar_url){
