@@ -459,14 +459,22 @@ textarea {
 </div>
 
 <div class="form-row">
-<label>🎁 アイテム報酬（フレーム・名前装飾・背景）</label>
-<select id="rewardCodeItem">
-<option value="">なし</option>
-</select>
+<label>🖼️ フレーム報酬</label>
+<select id="rewardFrameItem"><option value="">なし</option></select>
+</div>
+
+<div class="form-row">
+<label>✨ 名前装飾報酬</label>
+<select id="rewardNameDecorationItem"><option value="">なし</option></select>
+</div>
+
+<div class="form-row">
+<label>🎨 背景報酬</label>
+<select id="rewardBackgroundItem"><option value="">なし</option></select>
+</div>
 
 <div id="rewardFrameStatus" class="frame-status">
-🔄 アイテム一覧を読み込んでいます...
-</div>
+🔄 フレーム・名前装飾・背景を読み込んでいます...
 </div>
 
 <div class="form-row">
@@ -1113,124 +1121,77 @@ async function deleteBoardMessage(id) {
 }
 
 async function loadItems() {
-  const rewardSelect =
-    document.getElementById("rewardCodeItem");
+  const frameSelect = document.getElementById("rewardFrameItem");
+  const nameSelect = document.getElementById("rewardNameDecorationItem");
+  const bgSelect = document.getElementById("rewardBackgroundItem");
+  const eventSelect = document.getElementById("eventItem");
+  const status = document.getElementById("rewardFrameStatus");
 
-  const eventSelect =
-    document.getElementById("eventItem");
+  status.className = "frame-status";
+  status.textContent = "🔄 フレーム・名前装飾・背景を読み込んでいます...";
 
-  const itemStatus =
-    document.getElementById("rewardFrameStatus");
+  frameSelect.innerHTML = '<option value="">なし</option>';
+  nameSelect.innerHTML = '<option value="">なし</option>';
+  bgSelect.innerHTML = '<option value="">なし</option>';
+  eventSelect.innerHTML = '<option value="">なし</option>';
 
-  itemStatus.className = "frame-status";
-  itemStatus.textContent =
-    "🔄 coin_itemsからアイテムを取得しています...";
-
-  rewardSelect.innerHTML =
-    `<option value="">なし</option>`;
-
-  eventSelect.innerHTML =
-    `<option value="">なし</option>`;
-
-  const { data, error } =
-    await supabaseClient
-      .from("coin_items")
-      .select("item_key,name,icon,price,frame_color,item_type")
-      .order("price",{ascending:true});
+  const { data, error } = await supabaseClient
+    .from("coin_items")
+    .select("item_key,name,icon,price,frame_color,item_type")
+    .order("price", { ascending:true });
 
   if (error) {
     console.error("coin_items error:", error);
-
-    itemStatus.className = "frame-status error";
-    itemStatus.textContent =
-      "❌ アイテム取得失敗\n\n" + error.message;
-
-    rewardSelect.innerHTML =
-      `<option value="">❌ 取得失敗</option>`;
-
-    eventSelect.innerHTML =
-      `<option value="">❌ 取得失敗</option>`;
-
+    status.className = "frame-status error";
+    status.textContent = "❌ アイテム取得失敗\n\n" + error.message;
     return;
   }
 
+  // 管理者専用アイテムは配布対象から完全に除外
   const items = (data || []).filter(item =>
-    !["admin","admin_name","admin_bg"].includes(item.item_key)
+    !["admin", "admin_name", "admin_bg"].includes(item.item_key)
   );
 
-  if (!items.length) {
-    itemStatus.className = "frame-status error";
-    itemStatus.textContent =
-      "⚠️ coin_itemsに配布可能なアイテムがありません。";
-    return;
-  }
-
-  const groups = [
-    {
-      type: "frame",
-      label: "🖼️ フレーム"
-    },
-    {
-      type: "name_decoration",
-      label: "✨ 名前装飾"
-    },
-    {
-      type: "background",
-      label: "🎨 背景"
+  const getType = item => {
+    if (["frame", "name_decoration", "background"].includes(item.item_type)) {
+      return item.item_type;
     }
-  ];
-
-  const rewardGroups = {};
-
-  groups.forEach(group => {
-    const optgroup = document.createElement("optgroup");
-    optgroup.label = group.label;
-    rewardSelect.appendChild(optgroup);
-    rewardGroups[group.type] = optgroup;
-  });
+    if (item.item_key?.startsWith("nd_")) return "name_decoration";
+    if (item.item_key?.startsWith("bg_")) return "background";
+    return "frame";
+  };
 
   items.forEach(item => {
-    const type =
-      ["frame","name_decoration","background"].includes(item.item_type)
-        ? item.item_type
-        : item.item_key?.startsWith("nd_")
-          ? "name_decoration"
-          : item.item_key?.startsWith("bg_")
-            ? "background"
-            : "frame";
+    const type = getType(item);
+    const icon = item.icon || (type === "name_decoration" ? "✨" : type === "background" ? "🎨" : "🖼️");
 
-    const icon = item.icon || (
-      type === "name_decoration"
-        ? "✨"
-        : type === "background"
-          ? "🎨"
-          : "🖼️"
-    );
-
-    const option =
-      document.createElement("option");
-
+    const option = document.createElement("option");
     option.value = item.item_key;
-    option.textContent =
-      `${icon} ${item.name}`;
+    option.textContent = `${icon} ${item.name}`;
 
-    rewardGroups[type].appendChild(option);
+    if (type === "frame") frameSelect.appendChild(option);
+    if (type === "name_decoration") nameSelect.appendChild(option);
+    if (type === "background") bgSelect.appendChild(option);
 
-    // イベント側は従来どおりアイテム報酬として利用可能。
-    const eventOption =
-      document.createElement("option");
-
+    const eventOption = document.createElement("option");
     eventOption.value = item.item_key;
-    eventOption.textContent =
-      `${icon} ${item.name}`;
-
+    eventOption.textContent = `${icon} ${item.name}`;
     eventSelect.appendChild(eventOption);
   });
 
-  itemStatus.className = "frame-status success";
-  itemStatus.textContent =
-    `✅ ${items.length}個のアイテムを読み込みました。\n` +
-    "フレーム・名前装飾・背景から選択できます。";
+  // 3つから同時に選ばれないようにする
+  const selects = [frameSelect, nameSelect, bgSelect];
+  selects.forEach(current => {
+    current.addEventListener("change", () => {
+      if (!current.value) return;
+      selects.forEach(other => {
+        if (other !== current) other.value = "";
+      });
+    });
+  });
+
+  status.className = "frame-status success";
+  status.textContent = `✅ 配布可能なアイテム ${items.length}個\n管理者限定の名前装飾・背景は配布できません。`;
 }
 
 async function createRewardCode() {
@@ -1255,8 +1216,10 @@ async function createRewardCode() {
         document.getElementById("rewardCodeCoins").value || 0
       );
 
-    const rewardItem =
-      document.getElementById("rewardCodeItem").value || null;
+    const rewardFrame = document.getElementById("rewardFrameItem").value || "";
+    const rewardNameDecoration = document.getElementById("rewardNameDecorationItem").value || "";
+    const rewardBackground = document.getElementById("rewardBackgroundItem").value || "";
+    const rewardItem = rewardFrame || rewardNameDecoration || rewardBackground || null;
 
     const maxUses =
       Number(
@@ -1277,7 +1240,7 @@ async function createRewardCode() {
 
     if (rewardCoins === 0 && !rewardItem) {
       throw new Error(
-        "コインまたはアイテムを1つ以上設定してください。"
+        "コインまたは配布アイテムを1つ以上設定してください。"
       );
     }
 
@@ -1309,7 +1272,9 @@ async function createRewardCode() {
 
     document.getElementById("rewardCode").value = "";
     document.getElementById("rewardCodeCoins").value = "0";
-    document.getElementById("rewardCodeItem").value = "";
+    document.getElementById("rewardFrameItem").value = "";
+    document.getElementById("rewardNameDecorationItem").value = "";
+    document.getElementById("rewardBackgroundItem").value = "";
     document.getElementById("rewardCodeMaxUses").value = "0";
 
     await loadRewardCodes();
