@@ -202,7 +202,7 @@ async function loadFriends(){
     card.className="friend-card";
 
     // フレンドをタップするとプロフィールを開く
-    card.onclick=()=>location.href="friend_profile.html?user="+encodeURIComponent(username);
+    card.addEventListener("click",()=>{ window.location.assign("./friend_profile.html?user="+encodeURIComponent(username)); });
 
     card.appendChild(createAvatar(profile,item));
 
