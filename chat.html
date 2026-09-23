@@ -36,7 +36,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
 .read-status{font-size:10px;color:#8f7cff;margin-top:3px;font-weight:bold}
 .deleted-message{color:#999!important;background:#f1f1f1!important;box-shadow:none!important;font-size:13px;font-style:italic}
 .delete-button{border:0;background:rgba(255,255,255,.9);color:#777;border-radius:10px;padding:5px 8px;margin-top:5px;font-size:11px}
-.message-actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;justify-content:flex-end}
+.message-actions{display:none;flex-wrap:wrap;gap:5px;margin-top:5px;justify-content:flex-end}
+.message-actions.show{display:flex}
 .message-action{border:0;background:rgba(255,255,255,.92);color:#666;border-radius:10px;padding:5px 8px;font-size:11px}
 .reaction-picker{display:none;flex-wrap:wrap;gap:4px;margin-top:5px;padding:5px;background:rgba(255,255,255,.96);border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,.1)}
 .reaction-picker button{border:0;background:#f4f4f8;border-radius:9px;padding:5px 7px;font-size:16px}
@@ -164,7 +165,6 @@ async function createNotification(messageText="新しいメッセージがあり
  });
  if(error)console.error("通知レコード作成エラー:",error);
 }
-
 async function sendPushToUser(userId,title,message,url){
  if(!userId||userId===currentUsername)return;
  try{
@@ -196,28 +196,20 @@ async function editMessage(id,currentContent){
  if(value===null)return;
  const text=value.trim();
  if(!text)return;
- const {error}=await db.from("messages")
-  .update({content:text})
-  .eq("id",id)
-  .eq("sender_id",currentUsername);
- if(error){alert("メッセージの編集に失敗しました。\\n\\n"+error.message);return}
+ const {error}=await db.from("messages").update({content:text}).eq("id",id).eq("sender_id",currentUsername);
+ if(error){alert("メッセージの編集に失敗しました。\n\n"+error.message);return}
  await loadMessages();
 }
 async function toggleReaction(messageId,reaction){
- const {data:old,error:findError}=await db.from("chat_reactions")
-  .select("id")
-  .eq("message_id",messageId)
-  .eq("user_id",currentUsername)
-  .eq("reaction",reaction)
-  .maybeSingle();
- if(findError){alert("リアクションを確認できませんでした。\\n\\n"+findError.message);return}
+ const {data:old,error:findError}=await db.from("chat_reactions").select("id").eq("message_id",messageId).eq("user_id",currentUsername).eq("reaction",reaction).maybeSingle();
+ if(findError){alert("リアクションを確認できませんでした。\n\n"+findError.message);return}
  let result;
  if(old){
   result=await db.from("chat_reactions").delete().eq("id",old.id).eq("user_id",currentUsername);
  }else{
   result=await db.from("chat_reactions").insert({message_id:messageId,user_id:currentUsername,reaction});
  }
- if(result.error){alert("リアクションに失敗しました。\\n\\n"+result.error.message);return}
+ if(result.error){alert("リアクションに失敗しました。\n\n"+result.error.message);return}
  await loadMessages();
 }
 function setReplyTarget(message){
@@ -235,12 +227,8 @@ function clearReplyTarget(){
 }
 async function sendReply(content){
  if(!replyTarget||!content||!currentUsername)return false;
- const {error}=await db.from("chat_replies").insert({
-  message_id:replyTarget.id,
-  sender_id:currentUsername,
-  content
- });
- if(error){alert("返信を送信できませんでした。\\n\\n"+error.message);return false}
+ const {error}=await db.from("chat_replies").insert({message_id:replyTarget.id,sender_id:currentUsername,content});
+ if(error){alert("返信を送信できませんでした。\n\n"+error.message);return false}
  const target=replyTarget;
  clearReplyTarget();
  await loadMessages();
@@ -258,22 +246,16 @@ async function loadChatExtras(messages){
  if(r2.error)console.warn("リアクション取得エラー:",r2.error);
  return {replies:r1.data||[],reactions:r2.data||[]};
 }
-
 async function deleteMessage(id){
  if(!confirm("このメッセージを送信取り消ししますか？"))return;
  const {error}=await db.from("messages").update({is_deleted:true}).eq("id",id).eq("sender_id",currentUsername);
- if(error){alert("送信取り消しに失敗しました。\n\n"+error.message);return}await loadMessages();scrollToBottom();
+ if(error){alert("送信取り消しに失敗しました。\n\n"+error.message);return}
+ await loadMessages();scrollToBottom();
 }
 async function reportChatMessage(message){
  if(!message?.sender_id||message.sender_id===currentUsername)return;
-
- const reason=prompt(
-  "このメッセージを通報する理由を入力してください",
-  "暴言・不適切な内容"
- );
-
+ const reason=prompt("このメッセージを通報する理由を入力してください","暴言・不適切な内容");
  if(reason===null||!reason.trim())return;
-
  const {error}=await db.from("user_reports").insert({
   reporter_id:currentUsername,
   target_type:"chat_message",
@@ -284,16 +266,13 @@ async function reportChatMessage(message){
   message_content:message.content||"",
   message_image_url:message.image_url||""
  });
-
  if(error){
   console.error("個別チャット通報エラー:",error);
-  alert("通報に失敗しました。\\n\\n"+error.message);
+  alert("通報に失敗しました。\n\n"+error.message);
   return;
  }
-
  alert("🚨 通報を送信しました。管理者が確認します。");
 }
-
 function createMessageElement(message,imageUrl,extras={replies:[],reactions:[]}){
  const wrap=document.createElement("div");wrap.className="message";wrap.dataset.messageId=message.id;
  const mine=message.sender_id===currentUsername;if(mine)wrap.classList.add("mine");
@@ -327,35 +306,84 @@ function createMessageElement(message,imageUrl,extras={replies:[],reactions:[]})
 
  if(!message.is_deleted){
   const actions=document.createElement("div");actions.className="message-actions";
-  const reactionButton=document.createElement("button");reactionButton.type="button";reactionButton.className="message-action";reactionButton.textContent="😀 リアクション";
-  const replyButton=document.createElement("button");replyButton.type="button";replyButton.className="message-action";replyButton.textContent="↩️ 返信";
+
+  const reactionButton=document.createElement("button");
+  reactionButton.type="button";reactionButton.className="message-action";reactionButton.textContent="😀 リアクション";
+
+  const replyButton=document.createElement("button");
+  replyButton.type="button";replyButton.className="message-action";replyButton.textContent="↩️ 返信";
+
   actions.append(reactionButton,replyButton);
 
   if(!mine){
-   const reportButton=document.createElement("button");reportButton.type="button";reportButton.className="message-action";reportButton.textContent="🚨 通報";
-   reportButton.onclick=e=>{e.preventDefault();e.stopPropagation();reportChatMessage(message)};actions.appendChild(reportButton);
+   const reportButton=document.createElement("button");
+   reportButton.type="button";reportButton.className="message-action";reportButton.textContent="🚨 通報";
+   reportButton.onclick=e=>{e.preventDefault();e.stopPropagation();reportChatMessage(message)};
+   actions.appendChild(reportButton);
   }
+
   if(mine){
-   const editButton=document.createElement("button");editButton.type="button";editButton.className="message-action";editButton.textContent="✏️ 編集";
+   const editButton=document.createElement("button");
+   editButton.type="button";editButton.className="message-action";editButton.textContent="✏️ 編集";
    editButton.onclick=e=>{e.preventDefault();e.stopPropagation();editMessage(message.id,message.content||"")};
    actions.appendChild(editButton);
-   const deleteButton=document.createElement("button");deleteButton.type="button";deleteButton.className="delete-button";deleteButton.textContent="🗑️ 送信取り消し";
-   deleteButton.onclick=e=>{e.preventDefault();e.stopPropagation();deleteMessage(message.id)};actions.appendChild(deleteButton);
-  }
-  box.appendChild(actions);
 
-  const picker=document.createElement("div");picker.className="reaction-picker";
+   const deleteButton=document.createElement("button");
+   deleteButton.type="button";deleteButton.className="delete-button";deleteButton.textContent="🗑️ 送信取り消し";
+   deleteButton.onclick=e=>{e.preventDefault();e.stopPropagation();deleteMessage(message.id)};
+   actions.appendChild(deleteButton);
+  }
+
+  const picker=document.createElement("div");
+  picker.className="reaction-picker";
+
   ["👍","❤️","😂","😮","😢","👏"].forEach(reaction=>{
-   const button=document.createElement("button");button.type="button";button.textContent=reaction;
-   button.onclick=async e=>{e.preventDefault();e.stopPropagation();await toggleReaction(message.id,reaction);picker.style.display="none"};
+   const button=document.createElement("button");
+   button.type="button";button.textContent=reaction;
+   button.onclick=async e=>{
+    e.preventDefault();e.stopPropagation();
+    await toggleReaction(message.id,reaction);
+    picker.style.display="none";
+   };
    picker.appendChild(button);
   });
-  reactionButton.onclick=e=>{e.preventDefault();e.stopPropagation();picker.style.display=picker.style.display==="flex"?"none":"flex"};
-  replyButton.onclick=e=>{e.preventDefault();e.stopPropagation();picker.style.display="none";setReplyTarget(message)};
+
+  reactionButton.onclick=e=>{
+   e.preventDefault();e.stopPropagation();
+   if(!actions.classList.contains("show"))actions.classList.add("show");
+   picker.style.display=picker.style.display==="flex"?"none":"flex";
+  };
+
+  replyButton.onclick=e=>{
+   e.preventDefault();e.stopPropagation();
+   picker.style.display="none";
+   setReplyTarget(message);
+   actions.classList.remove("show");
+  };
+
+  wrap.addEventListener("click",e=>{
+   if(e.target.closest("button"))return;
+   document.querySelectorAll(".message-actions.show").forEach(menu=>{
+    if(menu!==actions)menu.classList.remove("show");
+   });
+   actions.classList.toggle("show");
+   if(!actions.classList.contains("show"))picker.style.display="none";
+  });
+
+  box.appendChild(actions);
   box.appendChild(picker);
  }
- wrap.appendChild(box);if(mine)wrap.appendChild(createAvatar(avatarUrl,"😊",item));return wrap;
+ wrap.appendChild(box);
+ if(mine)wrap.appendChild(createAvatar(avatarUrl,"😊",item));
+ return wrap;
 }
+
+document.addEventListener("click",e=>{
+ if(e.target.closest(".message"))return;
+ document.querySelectorAll(".message-actions.show").forEach(menu=>menu.classList.remove("show"));
+ document.querySelectorAll(".reaction-picker").forEach(picker=>picker.style.display="none");
+});
+
 async function loadMessages(){
  if(!currentUsername||!friendId){messagesElement.innerHTML='<div class="empty">ユーザー情報を取得できませんでした</div>';return}
  messagesElement.innerHTML='<div class="empty">メッセージを読み込み中...</div>';
@@ -381,23 +409,27 @@ function startRealtime(){
   const {data:m}=await db.from("messages").select("id,sender_id,receiver_id").eq("id",r.message_id).maybeSingle();
   if(m&&((m.sender_id===currentUsername&&m.receiver_id===friendId)||(m.sender_id===friendId&&m.receiver_id===currentUsername)))await loadMessages();
  })
- .on("postgres_changes",{event:"DELETE",schema:"public",table:"chat_reactions"},async p=>{
-  await loadMessages();
- })
+ .on("postgres_changes",{event:"DELETE",schema:"public",table:"chat_reactions"},async p=>{await loadMessages()})
  .on("postgres_changes",{event:"INSERT",schema:"public",table:"chat_replies"},async p=>{
   const r=p.new;
   const {data:m}=await db.from("messages").select("id,sender_id,receiver_id").eq("id",r.message_id).maybeSingle();
   if(m&&((m.sender_id===currentUsername&&m.receiver_id===friendId)||(m.sender_id===friendId&&m.receiver_id===currentUsername)))await loadMessages();
  })
- .on("postgres_changes",{event:"INSERT",schema:"public",table:"message_reads"},async p=>{const r=p.new;if(r.user_id!==friendId)return;const {data:m}=await db.from("messages").select("id,sender_id,receiver_id").eq("id",r.message_id).maybeSingle();if(m?.sender_id===currentUsername&&m?.receiver_id===friendId){readMessageIds.add(r.message_id);await loadMessages()}})
+ .on("postgres_changes",{event:"INSERT",schema:"public",table:"message_reads"},async p=>{
+  const r=p.new;if(r.user_id!==friendId)return;
+  const {data:m}=await db.from("messages").select("id,sender_id,receiver_id").eq("id",r.message_id).maybeSingle();
+  if(m?.sender_id===currentUsername&&m?.receiver_id===friendId){readMessageIds.add(r.message_id);await loadMessages()}
+ })
  .subscribe();
 }
 messageForm.onsubmit=async e=>{
  e.preventDefault();const text=messageInput.value.trim();if(!text||!currentUsername||!friendId)return;
  if(replyTarget){sendButton.disabled=true;const ok=await sendReply(text);sendButton.disabled=false;if(ok)messageInput.value="";return}
  sendButton.disabled=true;
- const {data,error}=await db.from("messages").insert({sender_id:currentUsername,receiver_id:friendId,content:text,image_url:"",is_deleted:false}).select().single();sendButton.disabled=false;
- if(error){alert("メッセージを送信できませんでした。\n\n"+error.message);return}messageInput.value="";messagesElement.appendChild(createMessageElement(data,""));scrollToBottom();updateLatestButton();await createNotification(text);await sendPushToUser(friendId,"💬 "+currentUsername+"さんからメッセージ",currentUsername+"さん: "+text,"./chat.html?user="+encodeURIComponent(currentUsername));
+ const {data,error}=await db.from("messages").insert({sender_id:currentUsername,receiver_id:friendId,content:text,image_url:"",is_deleted:false}).select().single();
+ sendButton.disabled=false;
+ if(error){alert("メッセージを送信できませんでした。\n\n"+error.message);return}
+ messageInput.value="";messagesElement.appendChild(createMessageElement(data,""));scrollToBottom();updateLatestButton();await createNotification(text);await sendPushToUser(friendId,"💬 "+currentUsername+"さんからメッセージ",currentUsername+"さん: "+text,"./chat.html?user="+encodeURIComponent(currentUsername));
 };
 imageButton.onclick=()=>imageInput.click();
 imageInput.onchange=async()=>{
@@ -410,7 +442,8 @@ imageInput.onchange=async()=>{
   const up=await db.storage.from("chat-images").upload(path,file,{contentType:file.type,upsert:false});if(up.error)throw up.error;
   const {data,error}=await db.from("messages").insert({sender_id:currentUsername,receiver_id:friendId,content:"",image_url:path,is_deleted:false}).select().single();if(error)throw error;
   const {data:signed}=await db.storage.from("chat-images").createSignedUrl(path,3600);messagesElement.appendChild(createMessageElement(data,signed?.signedUrl||""));scrollToBottom();updateLatestButton();await createNotification("🖼️ 画像を送信しました");await sendPushToUser(friendId,"💬 "+currentUsername+"さんからメッセージ","🖼️ "+currentUsername+"さんが画像を送信しました","./chat.html?user="+encodeURIComponent(currentUsername));
- }catch(e){console.error(e);alert("画像を送信できませんでした。\n\n"+e.message)}finally{imageButton.disabled=false;sendButton.disabled=false;imageInput.value=""}
+ }catch(e){console.error(e);alert("画像を送信できませんでした。\n\n"+e.message)}
+ finally{imageButton.disabled=false;sendButton.disabled=false;imageInput.value=""}
 };
 $("replyCancel").onclick=e=>{e.preventDefault();clearReplyTarget()};
 window.addEventListener("pagehide",()=>{if(presenceTimer)clearInterval(presenceTimer);if(realtimeChannel)db.removeChannel(realtimeChannel)});
