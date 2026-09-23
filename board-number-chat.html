@@ -815,8 +815,12 @@ async function sendMessage(){
   await loadMessages();
 
  }catch(error){
-  console.error(error);
-  alert("メッセージ送信に失敗しました");
+  console.error("メッセージ送信エラー:",error);
+
+  alert(
+   "❌ メッセージ送信に失敗しました\\n\\n"+
+   (error?.message || "原因不明のエラー")
+  );
  }finally{
   $("sendButton").disabled=isMuted;
  }
