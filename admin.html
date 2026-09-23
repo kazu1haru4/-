@@ -420,6 +420,16 @@ textarea {
 </details>
 
 <details class="panel collapsible-panel">
+<summary>🚨 通報一覧</summary>
+<div style="margin-top:12px">
+<select id="reportStatusFilter" style="width:100%;padding:12px;border-radius:12px;border:1px solid #ddd">
+<option value="all">すべて</option><option value="open">未対応</option><option value="resolved">対応済み</option>
+</select>
+<div id="reportsList" class="loading" style="margin-top:12px">読み込み中...</div>
+</div>
+</details>
+
+<details class="panel collapsible-panel">
 <summary>🖼️ フレーム一覧</summary>
 <div id="framesLoading" class="loading">フレームを読み込んでいます...</div>
 <div id="framesList"></div>
@@ -1147,8 +1157,8 @@ async function loadItems() {
   const { data, error } =
     await supabaseClient
       .from("coin_items")
-      .select("item_key,name,icon,price,frame_color")
-      .neq("item_key","admin")
+      .select("item_key,name,icon,price,frame_color,item_type")
+      .not("item_key","in","(admin,admin_name,admin_bg)")
       .order("price",{ascending:true});
 
   if (error) {
@@ -1167,14 +1177,16 @@ async function loadItems() {
     return;
   }
 
-  if (!data || data.length === 0) {
+  const publicItems = (data || []).filter(item => !isAdminOnlyItem(item));
+
+  if (!publicItems.length) {
     frameStatus.className = "frame-status error";
     frameStatus.textContent =
-      "⚠️ coin_itemsにフレームがありません。";
+      "⚠️ 配布できるアイテムがありません。";
     return;
   }
 
-  data.forEach(item => {
+  publicItems.forEach(item => {
     const icon = item.icon || "🖼️";
 
     const rewardOption =
@@ -1198,7 +1210,7 @@ async function loadItems() {
 
   frameStatus.className = "frame-status success";
   frameStatus.textContent =
-    `✅ ${data.length}個のフレームを読み込みました。`;
+    `✅ ${publicItems.length}個のアイテムを読み込みました。`;
 }
 
 async function createRewardCode() {
@@ -1907,6 +1919,28 @@ async function loadItemLists() {
 }
 
 
+
+async function loadReports(){
+ const box=document.getElementById("reportsList");
+ const filter=document.getElementById("reportStatusFilter")?.value||"all";
+ if(!box)return;
+ box.className="loading";box.textContent="読み込み中...";
+ let q=supabaseClient.from("user_reports").select("id,reporter_id,target_type,target_id,target_user,reason,status,created_at,message_id,message_content,message_image_url").order("created_at",{ascending:false}).limit(100);
+ if(filter!=="all")q=q.eq("status",filter);
+ const {data,error}=await q;
+ if(error){box.textContent="❌ "+error.message;return}
+ box.className="";
+ if(!data?.length){box.textContent="通報はありません。";return}
+ box.innerHTML="";
+ data.forEach(r=>{
+  const card=document.createElement("div");card.className="reward-code-card";
+  const status=r.status==="resolved"?"対応済み":"未対応";
+  card.innerHTML=`<div><b>🚨 ${escapeHtml(status)}</b>　対象：${escapeHtml(r.target_user||"不明")}</div><div style="margin-top:7px">通報者：${escapeHtml(r.reporter_id||"不明")}</div><div style="margin-top:7px">理由：${escapeHtml(r.reason||"理由なし")}</div><div style="margin-top:7px">チャット：${escapeHtml(r.target_type||"message")} / メッセージID：${escapeHtml(r.message_id||r.target_id||"不明")}</div><div style="margin-top:7px;padding:10px;background:#f7f7f9;border-radius:10px;white-space:pre-wrap">内容：${escapeHtml(r.message_content||"画像または内容なし")}</div><div class="muted" style="margin-top:7px">${escapeHtml(new Date(r.created_at).toLocaleString("ja-JP"))}</div>`;
+  if(r.status!=="resolved"){const b=document.createElement("button");b.className="success small";b.textContent="✅ 対応済みにする";b.style.marginTop="8px";b.onclick=async()=>{const {error}=await supabaseClient.from("user_reports").update({status:"resolved",resolved_by:currentUsername,resolved_at:new Date().toISOString()}).eq("id",r.id);if(error)alert(error.message);else loadReports()};card.appendChild(b)}
+  box.appendChild(card);
+ });
+}
+
 async function init() {
   try {
     setStatus(
@@ -1939,6 +1973,7 @@ async function init() {
 
     setStatus("🖼️✨🎨 アイテム一覧を読み込んでいます...", "info");
     await loadItemLists();
+  await loadReports();
 
     setStatus(
       "👤 ユーザーを読み込んでいます...",
