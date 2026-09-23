@@ -1949,8 +1949,10 @@ function setupButtons() {
       document.getElementById("userDetailModal")?.classList.add("hidden");
     });
 
-  document.getElementById("closeUserDetailButton")
-    .addEventListener("click", closeUserDetail);
+  const closeUserDetailButton = document.getElementById("closeUserDetail");
+  if (closeUserDetailButton) {
+    closeUserDetailButton.addEventListener("click", closeUserDetail);
+  }
 
   document.getElementById("createRewardCodeButton")
     .addEventListener("click", createRewardCode);
