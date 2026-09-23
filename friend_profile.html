@@ -1,388 +1,673 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>プロフィール</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    *{box-sizing:border-box}
-    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:linear-gradient(135deg,#fff4fb,#eef7ff);min-height:100vh;padding:24px 16px}
-    .container{width:100%;max-width:420px;margin:0 auto;background:white;border-radius:24px;padding:28px 22px;box-shadow:0 10px 30px rgba(0,0,0,.08);text-align:center}
-    h1{margin:0 0 25px;color:#555;font-size:25px}
-    .avatar-area{display:flex;justify-content:center;margin-bottom:22px}
-    .avatar-frame{position:relative;width:155px;height:155px;min-width:155px;min-height:155px;aspect-ratio:1/1;flex:none;border-radius:50%;padding:7px;background:#ffdff0;border:6px solid #ffd0e7}
-    #avatarContent{width:100%;height:100%;aspect-ratio:1/1;overflow:hidden;border-radius:50%}
-    .avatar{width:100%;height:100%;min-width:0;min-height:0;aspect-ratio:1/1;border-radius:50%;object-fit:cover;object-position:center;display:block;background:#f5f5f5}
-    .avatar-placeholder{width:100%;height:100%;aspect-ratio:1/1;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:55px;color:#aaa}
-    .equipped-badge{position:absolute;right:-7px;top:-7px;width:48px;height:48px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:27px;box-shadow:0 4px 12px rgba(0,0,0,.15);border:3px solid #eee;z-index:2}
-    .name{font-size:24px;font-weight:bold;color:#444;margin-top:8px;word-break:break-word}
-    .name-decoration-sakura{color:#ff4f9b;text-shadow:0 2px 8px rgba(255,80,160,.3)}
-    .name-decoration-star{color:#d79a00;text-shadow:0 2px 8px rgba(244,191,63,.45)}
-    .name-decoration-diamond{color:#159ed6;text-shadow:0 2px 8px rgba(66,185,238,.45)}
-    .name-decoration-heart{color:#ff3d7e;text-shadow:0 2px 8px rgba(255,79,129,.4)}
-    .name-decoration-rainbow{background:linear-gradient(90deg,#ff4d4d,#ffb84d,#5cff8d,#4ddcff,#7b6cff,#ff4dd8);-webkit-background-clip:text;background-clip:text;color:transparent}
-    .name-decoration-flame{color:#ff5b00;text-shadow:0 2px 10px rgba(255,90,0,.5)}
-    .name-decoration-sea{color:#0077ff;text-shadow:0 2px 8px rgba(0,150,255,.4)}
-    .name-decoration-space{color:#8c63ff;text-shadow:0 0 10px rgba(110,60,255,.65)}
-    .name-decoration-neon{color:#00cfcf;text-shadow:0 0 7px #00ff88,0 0 14px #00e5ff,0 0 20px #ff00d4}
-    .name-decoration-admin{color:#d49b00;text-shadow:0 0 8px rgba(255,215,0,.8),0 0 18px rgba(255,215,0,.45)}
-    .background-sakura{background:radial-gradient(circle at 15% 20%,rgba(255,255,255,.75) 0 6px,transparent 7px),linear-gradient(135deg,#ffe2f0,#ffb8d8,#fff0f8)!important}
-    .background-star{background:radial-gradient(circle at 15% 20%,#fff 0 2px,transparent 3px),radial-gradient(circle at 80% 30%,#fff 0 2px,transparent 3px),linear-gradient(135deg,#fff4a8,#f5cf5c,#fff8cf)!important}
-    .background-diamond{background:linear-gradient(135deg,#dff8ff,#9fe7ff,#effcff)!important}
-    .background-heart{background:radial-gradient(circle at 80% 20%,rgba(255,255,255,.65) 0 8px,transparent 9px),linear-gradient(135deg,#ffe0eb,#ff9fbd,#ffd8e6)!important}
-    .background-rainbow{background:linear-gradient(135deg,#ffd7d7,#ffe7b5,#ffffc4,#d8ffd9,#d8f7ff,#ddd8ff,#ffd8f3)!important}
-    .background-flame{background:linear-gradient(135deg,#ffb18b,#ff6b3d,#ffd65c,#fff0a0)!important}
-    .background-sea{background:linear-gradient(135deg,#bff5ff,#55d9f5,#5b9fff,#d8fbff)!important}
-    .background-space{background:radial-gradient(circle at 20% 20%,white 0 2px,transparent 3px),radial-gradient(circle at 75% 35%,#9fe7ff 0 2px,transparent 3px),linear-gradient(135deg,#08051c,#25104f,#09031c)!important}
-    .background-neon{background:linear-gradient(135deg,#c8ffe7,#b9ffff,#ffd0f8,#d9c8ff)!important}
-    .background-admin{background:radial-gradient(circle at 20% 20%,rgba(255,255,255,.8) 0 5px,transparent 6px),linear-gradient(135deg,#fff9cf,#ffd700,#fff2a1,#fffbe1)!important}
-    .user-id{margin-top:6px;color:#999;font-size:14px;word-break:break-word}
-    .bio-box{margin-top:22px;padding:18px;border-radius:16px;background:#fafafa;text-align:left}
-    .bio-title{font-weight:bold;color:#777;margin-bottom:8px}
-    .bio{color:#555;line-height:1.7;white-space:pre-wrap;word-break:break-word}
-    .empty-bio{color:#aaa}
-    .gift-section{margin-top:22px;padding:18px;border-radius:18px;background:linear-gradient(135deg,#fff4fb,#f5f1ff)}
-    .gift-title{font-size:18px;font-weight:bold;color:#555;margin-bottom:8px}
-    .gift-balance{font-size:14px;color:#888;margin-bottom:14px}
-    .gift-button{width:100%;border:none;border-radius:14px;padding:14px;background:linear-gradient(135deg,#ff8fc7,#9b8cff);color:white;font-size:16px;font-weight:bold;cursor:pointer;box-shadow:0 5px 14px rgba(155,140,255,.22)}
-    .gift-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;padding:20px}
-    .gift-modal.show{display:flex}
-    .gift-modal-box{width:100%;max-width:360px;background:white;border-radius:22px;padding:24px;text-align:center;box-shadow:0 15px 40px rgba(0,0,0,.2)}
-    .gift-modal-title{font-size:21px;font-weight:bold;color:#555;margin-bottom:8px}
-    .gift-target{color:#888;font-size:14px;margin-bottom:18px}
-    .amount-buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
-    .amount-button{border:none;border-radius:12px;padding:11px 5px;background:#f3efff;color:#6554b8;font-weight:bold;cursor:pointer}
-    .amount-button.selected{background:#8f7cff;color:white}
-    .amount-input{width:100%;padding:13px;border:2px solid #eee;border-radius:12px;font-size:16px;text-align:center;outline:none}
-    .gift-confirm-button{width:100%;margin-top:14px;border:none;border-radius:13px;padding:13px;background:#8f7cff;color:white;font-size:16px;font-weight:bold;cursor:pointer}
-    .gift-cancel-button{width:100%;margin-top:8px;border:none;border-radius:13px;padding:12px;background:#f2f2f2;color:#777;font-weight:bold;cursor:pointer}
-    .gift-status{margin-top:12px;font-size:14px;min-height:20px}
-    .gift-success{color:#35a66b}.gift-error{color:#e25555}
-    .profile-actions{display:flex;gap:10px;margin-top:24px}
-    .action-button{flex:1;display:block;padding:13px 10px;border-radius:14px;text-decoration:none;font-weight:bold;text-align:center;border:none;font-size:14px}
-    .chat-button{background:linear-gradient(135deg,#8f7cff,#6e9cff);color:white;box-shadow:0 5px 14px rgba(110,140,255,.2)}
-    .back-button{background:#f3efff;color:#6554b8}
-    .message{padding:25px 10px;color:#777}.error{color:#e25555}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>プロフィール</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="ban-check.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif;background:linear-gradient(135deg,#fff4fb,#eef7ff);color:#333;padding:20px;transition:background .35s ease}
+.home-link{display:inline-block;text-decoration:none;color:#7658d9;background:rgba(255,255,255,.9);padding:10px 16px;border-radius:999px;font-weight:bold;box-shadow:0 4px 12px rgba(100,80,150,.12);margin-bottom:16px}
+.container{width:100%;max-width:420px;margin:0 auto;background:rgba(255,255,255,.94);border-radius:24px;padding:28px 22px;box-shadow:0 12px 35px rgba(100,80,150,.15);transition:background .35s ease}
+h1{text-align:center;margin:0 0 20px;font-size:27px;color:#7158cf}
+.profile-preview{text-align:center;margin-bottom:22px}
+.avatar-area{display:flex;justify-content:center;margin-bottom:15px}
+.avatar-frame{position:relative;width:150px;height:150px;border-radius:50%;padding:7px;background:#ffd9ec;box-shadow:0 5px 18px rgba(0,0,0,.12),0 0 0 3px white;transition:background .3s ease,box-shadow .3s ease}
+.avatar-image{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;border:3px solid white;filter:none!important;mix-blend-mode:normal!important;opacity:1!important}
+.avatar-placeholder{width:100%;height:100%;border-radius:50%;background:#fff3f9;border:3px solid white;display:flex;align-items:center;justify-content:center;font-size:58px}
+.equipped-badge{position:absolute;top:-8px;right:-8px;width:48px;height:48px;border-radius:50%;background:white;display:none;align-items:center;justify-content:center;font-size:27px;box-shadow:0 4px 12px rgba(0,0,0,.18),0 0 0 3px white;z-index:5}
+.equipped-badge.show{display:flex}
+.name-preview{font-size:22px;font-weight:bold;min-height:34px;word-break:break-word}
+.name-decoration-sakura{color:#ff4f9b;text-shadow:0 2px 8px rgba(255,80,160,.3)}
+.name-decoration-star{color:#d79a00;text-shadow:0 2px 8px rgba(244,191,63,.45)}
+.name-decoration-diamond{color:#159ed6;text-shadow:0 2px 8px rgba(66,185,238,.45)}
+.name-decoration-heart{color:#ff3d7e;text-shadow:0 2px 8px rgba(255,79,129,.4)}
+.name-decoration-rainbow{background:linear-gradient(90deg,#ff4d4d,#ffb84d,#5cff8d,#4ddcff,#7b6cff,#ff4dd8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.name-decoration-flame{color:#ff5b00;text-shadow:0 2px 10px rgba(255,90,0,.5)}
+.name-decoration-sea{color:#0077ff;text-shadow:0 2px 8px rgba(0,150,255,.4)}
+.name-decoration-space{color:#8c63ff;text-shadow:0 0 10px rgba(110,60,255,.65)}
+.name-decoration-neon{color:#00cfcf;text-shadow:0 0 7px #00ff88,0 0 14px #00e5ff,0 0 20px #ff00d4}
+.name-decoration-admin{color:#d49b00;text-shadow:0 0 8px rgba(255,215,0,.8),0 0 18px rgba(255,215,0,.45)}
+.admin-name-badge{font-size:15px;margin-left:5px}
+.frame-sakura{background:linear-gradient(135deg,#ffb7d8,#ff65ae,#ffd3e8,#ff8bc0);box-shadow:0 0 0 3px white,0 0 18px rgba(255,100,180,.45)}
+.frame-star{background:linear-gradient(135deg,#fff0a6,#f4bf3f,#fff8c9,#e9a900);box-shadow:0 0 0 3px white,0 0 20px rgba(244,191,63,.45)}
+.frame-diamond{background:linear-gradient(135deg,#a8edff,#42b9ee,#e2faff,#48caff);box-shadow:0 0 0 3px white,0 0 20px rgba(50,190,255,.45)}
+.frame-heart{background:linear-gradient(135deg,#ffb1d4,#ff4f9a,#ff8fc2,#ff2f86);box-shadow:0 0 0 3px white,0 0 22px rgba(255,60,150,.45)}
+.frame-rainbow{background:conic-gradient(#ff0000,#ff7a00,#ffe600,#00d639,#00d9ff,#0066ff,#7a00ff,#ff00d4,#ff0000);box-shadow:0 0 0 3px white,0 0 15px rgba(80,150,255,.45),0 0 30px rgba(255,80,180,.35)}
+.frame-flame{background:linear-gradient(135deg,#ff2200,#ff6500,#ffd000,#ff3300,#ff9500);box-shadow:0 0 0 3px white,0 0 20px rgba(255,80,0,.55)}
+.frame-sea{background:linear-gradient(135deg,#00c6ff,#0072ff,#00e5ff,#0066cc);box-shadow:0 0 0 3px white,0 0 20px rgba(0,170,255,.45)}
+.frame-neon{background:linear-gradient(135deg,#00ff00,#00ffff,#ff00ff,#7a00ff,#00ff00);background-size:300% 300%;box-shadow:0 0 0 3px white,0 0 10px #00ff00,0 0 20px #00ffff,0 0 35px #ff00ff;animation:neonMove 2s ease infinite}
+@keyframes neonMove{0%{background-position:0 50%}50%{background-position:100% 50%}100%{background-position:0 50%}}
+.frame-space{background:radial-gradient(circle at 20% 20%,white 0 2px,transparent 3px),radial-gradient(circle at 70% 30%,white 0 1px,transparent 3px),radial-gradient(circle at 40% 75%,#8de7ff 0 2px,transparent 3px),radial-gradient(circle at 85% 80%,white 0 1px,transparent 3px),linear-gradient(135deg,#050014,#26105f,#6d28d9,#09001c);box-shadow:0 0 0 3px white,0 0 20px rgba(100,70,255,.6),0 0 35px rgba(120,80,255,.35)}
+.admin-frame{background:linear-gradient(135deg,#fff4a8,#ffd700,#fff7bd,#e8ad00,#fff4a8);box-shadow:0 0 0 3px white,0 0 18px rgba(255,215,0,.5)}
+.background-sakura{background:radial-gradient(circle at 15% 20%,rgba(255,255,255,.75) 0 6px,transparent 7px),linear-gradient(135deg,#ffe2f0,#ffb8d8,#fff0f8)!important}
+.background-star{background:radial-gradient(circle at 15% 20%,#fff 0 2px,transparent 3px),radial-gradient(circle at 80% 30%,#fff 0 2px,transparent 3px),linear-gradient(135deg,#fff4a8,#f5cf5c,#fff8cf)!important}
+.background-diamond{background:linear-gradient(135deg,#dff8ff,#9fe7ff,#effcff)!important}
+.background-heart{background:radial-gradient(circle at 80% 20%,rgba(255,255,255,.65) 0 8px,transparent 9px),linear-gradient(135deg,#ffe0eb,#ff9fbd,#ffd8e6)!important}
+.background-rainbow{background:linear-gradient(135deg,#ffd7d7,#ffe7b5,#ffffc4,#d8ffd9,#d8f7ff,#ddd8ff,#ffd8f3)!important}
+.background-flame{background:linear-gradient(135deg,#ffb18b,#ff6b3d,#ffd65c,#fff0a0)!important}
+.background-sea{background:linear-gradient(135deg,#bff5ff,#55d9f5,#5b9fff,#d8fbff)!important}
+.background-space{background:radial-gradient(circle at 20% 20%,white 0 2px,transparent 3px),radial-gradient(circle at 75% 35%,#9fe7ff 0 2px,transparent 3px),linear-gradient(135deg,#08051c,#25104f,#09031c)!important}
+.background-neon{background:linear-gradient(135deg,#c8ffe7,#b9ffff,#ffd0f8,#d9c8ff)!important}
+.background-admin{background:radial-gradient(circle at 20% 20%,rgba(255,255,255,.8) 0 5px,transparent 6px),linear-gradient(135deg,#fff9cf,#ffd700,#fff2a1,#fffbe1)!important}
+.items-section{margin-bottom:25px}
+.items{display:flex;gap:10px;flex-wrap:wrap}
+.item-card{width:calc(50% - 5px);min-height:125px;border-radius:16px;background:white;border:2px solid #eee;padding:9px;text-align:center}
+.item-card.admin-item{border-color:#ffd700;background:linear-gradient(135deg,#fffdf0,#fff8cf);box-shadow:0 3px 12px rgba(255,215,0,.2)}
+.item-icon{position:relative;width:54px;height:54px;margin:0 auto 6px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:29px;background:#fff}
+.item-name{font-size:11px;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.equip-button{width:100%;border:none;border-radius:9px;padding:6px 3px;background:#7658d9;color:white;font-size:11px;font-weight:bold;cursor:pointer}.equip-button.equipped{background:#bbb}
+.item-preview{position:relative;width:54px;height:54px;margin:0 auto 6px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:#fff;overflow:hidden}
+.name-item-preview{font-size:17px;font-weight:900;white-space:nowrap}
+.background-item-preview{font-size:25px;width:54px;height:54px;border-radius:14px;border:2px solid #eee}
+.item-type-label{font-size:9px;color:#888;margin:-2px 0 5px}
+.no-items{color:#999;text-align:center;font-size:13px;padding:10px 0;width:100%}
+.image-button{display:block;width:100%;padding:14px;border:none;border-radius:15px;background:#f0eaff;color:#7158cf;font-size:16px;font-weight:bold;cursor:pointer;text-align:center;margin-bottom:24px}
+#imageInput{display:none}
+label{display:block;font-weight:bold;margin:18px 0 7px;color:#444}
+input[type=text],textarea{width:100%;border:2px solid #eee;border-radius:14px;padding:13px;font-size:16px;font-family:inherit;outline:none;background:#fff}
+input[type=text]:focus,textarea:focus{border-color:#b8a7ef}
+textarea{min-height:120px;resize:vertical}
+.save-button{width:100%;margin-top:25px;border:none;border-radius:16px;padding:15px;background:#7658d9;color:white;font-size:17px;font-weight:bold;cursor:pointer}
+.save-button:disabled{opacity:.65;cursor:wait}
+#message{text-align:center;margin-top:15px;min-height:22px;font-size:14px;white-space:pre-line;color:#7658d9}
+.item-details{margin-bottom:12px;border-radius:18px;overflow:hidden;background:#faf9ff}
+.item-summary{list-style:none;cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border:2px solid #e8e3ff;border-radius:18px;background:linear-gradient(135deg,#f8f5ff,#fff4fb);font-size:16px;font-weight:bold}
+.item-summary::-webkit-details-marker{display:none}
+.item-details[open] .item-arrow{transform:rotate(180deg)}
+.item-arrow{font-size:17px;transition:transform .2s ease}
+.item-content{padding:12px 10px 10px}
+</style>
 </head>
 <body>
-<div class="container">
-  <h1>プロフィール</h1>
-  <div id="loading" class="message">読み込み中...</div>
+<a class="home-link" href="home.html">🏠 ホーム</a>
+<div class="container" id="profileContainer">
+<h1>👤 プロフィール</h1>
 
-  <div id="profile" style="display:none;">
-    <div class="avatar-area">
-      <div id="avatarFrame" class="avatar-frame">
-        <div id="avatarContent"></div>
-        <div id="equippedBadge" class="equipped-badge" style="display:none;"></div>
-      </div>
-    </div>
-
-    <div id="name" class="name"></div>
-    <div id="userId" class="user-id"></div>
-
-    <div class="bio-box">
-      <div class="bio-title">自己紹介</div>
-      <div id="bio" class="bio"></div>
-    </div>
-
-    <div id="giftSection" class="gift-section" style="display:none;">
-      <div class="gift-title">🎁 コインギフト</div>
-      <div id="giftBalance" class="gift-balance">残高を確認中...</div>
-      <button id="openGiftButton" class="gift-button" type="button">🎁 コインをギフト</button>
-    </div>
-
-    <div class="profile-actions">
-      <a id="chatButton" class="action-button chat-button" href="#">💬 チャットする</a>
-      <a href="friends.html" class="action-button back-button">← 友達一覧</a>
-    </div>
-    <a href="home.html" class="action-button back-button" style="display:block;margin-top:10px;">🏠 ホーム</a>
-  </div>
-
-  <div id="error" class="message error" style="display:none;"></div>
+<div class="profile-preview">
+<div class="avatar-area">
+<div id="avatarFrame" class="avatar-frame">
+<div id="avatarContent" class="avatar-placeholder">😊</div>
+<div id="equippedBadge" class="equipped-badge"></div>
+</div>
+</div>
+<div id="namePreview" class="name-preview">名前</div>
 </div>
 
-<div id="giftModal" class="gift-modal">
-  <div class="gift-modal-box">
-    <div class="gift-modal-title">🎁 コインをギフト</div>
-    <div id="giftTarget" class="gift-target"></div>
-    <div class="amount-buttons">
-      <button class="amount-button" type="button" data-amount="10">10</button>
-      <button class="amount-button" type="button" data-amount="50">50</button>
-      <button class="amount-button" type="button" data-amount="100">100</button>
-    </div>
-    <input id="giftAmount" class="amount-input" type="number" min="1" step="1" placeholder="送る枚数を入力">
-    <button id="sendGiftButton" class="gift-confirm-button" type="button">🎁 ギフトする</button>
-    <button id="closeGiftButton" class="gift-cancel-button" type="button">キャンセル</button>
-    <div id="giftStatus" class="gift-status"></div>
-  </div>
+<div class="items-section">
+<details class="item-details">
+<summary class="item-summary"><span>🖼️ フレーム</span><span class="item-arrow">▼</span></summary>
+<div class="item-content"><div id="frameItems" class="items"><div class="no-items">読み込み中...</div></div></div>
+</details>
+
+<details class="item-details">
+<summary class="item-summary"><span>✨ 名前装飾</span><span class="item-arrow">▼</span></summary>
+<div class="item-content"><div id="nameDecorationItems" class="items"><div class="no-items">読み込み中...</div></div></div>
+</details>
+
+<details class="item-details">
+<summary class="item-summary"><span>🎨 プロフィール背景</span><span class="item-arrow">▼</span></summary>
+<div class="item-content"><div id="backgroundItems" class="items"><div class="no-items">読み込み中...</div></div></div>
+</details>
+</div>
+
+<label for="imageInput" class="image-button">📷 アイコン画像を選ぶ</label>
+<input id="imageInput" type="file" accept="image/*">
+
+<label for="name">名前</label>
+<input id="name" type="text" placeholder="表示する名前" maxlength="30">
+
+<label for="bio">自己紹介</label>
+<textarea id="bio" placeholder="自己紹介を書こう！" maxlength="300"></textarea>
+
+<button id="saveButton" class="save-button" type="button">プロフィールを保存</button>
+<div id="message"></div>
 </div>
 
 <script>
 const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
 const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
-const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-let currentUsername="";
-let friendUsername="";
-let selectedAmount=null;
-let currentBalance=0;
+const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
+const ADMIN_ITEMS={
+ admin:{item_key:"admin",name:"管理者限定フレーム",icon:"👑",frame_color:"#ffd700",item_type:"frame"},
+ admin_name:{item_key:"admin_name",name:"管理者限定名前装飾",icon:"👑",frame_color:"#ffd700",item_type:"name_decoration"},
+ admin_bg:{item_key:"admin_bg",name:"管理者限定背景",icon:"👑",frame_color:"#ffd700",item_type:"background"}
+};
 
-function escapeHtml(value){
-  if(value===null||value===undefined)return "";
-  return String(value).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+let currentUsername="",currentProfile=null,ownedItems=[];
+let selectedAvatarFile=null;
+let saving=false;
+
+function isAdmin(){return ADMIN_USERNAMES.has(currentUsername)}
+
+function showMessage(text,error=false){
+ const el=document.getElementById("message");
+ el.textContent=text;
+ el.style.color=error?"#e05252":"#7658d9";
 }
 
-function getFriendUsername(){
-  const params=new URLSearchParams(window.location.search);
-  return params.get("user")||params.get("username")||params.get("friend");
+function escapeHtml(v){
+ return String(v??"")
+  .replaceAll("&","&amp;")
+  .replaceAll("<","&lt;")
+  .replaceAll(">","&gt;")
+  .replaceAll('"',"&quot;")
+  .replaceAll("'","&#039;");
 }
 
-async function getEquippedItem(itemKey){
-  if(!itemKey)return null;
-  const {data,error}=await db.from("coin_items").select("item_key,name,icon,frame_color").eq("item_key",itemKey).maybeSingle();
-  if(error){console.error("アイテム取得エラー:",error);return null}
-  return data||null;
+async function getCurrentUser(){
+ if(typeof checkFriendChatBan==="function"&&await checkFriendChatBan())return null;
+
+ const {data,error}=await supabaseClient.auth.getUser();
+
+ if(error||!data.user){
+  location.href="index.html";
+  return null;
+ }
+
+ currentUsername=data.user.user_metadata?.username||"";
+
+ if(!currentUsername){
+  showMessage("ユーザー情報を取得できませんでした。",true);
+  return null;
+ }
+
+ return data.user;
 }
 
 async function loadProfile(){
-  friendUsername=getFriendUsername();
-  if(!friendUsername)throw new Error("プロフィールのユーザーが指定されていません。");
+ const {data,error}=await supabaseClient
+  .from("profiles")
+  .select("*")
+  .eq("user_id",currentUsername)
+  .maybeSingle();
 
-  const {data:{session}}=await db.auth.getSession();
-  if(!session)throw new Error("ログインしてください。");
+ if(error){
+  console.error("loadProfile:",error);
+  showMessage("プロフィールの読み込みに失敗しました。\n"+error.message,true);
+  return;
+ }
 
-  currentUsername=session.user.user_metadata?.username||"";
-  if(!currentUsername)throw new Error("ログインユーザーを確認できませんでした。");
+ currentProfile=data||{
+  user_id:currentUsername,
+  name:"",
+  bio:"",
+  avatar_url:null,
+  equipped_item_key:null,
+  equipped_name_decoration_key:null,
+  equipped_background_key:null
+ };
 
-  const isOwnProfile=currentUsername===friendUsername;
+ document.getElementById("name").value=currentProfile.name||"";
+ document.getElementById("bio").value=currentProfile.bio||"";
 
-  const {data,error}=await db.from("profiles")
-    .select("user_id,name,bio,avatar_url,equipped_item_key,equipped_name_decoration_key,equipped_background_key")
-    .eq("user_id",friendUsername).maybeSingle();
+ displayAvatar(currentProfile.avatar_url);
+ updatePreview();
+}
 
-  if(error){console.error(error);throw new Error("プロフィールを読み込めませんでした。")}
-  if(!data)throw new Error("プロフィールが見つかりませんでした。");
+function displayAvatar(url){
+ const old=document.getElementById("avatarContent");
+ if(!old)return;
 
-  const item=await getEquippedItem(data.equipped_item_key);
-  const frame=document.getElementById("avatarFrame");
-  const badge=document.getElementById("equippedBadge");
-  const avatarContent=document.getElementById("avatarContent");
-
-  frame.className="avatar-frame";
-  frame.style.background="";
-  frame.style.borderColor="#ffd0e7";
-  frame.style.boxShadow="";
-
-  const frameClasses={
-    sakura:"frame-sakura",
-    star:"frame-star",
-    diamond:"frame-diamond",
-    heart:"frame-heart",
-    rainbow:"frame-rainbow",
-    flame:"frame-flame",
-    sea:"frame-sea",
-    neon:"frame-neon",
-    space:"frame-space",
-    admin:"admin-frame"
+ if(url){
+  const img=document.createElement("img");
+  img.id="avatarContent";
+  img.className="avatar-image";
+  img.src=url;
+  img.alt="プロフィール画像";
+  img.onerror=()=>{
+   showMessage("プロフィール画像を表示できませんでした。",true);
   };
+  old.replaceWith(img);
+ }else{
+  const div=document.createElement("div");
+  div.id="avatarContent";
+  div.className="avatar-placeholder";
+  div.textContent="😊";
+  old.replaceWith(div);
+ }
+}
 
-  const frameClass=frameClasses[data.equipped_item_key]||"";
-  if(frameClass){
-    frame.classList.add(frameClass);
-  }else if(item?.frame_color){
-    frame.style.background=item.frame_color;
-    frame.style.borderColor=item.frame_color;
-    frame.style.boxShadow=`0 0 0 3px white,0 0 15px ${item.frame_color}`;
+async function loadItems(){
+ const {data,error}=await supabaseClient
+  .from("user_coin_items")
+  .select("item_key,coin_items(item_key,name,icon,frame_color,item_type)")
+  .eq("user_id",currentUsername);
+
+ if(error){
+  console.error("loadItems:",error);
+  showMessage("アイテムを読み込めませんでした。\n"+error.message,true);
+  return;
+ }
+
+ ownedItems=(data||[]).map(row=>row.coin_items||{item_key:row.item_key});
+
+ if(isAdmin()){
+  for(const key of Object.keys(ADMIN_ITEMS)){
+   if(!ownedItems.some(x=>x.item_key===key))ownedItems.push(ADMIN_ITEMS[key]);
   }
+ }
 
-  badge.style.display="none";
-  badge.className="equipped-badge";
-  badge.style.borderColor=item?.frame_color||"#eee";
+ renderItems();
+ updatePreview();
+}
 
-  if(item?.icon){
-    badge.textContent=item.icon;
-    badge.style.display="flex";
-  }
+function getItem(key){
+ return ownedItems.find(x=>(x.item_key||"")===key)||ADMIN_ITEMS[key]||null;
+}
 
-  // プロフィール背景
-  const backgroundClasses={
-    bg_sakura:"background-sakura",
-    bg_star:"background-star",
-    bg_diamond:"background-diamond",
-    bg_heart:"background-heart",
-    bg_rainbow:"background-rainbow",
-    bg_flame:"background-flame",
-    bg_sea:"background-sea",
-    bg_space:"background-space",
-    bg_neon:"background-neon",
-    admin_bg:"background-admin"
-  };
+function normalizeItemType(item){
+ const key=String(item?.item_key||"");
+ if(item?.item_type==="frame"||item?.item_type==="name_decoration"||item?.item_type==="background")return item.item_type;
+ if(key.startsWith("nd_")||key==="admin_name")return "name_decoration";
+ if(key.startsWith("bg_")||key==="admin_bg")return "background";
+ return "frame";
+}
 
-  document.body.className="";
-  const bgClass=backgroundClasses[data.equipped_background_key]||"";
-  if(bgClass)document.body.classList.add(bgClass);
+function getFrameClass(key){
+ return {
+  sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",
+  heart:"frame-heart",rainbow:"frame-rainbow",flame:"frame-flame",
+  sea:"frame-sea",neon:"frame-neon",space:"frame-space",admin:"admin-frame"
+ }[key]||"";
+}
 
-  // 名前装飾
-  const nameClasses={
-    nd_sakura:"name-decoration-sakura",
-    nd_star:"name-decoration-star",
-    nd_diamond:"name-decoration-diamond",
-    nd_heart:"name-decoration-heart",
-    nd_rainbow:"name-decoration-rainbow",
-    nd_flame:"name-decoration-flame",
-    nd_sea:"name-decoration-sea",
-    nd_space:"name-decoration-space",
-    nd_neon:"name-decoration-neon",
-    admin_name:"name-decoration-admin"
-  };
+function getNameClass(key){
+ return {
+  nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",
+  nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",
+  nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",
+  nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",
+  nd_neon:"name-decoration-neon",admin_name:"name-decoration-admin"
+ }[key]||"";
+}
 
-  if(data.avatar_url){
-    avatarContent.innerHTML=`<img class="avatar" src="${escapeHtml(data.avatar_url)}" alt="プロフィール画像">`;
+function getBackgroundClass(key){
+ return {
+  bg_sakura:"background-sakura",bg_star:"background-star",
+  bg_diamond:"background-diamond",bg_heart:"background-heart",
+  bg_rainbow:"background-rainbow",bg_flame:"background-flame",
+  bg_sea:"background-sea",bg_space:"background-space",
+  bg_neon:"background-neon",admin_bg:"background-admin"
+ }[key]||"";
+}
+
+function renderItems(){
+ const groups={
+  frame:document.getElementById("frameItems"),
+  name_decoration:document.getElementById("nameDecorationItems"),
+  background:document.getElementById("backgroundItems")
+ };
+
+ Object.values(groups).forEach(x=>x.innerHTML="");
+
+ const equipped={
+  frame:currentProfile?.equipped_item_key||"",
+  name_decoration:currentProfile?.equipped_name_decoration_key||"",
+  background:currentProfile?.equipped_background_key||""
+ };
+
+ for(const raw of ownedItems){
+  const item={...raw};
+  const key=String(item.item_key||"");
+  const type=normalizeItemType(item);
+
+  if(!groups[type]||(!isAdmin()&&["admin","admin_name","admin_bg"].includes(key)))continue;
+
+  const isEquipped=equipped[type]===key;
+  const card=document.createElement("div");
+  card.className="item-card"+(key.startsWith("admin")?" admin-item":"");
+
+  let preview="";
+  let typeLabel="";
+
+  if(type==="frame"){
+   const cls=getFrameClass(key);
+   typeLabel="フレーム";
+   preview=`<div class="item-preview ${cls}" style="${cls?"":`border:4px solid ${escapeHtml(item.frame_color||"#ffd9ec")};`}">${escapeHtml(item.icon||"🎁")}</div>`;
+  }else if(type==="name_decoration"){
+   const cls=getNameClass(key);
+   typeLabel="名前装飾";
+   preview=`<div class="item-preview name-item-preview ${cls}">名前${key==="admin_name"?" 👑":""}</div>`;
   }else{
-    avatarContent.innerHTML=`<div class="avatar-placeholder">👤</div>`;
+   const cls=getBackgroundClass(key);
+   typeLabel="プロフィール背景";
+   preview=`<div class="item-preview background-item-preview ${cls}">${escapeHtml(item.icon||"🎨")}</div>`;
   }
 
-  const nameEl=document.getElementById("name");
-  const nameClass=nameClasses[data.equipped_name_decoration_key]||"";
-  nameEl.className="name "+nameClass;
-  nameEl.textContent=data.name||data.user_id;
-  if(data.equipped_name_decoration_key==="admin_name"){
-    nameEl.textContent=(data.name||data.user_id)+" 👑";
-  }
-  document.getElementById("userId").textContent="@"+data.user_id;
+  card.innerHTML=`
+   ${preview}
+   <div class="item-type-label">${typeLabel}</div>
+   <div class="item-name">${escapeHtml(item.name||key)}</div>
+   <button class="equip-button ${isEquipped?"equipped":""}" data-type="${type}" data-key="${escapeHtml(key)}">${isEquipped?"装備中":"装備する"}</button>`;
 
-  const bio=document.getElementById("bio");
-  if(data.bio)bio.textContent=data.bio;
-  else bio.innerHTML='<span class="empty-bio">自己紹介はありません</span>';
+  groups[type].appendChild(card);
+ }
 
-  // 個別チャットへのリンク
-  document.getElementById("chatButton").href="chat.html?user="+encodeURIComponent(friendUsername);
+ for(const el of Object.values(groups)){
+  if(!el.children.length)el.innerHTML='<div class="no-items">まだこの種類のアイテムはありません</div>';
+ }
 
-  const giftSection=document.getElementById("giftSection");
-  if(!isOwnProfile){
-    giftSection.style.display="block";
-    document.getElementById("giftTarget").textContent="@"+friendUsername+" さんへ";
-    await loadMyBalance();
-  }else{
-    giftSection.style.display="none";
-  }
-
-  document.getElementById("loading").style.display="none";
-  document.getElementById("profile").style.display="block";
+ document.querySelectorAll(".equip-button").forEach(btn=>{
+  btn.addEventListener("click",()=>equipItem(btn.dataset.type,btn.dataset.key));
+ });
 }
 
-async function loadMyBalance(){
-  const {data,error}=await db.from("user_coins").select("coins").eq("user_id",currentUsername).maybeSingle();
-  if(error){
-    console.error("コイン残高取得エラー:",error);
-    document.getElementById("giftBalance").textContent="コイン残高を取得できませんでした。";
-    return;
-  }
-  currentBalance=Number(data?.coins||0);
-  document.getElementById("giftBalance").textContent="現在の残高：🪙 "+currentBalance+" COIN";
-}
+async function equipItem(type,key){
+ try{
+  if(typeof checkFriendChatBan==="function"&&await checkFriendChatBan())return;
 
-function openGiftModal(){
-  selectedAmount=null;
-  document.getElementById("giftAmount").value="";
-  document.getElementById("giftStatus").textContent="";
-  document.getElementById("giftStatus").className="gift-status";
-  document.querySelectorAll(".amount-button").forEach(button=>button.classList.remove("selected"));
-  document.getElementById("giftModal").classList.add("show");
-}
-
-function closeGiftModal(){
-  document.getElementById("giftModal").classList.remove("show");
-}
-
-document.querySelectorAll(".amount-button").forEach(button=>{
-  button.addEventListener("click",()=>{
-    const amount=Number(button.dataset.amount);
-    selectedAmount=amount;
-    document.getElementById("giftAmount").value=amount;
-    document.querySelectorAll(".amount-button").forEach(other=>other.classList.remove("selected"));
-    button.classList.add("selected");
-  });
-});
-
-document.getElementById("giftAmount").addEventListener("input",()=>{
-  selectedAmount=null;
-  document.querySelectorAll(".amount-button").forEach(button=>button.classList.remove("selected"));
-});
-
-async function sendGift(){
-  const input=document.getElementById("giftAmount");
-  const status=document.getElementById("giftStatus");
-  const sendButton=document.getElementById("sendGiftButton");
-  const amount=Number(input.value);
-
-  status.textContent="";
-  status.className="gift-status";
-
-  if(!Number.isInteger(amount)||amount<=0){
-    status.textContent="1枚以上のコインを入力してください。";
-    status.classList.add("gift-error");
-    return;
-  }
-  if(amount>currentBalance){
-    status.textContent="コインが足りません。";
-    status.classList.add("gift-error");
-    return;
-  }
-  if(!friendUsername||friendUsername===currentUsername){
-    status.textContent="このユーザーにはギフトできません。";
-    status.classList.add("gift-error");
-    return;
+  if(["admin","admin_name","admin_bg"].includes(key)&&!isAdmin()){
+   showMessage("管理者専用アイテムです。",true);
+   return;
   }
 
-  if(!window.confirm("@"+friendUsername+" さんに "+amount+" COIN を送りますか？"))return;
+  if(!["frame","name_decoration","background"].includes(type)){
+   showMessage("アイテム種類が不正です。",true);
+   return;
+  }
 
-  sendButton.disabled=true;
-  sendButton.textContent="送信中...";
+  const item=getItem(key);
+  if(!item){
+   showMessage("このアイテムを所有していません。",true);
+   return;
+  }
 
-  const {error}=await db.rpc("send_coin_gift",{target_username:friendUsername,gift_amount:amount});
+  const column=
+   type==="frame"
+    ?"equipped_item_key"
+    :type==="name_decoration"
+    ?"equipped_name_decoration_key"
+    :"equipped_background_key";
+
+  showMessage("装備しています...");
+
+  const {data,error}=await supabaseClient
+   .from("profiles")
+   .update({[column]:key})
+   .eq("user_id",currentUsername)
+   .select("*")
+   .maybeSingle();
 
   if(error){
-    console.error("ギフト送信エラー:",error);
-    status.textContent=error.message||"ギフトの送信に失敗しました。";
-    status.classList.add("gift-error");
-    sendButton.disabled=false;
-    sendButton.textContent="🎁 ギフトする";
-    return;
+   console.error("equipItem update error:",error);
+   showMessage("装備に失敗しました。\n"+error.message,true);
+   return;
   }
 
-  currentBalance-=amount;
-  document.getElementById("giftBalance").textContent="現在の残高：🪙 "+currentBalance+" COIN";
-  status.textContent="🎉 "+amount+" COIN をギフトしました！";
-  status.classList.add("gift-success");
-  input.value="";
-  document.querySelectorAll(".amount-button").forEach(button=>button.classList.remove("selected"));
-  sendButton.disabled=false;
-  sendButton.textContent="🎁 ギフトする";
-  setTimeout(closeGiftModal,1200);
+  if(!data){
+   showMessage("装備を保存できませんでした。プロフィールの更新権限を確認してください。",true);
+   return;
+  }
+
+  currentProfile=data;
+  renderItems();
+  updatePreview();
+  showMessage("装備しました！✨");
+
+ }catch(e){
+  console.error("equipItem exception:",e);
+  showMessage("装備中にエラーが発生しました。\n"+(e.message||e),true);
+ }
 }
 
-document.getElementById("openGiftButton").addEventListener("click",openGiftModal);
-document.getElementById("closeGiftButton").addEventListener("click",closeGiftModal);
-document.getElementById("sendGiftButton").addEventListener("click",sendGift);
-document.getElementById("giftModal").addEventListener("click",event=>{
-  if(event.target.id==="giftModal")closeGiftModal();
+function updatePreview(){
+ const frame=document.getElementById("avatarFrame");
+ const badge=document.getElementById("equippedBadge");
+
+ frame.className="avatar-frame";
+ frame.style.background="";
+ frame.style.boxShadow="";
+ frame.style.animation="";
+
+ badge.className="equipped-badge";
+ badge.textContent="";
+ badge.style.border="";
+
+ const frameKey=currentProfile?.equipped_item_key;
+ const frameItem=getItem(frameKey);
+
+ if(frameItem){
+  const cls=getFrameClass(frameKey);
+
+  if(cls){
+   frame.classList.add(cls);
+  }else if(frameItem.frame_color){
+   frame.style.background=frameItem.frame_color;
+   frame.style.boxShadow=`0 0 0 3px white,0 0 15px ${frameItem.frame_color}`;
+  }
+
+  badge.textContent=frameItem.icon||"🎁";
+  badge.classList.add("show");
+
+  if(frameKey==="admin"){
+   badge.style.border="3px solid #ffd700";
+   badge.textContent="👑";
+  }
+ }
+
+ const name=document.getElementById("name").value.trim()||"名前";
+ const nameEl=document.getElementById("namePreview");
+ const nameKey=currentProfile?.equipped_name_decoration_key;
+ const nameClass=getNameClass(nameKey);
+
+ nameEl.className="name-preview "+nameClass;
+ nameEl.innerHTML=
+  escapeHtml(name)+
+  (nameKey==="admin_name"?'<span class="admin-name-badge">👑</span>':"");
+
+ const bgKey=currentProfile?.equipped_background_key;
+
+ document.body.className="";
+ const container=document.getElementById("profileContainer");
+ container.className="container";
+
+ const bgClass=getBackgroundClass(bgKey);
+
+ if(bgClass){
+  document.body.classList.add(bgClass);
+  container.classList.add(bgClass);
+ }
+}
+
+document.getElementById("name").addEventListener("input",updatePreview);
+
+document.getElementById("imageInput").addEventListener("change",async function(){
+ if(typeof checkFriendChatBan==="function"&&await checkFriendChatBan())return;
+
+ const file=this.files?.[0];
+ if(!file)return;
+
+ if(!file.type.startsWith("image/")){
+  showMessage("画像ファイルを選んでください。",true);
+  this.value="";
+  return;
+ }
+
+ if(file.size>5*1024*1024){
+  showMessage("画像は5MB以下にしてください。",true);
+  this.value="";
+  return;
+ }
+
+ selectedAvatarFile=file;
+
+ showMessage("画像を確認しています...");
+
+ try{
+  // 選択時点ではDBへ保存せず、プロフィール保存時にアップロードする
+  const localUrl=URL.createObjectURL(file);
+  displayAvatar(localUrl);
+
+  if(!currentProfile)currentProfile={};
+  currentProfile._avatarFile=file;
+
+  showMessage("画像を選びました。最後に「プロフィールを保存」を押してください。");
+
+ }catch(error){
+  console.error("image preview error:",error);
+  showMessage("画像の読み込みに失敗しました。\n"+(error.message||error),true);
+ }
 });
 
-async function start(){
-  try{
-    await loadProfile();
-  }catch(error){
-    console.error(error);
-    document.getElementById("loading").style.display="none";
-    const errorBox=document.getElementById("error");
-    errorBox.textContent=error.message||"エラーが発生しました。";
-    errorBox.style.display="block";
-  }
+document.getElementById("saveButton").addEventListener("click",saveProfile);
+
+async function uploadAvatar(file){
+ if(!file)return currentProfile?.avatar_url||null;
+
+ const extension=
+  (file.name.split(".").pop()||"jpg")
+   .toLowerCase()
+   .replace(/[^a-z0-9]/g,"");
+
+ const safeExtension=extension||"jpg";
+
+ const path=
+  `${currentUsername}/${Date.now()}-${Math.random().toString(36).slice(2)}.${safeExtension}`;
+
+ const upload=await supabaseClient
+  .storage
+  .from("avatars")
+  .upload(
+   path,
+   file,
+   {
+    upsert:false,
+    contentType:file.type
+   }
+  );
+
+ if(upload.error){
+  throw new Error("画像のアップロードに失敗しました。\n"+upload.error.message);
+ }
+
+ const {data:urlData}=supabaseClient
+  .storage
+  .from("avatars")
+  .getPublicUrl(path);
+
+ if(!urlData?.publicUrl){
+  throw new Error("画像URLを取得できませんでした。");
+ }
+
+ return urlData.publicUrl;
 }
-start();
+
+async function saveProfile(){
+ if(saving)return;
+
+ if(typeof checkFriendChatBan==="function"&&await checkFriendChatBan())return;
+
+ if(!currentUsername){
+  showMessage("ユーザーIDを取得できませんでした。",true);
+  return;
+ }
+
+ const name=document.getElementById("name").value.trim();
+ const bio=document.getElementById("bio").value.trim();
+
+ const saveButton=document.getElementById("saveButton");
+ saving=true;
+ saveButton.disabled=true;
+
+ try{
+  showMessage("プロフィールを保存しています...");
+
+  let avatarUrl=currentProfile?.avatar_url||null;
+
+  // 新しい画像が選択されていた場合、先にStorageへ保存
+  if(selectedAvatarFile){
+   showMessage("📷 画像をアップロードしています...");
+   avatarUrl=await uploadAvatar(selectedAvatarFile);
+  }
+
+  // RPC経由でプロフィールを保存
+  showMessage("💾 プロフィール情報を保存しています...");
+
+  const {data:rpcData,error}=await supabaseClient.rpc(
+   "save_my_profile",
+   {
+    p_name:name,
+    p_bio:bio,
+    p_avatar_url:avatarUrl,
+    p_frame_key:currentProfile?.equipped_item_key||null,
+    p_name_decoration_key:
+     currentProfile?.equipped_name_decoration_key||null,
+    p_background_key:
+     currentProfile?.equipped_background_key||null
+   }
+  );
+
+  if(error){
+   console.error("プロフィール保存RPCエラー:",error);
+   showMessage(
+    "プロフィールの保存に失敗しました。\n"+error.message,
+    true
+   );
+   return;
+  }
+
+  if(!rpcData){
+   showMessage(
+    "プロフィールを保存できませんでした。\n"+
+    "save_my_profile が正しく作成されているか確認してください。",
+    true
+   );
+   return;
+  }
+
+  let data=rpcData;
+
+  // RETURNS json のRPC結果が文字列として返る環境にも対応
+  if(typeof data==="string"){
+   try{
+    data=JSON.parse(data);
+   }catch(e){
+    console.error("RPC JSON parse error:",e);
+   }
+  }
+
+  currentProfile=data;
+  selectedAvatarFile=null;
+
+  if(currentProfile._avatarFile){
+   delete currentProfile._avatarFile;
+  }
+
+  displayAvatar(data.avatar_url);
+  updatePreview();
+
+  showMessage("プロフィールを保存しました！✨");
+
+ }catch(error){
+  console.error("saveProfile exception:",error);
+  showMessage(
+   "プロフィールの保存中にエラーが発生しました。\n"+
+   (error.message||error),
+   true
+  );
+ }finally{
+  saving=false;
+  saveButton.disabled=false;
+ }
+}
+
+async function init(){
+ if(typeof checkFriendChatBan==="function"&&await checkFriendChatBan())return;
+
+ const user=await getCurrentUser();
+ if(!user)return;
+
+ await loadProfile();
+ await loadItems();
+ updatePreview();
+}
+
+init();
 </script>
 </body>
 </html>
