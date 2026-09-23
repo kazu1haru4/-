@@ -1,4 +1,5 @@
 // Friend Chat PWA Service Worker
+// プッシュ通知対応版
 const CACHE_NAME = "friend-chat-pwa-v3";
 
 const APP_SHELL = [
@@ -9,23 +10,27 @@ const APP_SHELL = [
   "./icon-512.png"
 ];
 
+
 // =========================
 // インストール
 // =========================
+
 self.addEventListener("install", function(event) {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(function(cache) {
-      return cache.addAll(APP_SHELL);
-    })
+    caches.open(CACHE_NAME)
+      .then(function(cache) {
+        return cache.addAll(APP_SHELL);
+      })
   );
 
-  // 新しいService Workerをすぐ有効化
   self.skipWaiting();
 });
+
 
 // =========================
 // 有効化
 // =========================
+
 self.addEventListener("activate", function(event) {
   event.waitUntil(
     caches.keys().then(function(keys) {
@@ -44,55 +49,88 @@ self.addEventListener("activate", function(event) {
   );
 });
 
+
 // =========================
 // プッシュ通知を受信
 // =========================
+
 self.addEventListener("push", function(event) {
+
   let data = {};
 
   try {
-    data = event.data ? event.data.json() : {};
+
+    if (event.data) {
+      data = event.data.json();
+    }
+
   } catch (error) {
+
     data = {
       title: "Friend Chat",
       body: event.data
         ? event.data.text()
         : "新しい通知があります。"
     };
+
   }
 
-  const title = data.title || "Friend Chat";
+
+  const title =
+    data.title || "Friend Chat";
+
 
   const options = {
-    body: data.body || "新しい通知があります。",
-    icon: data.icon || "./icon-192.png",
-    badge: data.badge || "./icon-192.png",
+
+    body:
+      data.body ||
+      "新しい通知があります。",
+
+    icon:
+      data.icon ||
+      "./icon-192.png",
+
+    badge:
+      data.badge ||
+      "./icon-192.png",
 
     data: {
-      url: data.url || "./notifications.html"
+      url:
+        data.url ||
+        "./notifications.html"
     },
 
-    tag: data.tag || "friend-chat-notification",
+    tag:
+      data.tag ||
+      "friend-chat-notification",
 
     renotify: true
+
   };
 
+
   event.waitUntil(
+
     self.registration.showNotification(
       title,
       options
     )
+
   );
+
 });
+
 
 // =========================
 // 通知をタップ
 // =========================
+
 self.addEventListener(
   "notificationclick",
   function(event) {
 
     event.notification.close();
+
 
     const targetUrl =
       event.notification.data &&
@@ -100,11 +138,15 @@ self.addEventListener(
         ? event.notification.data.url
         : "./notifications.html";
 
+
     event.waitUntil(
+
       self.clients.matchAll({
         type: "window",
         includeUncontrolled: true
-      }).then(function(clientList) {
+      })
+
+      .then(function(clientList) {
 
         for (const client of clientList) {
 
@@ -125,8 +167,11 @@ self.addEventListener(
             } catch (error) {}
 
             return client.focus();
+
           }
+
         }
+
 
         if (self.clients.openWindow) {
           return self.clients.openWindow(
@@ -135,50 +180,70 @@ self.addEventListener(
         }
 
       })
+
     );
+
   }
 );
+
 
 // =========================
 // 通信
 // =========================
-// オンライン → 最新版を取得
-// オフライン → キャッシュを使用
-self.addEventListener("fetch", function(event) {
+// オンラインなら最新版を取得。
+// オフラインならキャッシュを使用。
 
-  if (event.request.method !== "GET") {
-    return;
-  }
+self.addEventListener(
+  "fetch",
+  function(event) {
 
-  event.respondWith(
+    if (
+      event.request.method !== "GET"
+    ) {
+      return;
+    }
 
-    fetch(event.request)
 
-      .then(function(response) {
+    event.respondWith(
 
-        if (response && response.ok) {
+      fetch(event.request)
 
-          const copy =
-            response.clone();
+        .then(function(response) {
 
-          caches.open(CACHE_NAME)
-            .then(function(cache) {
+          if (
+            response &&
+            response.ok
+          ) {
+
+            const copy =
+              response.clone();
+
+            caches.open(
+              CACHE_NAME
+            ).then(function(cache) {
+
               cache.put(
                 event.request,
                 copy
               );
+
             });
-        }
 
-        return response;
-      })
+          }
 
-      .catch(function() {
+          return response;
 
-        return caches.match(
-          event.request
-        );
+        })
 
-      })
-  );
-});
+        .catch(function() {
+
+          return caches.match(
+            event.request
+          );
+
+        })
+
+    );
+
+  }
+);
