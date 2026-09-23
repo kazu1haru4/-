@@ -142,42 +142,16 @@ async function updateFriendStatus(){
 async function updateMyPresence(){if(currentUsername)await db.from("user_presence").upsert({user_id:currentUsername,last_seen:new Date().toISOString()},{onConflict:"user_id"})}
 async function createNotification(messageText="新しいメッセージがあります。"){
  if(!currentUsername||!friendId)return;
-
- const title="💬 新しいメッセージ";
- const message=currentUsername+"さんからメッセージが届きました";
-
+ const message=String(messageText||"新しいメッセージがあります。").trim()||"新しいメッセージがあります。";
  const {error}=await db.from("notifications").insert({
   user_id:friendId,
   type:"chat",
-  title:title,
+  title:"💬 "+currentUsername+"さんからメッセージ",
   message:message,
   link:"chat.html?user="+encodeURIComponent(currentUsername),
   is_read:false
  });
-
- if(error){
-  console.error("通知レコード作成エラー:",error);
- }
-
- try{
-  const {data,error:pushError}=await db.functions.invoke("send-push",{
-   body:{
-    username:friendId,
-    title:title,
-    message:messageText
-      ? currentUsername+"さん: "+messageText
-      : message
-   }
-  });
-
-  if(pushError){
-   console.error("プッシュ通知送信エラー:",pushError);
-  }else{
-   console.log("プッシュ通知送信結果:",data);
-  }
- }catch(error){
-  console.error("プッシュ通知呼び出しエラー:",error);
- }
+ if(error)console.error("通知レコード作成エラー:",error);
 }
 
 async function sendPushToUser(userId,title,message,url){
@@ -210,6 +184,36 @@ async function deleteMessage(id){
  const {error}=await db.from("messages").update({is_deleted:true}).eq("id",id).eq("sender_id",currentUsername);
  if(error){alert("送信取り消しに失敗しました。\n\n"+error.message);return}await loadMessages();scrollToBottom();
 }
+async function reportChatMessage(message){
+ if(!message?.sender_id||message.sender_id===currentUsername)return;
+
+ const reason=prompt(
+  "このメッセージを通報する理由を入力してください",
+  "暴言・不適切な内容"
+ );
+
+ if(reason===null||!reason.trim())return;
+
+ const {error}=await db.from("user_reports").insert({
+  reporter_id:currentUsername,
+  target_type:"chat_message",
+  target_id:String(message.id),
+  target_user:message.sender_id,
+  reason:reason.trim(),
+  message_id:String(message.id),
+  message_content:message.content||"",
+  message_image_url:message.image_url||""
+ });
+
+ if(error){
+  console.error("個別チャット通報エラー:",error);
+  alert("通報に失敗しました。\\n\\n"+error.message);
+  return;
+ }
+
+ alert("🚨 通報を送信しました。管理者が確認します。");
+}
+
 function createMessageElement(message,imageUrl){
  const wrap=document.createElement("div");wrap.className="message";wrap.dataset.messageId=message.id;
  const mine=message.sender_id===currentUsername;if(mine)wrap.classList.add("mine");
@@ -225,6 +229,18 @@ function createMessageElement(message,imageUrl){
  }
  const time=document.createElement("div");time.className="time";time.textContent=new Date(message.created_at).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});bubble.appendChild(time);box.appendChild(bubble);
  if(mine&&!message.is_deleted&&readMessageIds.has(message.id)){const r=document.createElement("div");r.className="read-status";r.textContent="既読";box.appendChild(r)}
+ if(!mine&&!message.is_deleted){
+  const reportButton=document.createElement("button");
+  reportButton.type="button";
+  reportButton.className="delete-button";
+  reportButton.textContent="🚨 通報";
+  reportButton.onclick=e=>{
+   e.preventDefault();
+   e.stopPropagation();
+   reportChatMessage(message);
+  };
+  box.appendChild(reportButton);
+ }
  if(mine&&!message.is_deleted){const b=document.createElement("button");b.type="button";b.className="delete-button";b.textContent="🗑️ 送信取り消し";b.onclick=e=>{e.preventDefault();e.stopPropagation();deleteMessage(message.id)};box.appendChild(b)}
  wrap.appendChild(box);if(mine)wrap.appendChild(createAvatar(avatarUrl,"😊",item));return wrap;
 }
@@ -254,7 +270,7 @@ function startRealtime(){
 messageForm.onsubmit=async e=>{
  e.preventDefault();const text=messageInput.value.trim();if(!text||!currentUsername||!friendId)return;sendButton.disabled=true;
  const {data,error}=await db.from("messages").insert({sender_id:currentUsername,receiver_id:friendId,content:text,image_url:"",is_deleted:false}).select().single();sendButton.disabled=false;
- if(error){alert("メッセージを送信できませんでした。\n\n"+error.message);return}messageInput.value="";messagesElement.appendChild(createMessageElement(data,""));scrollToBottom();updateLatestButton();await createNotification();await sendPushToUser(friendId,"💬 新しいメッセージ",currentUsername+"さんからメッセージが届きました","./chat.html?user="+encodeURIComponent(currentUsername));
+ if(error){alert("メッセージを送信できませんでした。\n\n"+error.message);return}messageInput.value="";messagesElement.appendChild(createMessageElement(data,""));scrollToBottom();updateLatestButton();await createNotification(text);await sendPushToUser(friendId,"💬 "+currentUsername+"さんからメッセージ",currentUsername+"さん: "+text,"./chat.html?user="+encodeURIComponent(currentUsername));
 };
 imageButton.onclick=()=>imageInput.click();
 imageInput.onchange=async()=>{
@@ -266,7 +282,7 @@ imageInput.onchange=async()=>{
   const ext=file.name.split(".").pop()||"jpg",path=currentUsername+"/"+Date.now()+"_"+Math.random().toString(36).slice(2)+"."+ext;
   const up=await db.storage.from("chat-images").upload(path,file,{contentType:file.type,upsert:false});if(up.error)throw up.error;
   const {data,error}=await db.from("messages").insert({sender_id:currentUsername,receiver_id:friendId,content:"",image_url:path,is_deleted:false}).select().single();if(error)throw error;
-  const {data:signed}=await db.storage.from("chat-images").createSignedUrl(path,3600);messagesElement.appendChild(createMessageElement(data,signed?.signedUrl||""));scrollToBottom();updateLatestButton();await createNotification();await sendPushToUser(friendId,"💬 新しいメッセージ",currentUsername+"さんからメッセージが届きました","./chat.html?user="+encodeURIComponent(currentUsername));
+  const {data:signed}=await db.storage.from("chat-images").createSignedUrl(path,3600);messagesElement.appendChild(createMessageElement(data,signed?.signedUrl||""));scrollToBottom();updateLatestButton();await createNotification("🖼️ 画像を送信しました");await sendPushToUser(friendId,"💬 "+currentUsername+"さんからメッセージ","🖼️ "+currentUsername+"さんが画像を送信しました","./chat.html?user="+encodeURIComponent(currentUsername));
  }catch(e){console.error(e);alert("画像を送信できませんでした。\n\n"+e.message)}finally{imageButton.disabled=false;sendButton.disabled=false;imageInput.value=""}
 };
 window.addEventListener("pagehide",()=>{if(presenceTimer)clearInterval(presenceTimer);if(realtimeChannel)db.removeChannel(realtimeChannel)});
