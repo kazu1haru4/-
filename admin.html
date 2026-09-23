@@ -420,31 +420,9 @@ textarea {
 </details>
 
 <details class="panel collapsible-panel">
-<summary>🚨 通報一覧</summary>
-<div style="margin-top:12px">
-<select id="reportStatusFilter" style="width:100%;padding:12px;border-radius:12px;border:1px solid #ddd">
-<option value="all">すべて</option><option value="open">未対応</option><option value="resolved">対応済み</option>
-</select>
-<div id="reportsList" class="loading" style="margin-top:12px">読み込み中...</div>
-</div>
-</details>
-
-<details class="panel collapsible-panel">
 <summary>🖼️ フレーム一覧</summary>
 <div id="framesLoading" class="loading">フレームを読み込んでいます...</div>
 <div id="framesList"></div>
-</details>
-
-<details class="panel collapsible-panel">
-<summary>✨ 名前装飾一覧</summary>
-<div id="nameDecorationsLoading" class="loading">名前装飾を読み込んでいます...</div>
-<div id="nameDecorationsList"></div>
-</details>
-
-<details class="panel collapsible-panel">
-<summary>🎨 背景一覧</summary>
-<div id="backgroundsLoading" class="loading">背景を読み込んでいます...</div>
-<div id="backgroundsList"></div>
 </details>
 
 <details class="panel collapsible-panel">
@@ -482,13 +460,21 @@ textarea {
 
 <div class="form-row">
 <label>🖼️ フレーム報酬</label>
-<select id="rewardCodeItem">
-<option value="">なし</option>
-</select>
+<select id="rewardFrameItem"><option value="">なし</option></select>
+</div>
+
+<div class="form-row">
+<label>✨ 名前装飾報酬</label>
+<select id="rewardNameDecorationItem"><option value="">なし</option></select>
+</div>
+
+<div class="form-row">
+<label>🎨 背景報酬</label>
+<select id="rewardBackgroundItem"><option value="">なし</option></select>
+</div>
 
 <div id="rewardFrameStatus" class="frame-status">
-🔄 フレーム一覧を読み込んでいます...
-</div>
+🔄 フレーム・名前装飾・背景を読み込んでいます...
 </div>
 
 <div class="form-row">
@@ -566,6 +552,20 @@ textarea {
 <div class="modal-box">
 <h3>🚫 ユーザーをBAN</h3>
 <p id="banTarget"></p>
+
+<div class="form-row">
+<label>BAN期間</label>
+<select id="banDuration">
+<option value="10m">10分</option>
+<option value="1h">1時間</option>
+<option value="6h">6時間</option>
+<option value="1d" selected>1日</option>
+<option value="3d">3日</option>
+<option value="7d">7日</option>
+<option value="30d">30日</option>
+<option value="permanent">無期限</option>
+</select>
+</div>
 
 <div class="form-row">
 <label>理由</label>
@@ -929,6 +929,7 @@ function openBanModal(username) {
   document.getElementById("banTarget").textContent =
     `対象ユーザー：${username}`;
   document.getElementById("banReason").value = "";
+  document.getElementById("banDuration").value = "1d";
   document.getElementById("banModal").classList.remove("hidden");
 }
 
@@ -947,6 +948,26 @@ async function banUser() {
 
   const reason =
     document.getElementById("banReason").value.trim();
+  const duration = document.getElementById("banDuration").value;
+
+  let expiresAt = null;
+  if (duration !== "permanent") {
+    const minutesMap = {
+      "10m": 10,
+      "1h": 60,
+      "6h": 360,
+      "1d": 1440,
+      "3d": 4320,
+      "7d": 10080,
+      "30d": 43200
+    };
+    const minutes = minutesMap[duration];
+    if (!minutes) {
+      alert("BAN期間を選択してください。");
+      return;
+    }
+    expiresAt = new Date(Date.now() + minutes * 60 * 1000).toISOString();
+  }
 
   const { error } =
     await supabaseClient
@@ -954,7 +975,8 @@ async function banUser() {
       .insert({
         user_id: banTargetUsername,
         reason,
-        banned_by: currentUsername
+        banned_by: currentUsername,
+        expires_at: expiresAt
       });
 
   if (error) {
@@ -965,7 +987,11 @@ async function banUser() {
   const target = banTargetUsername;
   closeBanModal();
   await loadUsers();
-  alert(`${target} をBANしました。`);
+  const durationLabel = {
+    "10m":"10分", "1h":"1時間", "6h":"6時間", "1d":"1日",
+    "3d":"3日", "7d":"7日", "30d":"30日", "permanent":"無期限"
+  }[duration] || "指定期間";
+  alert(`${target} を${durationLabel}BANしました。`);
 }
 
 async function unbanUser(username) {
@@ -1135,82 +1161,77 @@ async function deleteBoardMessage(id) {
 }
 
 async function loadItems() {
-  const rewardSelect =
-    document.getElementById("rewardCodeItem");
+  const frameSelect = document.getElementById("rewardFrameItem");
+  const nameSelect = document.getElementById("rewardNameDecorationItem");
+  const bgSelect = document.getElementById("rewardBackgroundItem");
+  const eventSelect = document.getElementById("eventItem");
+  const status = document.getElementById("rewardFrameStatus");
 
-  const eventSelect =
-    document.getElementById("eventItem");
+  status.className = "frame-status";
+  status.textContent = "🔄 フレーム・名前装飾・背景を読み込んでいます...";
 
-  const frameStatus =
-    document.getElementById("rewardFrameStatus");
+  frameSelect.innerHTML = '<option value="">なし</option>';
+  nameSelect.innerHTML = '<option value="">なし</option>';
+  bgSelect.innerHTML = '<option value="">なし</option>';
+  eventSelect.innerHTML = '<option value="">なし</option>';
 
-  frameStatus.className = "frame-status";
-  frameStatus.textContent =
-    "🔄 coin_itemsからフレームを取得しています...";
-
-  rewardSelect.innerHTML =
-    `<option value="">なし</option>`;
-
-  eventSelect.innerHTML =
-    `<option value="">なし</option>`;
-
-  const { data, error } =
-    await supabaseClient
-      .from("coin_items")
-      .select("item_key,name,icon,price,frame_color,item_type")
-      .not("item_key","in","(admin,admin_name,admin_bg)")
-      .order("price",{ascending:true});
+  const { data, error } = await supabaseClient
+    .from("coin_items")
+    .select("item_key,name,icon,price,frame_color,item_type")
+    .order("price", { ascending:true });
 
   if (error) {
     console.error("coin_items error:", error);
-
-    frameStatus.className = "frame-status error";
-    frameStatus.textContent =
-      "❌ フレーム取得失敗\n\n" + error.message;
-
-    rewardSelect.innerHTML =
-      `<option value="">❌ 取得失敗</option>`;
-
-    eventSelect.innerHTML =
-      `<option value="">❌ 取得失敗</option>`;
-
+    status.className = "frame-status error";
+    status.textContent = "❌ アイテム取得失敗\n\n" + error.message;
     return;
   }
 
-  const publicItems = (data || []).filter(item => !isAdminOnlyItem(item));
+  // 管理者専用アイテムは配布対象から完全に除外
+  const items = (data || []).filter(item =>
+    !["admin", "admin_name", "admin_bg"].includes(item.item_key)
+  );
 
-  if (!publicItems.length) {
-    frameStatus.className = "frame-status error";
-    frameStatus.textContent =
-      "⚠️ 配布できるアイテムがありません。";
-    return;
-  }
+  const getType = item => {
+    if (["frame", "name_decoration", "background"].includes(item.item_type)) {
+      return item.item_type;
+    }
+    if (item.item_key?.startsWith("nd_")) return "name_decoration";
+    if (item.item_key?.startsWith("bg_")) return "background";
+    return "frame";
+  };
 
-  publicItems.forEach(item => {
-    const icon = item.icon || "🖼️";
+  items.forEach(item => {
+    const type = getType(item);
+    const icon = item.icon || (type === "name_decoration" ? "✨" : type === "background" ? "🎨" : "🖼️");
 
-    const rewardOption =
-      document.createElement("option");
+    const option = document.createElement("option");
+    option.value = item.item_key;
+    option.textContent = `${icon} ${item.name}`;
 
-    rewardOption.value = item.item_key;
-    rewardOption.textContent =
-      `${icon} ${item.name}`;
+    if (type === "frame") frameSelect.appendChild(option);
+    if (type === "name_decoration") nameSelect.appendChild(option);
+    if (type === "background") bgSelect.appendChild(option);
 
-    rewardSelect.appendChild(rewardOption);
-
-    const eventOption =
-      document.createElement("option");
-
+    const eventOption = document.createElement("option");
     eventOption.value = item.item_key;
-    eventOption.textContent =
-      `${icon} ${item.name}`;
-
+    eventOption.textContent = `${icon} ${item.name}`;
     eventSelect.appendChild(eventOption);
   });
 
-  frameStatus.className = "frame-status success";
-  frameStatus.textContent =
-    `✅ ${publicItems.length}個のアイテムを読み込みました。`;
+  // 3つから同時に選ばれないようにする
+  const selects = [frameSelect, nameSelect, bgSelect];
+  selects.forEach(current => {
+    current.addEventListener("change", () => {
+      if (!current.value) return;
+      selects.forEach(other => {
+        if (other !== current) other.value = "";
+      });
+    });
+  });
+
+  status.className = "frame-status success";
+  status.textContent = `✅ 配布可能なアイテム ${items.length}個\n管理者限定の名前装飾・背景は配布できません。`;
 }
 
 async function createRewardCode() {
@@ -1235,8 +1256,10 @@ async function createRewardCode() {
         document.getElementById("rewardCodeCoins").value || 0
       );
 
-    const rewardItem =
-      document.getElementById("rewardCodeItem").value || null;
+    const rewardFrame = document.getElementById("rewardFrameItem").value || "";
+    const rewardNameDecoration = document.getElementById("rewardNameDecorationItem").value || "";
+    const rewardBackground = document.getElementById("rewardBackgroundItem").value || "";
+    const rewardItem = rewardFrame || rewardNameDecoration || rewardBackground || null;
 
     const maxUses =
       Number(
@@ -1257,7 +1280,7 @@ async function createRewardCode() {
 
     if (rewardCoins === 0 && !rewardItem) {
       throw new Error(
-        "コインまたはフレームを1つ以上設定してください。"
+        "コインまたは配布アイテムを1つ以上設定してください。"
       );
     }
 
@@ -1289,7 +1312,9 @@ async function createRewardCode() {
 
     document.getElementById("rewardCode").value = "";
     document.getElementById("rewardCodeCoins").value = "0";
-    document.getElementById("rewardCodeItem").value = "";
+    document.getElementById("rewardFrameItem").value = "";
+    document.getElementById("rewardNameDecorationItem").value = "";
+    document.getElementById("rewardBackgroundItem").value = "";
     document.getElementById("rewardCodeMaxUses").value = "0";
 
     await loadRewardCodes();
@@ -1329,7 +1354,7 @@ async function loadRewardCodes() {
 
   const { data: codes, error } = await supabaseClient
     .from("coin_reward_codes")
-    .select(`id,code,reward_coins,reward_item_key,max_uses,is_active,created_by,created_at,coin_items(name,icon)`)
+    .select(`id,code,reward_coins,reward_item_key,max_uses,is_active,created_by,created_at,coin_items(name,icon,item_type)`)
     .order("created_at", { ascending:false });
 
   if (error) {
@@ -1362,7 +1387,18 @@ async function loadRewardCodes() {
     const item = code.coin_items;
     const rewards = [];
     if (Number(code.reward_coins) > 0) rewards.push(`🪙 ${Number(code.reward_coins).toLocaleString()} COIN`);
-    if (item) rewards.push(`${item.icon || "🖼️"} ${escapeHtml(item.name)}`);
+    if (item) {
+      const itemTypeLabel =
+        item.item_type === "name_decoration"
+          ? "✨ 名前装飾"
+          : item.item_type === "background"
+            ? "🎨 背景"
+            : "🖼️ フレーム";
+
+      rewards.push(
+        `${itemTypeLabel}：${item.icon || ""} ${escapeHtml(item.name)}`
+      );
+    }
 
     const historyHtml = history.length
       ? `<div class="history"><div class="history-title">👥 受取履歴（${history.length}人）</div>${history.map(row => `<div class="history-row">👤 ${escapeHtml(row.user_id)}　${escapeHtml(formatDate(row.used_at))}</div>`).join("")}</div>`
@@ -1820,125 +1856,74 @@ async function loadSiteStats() {
 フレーム一覧
 ======================================== */
 
-function isAdminOnlyItem(item) {
-  return ["admin", "admin_name", "admin_bg"].includes(item.item_key);
-}
-
-function renderAdminItemCard(item) {
-  const card = document.createElement("div");
-  card.className = "frame-admin-card";
-
-  const icon = item.icon || "🖼️";
-  const frameColor = item.frame_color || "#ffd0e7";
-
-  card.innerHTML = `
-    <div class="frame-preview"
-         style="--frame-color:${escapeAttribute(frameColor)}">
-      ${escapeHtml(icon)}
-    </div>
-    <div class="frame-admin-info">
-      <div class="frame-admin-name">${escapeHtml(item.name || item.item_key)}</div>
-      <div class="frame-admin-meta">
-        ID：${escapeHtml(item.item_key)}<br>
-        価格：${Number(item.price || 0).toLocaleString("ja-JP")} COIN
-      </div>
-    </div>
-  `;
-
-  return card;
-}
-
-async function loadItemListByType(type, loadingId, listId, emptyText, errorText) {
-  const loading = document.getElementById(loadingId);
-  const list = document.getElementById(listId);
+async function loadFrameList() {
+  const loading = document.getElementById("framesLoading");
+  const list = document.getElementById("framesList");
 
   if (!loading || !list) return;
 
   loading.classList.remove("hidden");
   list.innerHTML = "";
 
-  const { data, error } = await supabaseClient
-    .from("coin_items")
-    .select("item_key,name,icon,price,frame_color,item_type")
-    .eq("item_type", type)
-    .order("price", { ascending: true });
+  try {
+    const { data, error } = await supabaseClient
+      .from("coin_items")
+      .select("item_key,name,icon,price,frame_color")
+      .neq("item_key", "admin")
+      .order("price", { ascending: true });
 
-  if (error) {
-    loading.textContent = "❌ " + errorText + "：\n" + error.message;
-    return;
+    if (error) throw error;
+
+    loading.classList.add("hidden");
+
+    if (!data?.length) {
+      list.innerHTML = `<div class="empty">フレームがありません。</div>`;
+      return;
+    }
+
+    data.forEach(item => {
+      const card = document.createElement("div");
+      card.className = "reward-code-card";
+
+      const icon = item.icon || "🖼️";
+      const frameColor = item.frame_color || "#ffd0e7";
+
+      card.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="
+            width:52px;
+            height:52px;
+            border-radius:50%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:26px;
+            background:${escapeAttribute(frameColor)};
+            border:4px solid ${escapeAttribute(frameColor)};
+          ">${escapeHtml(icon)}</div>
+
+          <div style="flex:1;min-width:0;">
+            <div class="reward-code-title">
+              ${escapeHtml(item.name || item.item_key)}
+            </div>
+            <div class="reward-code-info">
+              ID：${escapeHtml(item.item_key)}
+              <br>
+              価格：${Number(item.price || 0).toLocaleString("ja-JP")} COIN
+              <br>
+              フレーム色：${escapeHtml(frameColor)}
+            </div>
+          </div>
+        </div>
+      `;
+
+      list.appendChild(card);
+    });
+  } catch (error) {
+    loading.textContent =
+      "❌ フレーム一覧の読み込みに失敗しました：\n" +
+      (error.message || error);
   }
-
-  const items = (data || []).filter(item => !isAdminOnlyItem(item));
-
-  loading.classList.add("hidden");
-
-  if (!items.length) {
-    list.innerHTML = `<div class="empty">${emptyText}</div>`;
-    return;
-  }
-
-  items.forEach(item => list.appendChild(renderAdminItemCard(item)));
-}
-
-async function loadFrameList() {
-  await loadItemListByType(
-    "frame",
-    "framesLoading",
-    "framesList",
-    "フレームはありません。",
-    "フレーム一覧の読み込みに失敗しました"
-  );
-}
-
-async function loadNameDecorationList() {
-  await loadItemListByType(
-    "name_decoration",
-    "nameDecorationsLoading",
-    "nameDecorationsList",
-    "名前装飾はありません。",
-    "名前装飾一覧の読み込みに失敗しました"
-  );
-}
-
-async function loadBackgroundList() {
-  await loadItemListByType(
-    "background",
-    "backgroundsLoading",
-    "backgroundsList",
-    "背景はありません。",
-    "背景一覧の読み込みに失敗しました"
-  );
-}
-
-async function loadItemLists() {
-  await Promise.all([
-    loadFrameList(),
-    loadNameDecorationList(),
-    loadBackgroundList()
-  ]);
-}
-
-
-
-async function loadReports(){
- const box=document.getElementById("reportsList");
- const filter=document.getElementById("reportStatusFilter")?.value||"all";
- if(!box)return;
- box.className="loading";box.textContent="読み込み中...";
- let q=supabaseClient.from("user_reports").select("id,reporter_id,target_type,target_id,target_user,reason,status,created_at,message_id,message_content,message_image_url").order("created_at",{ascending:false}).limit(100);
- if(filter!=="all")q=q.eq("status",filter);
- const {data,error}=await q;
- if(error){box.textContent="❌ "+error.message;return}
- box.className="";
- if(!data?.length){box.textContent="通報はありません。";return}
- box.innerHTML="";
- data.forEach(r=>{
-  const card=document.createElement("div");card.className="reward-code-card";
-  const status=r.status==="resolved"?"対応済み":"未対応";
-  card.innerHTML=`<div><b>🚨 ${escapeHtml(status)}</b>　対象：${escapeHtml(r.target_user||"不明")}</div><div style="margin-top:7px">通報者：${escapeHtml(r.reporter_id||"不明")}</div><div style="margin-top:7px">理由：${escapeHtml(r.reason||"理由なし")}</div><div style="margin-top:7px">チャット：${escapeHtml(r.target_type||"message")} / メッセージID：${escapeHtml(r.message_id||r.target_id||"不明")}</div><div style="margin-top:7px;padding:10px;background:#f7f7f9;border-radius:10px;white-space:pre-wrap">内容：${escapeHtml(r.message_content||"画像または内容なし")}</div><div class="muted" style="margin-top:7px">${escapeHtml(new Date(r.created_at).toLocaleString("ja-JP"))}</div>`;
-  if(r.status!=="resolved"){const b=document.createElement("button");b.className="success small";b.textContent="✅ 対応済みにする";b.style.marginTop="8px";b.onclick=async()=>{const {error}=await supabaseClient.from("user_reports").update({status:"resolved",resolved_by:currentUsername,resolved_at:new Date().toISOString()}).eq("id",r.id);if(error)alert(error.message);else loadReports()};card.appendChild(b)}
-  box.appendChild(card);
- });
 }
 
 async function init() {
@@ -1971,9 +1956,8 @@ async function init() {
     setStatus("📊 サイト統計を読み込んでいます...", "info");
     await loadSiteStats();
 
-    setStatus("🖼️✨🎨 アイテム一覧を読み込んでいます...", "info");
-    await loadItemLists();
-  await loadReports();
+    setStatus("🖼️ フレーム一覧を読み込んでいます...", "info");
+    await loadFrameList();
 
     setStatus(
       "👤 ユーザーを読み込んでいます...",
