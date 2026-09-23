@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全ユーザー</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="ban-check.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;padding:20px;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif;background:linear-gradient(135deg,#fff4fb,#eef7ff);color:#333}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:16px}
+.home-link,.admin-link{display:inline-block;text-decoration:none;padding:10px 14px;border-radius:999px;font-weight:bold;box-shadow:0 4px 12px rgba(100,80,150,.12);white-space:nowrap}
+.home-link{color:#7658d9;background:rgba(255,255,255,.95)}
+.admin-link{color:#fff;background:linear-gradient(135deg,#7658d9,#a978e8)}
+.container{width:100%;max-width:520px;margin:0 auto;background:#fff;border-radius:24px;padding:25px 20px;box-shadow:0 12px 35px rgba(100,80,150,.15)}
+h1{text-align:center;margin:0 0 22px;color:#7158cf;font-size:27px}
+.add-box{background:#f8f5ff;border-radius:18px;padding:15px;margin-bottom:18px}
+.add-title{font-weight:bold;color:#7158cf;margin-bottom:9px}
+.add-row{display:flex;gap:8px}
+.add-row input{flex:1;min-width:0;padding:13px;border:2px solid #e4ddff;border-radius:12px;font-size:15px;outline:none}
+.add-row input:focus{border-color:#9a85ed}
+.add-row button{border:0;border-radius:12px;padding:0 16px;background:#7158cf;color:#fff;font-weight:bold;font-size:14px}
+.add-row button:disabled{opacity:.6}
+.add-help{font-size:12px;color:#888;margin-top:8px}
+.status{text-align:center;color:#888;font-size:14px;margin-bottom:15px}
+.friends{display:flex;flex-direction:column;gap:12px}
+.friend-card{display:flex;align-items:center;gap:13px;padding:12px;background:#fff;border:2px solid #eee;border-radius:20px;cursor:pointer;box-shadow:0 4px 12px rgba(100,80,150,.06);transition:transform .1s}
+.friend-card:active{transform:scale(.98)}
+.friend-info{min-width:0;flex:1}
+.friend-name{font-size:17px;font-weight:bold;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.name-decoration-sakura{color:#ff4f9b;text-shadow:0 2px 8px rgba(255,80,160,.3)}
+.name-decoration-star{color:#d79a00;text-shadow:0 2px 8px rgba(244,191,63,.45)}
+.name-decoration-diamond{color:#159ed6;text-shadow:0 2px 8px rgba(66,185,238,.45)}
+.name-decoration-heart{color:#ff3d7e;text-shadow:0 2px 8px rgba(255,79,129,.4)}
+.name-decoration-rainbow{background:linear-gradient(90deg,#ff4d4d,#ffb84d,#5cff8d,#4ddcff,#7b6cff,#ff4dd8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.name-decoration-flame{color:#ff5b00;text-shadow:0 2px 10px rgba(255,90,0,.5)}
+.name-decoration-sea{color:#0077ff;text-shadow:0 2px 8px rgba(0,150,255,.4)}
+.name-decoration-space{color:#8c63ff;text-shadow:0 0 10px rgba(110,60,255,.65)}
+.name-decoration-neon{color:#00cfcf;text-shadow:0 0 7px #00ff88,0 0 14px #00e5ff,0 0 20px #ff00d4}
+.name-decoration-admin{color:#d49b00;text-shadow:0 0 8px rgba(255,215,0,.8),0 0 18px rgba(255,215,0,.45)}
+.admin-name-badge{font-size:12px;margin-left:4px}
+.friend-id{margin-top:3px;font-size:13px;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.friend-status{margin-top:5px;font-size:12px;font-weight:bold}.online{color:#22b573}.offline{color:#999}
+.arrow{font-size:22px;color:#aaa}
+.avatar-frame{position:relative;flex-shrink:0;width:68px;height:68px;padding:4px;border-radius:50%;background:#ffd9ec;box-shadow:0 0 0 2px white,0 4px 12px rgba(0,0,0,.12)}
+.frame-sakura{background:linear-gradient(135deg,#ffb7d8,#ff65ae,#ffd3e8,#ff8bc0);box-shadow:0 0 0 2px white,0 0 14px rgba(255,100,180,.45)}
+.frame-star{background:linear-gradient(135deg,#fff0a6,#f4bf3f,#fff8c9,#e9a900);box-shadow:0 0 0 2px white,0 0 15px rgba(244,191,63,.45)}
+.frame-diamond{background:linear-gradient(135deg,#a8edff,#42b9ee,#e2faff,#48caff);box-shadow:0 0 0 2px white,0 0 15px rgba(50,190,255,.45)}
+.frame-heart{background:linear-gradient(135deg,#ffb1d4,#ff4f9a,#ff8fc2,#ff2f86);box-shadow:0 0 0 2px white,0 0 16px rgba(255,60,150,.45)}
+.frame-rainbow{background:conic-gradient(#f00,#ff7a00,#ffe600,#00d639,#00d9ff,#06f,#7a00ff,#ff00d4,#f00);box-shadow:0 0 0 2px white,0 0 14px rgba(80,150,255,.45)}
+.frame-flame{background:linear-gradient(135deg,#f20,#f60,#ffd000,#f30,#ff9500);box-shadow:0 0 0 2px white,0 0 16px rgba(255,80,0,.5)}
+.frame-sea{background:linear-gradient(135deg,#00c6ff,#0072ff,#00e5ff,#06c);box-shadow:0 0 0 2px white,0 0 16px rgba(0,170,255,.45)}
+.frame-space{background:radial-gradient(circle at 20% 20%,white 0 1px,transparent 3px),radial-gradient(circle at 70% 30%,white 0 1px,transparent 3px),radial-gradient(circle at 40% 75%,#8de7ff 0 1px,transparent 3px),linear-gradient(135deg,#050014,#26105f,#6d28d9,#09001c);box-shadow:0 0 0 2px white,0 0 16px rgba(100,70,255,.6)}
+.frame-neon{background:linear-gradient(135deg,#0f0,#0ff,#f0f,#7a00ff,#0f0);background-size:300% 300%;box-shadow:0 0 0 2px white,0 0 8px #0f0,0 0 16px #0ff,0 0 25px #f0f;animation:neonMove 2s ease infinite}
+@keyframes neonMove{0%{background-position:0 50%}50%{background-position:100% 50%}100%{background-position:0 50%}}
+.admin-frame{background:linear-gradient(135deg,#fff4a8,#ffd700,#fff7bd,#e8ad00,#fff4a8);box-shadow:0 0 0 2px white,0 0 18px rgba(255,215,0,.55)}
+.avatar-image{width:100%;height:100%;display:block;object-fit:cover;border-radius:50%;border:2px solid white}
+.avatar-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#fff3f9;border:2px solid white;font-size:30px}
+.equipped-badge{position:absolute;right:-7px;top:-7px;width:27px;height:27px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:15px;z-index:5;box-shadow:0 2px 7px rgba(0,0,0,.18),0 0 0 2px white}
+.empty{text-align:center;padding:30px 10px;color:#999;font-size:15px}
+.reload-button{display:block;width:100%;margin-top:18px;padding:13px;border:0;border-radius:14px;background:#f0eaff;color:#7158cf;font-size:15px;font-weight:bold}
+@media(max-width:380px){body{padding:12px}.topbar{gap:5px}.home-link,.admin-link{padding:9px 11px;font-size:13px}.container{padding:22px 14px}}
+</style>
+</head>
+<body>
+<div class="topbar">
+<a class="home-link" href="home.html">🏠 ホーム</a>
+<a class="admin-link" href="friends.html">👥 フレンド一覧</a>
+</div>
+<div class="container">
+<h1>👥 全ユーザー</h1>
+<div id="status" class="status">読み込み中...</div>
+<div id="friends" class="friends"></div>
+<button id="reloadButton" class="reload-button" type="button">🔄 全ユーザーを更新</button>
+</div>
+<script>
+const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
+const ADMIN_ITEM_KEY="admin";
+let currentUsername="",presenceTimer=null;
+
+async function getCurrentUser(){
+  if(await checkFriendChatBan())return null;
+  const {data,error}=await supabaseClient.auth.getUser();
+  if(error||!data.user){location.href="index.html";return null}
+  currentUsername=data.user.user_metadata?.username||"";
+  if(!currentUsername){location.href="index.html";return null}
+  if(!ADMIN_USERNAMES.has(currentUsername)){
+    alert("管理者専用ページです。");
+    location.href="friends.html";
+    return null;
+  }
+  return data.user;
+}
+async function updateMyPresence(){
+  if(!currentUsername)return;
+  const {error}=await supabaseClient.from("user_presence").upsert({user_id:currentUsername,last_seen:new Date().toISOString()},{onConflict:"user_id"});
+  if(error)console.error("Presence error:",error);
+}
+function getFrameClass(itemKey){return{ sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",space:"frame-space",neon:"frame-neon",rainbow:"frame-rainbow",flame:"frame-flame",sea:"frame-sea",heart:"frame-heart"}[itemKey]||""}
+function getNameClass(itemKey){return{nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",nd_neon:"name-decoration-neon",admin_name:"name-decoration-admin"}[itemKey]||""}
+function createAvatar(profile,item){
+  const frame=document.createElement("div");frame.className="avatar-frame";
+  const username=profile.user_id||"";
+  if(item?.item_key===ADMIN_ITEM_KEY&&ADMIN_USERNAMES.has(username))frame.classList.add("admin-frame");
+  else{const cls=getFrameClass(item?.item_key);if(cls)frame.classList.add(cls);else if(item?.frame_color){frame.style.background=item.frame_color;frame.style.boxShadow=`0 0 0 2px white,0 0 14px ${item.frame_color}`}}
+  if(profile.avatar_url){const img=document.createElement("img");img.className="avatar-image";img.src=profile.avatar_url;img.alt="プロフィール画像";frame.appendChild(img)}
+  else{const placeholder=document.createElement("div");placeholder.className="avatar-placeholder";placeholder.textContent="😊";frame.appendChild(placeholder)}
+  if(item?.icon){const badge=document.createElement("div");badge.className="equipped-badge";badge.textContent=item.icon;badge.style.border=`2px solid ${item.item_key===ADMIN_ITEM_KEY?"#ffd700":(item.frame_color||"white")}`;frame.appendChild(badge)}
+  return frame;
+}
+async function loadAllUsers(){
+  const container=document.getElementById("friends"),status=document.getElementById("status");
+  if(await checkFriendChatBan())return;
+  status.textContent="読み込み中...";container.innerHTML="";
+  const {data:profiles,error}=await supabaseClient.from("profiles").select("user_id,name,avatar_url,equipped_item_key,equipped_name_decoration_key").order("user_id",{ascending:true});
+  if(error){console.error(error);status.textContent="ユーザー一覧の読み込みに失敗しました。\n"+(error.message||"");return}
+  if(!profiles?.length){status.textContent="ユーザーがいません。";container.innerHTML='<div class="empty">👥 登録ユーザーはいません。</div>';return}
+  const usernames=profiles.map(p=>p.user_id).filter(Boolean);
+  const itemKeys=[...(new Set(profiles.flatMap(p=>[p.equipped_item_key,p.equipped_name_decoration_key]).filter(Boolean)))];
+  let items=[];
+  if(itemKeys.length){const {data,error}=await supabaseClient.from("coin_items").select("item_key,name,icon,frame_color,item_type").in("item_key",itemKeys);if(!error)items=data||[]}
+  const itemMap=new Map(items.map(i=>[i.item_key,i]));
+  const {data:presenceRows,error:presenceError}=await supabaseClient.from("user_presence").select("user_id,last_seen").in("user_id",usernames);
+  if(presenceError)console.error(presenceError);
+  const presenceMap=new Map((presenceRows||[]).map(p=>[p.user_id,p]));
+  profiles.forEach(profile=>{
+    const username=profile.user_id;
+    const frameItem=profile.equipped_item_key?itemMap.get(profile.equipped_item_key):null;
+    const presence=presenceMap.get(username);
+    const isOnline=!!presence?.last_seen&&(Date.now()-new Date(presence.last_seen).getTime()<90000);
+    const card=document.createElement("div");card.className="friend-card";
+    card.addEventListener("click",()=>window.location.assign("./friend_profile.html?user="+encodeURIComponent(username)));
+    card.appendChild(createAvatar(profile,frameItem));
+    const info=document.createElement("div");info.className="friend-info";
+    const name=document.createElement("div"),nameKey=profile.equipped_name_decoration_key||"",nameClass=getNameClass(nameKey);
+    name.className="friend-name"+(nameClass?" "+nameClass:"");name.textContent=profile.name||username;
+    if(ADMIN_USERNAMES.has(username)){const badge=document.createElement("span");badge.className="admin-name-badge";badge.textContent="👑";name.appendChild(badge)}
+    const id=document.createElement("div");id.className="friend-id";id.textContent="@"+username;
+    const statusEl=document.createElement("div");statusEl.className="friend-status "+(isOnline?"online":"offline");statusEl.textContent=isOnline?"● オンライン":"○ オフライン";
+    info.append(name,id,statusEl);card.appendChild(info);
+    const arrow=document.createElement("div");arrow.className="arrow";arrow.textContent="›";card.appendChild(arrow);
+    container.appendChild(card);
+  });
+  status.textContent=`${profiles.length}人のユーザー`;
+}
+document.getElementById("reloadButton").onclick=loadAllUsers;
+async function init(){const user=await getCurrentUser();if(!user)return;await updateMyPresence();await loadAllUsers();presenceTimer=setInterval(updateMyPresence,30000)}
+init();
+</script>
+</body>
+</html>
