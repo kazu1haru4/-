@@ -835,6 +835,15 @@ async function loadUsers() {
             </button>
           `
         }
+        ${
+          isAdmin
+          ? ""
+          : `<button class="danger small"
+              data-delete-user="${escapeAttribute(username)}"
+              type="button">
+              🗑️ アカウント削除
+            </button>`
+        }
       </div>
     `;
 
@@ -858,6 +867,47 @@ async function loadUsers() {
       openCoinModal(button.dataset.coin);
     });
   });
+
+  list.querySelectorAll("[data-delete-user]").forEach(button => {
+    button.addEventListener("click", () => {
+      deleteUserAccount(button.dataset.deleteUser);
+    });
+  });
+}
+
+async function deleteUserAccount(username) {
+  if (!username) return;
+
+  if (ADMIN_USERNAMES.has(username)) {
+    alert("管理者アカウントは削除できません。");
+    return;
+  }
+
+  if (!confirm(`⚠️ 「${username}」のアカウントを削除しますか？\n\nこの操作は取り消せません。\nログイン用アカウントも削除されます。`)) return;
+  if (!confirm(`最終確認です。\n\nユーザーID：${username}\n\n本当に完全に削除しますか？`)) return;
+
+  try {
+    setStatus(`🗑️ ${username} のアカウントを削除しています...`, "info");
+
+    const { error } = await supabaseClient.rpc("admin_delete_user", {
+      target_username: username
+    });
+
+    if (error) throw error;
+
+    const target = username;
+    await loadUsers();
+    await logOperation(`ユーザー「${target}」のアカウントを削除しました。`, {
+      target_username: target
+    });
+
+    setStatus(`✅ ${target} のアカウントを削除しました。`, "success");
+    alert(`🗑️ アカウントを削除しました。\n\nユーザーID：${target}`);
+  } catch (error) {
+    console.error("deleteUserAccount:", error);
+    setStatus(`❌ ${username} のアカウント削除に失敗しました。\n\n${error.message || error}`, "error");
+    alert("❌ アカウント削除に失敗しました。\n\n" + (error.message || error));
+  }
 }
 
 async function openCoinModal(username) {
