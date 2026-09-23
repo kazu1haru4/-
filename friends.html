@@ -26,6 +26,18 @@ h1{text-align:center;margin:0 0 22px;color:#7158cf;font-size:27px}
 .friend-card:active{transform:scale(.98)}
 .friend-info{min-width:0;flex:1}
 .friend-name{font-size:17px;font-weight:bold;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.name-decoration-sakura{color:#ff4f9b;text-shadow:0 2px 8px rgba(255,80,160,.3)}
+.name-decoration-star{color:#d79a00;text-shadow:0 2px 8px rgba(244,191,63,.45)}
+.name-decoration-diamond{color:#159ed6;text-shadow:0 2px 8px rgba(66,185,238,.45)}
+.name-decoration-heart{color:#ff3d7e;text-shadow:0 2px 8px rgba(255,79,129,.4)}
+.name-decoration-rainbow{background:linear-gradient(90deg,#ff4d4d,#ffb84d,#5cff8d,#4ddcff,#7b6cff,#ff4dd8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.name-decoration-flame{color:#ff5b00;text-shadow:0 2px 10px rgba(255,90,0,.5)}
+.name-decoration-sea{color:#0077ff;text-shadow:0 2px 8px rgba(0,150,255,.4)}
+.name-decoration-space{color:#8c63ff;text-shadow:0 0 10px rgba(110,60,255,.65)}
+.name-decoration-neon{color:#00cfcf;text-shadow:0 0 7px #00ff88,0 0 14px #00e5ff,0 0 20px #ff00d4}
+.name-decoration-admin{color:#d49b00;text-shadow:0 0 8px rgba(255,215,0,.8),0 0 18px rgba(255,215,0,.45)}
+.admin-name-badge{font-size:12px;margin-left:4px}
+
 .friend-id{margin-top:3px;font-size:13px;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .friend-status{margin-top:5px;font-size:12px;font-weight:bold}.online{color:#22b573}.offline{color:#999}
 .arrow{font-size:22px;color:#aaa}
@@ -103,6 +115,16 @@ function getFrameClass(itemKey){
   }[itemKey]||"";
 }
 
+function getNameClass(itemKey){
+  return {
+    nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",
+    nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",
+    nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",
+    nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",
+    nd_neon:"name-decoration-neon",admin_name:"name-decoration-admin"
+  }[itemKey]||"";
+}
+
 function createAvatar(profile,item){
   const frame=document.createElement("div");
   frame.className="avatar-frame";
@@ -166,7 +188,7 @@ async function loadFriends(){
 
   const usernames=friends.map(x=>x.friend_id).filter(Boolean);
   const {data:profiles,error:profilesError}=await supabaseClient
-    .from("profiles").select("user_id,name,avatar_url,equipped_item_key").in("user_id",usernames);
+    .from("profiles").select("user_id,name,avatar_url,equipped_item_key,equipped_name_decoration_key").in("user_id",usernames);
 
   if(profilesError){
     console.error(profilesError);
@@ -175,11 +197,11 @@ async function loadFriends(){
   }
 
   const profileMap=new Map((profiles||[]).map(p=>[p.user_id,p]));
-  const itemKeys=[...(new Set((profiles||[]).map(p=>p.equipped_item_key).filter(Boolean)))];
+  const itemKeys=[...(new Set((profiles||[]).flatMap(p=>[p.equipped_item_key,p.equipped_name_decoration_key]).filter(Boolean)))];
   let items=[];
   if(itemKeys.length){
     const {data,error}=await supabaseClient.from("coin_items")
-      .select("item_key,name,icon,frame_color").in("item_key",itemKeys);
+      .select("item_key,name,icon,frame_color,item_type").in("item_key",itemKeys);
     if(!error)items=data||[];
   }
   const itemMap=new Map(items.map(i=>[i.item_key,i]));
@@ -209,8 +231,16 @@ async function loadFriends(){
     const info=document.createElement("div");
     info.className="friend-info";
     const name=document.createElement("div");
-    name.className="friend-name";
+    const nameKey=profile.equipped_name_decoration_key||"";
+    const nameClass=getNameClass(nameKey);
+    name.className="friend-name"+(nameClass?" "+nameClass:"");
     name.textContent=profile.name||username;
+    if(nameKey==="admin_name"&&ADMIN_USERNAMES.has(username)){
+      const badge=document.createElement("span");
+      badge.className="admin-name-badge";
+      badge.textContent="👑";
+      name.appendChild(badge);
+    }
     const id=document.createElement("div");
     id.className="friend-id";
     id.textContent="@"+username;
