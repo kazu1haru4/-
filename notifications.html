@@ -56,10 +56,6 @@
       font-weight: bold;
     }
 
-    /* =========================
-       すべて削除ボタン
-    ========================= */
-
     #clearAllButton {
       position: absolute;
       right: 12px;
@@ -81,6 +77,53 @@
     #clearAllButton:disabled {
       background: #eee;
       color: #aaa;
+      cursor: default;
+    }
+
+    /* =========================
+       プッシュ通知設定
+    ========================= */
+
+    .push-settings {
+      margin: 14px;
+      padding: 15px;
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+    }
+
+    .push-title {
+      font-size: 15px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .push-description {
+      font-size: 12px;
+      color: #777;
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+
+    #pushToggleButton {
+      width: 100%;
+      border: none;
+      border-radius: 13px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #8f7cff;
+      color: white;
+    }
+
+    #pushToggleButton.off {
+      background: #eee;
+      color: #555;
+    }
+
+    #pushToggleButton:disabled {
+      opacity: 0.6;
       cursor: default;
     }
 
@@ -136,7 +179,6 @@
     }
 
     @media (max-width: 430px) {
-
       .header {
         padding-left: 58px;
         padding-right: 120px;
@@ -150,7 +192,6 @@
         font-size: 11px;
         padding: 8px 9px;
       }
-
     }
   </style>
 </head>
@@ -179,6 +220,29 @@
 
     </header>
 
+    <!-- =========================
+         プッシュ通知設定
+    ========================== -->
+
+    <section class="push-settings">
+
+      <div class="push-title">
+        📱 プッシュ通知
+      </div>
+
+      <div class="push-description">
+        Friend Chatを閉じているときにも、新しい通知を受け取れます。
+      </div>
+
+      <button
+        id="pushToggleButton"
+        type="button"
+      >
+        🔔 通知を確認中...
+      </button>
+
+    </section>
+
     <section
       class="notifications"
       id="notifications"
@@ -189,7 +253,6 @@
     </section>
 
   </main>
-
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -207,20 +270,509 @@
         SUPABASE_KEY
       );
 
-
     const notificationsElement =
       document.getElementById(
         "notifications"
       );
-
 
     const clearAllButton =
       document.getElementById(
         "clearAllButton"
       );
 
+    const pushToggleButton =
+      document.getElementById(
+        "pushToggleButton"
+      );
 
     let currentUsername = "";
+    let pushRegistration = null;
+
+    /*
+      公開鍵なのでHTMLに入れてOK。
+      VAPID_PRIVATE_KEYは絶対にHTML/GitHubへ入れない。
+    */
+    const VAPID_PUBLIC_KEY =
+      "BGCJVSnTEJmwEyTM5WVcI3YIINqO6hs_sHnrk_ID-P_0aPiMe7AFUUqHSAHFXINP04kHzyBYQf43wNMY9BZBZhU";
+
+
+    // =========================
+    // Base64 → Uint8Array
+    // =========================
+
+    function urlBase64ToUint8Array(
+      base64String
+    ) {
+
+      const padding =
+        "=".repeat(
+          (4 - (base64String.length % 4)) % 4
+        );
+
+      const base64 =
+        (base64String + padding)
+          .replace(/-/g, "+")
+          .replace(/_/g, "/");
+
+      const rawData =
+        window.atob(base64);
+
+      return Uint8Array.from(
+        [...rawData].map(
+          function(char) {
+            return char.charCodeAt(0);
+          }
+        )
+      );
+    }
+
+
+    // =========================
+    // Service Worker取得
+    // =========================
+
+    async function getPushRegistration() {
+
+      if (!("serviceWorker" in navigator)) {
+        throw new Error(
+          "この端末はService Workerに対応していません。"
+        );
+      }
+
+      pushRegistration =
+        await navigator.serviceWorker.register(
+          "./service-worker.js",
+          {
+            updateViaCache: "none"
+          }
+        );
+
+      await pushRegistration.update();
+
+      await navigator.serviceWorker.ready;
+
+      return pushRegistration;
+    }
+
+
+    // =========================
+    // 通知状態を表示
+    // =========================
+
+    async function updatePushButton() {
+
+      pushToggleButton.disabled = false;
+
+      if (!("Notification" in window)) {
+
+        pushToggleButton.textContent =
+          "🔔 この端末は通知に未対応";
+
+        pushToggleButton.disabled = true;
+        pushToggleButton.classList.add("off");
+
+        return;
+      }
+
+      if (
+        !("serviceWorker" in navigator) ||
+        !("PushManager" in window)
+      ) {
+
+        pushToggleButton.textContent =
+          "🔔 プッシュ通知に未対応";
+
+        pushToggleButton.disabled = true;
+        pushToggleButton.classList.add("off");
+
+        return;
+      }
+
+      try {
+
+        const registration =
+          await getPushRegistration();
+
+        const subscription =
+          await registration.pushManager
+            .getSubscription();
+
+        if (
+          Notification.permission === "granted" &&
+          subscription
+        ) {
+
+          pushToggleButton.textContent =
+            "🔔 通知はオンです";
+
+          pushToggleButton.classList.add(
+            "off"
+          );
+
+          return;
+        }
+
+        if (
+          Notification.permission === "denied"
+        ) {
+
+          pushToggleButton.textContent =
+            "🔒 通知がブロックされています";
+
+          pushToggleButton.classList.add(
+            "off"
+          );
+
+          return;
+        }
+
+      } catch (error) {
+
+        console.warn(
+          "通知状態確認エラー:",
+          error
+        );
+
+      }
+
+      pushToggleButton.textContent =
+        "🔔 通知をオンにする";
+
+      pushToggleButton.classList.remove(
+        "off"
+      );
+    }
+
+
+    // =========================
+    // 通知ON
+    // =========================
+
+    async function enablePushNotifications() {
+
+      try {
+
+        pushToggleButton.disabled =
+          true;
+
+        pushToggleButton.textContent =
+          "通知を設定中...";
+
+
+        if (!currentUsername) {
+
+          throw new Error(
+            "ログイン中のユーザーを取得できません。"
+          );
+
+        }
+
+
+        if (!("Notification" in window)) {
+
+          throw new Error(
+            "この端末は通知に対応していません。"
+          );
+
+        }
+
+
+        if (!("PushManager" in window)) {
+
+          throw new Error(
+            "この端末はプッシュ通知に対応していません。"
+          );
+
+        }
+
+
+        let permission =
+          Notification.permission;
+
+
+        if (permission !== "granted") {
+
+          permission =
+            await Notification.requestPermission();
+
+        }
+
+
+        if (permission !== "granted") {
+
+          if (permission === "denied") {
+
+            alert(
+              "通知がブロックされています。\n\n" +
+              "iPhoneの設定からFriend Chatの通知を許可してください。"
+            );
+
+          } else {
+
+            alert(
+              "通知を許可するとプッシュ通知を受け取れます。"
+            );
+
+          }
+
+          return;
+        }
+
+
+        const registration =
+          await getPushRegistration();
+
+
+        let subscription =
+          await registration.pushManager
+            .getSubscription();
+
+
+        if (!subscription) {
+
+          subscription =
+            await registration.pushManager
+              .subscribe({
+
+                userVisibleOnly: true,
+
+                applicationServerKey:
+                  urlBase64ToUint8Array(
+                    VAPID_PUBLIC_KEY
+                  )
+
+              });
+
+        }
+
+
+        const json =
+          subscription.toJSON();
+
+
+        const endpoint =
+          json.endpoint;
+
+        const p256dh =
+          json.keys &&
+          json.keys.p256dh;
+
+        const auth =
+          json.keys &&
+          json.keys.auth;
+
+
+        if (
+          !endpoint ||
+          !p256dh ||
+          !auth
+        ) {
+
+          throw new Error(
+            "プッシュ通知情報を取得できませんでした。"
+          );
+
+        }
+
+
+        const {
+          error
+        } =
+          await supabaseClient
+            .from(
+              "push_subscriptions"
+            )
+            .upsert(
+
+              {
+                user_id:
+                  currentUsername,
+
+                endpoint:
+                  endpoint,
+
+                p256dh:
+                  p256dh,
+
+                auth:
+                  auth
+              },
+
+              {
+                onConflict:
+                  "endpoint"
+              }
+
+            );
+
+
+        if (error) {
+          throw error;
+        }
+
+
+        alert(
+          "🔔 通知をオンにしました！"
+        );
+
+      } catch (error) {
+
+        console.error(
+          "プッシュ通知ONエラー:",
+          error
+        );
+
+        alert(
+          "通知の設定に失敗しました。\n\n" +
+          (
+            error &&
+            error.message
+              ? error.message
+              : "もう一度試してください。"
+          )
+        );
+
+      } finally {
+
+        await updatePushButton();
+
+      }
+    }
+
+
+    // =========================
+    // 通知OFF
+    // =========================
+
+    async function disablePushNotifications() {
+
+      try {
+
+        pushToggleButton.disabled =
+          true;
+
+        pushToggleButton.textContent =
+          "通知をオフにしています...";
+
+
+        const registration =
+          await getPushRegistration();
+
+
+        const subscription =
+          await registration.pushManager
+            .getSubscription();
+
+
+        if (subscription) {
+
+          const endpoint =
+            subscription.endpoint;
+
+
+          // まずSupabaseから削除
+          const {
+            error
+          } =
+            await supabaseClient
+              .from(
+                "push_subscriptions"
+              )
+              .delete()
+              .eq(
+                "user_id",
+                currentUsername
+              )
+              .eq(
+                "endpoint",
+                endpoint
+              );
+
+
+          if (error) {
+            throw error;
+          }
+
+
+          // ブラウザ側の購読も解除
+          await subscription.unsubscribe();
+
+        }
+
+
+        alert(
+          "🔕 通知をオフにしました。"
+        );
+
+      } catch (error) {
+
+        console.error(
+          "プッシュ通知OFFエラー:",
+          error
+        );
+
+        alert(
+          "通知をオフにできませんでした。\n\n" +
+          (
+            error &&
+            error.message
+              ? error.message
+              : "もう一度試してください。"
+          )
+        );
+
+      } finally {
+
+        await updatePushButton();
+
+      }
+    }
+
+
+    // =========================
+    // ON/OFFボタン
+    // =========================
+
+    pushToggleButton.addEventListener(
+      "click",
+      async function() {
+
+        if (
+          "Notification" in window &&
+          Notification.permission === "granted"
+        ) {
+
+          try {
+
+            const registration =
+              await getPushRegistration();
+
+            const subscription =
+              await registration.pushManager
+                .getSubscription();
+
+            if (subscription) {
+
+              await disablePushNotifications();
+
+              return;
+
+            }
+
+          } catch (error) {
+
+            console.warn(
+              "通知状態取得エラー:",
+              error
+            );
+
+          }
+        }
+
+        await enablePushNotifications();
+
+      }
+    );
 
 
     // =========================
@@ -277,7 +829,6 @@
         );
 
       }
-
 
       if (
         notification.link &&
@@ -413,6 +964,9 @@
       }
 
 
+      await updatePushButton();
+
+
       const {
         data: notifications,
         error: notificationError
@@ -488,10 +1042,6 @@
         }
 
 
-        // =====================
-        // タップ処理
-        // =====================
-
         item.addEventListener(
           "click",
           function() {
@@ -503,10 +1053,6 @@
           }
         );
 
-
-        // =====================
-        // タイトル
-        // =====================
 
         const title =
           document.createElement(
@@ -521,10 +1067,6 @@
           "通知";
 
 
-        // =====================
-        // 本文
-        // =====================
-
         const message =
           document.createElement(
             "div"
@@ -537,10 +1079,6 @@
           notification.message ||
           "";
 
-
-        // =====================
-        // 時刻
-        // =====================
 
         const time =
           document.createElement(
