@@ -9,7 +9,10 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;padding:20px;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif;background:linear-gradient(135deg,#fff4fb,#eef7ff);color:#333}
-.home-link{display:inline-block;text-decoration:none;color:#7658d9;background:rgba(255,255,255,.95);padding:10px 16px;border-radius:999px;font-weight:bold;box-shadow:0 4px 12px rgba(100,80,150,.12);margin-bottom:16px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:16px}
+.home-link,.admin-link{display:inline-block;text-decoration:none;padding:10px 14px;border-radius:999px;font-weight:bold;box-shadow:0 4px 12px rgba(100,80,150,.12);white-space:nowrap}
+.home-link{color:#7658d9;background:rgba(255,255,255,.95)}
+.admin-link{color:#fff;background:linear-gradient(135deg,#7658d9,#a978e8)}
 .container{width:100%;max-width:520px;margin:0 auto;background:#fff;border-radius:24px;padding:25px 20px;box-shadow:0 12px 35px rgba(100,80,150,.15)}
 h1{text-align:center;margin:0 0 22px;color:#7158cf;font-size:27px}
 .add-box{background:#f8f5ff;border-radius:18px;padding:15px;margin-bottom:18px}
@@ -37,7 +40,6 @@ h1{text-align:center;margin:0 0 22px;color:#7158cf;font-size:27px}
 .name-decoration-neon{color:#00cfcf;text-shadow:0 0 7px #00ff88,0 0 14px #00e5ff,0 0 20px #ff00d4}
 .name-decoration-admin{color:#d49b00;text-shadow:0 0 8px rgba(255,215,0,.8),0 0 18px rgba(255,215,0,.45)}
 .admin-name-badge{font-size:12px;margin-left:4px}
-
 .friend-id{margin-top:3px;font-size:13px;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .friend-status{margin-top:5px;font-size:12px;font-weight:bold}.online{color:#22b573}.offline{color:#999}
 .arrow{font-size:22px;color:#aaa}
@@ -58,13 +60,16 @@ h1{text-align:center;margin:0 0 22px;color:#7158cf;font-size:27px}
 .equipped-badge{position:absolute;right:-7px;top:-7px;width:27px;height:27px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:15px;z-index:5;box-shadow:0 2px 7px rgba(0,0,0,.18),0 0 0 2px white}
 .empty{text-align:center;padding:30px 10px;color:#999;font-size:15px}
 .reload-button{display:block;width:100%;margin-top:18px;padding:13px;border:0;border-radius:14px;background:#f0eaff;color:#7158cf;font-size:15px;font-weight:bold}
+@media(max-width:380px){body{padding:12px}.topbar{gap:5px}.home-link,.admin-link{padding:9px 11px;font-size:13px}.container{padding:22px 14px}}
 </style>
 </head>
 <body>
+<div class="topbar">
 <a class="home-link" href="home.html">🏠 ホーム</a>
+<a id="adminLink" class="admin-link" href="admin_all-users.html" style="display:none">🛡️ 管理</a>
+</div>
 <div class="container">
 <h1>👥 フレンド一覧</h1>
-
 <div class="add-box">
   <div class="add-title">➕ フレンドを追加</div>
   <div class="add-row">
@@ -73,259 +78,97 @@ h1{text-align:center;margin:0 0 22px;color:#7158cf;font-size:27px}
   </div>
   <div class="add-help">相手のユーザーIDを入力してフレンド追加できます。</div>
 </div>
-
 <div id="status" class="status">読み込み中...</div>
 <div id="friends" class="friends"></div>
 <button id="reloadButton" class="reload-button" type="button">🔄 フレンド一覧を更新</button>
 </div>
-
 <script>
 const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
 const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-
 const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
 const ADMIN_ITEM_KEY="admin";
-let currentUsername="";
-let presenceTimer=null;
+let currentUsername="",presenceTimer=null;
 
 async function getCurrentUser(){
-  if(await checkFriendChatBan()) return null;
+  if(await checkFriendChatBan())return null;
   const {data,error}=await supabaseClient.auth.getUser();
   if(error||!data.user){location.href="index.html";return null}
   currentUsername=data.user.user_metadata?.username||"";
   if(!currentUsername){location.href="index.html";return null}
+  const adminLink=document.getElementById("adminLink");
+  if(ADMIN_USERNAMES.has(currentUsername))adminLink.style.display="inline-block";
   return data.user;
 }
-
 async function updateMyPresence(){
   if(!currentUsername)return;
-  const {error}=await supabaseClient.from("user_presence").upsert(
-    {user_id:currentUsername,last_seen:new Date().toISOString()},
-    {onConflict:"user_id"}
-  );
+  const {error}=await supabaseClient.from("user_presence").upsert({user_id:currentUsername,last_seen:new Date().toISOString()},{onConflict:"user_id"});
   if(error)console.error("Presence error:",error);
 }
-
-function getFrameClass(itemKey){
-  return {
-    sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",
-    space:"frame-space",neon:"frame-neon",rainbow:"frame-rainbow",
-    flame:"frame-flame",sea:"frame-sea",heart:"frame-heart"
-  }[itemKey]||"";
-}
-
-function getNameClass(itemKey){
-  return {
-    nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",
-    nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",
-    nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",
-    nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",
-    nd_neon:"name-decoration-neon",admin_name:"name-decoration-admin"
-  }[itemKey]||"";
-}
-
+function getFrameClass(itemKey){return{ sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",space:"frame-space",neon:"frame-neon",rainbow:"frame-rainbow",flame:"frame-flame",sea:"frame-sea",heart:"frame-heart"}[itemKey]||""}
+function getNameClass(itemKey){return{nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",nd_neon:"name-decoration-neon",admin_name:"name-decoration-admin"}[itemKey]||""}
 function createAvatar(profile,item){
-  const frame=document.createElement("div");
-  frame.className="avatar-frame";
+  const frame=document.createElement("div");frame.className="avatar-frame";
   const username=profile.user_id||"";
-
-  if(item?.item_key===ADMIN_ITEM_KEY&&ADMIN_USERNAMES.has(username)){
-    frame.classList.add("admin-frame");
-  }else{
-    const cls=getFrameClass(item?.item_key);
-    if(cls)frame.classList.add(cls);
-    else if(item?.frame_color){
-      frame.style.background=item.frame_color;
-      frame.style.boxShadow=`0 0 0 2px white,0 0 14px ${item.frame_color}`;
-    }
-  }
-
-  if(profile.avatar_url){
-    const img=document.createElement("img");
-    img.className="avatar-image";
-    img.src=profile.avatar_url;
-    img.alt="プロフィール画像";
-    frame.appendChild(img);
-  }else{
-    const placeholder=document.createElement("div");
-    placeholder.className="avatar-placeholder";
-    placeholder.textContent="😊";
-    frame.appendChild(placeholder);
-  }
-
-  if(item?.icon){
-    const badge=document.createElement("div");
-    badge.className="equipped-badge";
-    badge.textContent=item.icon;
-    badge.style.border=`2px solid ${item.item_key===ADMIN_ITEM_KEY?"#ffd700":(item.frame_color||"white")}`;
-    frame.appendChild(badge);
-  }
+  if(item?.item_key===ADMIN_ITEM_KEY&&ADMIN_USERNAMES.has(username))frame.classList.add("admin-frame");
+  else{const cls=getFrameClass(item?.item_key);if(cls)frame.classList.add(cls);else if(item?.frame_color){frame.style.background=item.frame_color;frame.style.boxShadow=`0 0 0 2px white,0 0 14px ${item.frame_color}`}}
+  if(profile.avatar_url){const img=document.createElement("img");img.className="avatar-image";img.src=profile.avatar_url;img.alt="プロフィール画像";frame.appendChild(img)}
+  else{const placeholder=document.createElement("div");placeholder.className="avatar-placeholder";placeholder.textContent="😊";frame.appendChild(placeholder)}
+  if(item?.icon){const badge=document.createElement("div");badge.className="equipped-badge";badge.textContent=item.icon;badge.style.border=`2px solid ${item.item_key===ADMIN_ITEM_KEY?"#ffd700":(item.frame_color||"white")}`;frame.appendChild(badge)}
   return frame;
 }
-
 async function loadFriends(){
-  const friendsContainer=document.getElementById("friends");
-  const status=document.getElementById("status");
+  const friendsContainer=document.getElementById("friends"),status=document.getElementById("status");
   if(await checkFriendChatBan())return;
-  status.textContent="読み込み中...";
-  friendsContainer.innerHTML="";
-
-  const {data:friends,error:friendsError}=await supabaseClient
-    .from("friends").select("friend_id").eq("user_id",currentUsername);
-
-  if(friendsError){
-    console.error(friendsError);
-    status.textContent="フレンドの読み込みに失敗しました。";
-    return;
-  }
-
-  if(!friends?.length){
-    status.textContent="フレンドはまだいません。";
-    friendsContainer.innerHTML='<div class="empty">👥 フレンドを追加すると<br>ここに表示されます。</div>';
-    return;
-  }
-
+  status.textContent="読み込み中...";friendsContainer.innerHTML="";
+  const {data:friends,error:friendsError}=await supabaseClient.from("friends").select("friend_id").eq("user_id",currentUsername);
+  if(friendsError){console.error(friendsError);status.textContent="フレンドの読み込みに失敗しました。";return}
+  if(!friends?.length){status.textContent="フレンドはまだいません。";friendsContainer.innerHTML='<div class="empty">👥 フレンドを追加すると<br>ここに表示されます。</div>';return}
   const usernames=friends.map(x=>x.friend_id).filter(Boolean);
-  const {data:profiles,error:profilesError}=await supabaseClient
-    .from("profiles").select("user_id,name,avatar_url,equipped_item_key,equipped_name_decoration_key").in("user_id",usernames);
-
-  if(profilesError){
-    console.error(profilesError);
-    status.textContent="プロフィールの読み込みに失敗しました。";
-    return;
-  }
-
+  const {data:profiles,error:profilesError}=await supabaseClient.from("profiles").select("user_id,name,avatar_url,equipped_item_key,equipped_name_decoration_key").in("user_id",usernames);
+  if(profilesError){console.error(profilesError);status.textContent="プロフィールの読み込みに失敗しました。";return}
   const profileMap=new Map((profiles||[]).map(p=>[p.user_id,p]));
   const itemKeys=[...(new Set((profiles||[]).flatMap(p=>[p.equipped_item_key,p.equipped_name_decoration_key]).filter(Boolean)))];
-  let items=[];
-  if(itemKeys.length){
-    const {data,error}=await supabaseClient.from("coin_items")
-      .select("item_key,name,icon,frame_color,item_type").in("item_key",itemKeys);
-    if(!error)items=data||[];
-  }
+  let items=[];if(itemKeys.length){const {data,error}=await supabaseClient.from("coin_items").select("item_key,name,icon,frame_color,item_type").in("item_key",itemKeys);if(!error)items=data||[]}
   const itemMap=new Map(items.map(i=>[i.item_key,i]));
-
-  const {data:presenceRows,error:presenceError}=await supabaseClient
-    .from("user_presence").select("user_id,last_seen").in("user_id",usernames);
+  const {data:presenceRows,error:presenceError}=await supabaseClient.from("user_presence").select("user_id,last_seen").in("user_id",usernames);
   if(presenceError)console.error(presenceError);
   const presenceMap=new Map((presenceRows||[]).map(p=>[p.user_id,p]));
-
   friends.forEach(row=>{
-    const username=row.friend_id;
-    const profile=profileMap.get(username)||{
-      user_id:username,name:username,avatar_url:null,equipped_item_key:null
-    };
-    const item=profile.equipped_item_key?itemMap.get(profile.equipped_item_key):null;
-    const presence=presenceMap.get(username);
+    const username=row.friend_id,profile=profileMap.get(username)||{user_id:username,name:username,avatar_url:null,equipped_item_key:null};
+    const item=profile.equipped_item_key?itemMap.get(profile.equipped_item_key):null,presence=presenceMap.get(username);
     const isOnline=!!presence?.last_seen&&(Date.now()-new Date(presence.last_seen).getTime()<90000);
-
-    const card=document.createElement("div");
-    card.className="friend-card";
-
-    // フレンドをタップするとプロフィールを開く
-    card.addEventListener("click",()=>{ window.location.assign("./friend_profile.html?user="+encodeURIComponent(username)); });
-
+    const card=document.createElement("div");card.className="friend-card";card.addEventListener("click",()=>{window.location.assign("./friend_profile.html?user="+encodeURIComponent(username))});
     card.appendChild(createAvatar(profile,item));
-
-    const info=document.createElement("div");
-    info.className="friend-info";
-    const name=document.createElement("div");
-    const nameKey=profile.equipped_name_decoration_key||"";
-    const nameClass=getNameClass(nameKey);
-    name.className="friend-name"+(nameClass?" "+nameClass:"");
-    name.textContent=profile.name||username;
-    if(nameKey==="admin_name"&&ADMIN_USERNAMES.has(username)){
-      const badge=document.createElement("span");
-      badge.className="admin-name-badge";
-      badge.textContent="👑";
-      name.appendChild(badge);
-    }
-    const id=document.createElement("div");
-    id.className="friend-id";
-    id.textContent="@"+username;
-    const statusEl=document.createElement("div");
-    statusEl.className="friend-status "+(isOnline?"online":"offline");
-    statusEl.textContent=isOnline?"● オンライン":"○ オフライン";
-    info.append(name,id,statusEl);
-    card.appendChild(info);
-
-    const arrow=document.createElement("div");
-    arrow.className="arrow";
-    arrow.textContent="›";
-    card.appendChild(arrow);
-    friendsContainer.appendChild(card);
+    const info=document.createElement("div");info.className="friend-info";
+    const name=document.createElement("div"),nameKey=profile.equipped_name_decoration_key||"",nameClass=getNameClass(nameKey);name.className="friend-name"+(nameClass?" "+nameClass:"");name.textContent=profile.name||username;
+    if(nameKey==="admin_name"&&ADMIN_USERNAMES.has(username)){const badge=document.createElement("span");badge.className="admin-name-badge";badge.textContent="👑";name.appendChild(badge)}
+    const id=document.createElement("div");id.className="friend-id";id.textContent="@"+username;
+    const statusEl=document.createElement("div");statusEl.className="friend-status "+(isOnline?"online":"offline");statusEl.textContent=isOnline?"● オンライン":"○ オフライン";
+    info.append(name,id,statusEl);card.appendChild(info);
+    const arrow=document.createElement("div");arrow.className="arrow";arrow.textContent="›";card.appendChild(arrow);friendsContainer.appendChild(card);
   });
-
   status.textContent=`${usernames.length}人のフレンド`;
 }
-
 async function addFriend(){
-  const input=document.getElementById("friendIdInput");
-  const button=document.getElementById("addFriendButton");
-  const target=input.value.trim();
-
-  if(!target){
-    alert("フレンドのIDを入力してください。");
-    input.focus(); return;
-  }
-  if(target===currentUsername){
-    alert("自分自身はフレンドに追加できません。");
-    return;
-  }
-  if(!/^[A-Za-z0-9_]{3,20}$/.test(target)){
-    alert("ユーザーIDは3〜20文字の英数字と「_」で入力してください。");
-    return;
-  }
-
-  button.disabled=true;
-  button.textContent="追加中...";
-
+  const input=document.getElementById("friendIdInput"),button=document.getElementById("addFriendButton"),target=input.value.trim();
+  if(!target){alert("フレンドのIDを入力してください。");input.focus();return}
+  if(target===currentUsername){alert("自分自身はフレンドに追加できません。");return}
+  if(!/^[A-Za-z0-9_]{3,20}$/.test(target)){alert("ユーザーIDは3〜20文字の英数字と「_」で入力してください。");return}
+  button.disabled=true;button.textContent="追加中...";
   try{
     if(await checkFriendChatBan())return;
-
-    const {data:profile,error:profileError}=await supabaseClient
-      .from("profiles").select("user_id").eq("user_id",target).maybeSingle();
-
-    if(profileError)throw profileError;
-    if(!profile){
-      alert("そのIDのユーザーは見つかりません。");
-      return;
-    }
-
-    const {error}=await supabaseClient.rpc("add_friend_by_id",{target_username:target});
-    if(error)throw error;
-
-    input.value="";
-    alert("🎉 @"+target+" さんをフレンドに追加しました！");
-    await loadFriends();
-  }catch(error){
-    console.error(error);
-    const msg=String(error?.message||error);
-    if(msg.includes("already")||msg.includes("既に")||msg.includes("すでに")){
-      alert("そのユーザーはすでにフレンドです。");
-    }else{
-      alert("フレンド追加に失敗しました。\n\n"+msg);
-    }
-  }finally{
-    button.disabled=false;
-    button.textContent="追加";
-  }
+    const {data:profile,error:profileError}=await supabaseClient.from("profiles").select("user_id").eq("user_id",target).maybeSingle();
+    if(profileError)throw profileError;if(!profile){alert("そのIDのユーザーは見つかりません。");return}
+    const {error}=await supabaseClient.rpc("add_friend_by_id",{target_username:target});if(error)throw error;
+    input.value="";alert("🎉 @"+target+" さんをフレンドに追加しました！");await loadFriends();
+  }catch(error){console.error(error);const msg=String(error?.message||error);if(msg.includes("already")||msg.includes("既に")||msg.includes("すでに"))alert("そのユーザーはすでにフレンドです。");else alert("フレンド追加に失敗しました。\n\n"+msg)}
+  finally{button.disabled=false;button.textContent="追加"}
 }
-
 document.getElementById("addFriendButton").onclick=addFriend;
-document.getElementById("friendIdInput").onkeydown=e=>{
-  if(e.key==="Enter"){e.preventDefault();addFriend()}
-};
+document.getElementById("friendIdInput").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();addFriend()}};
 document.getElementById("reloadButton").onclick=loadFriends;
-
-async function init(){
-  const user=await getCurrentUser();
-  if(!user)return;
-  await updateMyPresence();
-  await loadFriends();
-  presenceTimer=setInterval(updateMyPresence,30000);
-}
+async function init(){const user=await getCurrentUser();if(!user)return;await updateMyPresence();await loadFriends();presenceTimer=setInterval(updateMyPresence,30000)}
 init();
 </script>
 </body>
