@@ -1,1 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>管理者・全グループ</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="ban-check.js"></script>
+<style>*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Yu Gothic",sans-serif;background:linear-gradient(135deg,#fff3fb,#eef5ff);color:#333}.header{background:#fff;padding:16px;box-shadow:0 3px 10px rgba(0,0,0,.06);position:sticky;top:0;z-index:2}h1{margin:0;font-size:22px}.sub{margin-top:5px;color:#888;font-size:12px}.list{padding:14px 16px 75px}.card{display:block;background:#fff;border-radius:17px;padding:16px;margin-bottom:11px;text-decoration:none;color:#333;box-shadow:0 4px 13px rgba(0,0,0,.06)}.name{font-size:17px;font-weight:800;word-break:break-word}.info{margin-top:6px;font-size:12px;color:#999}.empty{text-align:center;color:#888;padding:45px 10px}.back{position:fixed;left:12px;bottom:12px;border:0;background:#fff;color:#555;border-radius:12px;padding:10px 14px;font-weight:bold;box-shadow:0 3px 10px rgba(0,0,0,.08)}</style>
+</head><body><header class="header"><h1>🛡️ 全グループ管理</h1><div class="sub">管理者専用・参加していないグループも閲覧できます</div></header>
+<main class="list" id="list"><div class="empty">読み込み中...</div></main><button class="back" onclick="location.href='groups.html'">← グループ一覧</button>
+<script>
 
+const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const ADMINS=new Set(["kazu1haru100","kazu1haru4sub"]);
+function escapeHtml(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
+async function checkAdmin(){
+ const {data,error}=await supabaseClient.auth.getSession();
+ const username=data?.session?.user?.user_metadata?.username||"";
+ if(error||!data.session||!ADMINS.has(username)){
+   alert("管理者のみ利用できます。");
+   location.href="home.html";
+   return false;
+ }
+ if(typeof checkFriendChatBan==="function" && await checkFriendChatBan()) return false;
+ return true;
+}
+
+async function load(){
+ if(!await checkAdmin())return;
+ const {data,error}=await supabaseClient.rpc("admin_list_all_groups");
+ if(error){console.error(error);document.getElementById("list").innerHTML='<div class="empty">読み込みに失敗しました。<br><br>'+escapeHtml(error.message)+'</div>';return;}
+ const rows=Array.isArray(data)?data:[];
+ if(!rows.length){document.getElementById("list").innerHTML='<div class="empty">グループはありません。</div>';return;}
+ const list=document.getElementById("list");list.innerHTML="";
+ rows.forEach(g=>{
+  const a=document.createElement("a");a.className="card";a.href="group_chat.html?id="+encodeURIComponent(g.id);
+  a.innerHTML='<div class="name">👥 '+escapeHtml(g.name||"名前なし")+'</div><div class="info">🛡️ 管理者閲覧・メンバー登録なし</div>';
+  list.appendChild(a);
+ });
+}
+load();
+</script></body></html>
