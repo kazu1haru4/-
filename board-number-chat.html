@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>番号掲示板チャット</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="ban-check.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-serif;background:#f4f1ff;color:#333}
+.header{background:#fff;padding:11px 100px;text-align:center;box-shadow:0 2px 8px #0002;position:relative;z-index:10}
+.header a,.header button{position:absolute;top:9px;border:0;border-radius:11px;padding:9px 11px;background:#8f7cff;color:#fff;font-weight:bold;text-decoration:none;cursor:pointer}
+.header a{left:9px}.header button{right:9px}
+.title{font-weight:bold;font-size:19px}.room{font-size:12px;color:#888;margin-top:3px}
+.main{flex:1;min-height:0;overflow-y:auto;padding:14px}
+.messages{max-width:700px;margin:auto}
+.row{display:flex;gap:8px;margin:8px 0}
+.avatar{width:43px;height:43px;border-radius:50%;padding:3px;background:#8f7cff;flex:none}
+.avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover;background:#fff}
+.bubble{position:relative;flex:1;min-width:0;background:#fff;border-radius:15px;padding:9px 12px;box-shadow:0 2px 7px #0001}
+.name{font-size:12px;color:#777;font-weight:bold}
+.content{white-space:pre-wrap;word-break:break-word;margin-top:3px}
+.mention{color:#6655c9;font-weight:bold;background:#f0edff;border-radius:4px;padding:1px 3px}
+.edited{font-size:10px;color:#999}.deleted{color:#999;font-style:italic}
+.message-image{display:block;max-width:270px;max-height:330px;border-radius:13px;margin-top:6px}
+.reply{margin-top:7px;padding:7px 9px;background:#f0edff;border-left:4px solid #8f7cff;border-radius:8px;font-size:12px}
+.reactions{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.reaction{background:#eef1f7;border-radius:18px;padding:4px 8px;font-size:14px}
+.read{text-align:right;color:#6354c8;font-size:11px;margin-top:4px}
+.menu,.picker{display:none;position:absolute;z-index:50;background:#fff;border-radius:12px;box-shadow:0 5px 18px #0003;padding:6px}
+.menu{left:8px;top:calc(100% + 4px);min-width:195px}.menu button{display:block;width:100%;border:0;background:#fff;text-align:left;padding:10px;border-radius:8px;cursor:pointer}.menu button:hover{background:#f5f3ff}
+.picker{left:8px;top:calc(100% + 4px);gap:4px}.picker button{width:40px;height:40px;border:0;border-radius:9px;background:#f1f2f7;font-size:20px}
+.inputbar{display:flex;gap:7px;padding:9px;background:#fff;box-shadow:0 -2px 8px #0001;z-index:20}
+.inputbar input{flex:1;min-width:0;border:1px solid #ddd;border-radius:12px;padding:11px;font-size:16px}
+.inputbar button{border:0;border-radius:11px;background:#8f7cff;color:#fff;font-weight:bold;padding:0 15px;cursor:pointer}
+.image-btn{font-size:19px;padding:0 12px!important}
+.banner{display:none;background:#ffeaea;color:#b44;padding:7px;text-align:center;font-size:12px}.banner.show{display:block}
+.mention-list{display:none;position:fixed;left:8px;right:8px;bottom:62px;max-width:500px;margin:auto;background:#fff;border-radius:13px;box-shadow:0 4px 18px #0003;padding:6px;z-index:80}.mention-list.show{display:block}
+.mention-item{display:block;width:100%;border:0;background:#fff;text-align:left;padding:9px;border-radius:8px}
+.modal{display:none;position:fixed;inset:0;background:#0007;z-index:100;align-items:center;justify-content:center;padding:18px}
+.box{background:#fff;border-radius:19px;padding:18px;width:100%;max-width:410px;max-height:86vh;overflow:auto}
+.box h2{text-align:center;font-size:19px;margin:0 0 13px}
+.member-item{display:flex;gap:9px;background:#f3f0ff;border-radius:12px;padding:9px;margin:7px 0}
+.member-avatar{width:42px;height:42px;border-radius:50%;padding:3px;background:#8f7cff;flex:none}.member-avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.member-info{flex:1;min-width:0}.member-id{font-size:12px;color:#888}.role{display:inline-block;font-size:11px;padding:3px 7px;border-radius:8px;background:#eee;margin-top:4px}.owner{background:#fff0bf;color:#9b7600}.deputy{background:#e7e0ff;color:#5e50c9}
+.control{width:100%;margin-top:6px;padding:7px;border:1px solid #ddd;border-radius:8px;background:#fff}.danger{color:#c44}
+.close{width:100%;border:0;border-radius:11px;padding:11px;margin-top:8px;background:#eee;cursor:pointer}
+.gift-target{text-align:center;color:#6253c7;font-weight:bold}
+.presets{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}.presets button{border:0;border-radius:10px;padding:11px;background:#eeeaff;color:#5f50c4;font-weight:bold}
+.gift-input{width:100%;padding:11px;margin-top:9px;border:1px solid #ddd;border-radius:10px}
+.gift-send{width:100%;padding:11px;margin-top:9px;border:0;border-radius:10px;background:#8f7cff;color:#fff;font-weight:bold}
+</style>
+</head>
+<body>
+
+<header class="header">
+<a href="board-number.html">🔢 一覧</a>
+<button id="memberButton">👥 メンバー</button>
+<div class="title">🔢 掲示板チャット</div>
+<div id="roomInfo" class="room">読み込み中...</div>
+</header>
+
+<main id="main" class="main"><div id="messages" class="messages"></div></main>
+<div id="muteBanner" class="banner"></div>
+
+<div class="inputbar">
+<input id="messageInput" placeholder="メッセージを入力..." autocomplete="off">
+<button id="imageButton" class="image-btn">🖼️</button>
+<button id="sendButton">送信</button>
+</div>
+<input id="imageInput" type="file" accept="image/*" hidden>
+<div id="mentionList" class="mention-list"></div>
+
+<div id="memberModal" class="modal">
+<div class="box">
+<h2>👥 メンバー</h2>
+<div id="memberList"></div>
+<button class="close" onclick="closeMemberModal()">閉じる</button>
+</div>
+</div>
+
+<div id="giftModal" class="modal">
+<div class="box">
+<h2>🎁 コインを送る</h2>
+<div id="giftTarget" class="gift-target"></div>
+<div class="presets">
+<button data-amount="10">10コイン</button>
+<button data-amount="50">50コイン</button>
+<button data-amount="100">100コイン</button>
+</div>
+<input id="giftAmount" class="gift-input" type="number" min="1" placeholder="送るコイン数">
+<button id="giftSend" class="gift-send">🎁 送る</button>
+<button class="close" onclick="closeGiftModal()">キャンセル</button>
+</div>
+</div>
+
+<script>
+const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const boardId=new URLSearchParams(location.search).get("board");
+const $=id=>document.getElementById(id);
+
+let username="";
+let room=null;
+let members=[];
+let profiles={};
+let items={};
+let isOwner=false;
+let isBoardAdmin=false;
+let isMuted=false;
+let replyTarget=null;
+let giftTargetUsername="";
+
+const themeMap={
+ pink:["#ff82b2","#fff0f7"],
+ purple:["#8f7cff","#f0edff"],
+ blue:["#5c9eff","#eef5ff"],
+ green:["#48c78e","#eef9f3"],
+ orange:["#ff9b52","#fff4e8"],
+ cyan:["#36c9d8","#eafcff"]
+};
+const theme=themeMap[localStorage.getItem("friendChatTheme")||"purple"]||themeMap.purple;
+document.documentElement.style.setProperty("--theme",theme[0]);
+
+function escapeHtml(value){
+ return String(value??"")
+  .replaceAll("&","&amp;")
+  .replaceAll("<","&lt;")
+  .replaceAll(">","&gt;")
+  .replaceAll('"',"&quot;")
+  .replaceAll("'","&#039;");
+}
+
+async function loadProfiles(usernames){
+ usernames=[...new Set(usernames.filter(Boolean))];
+ if(!usernames.length)return;
+ const {data,error}=await supabaseClient
+  .from("profiles")
+  .select("user_id,name,avatar_url,equipped_item_key")
+  .in("user_id",usernames);
+ if(error){console.error(error);return}
+ (data||[]).forEach(p=>profiles[p.user_id]=p);
+
+ const keys=[...new Set((data||[]).map(p=>p.equipped_item_key).filter(Boolean))];
+ if(keys.length){
+  const r=await supabaseClient
+   .from("coin_items")
+   .select("item_key,icon,frame_color")
+   .in("item_key",keys);
+  if(!r.error)(r.data||[]).forEach(i=>items[i.item_key]=i);
+ }
+}
+
+function makeAvatar(username,member=false){
+ const p=profiles[username];
+ const item=items[p?.equipped_item_key];
+ const div=document.createElement("div");
+ div.className=member?"member-avatar":"avatar";
+ div.style.background=item?.frame_color||"#8f7cff";
+
+ if(p?.avatar_url){
+  const img=document.createElement("img");
+  img.src=p.avatar_url;
+  img.alt="プロフィール画像";
+  div.appendChild(img);
+ }else{
+  div.textContent="👤";
+ }
+ return div;
+}
+
+async function loadRoom(){
+ const {data,error}=await supabaseClient
+  .from("board_rooms")
+  .select("id,name,join_code,created_by")
+  .eq("id",boardId)
+  .maybeSingle();
+
+ if(error||!data){
+  alert("掲示板が見つかりません");
+  location.href="board-number.html";
+  return false;
+ }
+ room=data;
+ $("roomInfo").textContent=data.name+"　🔢 "+data.join_code;
+ isOwner=data.created_by===username;
+ return true;
+}
+
+async function loadMembers(){
+ const {data,error}=await supabaseClient
+  .from("board_room_members")
+  .select("user_id,role,joined_at")
+  .eq("board_id",boardId)
+  .order("joined_at",{ascending:true});
+
+ if(error){
+  console.error(error);
+  return;
+ }
+
+ members=data||[];
+ await loadProfiles(members.map(m=>m.user_id));
+
+ const me=members.find(m=>m.user_id===username);
+ isBoardAdmin=isOwner||me?.role==="admin";
+}
+
+async function refreshMute(){
+ const {data,error}=await supabaseClient
+  .from("board_room_mutes")
+  .select("muted_until")
+  .eq("board_id",boardId)
+  .eq("user_id",username)
+  .maybeSingle();
+
+ if(error){console.error(error);return}
+
+ isMuted=!!(
+  data?.muted_until &&
+  new Date(data.muted_until).getTime()>Date.now()
+ );
+
+ $("muteBanner").classList.toggle("show",isMuted);
+ $("muteBanner").textContent=isMuted
+  ?"🔇 現在、発言禁止中です"
+  :"";
+
+ $("messageInput").disabled=isMuted;
+ $("sendButton").disabled=isMuted;
+ $("imageButton").disabled=isMuted;
+}
+
+async function renderMembers(){
+ await loadMembers();
+
+ const {data:presence}=await supabaseClient
+  .from("user_presence")
+  .select("user_id,last_seen")
+  .in("user_id",members.map(m=>m.user_id));
+
+ const lastSeen={};
+ (presence||[]).forEach(p=>lastSeen[p.user_id]=p.last_seen);
+
+ const list=$("memberList");
+ list.innerHTML="";
+
+ members.forEach(member=>{
+  const item=document.createElement("div");
+  item.className="member-item";
+  item.appendChild(makeAvatar(member.user_id,true));
+
+  const info=document.createElement("div");
+  info.className="member-info";
+
+  const roleText=
+   member.user_id===room.created_by
+    ?"👑 管理者"
+    :member.role==="admin"
+      ?"🛡️ 副管理者"
+      :"メンバー";
+
+  const roleClass=
+   member.user_id===room.created_by
+    ?"owner"
+    :member.role==="admin"
+      ?"deputy"
+      :"";
+
+  info.innerHTML=
+   "<b>"+escapeHtml(profiles[member.user_id]?.name||member.user_id)+"</b>"+
+   "<div class='member-id'>@"+escapeHtml(member.user_id)+"</div>"+
+   "<span class='role "+roleClass+"'>"+roleText+"</span>";
+
+  if(isOwner && member.user_id!==username){
+   const select=document.createElement("select");
+   select.className="control";
+   select.innerHTML=
+    "<option value='member'>通常メンバー</option>"+
+    "<option value='admin'>副管理者</option>";
+   select.value=member.role==="admin"?"admin":"member";
+
+   select.onchange=async()=>{
+    const {error}=await supabaseClient.rpc("board_set_subadmin",{
+     target_board_id:Number(boardId),
+     target_username:member.user_id,
+     make_admin:select.value==="admin"
+    });
+    if(error)alert(error.message);
+    await renderMembers();
+   };
+   info.appendChild(select);
+  }
+
+  const myMember=members.find(m=>m.user_id===username);
+
+  const canMute=
+   isBoardAdmin &&
+   member.user_id!==username &&
+   member.user_id!==room.created_by &&
+   !(myMember?.role==="admin" && member.role==="admin");
+
+  if(canMute){
+   const minutes=document.createElement("input");
+   minutes.type="number";
+   minutes.min="1";
+   minutes.placeholder="発言禁止（分）";
+   minutes.className="control";
+
+   const muteButton=document.createElement("button");
+   muteButton.className="control";
+   muteButton.textContent="🔇 発言禁止";
+
+   muteButton.onclick=async()=>{
+    const value=Number(minutes.value);
+    if(!Number.isInteger(value)||value<1){
+     alert("1分以上を入力してください");
+     return;
+    }
+
+    const {error}=await supabaseClient.rpc("board_set_mute",{
+     target_board_id:Number(boardId),
+     target_username:member.user_id,
+     mute_minutes:value
+    });
+
+    if(error)alert(error.message);
+    await renderMembers();
+   };
+
+   info.append(minutes,muteButton);
+  }
+
+  if(isOwner && member.user_id!==username){
+   const kick=document.createElement("button");
+   kick.className="control danger";
+   kick.textContent="🚪 掲示板から蹴る";
+
+   kick.onclick=async()=>{
+    if(!confirm(member.user_id+"さんを掲示板から退出させますか？"))return;
+
+    const {error}=await supabaseClient.rpc("board_kick_member",{
+     target_board_id:Number(boardId),
+     target_username:member.user_id
+    });
+
+    if(error)alert(error.message);
+    await renderMembers();
+   };
+
+   info.appendChild(kick);
+  }
+
+  item.appendChild(info);
+  list.appendChild(item);
+ });
+}
+
+function closeMemberModal(){
+ $("memberModal").style.display="none";
+}
+
+$("memberButton").onclick=async()=>{
+ $("memberModal").style.display="flex";
+ await renderMembers();
+};
+
+async function loadMessages(){
+ const {data,error}=await supabaseClient
+  .from("board_room_messages")
+  .select("id,board_id,sender_id,content,image_url,created_at,is_deleted,edited_at")
+  .eq("board_id",boardId)
+  .order("created_at",{ascending:true});
+
+ if(error){
+  console.error(error);
+  return;
+ }
+
+ const messages=data||[];
+ const ids=messages.map(m=>m.id);
+
+ let replies=[],reactions=[],reads=[];
+
+ if(ids.length){
+  const [r1,r2,r3]=await Promise.all([
+   supabaseClient.from("board_room_replies")
+    .select("board_message_id,sender_id,content,created_at")
+    .in("board_message_id",ids)
+    .order("created_at",{ascending:true}),
+   supabaseClient.from("board_room_reactions")
+    .select("board_message_id,user_id,reaction")
+    .in("board_message_id",ids),
+   supabaseClient.from("board_room_message_reads")
+    .select("board_message_id,user_id")
+    .in("board_message_id",ids)
+  ]);
+
+  replies=r1.data||[];
+  reactions=r2.data||[];
+  reads=r3.data||[];
+ }
+
+ await loadProfiles([
+  ...messages.map(m=>m.sender_id),
+  ...replies.map(r=>r.sender_id)
+ ]);
+
+ const signed={};
+
+ await Promise.all(
+  messages
+   .filter(m=>m.image_url&&!m.is_deleted)
+   .map(async m=>{
+    const {data}=await supabaseClient
+     .storage
+     .from("chat-images")
+     .createSignedUrl(m.image_url,3600);
+    if(data?.signedUrl)signed[m.id]=data.signedUrl;
+   })
+ );
+
+ const fragment=document.createDocumentFragment();
+
+ messages.forEach(message=>{
+  const row=document.createElement("div");
+  row.className="row";
+
+  row.appendChild(makeAvatar(message.sender_id));
+
+  const bubble=document.createElement("div");
+  bubble.className="bubble";
+
+  bubble.innerHTML=
+   "<div class='name'>"+
+   escapeHtml(profiles[message.sender_id]?.name||message.sender_id)+
+   (message.edited_at?" <span class='edited'>編集済み</span>":"")+
+   "</div>";
+
+  if(message.is_deleted){
+   bubble.innerHTML+="<div class='deleted'>このメッセージは削除されました</div>";
+  }else{
+   if(message.content){
+    bubble.innerHTML+="<div class='content'>"+
+     formatMentions(message.content)+
+     "</div>";
+   }
+
+   if(signed[message.id]){
+    const img=document.createElement("img");
+    img.className="message-image";
+    img.src=signed[message.id];
+    img.alt="送信画像";
+    bubble.appendChild(img);
+   }
+  }
+
+  replies
+   .filter(r=>r.board_message_id===message.id)
+   .forEach(reply=>{
+    const div=document.createElement("div");
+    div.className="reply";
+    div.innerHTML=
+     "<b>"+escapeHtml(profiles[reply.sender_id]?.name||reply.sender_id)+
+     "</b>："+escapeHtml(reply.content);
+    bubble.appendChild(div);
+   });
+
+  const ownReactions=reactions.filter(r=>r.board_message_id===message.id);
+
+  if(ownReactions.length){
+   const div=document.createElement("div");
+   div.className="reactions";
+
+   const counts={};
+   ownReactions.forEach(r=>{
+    counts[r.reaction]=(counts[r.reaction]||0)+1;
+   });
+
+   Object.entries(counts).forEach(([reaction,count])=>{
+    const span=document.createElement("span");
+    span.className="reaction";
+    span.textContent=reaction+" "+count;
+    div.appendChild(span);
+   });
+
+   bubble.appendChild(div);
+  }
+
+  if(message.sender_id===username){
+   const read=document.createElement("div");
+   read.className="read";
+   const count=reads.filter(r=>r.board_message_id===message.id).length;
+   read.textContent=count?"既読 "+count+"人":"";
+   bubble.appendChild(read);
+  }
+
+  const menu=document.createElement("div");
+  menu.className="menu";
+
+  const reactionButton=document.createElement("button");
+  reactionButton.textContent="😀 リアクション";
+
+  const replyButton=document.createElement("button");
+  replyButton.textContent="↩️ 返信";
+
+  menu.append(reactionButton,replyButton);
+
+  if(message.sender_id!==username&&!message.is_deleted){
+   const gift=document.createElement("button");
+   gift.textContent="🎁 コインを送る";
+   gift.onclick=e=>{
+    e.stopPropagation();
+    openGiftModal(message.sender_id);
+    menu.style.display="none";
+   };
+   menu.appendChild(gift);
+  }
+
+  if(message.sender_id===username&&!message.is_deleted){
+   const edit=document.createElement("button");
+   edit.textContent="✏️ 編集";
+   edit.onclick=async e=>{
+    e.stopPropagation();
+    const value=prompt("メッセージを編集してください",message.content);
+    if(value===null||!value.trim())return;
+
+    const {error}=await supabaseClient
+     .from("board_room_messages")
+     .update({
+      content:value.trim(),
+      edited_at:new Date().toISOString()
+     })
+     .eq("id",message.id)
+     .eq("sender_id",username);
+
+    if(error)alert(error.message);
+    else await loadMessages();
+   };
+
+   const del=document.createElement("button");
+   del.textContent="🗑️ 削除";
+   del.onclick=async e=>{
+    e.stopPropagation();
+    if(!confirm("このメッセージを削除しますか？"))return;
+
+    const {error}=await supabaseClient
+     .from("board_room_messages")
+     .update({
+      is_deleted:true,
+      content:""
+     })
+     .eq("id",message.id)
+     .eq("sender_id",username);
+
+    if(error)alert(error.message);
+    else await loadMessages();
+   };
+
+   menu.append(edit,del);
+  }
+
+  const picker=document.createElement("div");
+  picker.className="picker";
+
+  ["👍","❤️","😂","😮","😢","👏"].forEach(reaction=>{
+   const button=document.createElement("button");
+   button.textContent=reaction;
+
+   button.onclick=async e=>{
+    e.stopPropagation();
+
+    const old=await supabaseClient
+     .from("board_room_reactions")
+     .select("id")
+     .eq("board_message_id",message.id)
+     .eq("user_id",username)
+     .eq("reaction",reaction)
+     .maybeSingle();
+
+    let result;
+
+    if(old.data){
+     result=await supabaseClient
+      .from("board_room_reactions")
+      .delete()
+      .eq("id",old.data.id);
+    }else{
+     result=await supabaseClient
+      .from("board_room_reactions")
+      .insert({
+       board_message_id:message.id,
+       user_id:username,
+       reaction
+      });
+    }
+
+    if(result.error)alert(result.error.message);
+    else await loadMessages();
+   };
+
+   picker.appendChild(button);
+  });
+
+  reactionButton.onclick=e=>{
+   e.stopPropagation();
+   picker.style.display=
+    picker.style.display==="flex"?"none":"flex";
+  };
+
+  replyButton.onclick=e=>{
+   e.stopPropagation();
+   replyTarget=message;
+   $("messageInput").placeholder="↩️ 返信先を入力...";
+   $("messageInput").focus();
+   menu.style.display="none";
+  };
+
+  bubble.append(menu,picker);
+
+  bubble.onclick=e=>{
+   if(e.target.closest(".menu,.picker"))return;
+
+   document.querySelectorAll(".menu,.picker").forEach(x=>{
+    x.style.display="none";
+   });
+
+   menu.style.display=
+    menu.style.display==="block"?"none":"block";
+  };
+
+  row.appendChild(bubble);
+  fragment.appendChild(row);
+ });
+
+ $("messages").innerHTML="";
+ $("messages").appendChild(fragment);
+
+ $("main").scrollTop=$("main").scrollHeight;
+
+ const unread=messages
+  .filter(m=>m.sender_id!==username)
+  .map(m=>m.id);
+
+ if(unread.length){
+  await supabaseClient
+   .from("board_room_message_reads")
+   .upsert(
+    unread.map(id=>({
+     board_message_id:id,
+     user_id:username,
+     read_at:new Date().toISOString()
+    })),
+    {onConflict:"board_message_id,user_id"}
+   );
+ }
+}
+
+function formatMentions(text){
+ return escapeHtml(text).replace(
+  /@([A-Za-z0-9_-]+)/g,
+  (full,user)=>{
+   return members.some(m=>m.user_id===user)
+    ?"<span class='mention'>"+full+"</span>"
+    :full;
+  }
+ );
+}
+
+async function sendMessage(){
+ if(isMuted){
+  alert("現在、発言禁止中です");
+  return;
+ }
+
+ const input=$("messageInput");
+ const text=input.value.trim();
+
+ if(!text)return;
+
+ $("sendButton").disabled=true;
+
+ try{
+  const {data,error}=await supabaseClient
+   .from("board_room_messages")
+   .insert({
+    board_id:Number(boardId),
+    sender_id:username,
+    content:text
+   })
+   .select()
+   .single();
+
+  if(error)throw error;
+
+  if(replyTarget){
+   const {error:replyError}=await supabaseClient
+    .from("board_room_replies")
+    .insert({
+     board_message_id:data.id,
+     sender_id:username,
+     content:replyTarget.content||"画像"
+    });
+
+   if(replyError)console.error(replyError);
+
+   replyTarget=null;
+  }
+
+  input.value="";
+  input.placeholder="メッセージを入力...";
+
+  await sendMentionNotifications(text);
+  await loadMessages();
+
+ }catch(error){
+  console.error(error);
+  alert("メッセージ送信に失敗しました");
+ }finally{
+  $("sendButton").disabled=isMuted;
+ }
+}
+
+async function sendMentionNotifications(text){
+ const names=[
+  ...text.matchAll(/@([A-Za-z0-9_-]+)/g)
+ ].map(x=>x[1])
+  .filter((x,i,a)=>
+   x!==username &&
+   a.indexOf(x)===i &&
+   members.some(m=>m.user_id===x)
+  );
+
+ if(!names.length)return;
+
+ await supabaseClient
+  .from("notifications")
+  .insert(
+   names.map(user=>({
+    user_id:user,
+    type:"mention",
+    title:"掲示板でメンションされました",
+    message:username+"さんがあなたをメンションしました",
+    link:"board-number-chat.html?board="+encodeURIComponent(boardId),
+    is_read:false
+   }))
+  );
+}
+
+async function sendImage(file){
+ if(isMuted){
+  alert("現在、発言禁止中です");
+  return;
+ }
+
+ if(!file.type.startsWith("image/")){
+  alert("画像ファイルを選択してください");
+  return;
+ }
+
+ $("imageButton").disabled=true;
+
+ try{
+  const ext=(file.name.split(".").pop()||"jpg").toLowerCase();
+
+  const path=
+   username+"/"+boardId+"/"+Date.now()+"-"+
+   Math.random().toString(36).slice(2)+"."+ext;
+
+  const upload=await supabaseClient
+   .storage
+   .from("chat-images")
+   .upload(path,file,{upsert:false});
+
+  if(upload.error)throw upload.error;
+
+  const {error}=await supabaseClient
+   .from("board_room_messages")
+   .insert({
+    board_id:Number(boardId),
+    sender_id:username,
+    content:"",
+    image_url:path
+   });
+
+  if(error)throw error;
+
+  await loadMessages();
+
+ }catch(error){
+  console.error(error);
+  alert("画像の送信に失敗しました");
+ }finally{
+  $("imageButton").disabled=isMuted;
+ }
+}
+
+function openGiftModal(target){
+ giftTargetUsername=target;
+ $("giftTarget").textContent="@"+target+" さんへ送る";
+ $("giftAmount").value="";
+ $("giftModal").style.display="flex";
+}
+
+function closeGiftModal(){
+ $("giftModal").style.display="none";
+}
+
+$("giftSend").onclick=async()=>{
+ const amount=Number($("giftAmount").value);
+
+ if(!Number.isInteger(amount)||amount<1){
+  alert("1以上のコイン数を入力してください");
+  return;
+ }
+
+ const {error}=await supabaseClient.rpc("send_coin_gift",{
+  target_username:giftTargetUsername,
+  gift_amount:amount
+ });
+
+ if(error){
+  alert(error.message);
+  return;
+ }
+
+ alert("🎁 コインを送りました！");
+ closeGiftModal();
+};
+
+document.querySelectorAll(".presets button").forEach(button=>{
+ button.onclick=()=>{
+  $("giftAmount").value=button.dataset.amount;
+ };
+});
+
+$("sendButton").onclick=sendMessage;
+
+$("messageInput").onkeydown=e=>{
+ if(e.key==="Enter"&&!e.shiftKey){
+  e.preventDefault();
+  sendMessage();
+ }
+};
+
+$("imageButton").onclick=()=>{
+ $("imageInput").click();
+};
+
+$("imageInput").onchange=()=>{
+ const file=$("imageInput").files[0];
+ if(file)sendImage(file);
+ $("imageInput").value="";
+};
+
+$("messageInput").oninput=()=>{
+ const input=$("messageInput");
+ const before=input.value.slice(0,input.selectionStart);
+ const match=before.match(/@([A-Za-z0-9_-]*)$/);
+ const list=$("mentionList");
+
+ if(!match){
+  list.classList.remove("show");
+  return;
+ }
+
+ const query=match[1].toLowerCase();
+
+ const candidates=members
+  .filter(m=>m.user_id.toLowerCase().includes(query))
+  .slice(0,8);
+
+ list.innerHTML="";
+
+ candidates.forEach(member=>{
+  const button=document.createElement("button");
+  button.className="mention-item";
+  button.textContent="@"+member.user_id;
+
+  button.onclick=()=>{
+   const current=input.value;
+   const pos=input.selectionStart;
+   const start=current.slice(0,pos).lastIndexOf("@");
+
+   input.value=
+    current.slice(0,start)+
+    "@"+member.user_id+" "+
+    current.slice(pos);
+
+   list.classList.remove("show");
+   input.focus();
+  };
+
+  list.appendChild(button);
+ });
+
+ list.classList.toggle("show",candidates.length>0);
+};
+
+function setupRealtime(){
+ supabaseClient
+  .channel("board-number-chat-"+boardId)
+  .on(
+   "postgres_changes",
+   {
+    event:"*",
+    schema:"public",
+    table:"board_room_messages",
+    filter:"board_id=eq."+boardId
+   },
+   ()=>loadMessages()
+  )
+  .on(
+   "postgres_changes",
+   {
+    event:"*",
+    schema:"public",
+    table:"board_room_reactions"
+   },
+   ()=>loadMessages()
+  )
+  .on(
+   "postgres_changes",
+   {
+    event:"*",
+    schema:"public",
+    table:"board_room_message_reads"
+   },
+   ()=>loadMessages()
+  )
+  .on(
+   "postgres_changes",
+   {
+    event:"*",
+    schema:"public",
+    table:"board_room_mutes",
+    filter:"board_id=eq."+boardId
+   },
+   ()=>refreshMute()
+  )
+  .subscribe();
+}
+
+async function updatePresence(){
+ await supabaseClient
+  .from("user_presence")
+  .upsert(
+   {
+    user_id:username,
+    last_seen:new Date().toISOString()
+   },
+   {onConflict:"user_id"}
+  );
+}
+
+async function start(){
+ if(!boardId){
+  alert("掲示板IDがありません");
+  return;
+ }
+
+ const {data:{session}}=
+  await supabaseClient.auth.getSession();
+
+ if(!session){
+  location.href="index.html";
+  return;
+ }
+
+ username=session.user.user_metadata?.username||"";
+
+ if(!username){
+  location.href="index.html";
+  return;
+ }
+
+ if(typeof checkFriendChatBan==="function"){
+  if(await checkFriendChatBan())return;
+ }
+
+ if(!(await loadRoom()))return;
+
+ await loadMembers();
+
+ const joined=members.some(m=>m.user_id===username);
+
+ if(!isOwner&&!joined){
+  alert("この掲示板には参加していません");
+  location.href="board-number.html";
+  return;
+ }
+
+ await Promise.all([
+  updatePresence(),
+  refreshMute(),
+  loadMessages()
+ ]);
+
+ setupRealtime();
+
+ setInterval(updatePresence,30000);
+ setInterval(refreshMute,30000);
+}
+
+start();
+</script>
+</body>
+</html>
