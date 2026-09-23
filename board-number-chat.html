@@ -1108,10 +1108,15 @@ async function start(){
 
  await loadMembers();
 
- const joined=members.some(m=>m.user_id===username);
+ const joined =
+  isOwner ||
+  members.some(m =>
+   String(m.user_id).toLowerCase() ===
+   String(username).toLowerCase()
+  );
 
- if(!isOwner&&!joined){
-  alert("この掲示板には参加していません");
+ if(!joined){
+  alert("この掲示板には参加していません。まず参加番号から参加してください。");
   location.href="board-number.html";
   return;
  }
