@@ -769,6 +769,19 @@ async function loadUsers() {
     banMap.set(ban.user_id, ban);
   });
 
+  // 各ユーザーの現在のコイン残高も取得
+  const coinResults = await Promise.all(
+    (profiles || []).map(async profile => {
+      const username = profile.user_id || "";
+      const { data, error } = await supabaseClient.rpc(
+        "admin_get_user_coins",
+        { target_username: username }
+      );
+      return [username, error ? null : Number(data || 0)];
+    })
+  );
+  const coinMap = new Map(coinResults);
+
   loading.classList.add("hidden");
 
   if (!profiles?.length) {
@@ -799,6 +812,14 @@ async function loadUsers() {
 
         <div class="user-id">
           ID：${escapeHtml(username)}
+        </div>
+
+        <div class="user-coins">
+          🪙 コイン：${
+            coinMap.get(username) == null
+              ? "取得できません"
+              : Number(coinMap.get(username)).toLocaleString("ja-JP") + " COIN"
+          }
         </div>
 
         ${
