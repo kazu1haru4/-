@@ -525,13 +525,27 @@ textarea {
 
 <div class="form-row">
 <label>🖼️ フレーム報酬</label>
-<select id="rewardCodeItem">
+<select id="rewardFrameItem">
 <option value="">なし</option>
 </select>
+</div>
+
+<div class="form-row">
+<label>✨ 名前装飾報酬</label>
+<select id="rewardNameDecorationItem">
+<option value="">なし</option>
+</select>
+</div>
+
+<div class="form-row">
+<label>🎨 背景報酬</label>
+<select id="rewardBackgroundItem">
+<option value="">なし</option>
+</select>
+</div>
 
 <div id="rewardFrameStatus" class="frame-status">
-🔄 フレーム一覧を読み込んでいます...
-</div>
+🔄 フレーム・名前装飾・背景を読み込んでいます...
 </div>
 
 <div class="form-row">
@@ -1178,8 +1192,14 @@ async function deleteBoardMessage(id) {
 }
 
 async function loadItems() {
-  const rewardSelect =
-    document.getElementById("rewardCodeItem");
+  const rewardFrameSelect =
+    document.getElementById("rewardFrameItem");
+
+  const rewardNameDecorationSelect =
+    document.getElementById("rewardNameDecorationItem");
+
+  const rewardBackgroundSelect =
+    document.getElementById("rewardBackgroundItem");
 
   const eventSelect =
     document.getElementById("eventItem");
@@ -1191,7 +1211,13 @@ async function loadItems() {
   frameStatus.textContent =
     "🔄 coin_itemsからフレームを取得しています...";
 
-  rewardSelect.innerHTML =
+  rewardFrameSelect.innerHTML =
+    `<option value="">なし</option>`;
+
+  rewardNameDecorationSelect.innerHTML =
+    `<option value="">なし</option>`;
+
+  rewardBackgroundSelect.innerHTML =
     `<option value="">なし</option>`;
 
   eventSelect.innerHTML =
@@ -1232,22 +1258,21 @@ async function loadItems() {
   publicItems.forEach(item => {
     const icon = item.icon || "🖼️";
 
-    const rewardOption =
-      document.createElement("option");
+    const option = document.createElement("option");
+    option.value = item.item_key;
+    option.textContent = `${icon} ${item.name}`;
 
-    rewardOption.value = item.item_key;
-    rewardOption.textContent =
-      `${icon} ${item.name}`;
+    if (item.item_type === "frame") {
+      rewardFrameSelect.appendChild(option);
+    } else if (item.item_type === "name_decoration") {
+      rewardNameDecorationSelect.appendChild(option);
+    } else if (item.item_type === "background") {
+      rewardBackgroundSelect.appendChild(option);
+    }
 
-    rewardSelect.appendChild(rewardOption);
-
-    const eventOption =
-      document.createElement("option");
-
+    const eventOption = document.createElement("option");
     eventOption.value = item.item_key;
-    eventOption.textContent =
-      `${icon} ${item.name}`;
-
+    eventOption.textContent = `${icon} ${item.name}`;
     eventSelect.appendChild(eventOption);
   });
 
@@ -1278,8 +1303,28 @@ async function createRewardCode() {
         document.getElementById("rewardCodeCoins").value || 0
       );
 
-    const rewardItem =
-      document.getElementById("rewardCodeItem").value || null;
+    const rewardFrame =
+      document.getElementById("rewardFrameItem").value || "";
+
+    const rewardNameDecoration =
+      document.getElementById("rewardNameDecorationItem").value || "";
+
+    const rewardBackground =
+      document.getElementById("rewardBackgroundItem").value || "";
+
+    const selectedRewards = [
+      rewardFrame,
+      rewardNameDecoration,
+      rewardBackground
+    ].filter(Boolean);
+
+    if (selectedRewards.length > 1) {
+      throw new Error(
+        "フレーム・名前装飾・背景は、1つの配布コードにつき1種類だけ選択してください。"
+      );
+    }
+
+    const rewardItem = selectedRewards[0] || null;
 
     const maxUses =
       Number(
@@ -1300,7 +1345,7 @@ async function createRewardCode() {
 
     if (rewardCoins === 0 && !rewardItem) {
       throw new Error(
-        "コインまたはフレームを1つ以上設定してください。"
+        "コイン・フレーム・名前装飾・背景のいずれかを1つ以上設定してください。"
       );
     }
 
@@ -1332,7 +1377,9 @@ async function createRewardCode() {
 
     document.getElementById("rewardCode").value = "";
     document.getElementById("rewardCodeCoins").value = "0";
-    document.getElementById("rewardCodeItem").value = "";
+    document.getElementById("rewardFrameItem").value = "";
+    document.getElementById("rewardNameDecorationItem").value = "";
+    document.getElementById("rewardBackgroundItem").value = "";
     document.getElementById("rewardCodeMaxUses").value = "0";
 
     await loadRewardCodes();
