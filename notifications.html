@@ -20,6 +20,8 @@ body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Seg
 #pushToggleButton{width:100%;border:none;border-radius:13px;padding:12px;font-size:14px;font-weight:bold;cursor:pointer;background:#8f7cff;color:#fff}
 #pushToggleButton.off{background:#eee;color:#555}
 #pushToggleButton:disabled{opacity:.6;cursor:default}
+#resetPushButton{width:100%;margin-top:8px;border:1px solid #ddd;border-radius:13px;padding:11px;font-size:13px;font-weight:bold;cursor:pointer;background:#fff;color:#555}
+#resetPushButton:disabled{opacity:.6;cursor:default}
 .notifications{padding:14px}
 .notification{display:block;text-decoration:none;color:#333;background:#fff;border-radius:18px;padding:15px;margin-bottom:10px;box-shadow:0 3px 10px rgba(0,0,0,.05);cursor:pointer;transition:transform .12s,background .12s}
 .notification:active{transform:scale(.98);background:#f8f8ff}
@@ -47,6 +49,7 @@ body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Seg
 <div class="push-title">📱 プッシュ通知</div>
 <div class="push-description">Friend Chatを閉じているときにも、新しい通知を受け取れます。</div>
 <button id="pushToggleButton" type="button">🔔 通知を確認中...</button>
+<button id="resetPushButton" type="button">🔄 Push購読を作り直す</button>
 </section>
 
 <section class="notifications" id="notifications">
@@ -58,18 +61,18 @@ body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Seg
 <script>
 const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
 const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
-
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 const notificationsElement=document.getElementById("notifications");
 const clearAllButton=document.getElementById("clearAllButton");
 const pushToggleButton=document.getElementById("pushToggleButton");
+const resetPushButton=document.getElementById("resetPushButton");
 
 let currentUsername="";
 let pushRegistration=null;
 
-/* 新しいVAPID公開キー */
-const VAPID_PUBLIC_KEY="BDIZYgf0Gvv0PasFdIR_sHsF8HMQahMA-apv_ax8k4ToaIrRzQPcAVGD4RNkBNx4HNkeq-MP9n44y_adXt48eQ0";
+/* テスト用・新しいVAPID公開キー */
+const VAPID_PUBLIC_KEY="BEIYWpQomaUWBd6hxIydJnYvJM5PsNu4yInKrXVb8y36CJwPe2300pmBW2-rRtHeHKXaxZzeDfoMhA-u26bZexI";
 
 function urlBase64ToUint8Array(base64String){
 const padding="=".repeat((4-(base64String.length%4))%4);
@@ -86,12 +89,48 @@ await navigator.serviceWorker.ready;
 return pushRegistration;
 }
 
+/* 現在のブラウザ購読とDBの購読を完全に解除 */
+async function removeCurrentPushSubscription(){
+if(!currentUsername)throw new Error("ログイン中のユーザーを取得できません。");
+
+const registration=await getPushRegistration();
+const subscription=await registration.pushManager.getSubscription();
+
+if(subscription){
+const endpoint=subscription.endpoint;
+
+const {error}=await supabaseClient
+.from("push_subscriptions")
+.delete()
+.eq("user_id",currentUsername)
+.eq("endpoint",endpoint);
+
+if(error)throw error;
+
+try{
+await subscription.unsubscribe();
+}catch(error){
+console.warn("Push購読の解除警告:",error);
+}
+}
+
+/* DBに残っている自分の購読も念のため削除 */
+const {error:cleanupError}=await supabaseClient
+.from("push_subscriptions")
+.delete()
+.eq("user_id",currentUsername);
+
+if(cleanupError)throw cleanupError;
+}
+
 async function updatePushButton(){
 pushToggleButton.disabled=false;
+resetPushButton.disabled=false;
 
 if(!("Notification" in window)){
 pushToggleButton.textContent="🔔 この端末は通知に未対応";
 pushToggleButton.disabled=true;
+resetPushButton.disabled=true;
 pushToggleButton.classList.add("off");
 return;
 }
@@ -99,6 +138,7 @@ return;
 if(!("serviceWorker" in navigator)||!("PushManager" in window)){
 pushToggleButton.textContent="🔔 プッシュ通知に未対応";
 pushToggleButton.disabled=true;
+resetPushButton.disabled=true;
 pushToggleButton.classList.add("off");
 return;
 }
@@ -126,11 +166,7 @@ pushToggleButton.textContent="🔔 通知をオンにする";
 pushToggleButton.classList.remove("off");
 }
 
-async function enablePushNotifications(){
-try{
-pushToggleButton.disabled=true;
-pushToggleButton.textContent="通知を設定中...";
-
+async function createFreshPushSubscription(){
 if(!currentUsername)throw new Error("ログイン中のユーザーを取得できません。");
 if(!("Notification" in window))throw new Error("この端末は通知に対応していません。");
 if(!("PushManager" in window))throw new Error("この端末はプッシュ通知に対応していません。");
@@ -144,24 +180,18 @@ alert("通知がブロックされています。\n\niPhoneの設定からFriend
 }else{
 alert("通知を許可するとプッシュ通知を受け取れます。");
 }
-return;
+return false;
 }
+
+/* ここが重要：古いVAPIDキーの購読を必ず解除 */
+await removeCurrentPushSubscription();
 
 const registration=await getPushRegistration();
 
-/*
- * 既存購読がある場合はそのまま使う。
- * VAPID公開キーを変更した場合は、先にOFFにして古い購読を解除してから
- * ONにすることで、新しい公開キーで購読を作成する。
- */
-let subscription=await registration.pushManager.getSubscription();
-
-if(!subscription){
-subscription=await registration.pushManager.subscribe({
+const subscription=await registration.pushManager.subscribe({
 userVisibleOnly:true,
 applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
 });
-}
 
 const json=subscription.toJSON();
 const endpoint=json.endpoint;
@@ -170,16 +200,32 @@ const auth=json.keys&&json.keys.auth;
 
 if(!endpoint||!p256dh||!auth)throw new Error("プッシュ通知情報を取得できませんでした。");
 
-const {error}=await supabaseClient.from("push_subscriptions").upsert({
+const {error}=await supabaseClient
+.from("push_subscriptions")
+.insert({
 user_id:currentUsername,
 endpoint:endpoint,
 p256dh:p256dh,
 auth:auth
-},{onConflict:"endpoint"});
+});
 
-if(error)throw error;
+if(error){
+try{await subscription.unsubscribe();}catch(_){}
+throw error;
+}
 
-alert("🔔 通知をオンにしました！");
+return true;
+}
+
+async function enablePushNotifications(){
+try{
+pushToggleButton.disabled=true;
+resetPushButton.disabled=true;
+pushToggleButton.textContent="通知を設定中...";
+
+const created=await createFreshPushSubscription();
+
+if(created)alert("🔔 通知をオンにしました！");
 }catch(error){
 console.error("プッシュ通知ONエラー:",error);
 alert("通知の設定に失敗しました。\n\n"+(error&&error.message?error.message:"もう一度試してください。"));
@@ -191,28 +237,34 @@ await updatePushButton();
 async function disablePushNotifications(){
 try{
 pushToggleButton.disabled=true;
+resetPushButton.disabled=true;
 pushToggleButton.textContent="通知をオフにしています...";
 
-const registration=await getPushRegistration();
-const subscription=await registration.pushManager.getSubscription();
-
-if(subscription){
-const endpoint=subscription.endpoint;
-
-const {error}=await supabaseClient.from("push_subscriptions").delete()
-.eq("user_id",currentUsername)
-.eq("endpoint",endpoint);
-
-if(error)throw error;
-
-await subscription.unsubscribe();
-}
+await removeCurrentPushSubscription();
 
 alert("🔕 通知をオフにしました。");
 }catch(error){
 console.error("プッシュ通知OFFエラー:",error);
 alert("通知をオフにできませんでした。\n\n"+(error&&error.message?error.message:"もう一度試してください。"));
 }finally{
+await updatePushButton();
+}
+}
+
+async function resetPushSubscription(){
+try{
+pushToggleButton.disabled=true;
+resetPushButton.disabled=true;
+resetPushButton.textContent="🔄 作り直しています...";
+
+const created=await createFreshPushSubscription();
+
+if(created)alert("✅ Push購読を新しいVAPIDキーで作り直しました！");
+}catch(error){
+console.error("Push購読作り直しエラー:",error);
+alert("Push購読の作り直しに失敗しました。\n\n"+(error&&error.message?error.message:"もう一度試してください。"));
+}finally{
+resetPushButton.textContent="🔄 Push購読を作り直す";
 await updatePushButton();
 }
 }
@@ -232,6 +284,8 @@ console.warn("通知状態取得エラー:",error);
 }
 await enablePushNotifications();
 });
+
+resetPushButton.addEventListener("click",resetPushSubscription);
 
 async function markAsRead(notificationId){
 const {error}=await supabaseClient.from("notifications").update({is_read:true})
@@ -304,7 +358,6 @@ for(const notification of notifications){
 const item=document.createElement("div");
 item.className="notification";
 if(!notification.is_read)item.classList.add("unread");
-
 item.addEventListener("click",function(){openNotification(notification);});
 
 const title=document.createElement("div");
