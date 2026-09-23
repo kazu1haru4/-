@@ -36,8 +36,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
 .read-status{font-size:10px;color:#8f7cff;margin-top:3px;font-weight:bold}
 .deleted-message{color:#999!important;background:#f1f1f1!important;box-shadow:none!important;font-size:13px;font-style:italic}
 .delete-button{border:0;background:rgba(255,255,255,.9);color:#777;border-radius:10px;padding:5px 8px;margin-top:5px;font-size:11px}
+.message-actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;justify-content:flex-end}
+.message-action{border:0;background:rgba(255,255,255,.92);color:#666;border-radius:10px;padding:5px 8px;font-size:11px}
+.reaction-picker{display:none;flex-wrap:wrap;gap:4px;margin-top:5px;padding:5px;background:rgba(255,255,255,.96);border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,.1)}
+.reaction-picker button{border:0;background:#f4f4f8;border-radius:9px;padding:5px 7px;font-size:16px}
+.reactions{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.reaction-item{background:rgba(255,255,255,.75);border-radius:10px;padding:3px 7px;font-size:11px;color:#555}
+.reply-preview{margin-top:6px;padding:6px 9px;border-left:3px solid #8f7cff;background:rgba(143,124,255,.08);border-radius:7px;font-size:11px;color:#555}
+.reply-bar{display:none;position:absolute;left:12px;right:12px;bottom:calc(100% + 5px);background:#f7f5ff;border:1px solid #ddd7ff;border-radius:12px;padding:7px 10px;font-size:12px;color:#555;align-items:center;justify-content:space-between;z-index:20}
+.reply-bar.show{display:flex}
+.reply-cancel{border:0;background:#fff;border-radius:8px;padding:4px 7px;font-size:11px;color:#777}
 .latest-button{position:absolute;right:16px;bottom:16px;border:0;background:#8f7cff;color:#fff;padding:11px 16px;border-radius:999px;font-size:13px;font-weight:bold;box-shadow:0 4px 14px rgba(0,0,0,.18);opacity:0;transform:translateY(10px);pointer-events:none;transition:.2s;z-index:10}.latest-button.show{opacity:1;transform:none;pointer-events:auto}
-.input-area{flex-shrink:0;background:#fff;padding:12px;padding-bottom:max(12px,env(safe-area-inset-bottom));display:flex;gap:8px;border-top:1px solid #eee;z-index:5}
+.input-area{position:relative;flex-shrink:0;background:#fff;padding:12px;padding-bottom:max(12px,env(safe-area-inset-bottom));display:flex;gap:8px;border-top:1px solid #eee;z-index:5}
 .input-area input{flex:1;min-width:0;padding:12px;border:1px solid #ddd;border-radius:18px;font-size:16px;outline:0}.input-area input:focus{border-color:#8f7cff}
 .image-button{width:46px;min-width:46px;border:0;border-radius:18px;background:#f1efff;font-size:21px}.send-button{border:0;border-radius:18px;padding:0 18px;background:#8f7cff;color:#fff;font-weight:bold}
 button:disabled{opacity:.5}#imageInput{display:none}
@@ -83,6 +93,7 @@ button:disabled{opacity:.5}#imageInput{display:none}
 <button id="latestButton" class="latest-button" type="button">⬇️ 最新へ</button>
 </div>
 <form class="input-area" id="messageForm">
+<div id="replyBar" class="reply-bar"><span id="replyBarText"></span><button id="replyCancel" class="reply-cancel" type="button">✕</button></div>
 <input id="messageInput" type="text" placeholder="メッセージを入力..." autocomplete="off">
 <button class="image-button" id="imageButton" type="button">🖼️</button>
 <button class="send-button" id="sendButton" type="submit">送信</button>
@@ -100,7 +111,7 @@ const friendId=new URLSearchParams(location.search).get("user")||"";
 const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
 const frameMap={sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",heart:"frame-heart",rainbow:"frame-rainbow",flame:"frame-flame",sea:"frame-sea",space:"frame-space",neon:"frame-neon",admin:"admin-frame"};
 const nameMap={nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",nd_neon:"name-decoration-neon",name_sakura:"name-decoration-sakura",admin_name:"name-decoration-admin"};
-let currentUsername="",myAvatarUrl="",friendAvatarUrl="",myItem=null,friendItem=null,myName="",friendName="",myNameClass="",friendNameClass="",realtimeChannel=null,presenceTimer=null,readMessageIds=new Set();
+let currentUsername="",myAvatarUrl="",friendAvatarUrl="",myItem=null,friendItem=null,myName="",friendName="",myNameClass="",friendNameClass="",realtimeChannel=null,presenceTimer=null,readMessageIds=new Set(),replyTarget=null;
 const ONLINE_LIMIT=60000;
 
 function frameClass(key){return frameMap[String(key||"")]||""}
@@ -179,6 +190,75 @@ async function prepareImageUrls(messages){
  const list=messages.filter(m=>!m.is_deleted&&m.image_url);if(!list.length)return new Map();
  const out=await Promise.all(list.map(async m=>{const {data,error}=await db.storage.from("chat-images").createSignedUrl(m.image_url,3600);return[m.id,error?"":data?.signedUrl||""]}));return new Map(out);
 }
+async function editMessage(id,currentContent){
+ if(!currentContent){alert("画像メッセージは編集できません。");return}
+ const value=prompt("メッセージを編集してください",currentContent);
+ if(value===null)return;
+ const text=value.trim();
+ if(!text)return;
+ const {error}=await db.from("messages")
+  .update({content:text})
+  .eq("id",id)
+  .eq("sender_id",currentUsername);
+ if(error){alert("メッセージの編集に失敗しました。\\n\\n"+error.message);return}
+ await loadMessages();
+}
+async function toggleReaction(messageId,reaction){
+ const {data:old,error:findError}=await db.from("chat_reactions")
+  .select("id")
+  .eq("message_id",messageId)
+  .eq("user_id",currentUsername)
+  .eq("reaction",reaction)
+  .maybeSingle();
+ if(findError){alert("リアクションを確認できませんでした。\\n\\n"+findError.message);return}
+ let result;
+ if(old){
+  result=await db.from("chat_reactions").delete().eq("id",old.id).eq("user_id",currentUsername);
+ }else{
+  result=await db.from("chat_reactions").insert({message_id:messageId,user_id:currentUsername,reaction});
+ }
+ if(result.error){alert("リアクションに失敗しました。\\n\\n"+result.error.message);return}
+ await loadMessages();
+}
+function setReplyTarget(message){
+ replyTarget=message;
+ $("replyBarText").textContent="↩️ "+(message.content||"画像")+" に返信";
+ $("replyBar").classList.add("show");
+ messageInput.placeholder="返信を入力...";
+ messageInput.focus();
+}
+function clearReplyTarget(){
+ replyTarget=null;
+ $("replyBar").classList.remove("show");
+ $("replyBarText").textContent="";
+ messageInput.placeholder="メッセージを入力...";
+}
+async function sendReply(content){
+ if(!replyTarget||!content||!currentUsername)return false;
+ const {error}=await db.from("chat_replies").insert({
+  message_id:replyTarget.id,
+  sender_id:currentUsername,
+  content
+ });
+ if(error){alert("返信を送信できませんでした。\\n\\n"+error.message);return false}
+ const target=replyTarget;
+ clearReplyTarget();
+ await loadMessages();
+ await sendPushToUser(target.sender_id,"↩️ "+currentUsername+"さんが返信",currentUsername+"さんがあなたのメッセージに返信しました","./chat.html?user="+encodeURIComponent(currentUsername));
+ return true;
+}
+async function loadChatExtras(messages){
+ const ids=messages.map(m=>m.id);
+ if(!ids.length)return {replies:[],reactions:[]};
+ const [r1,r2]=await Promise.all([
+  db.from("chat_replies").select("id,message_id,sender_id,content,created_at").in("message_id",ids).order("created_at",{ascending:true}),
+  db.from("chat_reactions").select("id,message_id,user_id,reaction").in("message_id",ids)
+ ]);
+ if(r1.error)console.warn("返信取得エラー:",r1.error);
+ if(r2.error)console.warn("リアクション取得エラー:",r2.error);
+ return {replies:r1.data||[],reactions:r2.data||[]};
+}
+
 async function deleteMessage(id){
  if(!confirm("このメッセージを送信取り消ししますか？"))return;
  const {error}=await db.from("messages").update({is_deleted:true}).eq("id",id).eq("sender_id",currentUsername);
@@ -214,7 +294,7 @@ async function reportChatMessage(message){
  alert("🚨 通報を送信しました。管理者が確認します。");
 }
 
-function createMessageElement(message,imageUrl){
+function createMessageElement(message,imageUrl,extras={replies:[],reactions:[]}){
  const wrap=document.createElement("div");wrap.className="message";wrap.dataset.messageId=message.id;
  const mine=message.sender_id===currentUsername;if(mine)wrap.classList.add("mine");
  const item=mine?myItem:friendItem,avatarUrl=mine?myAvatarUrl:friendAvatarUrl,name=mine?myName:friendName,nc=mine?myNameClass:friendNameClass;
@@ -227,21 +307,53 @@ function createMessageElement(message,imageUrl){
   if(imageUrl){const img=document.createElement("img");img.className="chat-image";img.src=imageUrl;img.alt="送信された画像";bubble.appendChild(img)}
   if(message.content){const t=document.createElement("div");t.textContent=message.content;bubble.appendChild(t)}
  }
+ const replyRows=extras.replies.filter(r=>String(r.message_id)===String(message.id));
+ replyRows.forEach(reply=>{
+  const div=document.createElement("div");div.className="reply-preview";
+  const sender=document.createElement("strong");sender.textContent=reply.sender_id;div.appendChild(sender);
+  div.appendChild(document.createTextNode("："+reply.content));bubble.appendChild(div);
+ });
+ const reactionRows=extras.reactions.filter(r=>String(r.message_id)===String(message.id));
+ if(reactionRows.length){
+  const counts={};reactionRows.forEach(r=>{counts[r.reaction]=(counts[r.reaction]||0)+1});
+  const reactions=document.createElement("div");reactions.className="reactions";
+  Object.entries(counts).forEach(([reaction,count])=>{
+   const item=document.createElement("span");item.className="reaction-item";item.textContent=reaction+" "+count;reactions.appendChild(item);
+  });
+  bubble.appendChild(reactions);
+ }
  const time=document.createElement("div");time.className="time";time.textContent=new Date(message.created_at).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});bubble.appendChild(time);box.appendChild(bubble);
  if(mine&&!message.is_deleted&&readMessageIds.has(message.id)){const r=document.createElement("div");r.className="read-status";r.textContent="既読";box.appendChild(r)}
- if(!mine&&!message.is_deleted){
-  const reportButton=document.createElement("button");
-  reportButton.type="button";
-  reportButton.className="delete-button";
-  reportButton.textContent="🚨 通報";
-  reportButton.onclick=e=>{
-   e.preventDefault();
-   e.stopPropagation();
-   reportChatMessage(message);
-  };
-  box.appendChild(reportButton);
+
+ if(!message.is_deleted){
+  const actions=document.createElement("div");actions.className="message-actions";
+  const reactionButton=document.createElement("button");reactionButton.type="button";reactionButton.className="message-action";reactionButton.textContent="😀 リアクション";
+  const replyButton=document.createElement("button");replyButton.type="button";replyButton.className="message-action";replyButton.textContent="↩️ 返信";
+  actions.append(reactionButton,replyButton);
+
+  if(!mine){
+   const reportButton=document.createElement("button");reportButton.type="button";reportButton.className="message-action";reportButton.textContent="🚨 通報";
+   reportButton.onclick=e=>{e.preventDefault();e.stopPropagation();reportChatMessage(message)};actions.appendChild(reportButton);
+  }
+  if(mine){
+   const editButton=document.createElement("button");editButton.type="button";editButton.className="message-action";editButton.textContent="✏️ 編集";
+   editButton.onclick=e=>{e.preventDefault();e.stopPropagation();editMessage(message.id,message.content||"")};
+   actions.appendChild(editButton);
+   const deleteButton=document.createElement("button");deleteButton.type="button";deleteButton.className="delete-button";deleteButton.textContent="🗑️ 送信取り消し";
+   deleteButton.onclick=e=>{e.preventDefault();e.stopPropagation();deleteMessage(message.id)};actions.appendChild(deleteButton);
+  }
+  box.appendChild(actions);
+
+  const picker=document.createElement("div");picker.className="reaction-picker";
+  ["👍","❤️","😂","😮","😢","👏"].forEach(reaction=>{
+   const button=document.createElement("button");button.type="button";button.textContent=reaction;
+   button.onclick=async e=>{e.preventDefault();e.stopPropagation();await toggleReaction(message.id,reaction);picker.style.display="none"};
+   picker.appendChild(button);
+  });
+  reactionButton.onclick=e=>{e.preventDefault();e.stopPropagation();picker.style.display=picker.style.display==="flex"?"none":"flex"};
+  replyButton.onclick=e=>{e.preventDefault();e.stopPropagation();picker.style.display="none";setReplyTarget(message)};
+  box.appendChild(picker);
  }
- if(mine&&!message.is_deleted){const b=document.createElement("button");b.type="button";b.className="delete-button";b.textContent="🗑️ 送信取り消し";b.onclick=e=>{e.preventDefault();e.stopPropagation();deleteMessage(message.id)};box.appendChild(b)}
  wrap.appendChild(box);if(mine)wrap.appendChild(createAvatar(avatarUrl,"😊",item));return wrap;
 }
 async function loadMessages(){
@@ -253,9 +365,9 @@ async function loadMessages(){
  ]);
  if(a.error||b.error){console.error(a.error||b.error);messagesElement.innerHTML='<div class="empty">メッセージを読み込めませんでした</div>';return}
  const messages=[...(a.data||[]),...(b.data||[])].sort((x,y)=>new Date(x.created_at)-new Date(y.created_at));
- await loadReadStatuses(messages);const urls=await prepareImageUrls(messages);await markMessagesAsRead(messages);messagesElement.innerHTML="";
+ await loadReadStatuses(messages);const urls=await prepareImageUrls(messages);const extras=await loadChatExtras(messages);await markMessagesAsRead(messages);messagesElement.innerHTML="";
  if(!messages.length){messagesElement.innerHTML='<div class="empty">まだメッセージがありません</div>';updateLatestButton();return}
- const f=document.createDocumentFragment();messages.forEach(m=>f.appendChild(createMessageElement(m,urls.get(m.id)||"")));messagesElement.appendChild(f);scrollToBottom();updateLatestButton();
+ const f=document.createDocumentFragment();messages.forEach(m=>f.appendChild(createMessageElement(m,urls.get(m.id)||"",extras)));messagesElement.appendChild(f);scrollToBottom();updateLatestButton();
 }
 function startRealtime(){
  if(realtimeChannel)return;
@@ -264,11 +376,26 @@ function startRealtime(){
   const m=p.new,isChat=(m.sender_id===currentUsername&&m.receiver_id===friendId)||(m.sender_id===friendId&&m.receiver_id===currentUsername);if(!isChat||m.sender_id===currentUsername)return;
   await markMessagesAsRead([m]);let u="";if(m.image_url){const {data}=await db.storage.from("chat-images").createSignedUrl(m.image_url,3600);u=data?.signedUrl||""}messagesElement.appendChild(createMessageElement(m,u));scrollToBottom();updateLatestButton();
  }).on("postgres_changes",{event:"UPDATE",schema:"public",table:"messages"},async p=>{const m=p.new;if((m.sender_id===currentUsername&&m.receiver_id===friendId)||(m.sender_id===friendId&&m.receiver_id===currentUsername))await loadMessages()})
+ .on("postgres_changes",{event:"INSERT",schema:"public",table:"chat_reactions"},async p=>{
+  const r=p.new;
+  const {data:m}=await db.from("messages").select("id,sender_id,receiver_id").eq("id",r.message_id).maybeSingle();
+  if(m&&((m.sender_id===currentUsername&&m.receiver_id===friendId)||(m.sender_id===friendId&&m.receiver_id===currentUsername)))await loadMessages();
+ })
+ .on("postgres_changes",{event:"DELETE",schema:"public",table:"chat_reactions"},async p=>{
+  await loadMessages();
+ })
+ .on("postgres_changes",{event:"INSERT",schema:"public",table:"chat_replies"},async p=>{
+  const r=p.new;
+  const {data:m}=await db.from("messages").select("id,sender_id,receiver_id").eq("id",r.message_id).maybeSingle();
+  if(m&&((m.sender_id===currentUsername&&m.receiver_id===friendId)||(m.sender_id===friendId&&m.receiver_id===currentUsername)))await loadMessages();
+ })
  .on("postgres_changes",{event:"INSERT",schema:"public",table:"message_reads"},async p=>{const r=p.new;if(r.user_id!==friendId)return;const {data:m}=await db.from("messages").select("id,sender_id,receiver_id").eq("id",r.message_id).maybeSingle();if(m?.sender_id===currentUsername&&m?.receiver_id===friendId){readMessageIds.add(r.message_id);await loadMessages()}})
  .subscribe();
 }
 messageForm.onsubmit=async e=>{
- e.preventDefault();const text=messageInput.value.trim();if(!text||!currentUsername||!friendId)return;sendButton.disabled=true;
+ e.preventDefault();const text=messageInput.value.trim();if(!text||!currentUsername||!friendId)return;
+ if(replyTarget){sendButton.disabled=true;const ok=await sendReply(text);sendButton.disabled=false;if(ok)messageInput.value="";return}
+ sendButton.disabled=true;
  const {data,error}=await db.from("messages").insert({sender_id:currentUsername,receiver_id:friendId,content:text,image_url:"",is_deleted:false}).select().single();sendButton.disabled=false;
  if(error){alert("メッセージを送信できませんでした。\n\n"+error.message);return}messageInput.value="";messagesElement.appendChild(createMessageElement(data,""));scrollToBottom();updateLatestButton();await createNotification(text);await sendPushToUser(friendId,"💬 "+currentUsername+"さんからメッセージ",currentUsername+"さん: "+text,"./chat.html?user="+encodeURIComponent(currentUsername));
 };
@@ -285,6 +412,7 @@ imageInput.onchange=async()=>{
   const {data:signed}=await db.storage.from("chat-images").createSignedUrl(path,3600);messagesElement.appendChild(createMessageElement(data,signed?.signedUrl||""));scrollToBottom();updateLatestButton();await createNotification("🖼️ 画像を送信しました");await sendPushToUser(friendId,"💬 "+currentUsername+"さんからメッセージ","🖼️ "+currentUsername+"さんが画像を送信しました","./chat.html?user="+encodeURIComponent(currentUsername));
  }catch(e){console.error(e);alert("画像を送信できませんでした。\n\n"+e.message)}finally{imageButton.disabled=false;sendButton.disabled=false;imageInput.value=""}
 };
+$("replyCancel").onclick=e=>{e.preventDefault();clearReplyTarget()};
 window.addEventListener("pagehide",()=>{if(presenceTimer)clearInterval(presenceTimer);if(realtimeChannel)db.removeChannel(realtimeChannel)});
 async function start(){
  if(!friendId){chatTitle.textContent="💬 相手が選ばれていません";messageForm.style.display="none";messagesElement.innerHTML='<div class="empty">フレンドから相手を選んでね</div>';return}
