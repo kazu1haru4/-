@@ -80,6 +80,8 @@ const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
 const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
+const ADMIN_ITEM_KEYS=new Set(["admin","admin_name","admin_bg"]);
+
 let currentUsername="",balance=0,shopItems=[],ownedItems=new Set();
 
 function getToday(){const now=new Date();return now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0")}
@@ -172,7 +174,10 @@ async function loadShop(){
   ["frameShop","nameDecorationShop","backgroundShop"].forEach(id=>document.getElementById(id).innerHTML="❌ ショップを読み込めませんでした");
   return;
  }
- shopItems=(items||[]).filter(item=>item.item_key!=="admin");
+
+ // 管理者限定アイテムはショップに表示しない
+ shopItems=(items||[]).filter(item=>!ADMIN_ITEM_KEYS.has(item.item_key));
+
  const {data:owned,error:ownedError}=await supabaseClient.from("user_coin_items").select("item_key").eq("user_id",currentUsername);
  ownedItems=ownedError?new Set() : new Set((owned||[]).map(x=>x.item_key));
  renderAllShops();
@@ -207,8 +212,14 @@ function escapeAttribute(value){return String(value??"").replaceAll("&","&amp;")
 
 async function buyItem(itemKey){
  const item=shopItems.find(x=>x.item_key===itemKey);
+
+ // 管理者限定アイテムはショップから交換できない
+ if(ADMIN_ITEM_KEYS.has(itemKey)){
+  showMessage("❌ このアイテムはショップでは交換できません");
+  return;
+ }
+
  if(!item){showMessage("❌ アイテムが見つかりません");return}
- if(itemKey==="admin"){showMessage("❌ このアイテムは交換できません");return}
  if(ownedItems.has(itemKey)){showMessage("このアイテムはすでに交換済みだよ！");return}
  const price=Number(item.price);
  if(balance<price){showMessage("🪙 コインが足りません！");return}
