@@ -181,8 +181,29 @@ function createMessageElement(message,imageUrl){
  const time=document.createElement("div");time.className="time";time.textContent=new Date(message.created_at).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});bubble.appendChild(time);box.appendChild(bubble);
  if(mine&&!message.is_deleted&&readMessageIds.has(message.id)){const r=document.createElement("div");r.className="read-status";r.textContent="既読";box.appendChild(r)}
  if(mine&&!message.is_deleted){const b=document.createElement("button");b.type="button";b.className="delete-button";b.textContent="🗑️ 送信取り消し";b.onclick=e=>{e.preventDefault();e.stopPropagation();deleteMessage(message.id)};box.appendChild(b)}
+ if(!mine&&!message.is_deleted){const b=document.createElement("button");b.type="button";b.className="delete-button report-button";b.textContent="🚨 通報";b.onclick=e=>{e.preventDefault();e.stopPropagation();reportMessage(message)};box.appendChild(b)}
  wrap.appendChild(box);if(mine)wrap.appendChild(createAvatar(avatarUrl,"😊",item));return wrap;
 }
+
+async function reportMessage(message){
+ const targetUser=message.sender_id;
+ if(!targetUser||targetUser===currentUsername)return;
+ const reason=prompt("このメッセージを通報する理由を入力してください", "暴言・不適切な内容");
+ if(reason===null||!reason.trim())return;
+ const {error}=await db.from("user_reports").insert({
+  reporter_id:currentUsername,
+  target_type:"message",
+  target_id:String(message.id),
+  target_user:targetUser,
+  reason:reason.trim(),
+  message_id:String(message.id),
+  message_content:message.content||"",
+  message_image_url:message.image_url||""
+ });
+ if(error){alert("通報に失敗しました。\n\n"+error.message);return}
+ alert("🚨 通報を送信しました。管理者が確認します。");
+}
+
 async function loadMessages(){
  if(!currentUsername||!friendId){messagesElement.innerHTML='<div class="empty">ユーザー情報を取得できませんでした</div>';return}
  messagesElement.innerHTML='<div class="empty">メッセージを読み込み中...</div>';
