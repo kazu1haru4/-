@@ -90,21 +90,26 @@ async function createGroupMessageNotifications(messageText,messageId){
 
     if(!recipients.length)return;
 
-    const rows=recipients.map(username=>({
-      user_id:username,
-      type:"group_chat",
-      title:"👥 グループに新しいメッセージ",
-      message:currentUsername+"さん: "+messageText,
-      link:"group_chat.html?id="+encodeURIComponent(groupId),
-      is_read:false
-    }));
+    const {data:notificationResult,error:notificationError}
+      =await supabaseClient.rpc(
+        "create_group_notifications",
+        {
+          p_group_id:Number(groupId),
+          p_sender:currentUsername,
+          p_message:messageText
+        }
+      );
 
-    const {error}=await supabaseClient
-      .from("notifications")
-      .insert(rows);
-
-    if(error){
-      console.error("グループ通知レコード作成エラー:",error);
+    if(notificationError){
+      console.error(
+        "グループ通知作成エラー:",
+        notificationError
+      );
+    }else{
+      console.log(
+        "グループ通知作成成功:",
+        notificationResult
+      );
     }
 
     /* Pushは各メンバーへ送信 */
