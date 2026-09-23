@@ -426,6 +426,18 @@ textarea {
 </details>
 
 <details class="panel collapsible-panel">
+<summary>✨ 名前装飾一覧</summary>
+<div id="nameDecorationsLoading" class="loading">名前装飾を読み込んでいます...</div>
+<div id="nameDecorationsList"></div>
+</details>
+
+<details class="panel collapsible-panel">
+<summary>🎨 背景一覧</summary>
+<div id="backgroundsLoading" class="loading">背景を読み込んでいます...</div>
+<div id="backgroundsList"></div>
+</details>
+
+<details class="panel collapsible-panel">
 
 <summary>👤 ユーザー管理</summary>
 
@@ -460,21 +472,13 @@ textarea {
 
 <div class="form-row">
 <label>🖼️ フレーム報酬</label>
-<select id="rewardFrameItem"><option value="">なし</option></select>
-</div>
-
-<div class="form-row">
-<label>✨ 名前装飾報酬</label>
-<select id="rewardNameDecorationItem"><option value="">なし</option></select>
-</div>
-
-<div class="form-row">
-<label>🎨 背景報酬</label>
-<select id="rewardBackgroundItem"><option value="">なし</option></select>
-</div>
+<select id="rewardCodeItem">
+<option value="">なし</option>
+</select>
 
 <div id="rewardFrameStatus" class="frame-status">
-🔄 フレーム・名前装飾・背景を読み込んでいます...
+🔄 フレーム一覧を読み込んでいます...
+</div>
 </div>
 
 <div class="form-row">
@@ -1121,77 +1125,80 @@ async function deleteBoardMessage(id) {
 }
 
 async function loadItems() {
-  const frameSelect = document.getElementById("rewardFrameItem");
-  const nameSelect = document.getElementById("rewardNameDecorationItem");
-  const bgSelect = document.getElementById("rewardBackgroundItem");
-  const eventSelect = document.getElementById("eventItem");
-  const status = document.getElementById("rewardFrameStatus");
+  const rewardSelect =
+    document.getElementById("rewardCodeItem");
 
-  status.className = "frame-status";
-  status.textContent = "🔄 フレーム・名前装飾・背景を読み込んでいます...";
+  const eventSelect =
+    document.getElementById("eventItem");
 
-  frameSelect.innerHTML = '<option value="">なし</option>';
-  nameSelect.innerHTML = '<option value="">なし</option>';
-  bgSelect.innerHTML = '<option value="">なし</option>';
-  eventSelect.innerHTML = '<option value="">なし</option>';
+  const frameStatus =
+    document.getElementById("rewardFrameStatus");
 
-  const { data, error } = await supabaseClient
-    .from("coin_items")
-    .select("item_key,name,icon,price,frame_color,item_type")
-    .order("price", { ascending:true });
+  frameStatus.className = "frame-status";
+  frameStatus.textContent =
+    "🔄 coin_itemsからフレームを取得しています...";
+
+  rewardSelect.innerHTML =
+    `<option value="">なし</option>`;
+
+  eventSelect.innerHTML =
+    `<option value="">なし</option>`;
+
+  const { data, error } =
+    await supabaseClient
+      .from("coin_items")
+      .select("item_key,name,icon,price,frame_color")
+      .neq("item_key","admin")
+      .order("price",{ascending:true});
 
   if (error) {
     console.error("coin_items error:", error);
-    status.className = "frame-status error";
-    status.textContent = "❌ アイテム取得失敗\n\n" + error.message;
+
+    frameStatus.className = "frame-status error";
+    frameStatus.textContent =
+      "❌ フレーム取得失敗\n\n" + error.message;
+
+    rewardSelect.innerHTML =
+      `<option value="">❌ 取得失敗</option>`;
+
+    eventSelect.innerHTML =
+      `<option value="">❌ 取得失敗</option>`;
+
     return;
   }
 
-  // 管理者専用アイテムは配布対象から完全に除外
-  const items = (data || []).filter(item =>
-    !["admin", "admin_name", "admin_bg"].includes(item.item_key)
-  );
+  if (!data || data.length === 0) {
+    frameStatus.className = "frame-status error";
+    frameStatus.textContent =
+      "⚠️ coin_itemsにフレームがありません。";
+    return;
+  }
 
-  const getType = item => {
-    if (["frame", "name_decoration", "background"].includes(item.item_type)) {
-      return item.item_type;
-    }
-    if (item.item_key?.startsWith("nd_")) return "name_decoration";
-    if (item.item_key?.startsWith("bg_")) return "background";
-    return "frame";
-  };
+  data.forEach(item => {
+    const icon = item.icon || "🖼️";
 
-  items.forEach(item => {
-    const type = getType(item);
-    const icon = item.icon || (type === "name_decoration" ? "✨" : type === "background" ? "🎨" : "🖼️");
+    const rewardOption =
+      document.createElement("option");
 
-    const option = document.createElement("option");
-    option.value = item.item_key;
-    option.textContent = `${icon} ${item.name}`;
+    rewardOption.value = item.item_key;
+    rewardOption.textContent =
+      `${icon} ${item.name}`;
 
-    if (type === "frame") frameSelect.appendChild(option);
-    if (type === "name_decoration") nameSelect.appendChild(option);
-    if (type === "background") bgSelect.appendChild(option);
+    rewardSelect.appendChild(rewardOption);
 
-    const eventOption = document.createElement("option");
+    const eventOption =
+      document.createElement("option");
+
     eventOption.value = item.item_key;
-    eventOption.textContent = `${icon} ${item.name}`;
+    eventOption.textContent =
+      `${icon} ${item.name}`;
+
     eventSelect.appendChild(eventOption);
   });
 
-  // 3つから同時に選ばれないようにする
-  const selects = [frameSelect, nameSelect, bgSelect];
-  selects.forEach(current => {
-    current.addEventListener("change", () => {
-      if (!current.value) return;
-      selects.forEach(other => {
-        if (other !== current) other.value = "";
-      });
-    });
-  });
-
-  status.className = "frame-status success";
-  status.textContent = `✅ 配布可能なアイテム ${items.length}個\n管理者限定の名前装飾・背景は配布できません。`;
+  frameStatus.className = "frame-status success";
+  frameStatus.textContent =
+    `✅ ${data.length}個のフレームを読み込みました。`;
 }
 
 async function createRewardCode() {
@@ -1216,10 +1223,8 @@ async function createRewardCode() {
         document.getElementById("rewardCodeCoins").value || 0
       );
 
-    const rewardFrame = document.getElementById("rewardFrameItem").value || "";
-    const rewardNameDecoration = document.getElementById("rewardNameDecorationItem").value || "";
-    const rewardBackground = document.getElementById("rewardBackgroundItem").value || "";
-    const rewardItem = rewardFrame || rewardNameDecoration || rewardBackground || null;
+    const rewardItem =
+      document.getElementById("rewardCodeItem").value || null;
 
     const maxUses =
       Number(
@@ -1240,7 +1245,7 @@ async function createRewardCode() {
 
     if (rewardCoins === 0 && !rewardItem) {
       throw new Error(
-        "コインまたは配布アイテムを1つ以上設定してください。"
+        "コインまたはフレームを1つ以上設定してください。"
       );
     }
 
@@ -1272,9 +1277,7 @@ async function createRewardCode() {
 
     document.getElementById("rewardCode").value = "";
     document.getElementById("rewardCodeCoins").value = "0";
-    document.getElementById("rewardFrameItem").value = "";
-    document.getElementById("rewardNameDecorationItem").value = "";
-    document.getElementById("rewardBackgroundItem").value = "";
+    document.getElementById("rewardCodeItem").value = "";
     document.getElementById("rewardCodeMaxUses").value = "0";
 
     await loadRewardCodes();
@@ -1314,7 +1317,7 @@ async function loadRewardCodes() {
 
   const { data: codes, error } = await supabaseClient
     .from("coin_reward_codes")
-    .select(`id,code,reward_coins,reward_item_key,max_uses,is_active,created_by,created_at,coin_items(name,icon,item_type)`)
+    .select(`id,code,reward_coins,reward_item_key,max_uses,is_active,created_by,created_at,coin_items(name,icon)`)
     .order("created_at", { ascending:false });
 
   if (error) {
@@ -1347,18 +1350,7 @@ async function loadRewardCodes() {
     const item = code.coin_items;
     const rewards = [];
     if (Number(code.reward_coins) > 0) rewards.push(`🪙 ${Number(code.reward_coins).toLocaleString()} COIN`);
-    if (item) {
-      const itemTypeLabel =
-        item.item_type === "name_decoration"
-          ? "✨ 名前装飾"
-          : item.item_type === "background"
-            ? "🎨 背景"
-            : "🖼️ フレーム";
-
-      rewards.push(
-        `${itemTypeLabel}：${item.icon || ""} ${escapeHtml(item.name)}`
-      );
-    }
+    if (item) rewards.push(`${item.icon || "🖼️"} ${escapeHtml(item.name)}`);
 
     const historyHtml = history.length
       ? `<div class="history"><div class="history-title">👥 受取履歴（${history.length}人）</div>${history.map(row => `<div class="history-row">👤 ${escapeHtml(row.user_id)}　${escapeHtml(formatDate(row.used_at))}</div>`).join("")}</div>`
@@ -1816,75 +1808,104 @@ async function loadSiteStats() {
 フレーム一覧
 ======================================== */
 
-async function loadFrameList() {
-  const loading = document.getElementById("framesLoading");
-  const list = document.getElementById("framesList");
+function isAdminOnlyItem(item) {
+  return ["admin", "admin_name", "admin_bg"].includes(item.item_key);
+}
+
+function renderAdminItemCard(item) {
+  const card = document.createElement("div");
+  card.className = "frame-admin-card";
+
+  const icon = item.icon || "🖼️";
+  const frameColor = item.frame_color || "#ffd0e7";
+
+  card.innerHTML = `
+    <div class="frame-preview"
+         style="--frame-color:${escapeAttribute(frameColor)}">
+      ${escapeHtml(icon)}
+    </div>
+    <div class="frame-admin-info">
+      <div class="frame-admin-name">${escapeHtml(item.name || item.item_key)}</div>
+      <div class="frame-admin-meta">
+        ID：${escapeHtml(item.item_key)}<br>
+        価格：${Number(item.price || 0).toLocaleString("ja-JP")} COIN
+      </div>
+    </div>
+  `;
+
+  return card;
+}
+
+async function loadItemListByType(type, loadingId, listId, emptyText, errorText) {
+  const loading = document.getElementById(loadingId);
+  const list = document.getElementById(listId);
 
   if (!loading || !list) return;
 
   loading.classList.remove("hidden");
   list.innerHTML = "";
 
-  try {
-    const { data, error } = await supabaseClient
-      .from("coin_items")
-      .select("item_key,name,icon,price,frame_color")
-      .neq("item_key", "admin")
-      .order("price", { ascending: true });
+  const { data, error } = await supabaseClient
+    .from("coin_items")
+    .select("item_key,name,icon,price,frame_color,item_type")
+    .eq("item_type", type)
+    .order("price", { ascending: true });
 
-    if (error) throw error;
-
-    loading.classList.add("hidden");
-
-    if (!data?.length) {
-      list.innerHTML = `<div class="empty">フレームがありません。</div>`;
-      return;
-    }
-
-    data.forEach(item => {
-      const card = document.createElement("div");
-      card.className = "reward-code-card";
-
-      const icon = item.icon || "🖼️";
-      const frameColor = item.frame_color || "#ffd0e7";
-
-      card.innerHTML = `
-        <div style="display:flex;align-items:center;gap:12px;">
-          <div style="
-            width:52px;
-            height:52px;
-            border-radius:50%;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:26px;
-            background:${escapeAttribute(frameColor)};
-            border:4px solid ${escapeAttribute(frameColor)};
-          ">${escapeHtml(icon)}</div>
-
-          <div style="flex:1;min-width:0;">
-            <div class="reward-code-title">
-              ${escapeHtml(item.name || item.item_key)}
-            </div>
-            <div class="reward-code-info">
-              ID：${escapeHtml(item.item_key)}
-              <br>
-              価格：${Number(item.price || 0).toLocaleString("ja-JP")} COIN
-              <br>
-              フレーム色：${escapeHtml(frameColor)}
-            </div>
-          </div>
-        </div>
-      `;
-
-      list.appendChild(card);
-    });
-  } catch (error) {
-    loading.textContent =
-      "❌ フレーム一覧の読み込みに失敗しました：\n" +
-      (error.message || error);
+  if (error) {
+    loading.textContent = "❌ " + errorText + "：\n" + error.message;
+    return;
   }
+
+  const items = (data || []).filter(item => !isAdminOnlyItem(item));
+
+  loading.classList.add("hidden");
+
+  if (!items.length) {
+    list.innerHTML = `<div class="empty">${emptyText}</div>`;
+    return;
+  }
+
+  items.forEach(item => list.appendChild(renderAdminItemCard(item)));
 }
+
+async function loadFrameList() {
+  await loadItemListByType(
+    "frame",
+    "framesLoading",
+    "framesList",
+    "フレームはありません。",
+    "フレーム一覧の読み込みに失敗しました"
+  );
+}
+
+async function loadNameDecorationList() {
+  await loadItemListByType(
+    "name_decoration",
+    "nameDecorationsLoading",
+    "nameDecorationsList",
+    "名前装飾はありません。",
+    "名前装飾一覧の読み込みに失敗しました"
+  );
+}
+
+async function loadBackgroundList() {
+  await loadItemListByType(
+    "background",
+    "backgroundsLoading",
+    "backgroundsList",
+    "背景はありません。",
+    "背景一覧の読み込みに失敗しました"
+  );
+}
+
+async function loadItemLists() {
+  await Promise.all([
+    loadFrameList(),
+    loadNameDecorationList(),
+    loadBackgroundList()
+  ]);
+}
+
 
 async function init() {
   try {
@@ -1916,8 +1937,8 @@ async function init() {
     setStatus("📊 サイト統計を読み込んでいます...", "info");
     await loadSiteStats();
 
-    setStatus("🖼️ フレーム一覧を読み込んでいます...", "info");
-    await loadFrameList();
+    setStatus("🖼️✨🎨 アイテム一覧を読み込んでいます...", "info");
+    await loadItemLists();
 
     setStatus(
       "👤 ユーザーを読み込んでいます...",
