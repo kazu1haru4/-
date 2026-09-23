@@ -20,21 +20,6 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
 .avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover;background:#fff}
 .bubble{position:relative;flex:1;min-width:0;background:#fff;border-radius:15px;padding:9px 12px;box-shadow:0 2px 7px #0001}
 .name{font-size:12px;color:#777;font-weight:bold}
-/* 名前装飾 */
-.name-decoration-sakura{color:#ff4f9b !important}
-.name-decoration-star{color:#d79a00 !important}
-.name-decoration-diamond{color:#159ed6 !important}
-.name-decoration-heart{color:#ff3d7e !important}
-.name-decoration-rainbow{
- background:linear-gradient(90deg,#ff3b3b,#ff9f1c,#ffe600,#43d17a,#35bfff,#7467ff,#c64cff);
- -webkit-background-clip:text;background-clip:text;color:transparent !important
-}
-.name-decoration-flame{color:#ff6500 !important}
-.name-decoration-sea{color:#0077ff !important}
-.name-decoration-space{color:#6d28d9 !important}
-.name-decoration-neon{color:#00bfae !important;text-shadow:0 0 5px rgba(0,255,220,.5),0 0 10px rgba(0,255,220,.25)}
-.name-decoration-admin{color:#d39b00 !important}
-.admin-name-badge{margin-left:4px;font-size:12px}
 .content{white-space:pre-wrap;word-break:break-word;margin-top:3px}
 .mention{color:#6655c9;font-weight:bold;background:#f0edff;border-radius:4px;padding:1px 3px}
 .edited{font-size:10px;color:#999}.deleted{color:#999;font-style:italic}
@@ -128,29 +113,6 @@ let isMuted=false;
 let replyTarget=null;
 let giftTargetUsername="";
 
-const ADMIN_USERNAMES=new Set([
- "kazu1haru100",
- "kazu1haru4sub"
-]);
-
-const NAME_DECORATION_MAP={
- nd_sakura:"name-decoration-sakura",
- nd_star:"name-decoration-star",
- nd_diamond:"name-decoration-diamond",
- nd_heart:"name-decoration-heart",
- nd_rainbow:"name-decoration-rainbow",
- nd_flame:"name-decoration-flame",
- nd_sea:"name-decoration-sea",
- nd_space:"name-decoration-space",
- nd_neon:"name-decoration-neon",
- name_sakura:"name-decoration-sakura",
- admin_name:"name-decoration-admin"
-};
-
-function getNameClass(itemKey){
- return NAME_DECORATION_MAP[itemKey]||"";
-}
-
 const themeMap={
  pink:["#ff82b2","#fff0f7"],
  purple:["#8f7cff","#f0edff"],
@@ -176,7 +138,7 @@ async function loadProfiles(usernames){
  if(!usernames.length)return;
  const {data,error}=await supabaseClient
   .from("profiles")
-  .select("user_id,name,avatar_url,equipped_item_key,equipped_name_decoration_key")
+  .select("user_id,name,avatar_url,equipped_item_key")
   .in("user_id",usernames);
  if(error){console.error(error);return}
  (data||[]).forEach(p=>profiles[p.user_id]=p);
@@ -307,35 +269,10 @@ async function renderMembers(){
       ?"deputy"
       :"";
 
-  const memberNameEl=document.createElement("div");
-  const memberNameClass=getNameClass(
-   profiles[member.user_id]?.equipped_name_decoration_key
-  );
-  memberNameEl.className=memberNameClass||"";
-  memberNameEl.style.fontWeight="bold";
-  memberNameEl.textContent=profiles[member.user_id]?.name||member.user_id;
-
-  if(
-   profiles[member.user_id]?.equipped_name_decoration_key==="admin_name" &&
-   ADMIN_USERNAMES.has(member.user_id)
-  ){
-   const crown=document.createElement("span");
-   crown.className="admin-name-badge";
-   crown.textContent="👑";
-   memberNameEl.appendChild(crown);
-  }
-
-  info.appendChild(memberNameEl);
-
-  const memberIdEl=document.createElement("div");
-  memberIdEl.className="member-id";
-  memberIdEl.textContent="@"+member.user_id;
-  info.appendChild(memberIdEl);
-
-  const roleEl=document.createElement("span");
-  roleEl.className="role "+roleClass;
-  roleEl.textContent=roleText;
-  info.appendChild(roleEl);
+  info.innerHTML=
+   "<b>"+escapeHtml(profiles[member.user_id]?.name||member.user_id)+"</b>"+
+   "<div class='member-id'>@"+escapeHtml(member.user_id)+"</div>"+
+   "<span class='role "+roleClass+"'>"+roleText+"</span>";
 
   if(isOwner && member.user_id!==username){
    const select=document.createElement("select");
@@ -430,6 +367,25 @@ $("memberButton").onclick=async()=>{
  await renderMembers();
 };
 
+
+async function reportBoardMessage(message){
+ if(!message?.sender_id||message.sender_id===username)return;
+ const reason=prompt("このメッセージを通報する理由を入力してください", "暴言・不適切な内容");
+ if(reason===null||!reason.trim())return;
+ const {error}=await supabaseClient.from("user_reports").insert({
+  reporter_id:username,
+  target_type:"board_message",
+  target_id:String(message.id),
+  target_user:message.sender_id,
+  reason:reason.trim(),
+  message_id:String(message.id),
+  message_content:message.content||"",
+  message_image_url:message.image_url||""
+ });
+ if(error){alert("通報に失敗しました。\n\n"+error.message);return}
+ alert("🚨 通報を送信しました。管理者が確認します。");
+}
+
 async function loadMessages(){
  const {data,error}=await supabaseClient
   .from("board_room_messages")
@@ -496,31 +452,11 @@ async function loadMessages(){
   const bubble=document.createElement("div");
   bubble.className="bubble";
 
-  const senderNameEl=document.createElement("div");
-  const senderNameClass=getNameClass(
-   profiles[message.sender_id]?.equipped_name_decoration_key
-  );
-  senderNameEl.className="name"+(senderNameClass?" "+senderNameClass:"");
-  senderNameEl.textContent=profiles[message.sender_id]?.name||message.sender_id;
-
-  if(
-   profiles[message.sender_id]?.equipped_name_decoration_key==="admin_name" &&
-   ADMIN_USERNAMES.has(message.sender_id)
-  ){
-   const crown=document.createElement("span");
-   crown.className="admin-name-badge";
-   crown.textContent="👑";
-   senderNameEl.appendChild(crown);
-  }
-
-  if(message.edited_at){
-   const edited=document.createElement("span");
-   edited.className="edited";
-   edited.textContent=" 編集済み";
-   senderNameEl.appendChild(edited);
-  }
-
-  bubble.appendChild(senderNameEl);
+  bubble.innerHTML=
+   "<div class='name'>"+
+   escapeHtml(profiles[message.sender_id]?.name||message.sender_id)+
+   (message.edited_at?" <span class='edited'>編集済み</span>":"")+
+   "</div>";
 
   if(message.is_deleted){
    bubble.innerHTML+="<div class='deleted'>このメッセージは削除されました</div>";
@@ -545,25 +481,9 @@ async function loadMessages(){
    .forEach(reply=>{
     const div=document.createElement("div");
     div.className="reply";
-    const replyNameEl=document.createElement("b");
-    const replyNameClass=getNameClass(
-     profiles[reply.sender_id]?.equipped_name_decoration_key
-    );
-    if(replyNameClass)replyNameEl.className=replyNameClass;
-    replyNameEl.textContent=profiles[reply.sender_id]?.name||reply.sender_id;
-
-    if(
-     profiles[reply.sender_id]?.equipped_name_decoration_key==="admin_name" &&
-     ADMIN_USERNAMES.has(reply.sender_id)
-    ){
-     const crown=document.createElement("span");
-     crown.className="admin-name-badge";
-     crown.textContent="👑";
-     replyNameEl.appendChild(crown);
-    }
-
-    div.appendChild(replyNameEl);
-    div.appendChild(document.createTextNode("："+reply.content));
+    div.innerHTML=
+     "<b>"+escapeHtml(profiles[reply.sender_id]?.name||reply.sender_id)+
+     "</b>："+escapeHtml(reply.content);
     bubble.appendChild(div);
    });
 
@@ -606,6 +526,13 @@ async function loadMessages(){
   replyButton.textContent="↩️ 返信";
 
   menu.append(reactionButton,replyButton);
+
+  if(message.sender_id!==username&&!message.is_deleted){
+   const report=document.createElement("button");
+   report.textContent="🚨 通報";
+   report.onclick=e=>{e.stopPropagation();reportBoardMessage(message);menu.style.display="none";};
+   menu.appendChild(report);
+  }
 
   if(message.sender_id!==username&&!message.is_deleted){
    const gift=document.createElement("button");
@@ -815,12 +742,8 @@ async function sendMessage(){
   await loadMessages();
 
  }catch(error){
-  console.error("メッセージ送信エラー:",error);
-
-  alert(
-   "❌ メッセージ送信に失敗しました\\n\\n"+
-   (error?.message || "原因不明のエラー")
-  );
+  console.error(error);
+  alert("メッセージ送信に失敗しました");
  }finally{
   $("sendButton").disabled=isMuted;
  }
@@ -980,32 +903,7 @@ $("messageInput").oninput=()=>{
  candidates.forEach(member=>{
   const button=document.createElement("button");
   button.className="mention-item";
-
-  const mentionNameEl=document.createElement("span");
-  const mentionNameClass=getNameClass(
-   profiles[member.user_id]?.equipped_name_decoration_key
-  );
-  if(mentionNameClass)mentionNameEl.className=mentionNameClass;
-  mentionNameEl.textContent=
-   profiles[member.user_id]?.name||member.user_id;
-
-  if(
-   profiles[member.user_id]?.equipped_name_decoration_key==="admin_name" &&
-   ADMIN_USERNAMES.has(member.user_id)
-  ){
-   const crown=document.createElement("span");
-   crown.className="admin-name-badge";
-   crown.textContent="👑";
-   mentionNameEl.appendChild(crown);
-  }
-
-  button.appendChild(mentionNameEl);
-
-  const mentionId=document.createElement("span");
-  mentionId.style.color="#888";
-  mentionId.style.marginLeft="6px";
-  mentionId.textContent="@"+member.user_id;
-  button.appendChild(mentionId);
+  button.textContent="@"+member.user_id;
 
   button.onclick=()=>{
    const current=input.value;
@@ -1112,15 +1010,10 @@ async function start(){
 
  await loadMembers();
 
- const joined =
-  isOwner ||
-  members.some(m =>
-   String(m.user_id).toLowerCase() ===
-   String(username).toLowerCase()
-  );
+ const joined=members.some(m=>m.user_id===username);
 
- if(!joined){
-  alert("この掲示板には参加していません。まず参加番号から参加してください。");
+ if(!isOwner&&!joined){
+  alert("この掲示板には参加していません");
   location.href="board-number.html";
   return;
  }
