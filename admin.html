@@ -202,6 +202,40 @@ header h1 {
   margin: 0 0 10px;
 }
 
+
+.user-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+.detail-item {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f7f8fc;
+}
+.detail-label {
+  color: #777;
+  font-size: 12px;
+  margin-bottom: 3px;
+}
+.detail-value {
+  font-weight: bold;
+  word-break: break-word;
+}
+.detail-avatar {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  margin: 0 auto 14px;
+  background: #eee;
+}
+@media(max-width:600px) {
+  .user-detail-grid { grid-template-columns: 1fr; }
+}
+
 .banned {
   color: #e53935;
   font-weight: bold;
@@ -636,6 +670,9 @@ textarea {
 </div>
 </div>
 
+<div id="userDetailModal" class="modal hidden"><div class="modal-box"><h3>👤 ユーザー詳細</h3><div id="userDetailContent">読み込み中...</div><div class="actions"><button id="closeUserDetail" class="gray" type="button">閉じる</button></div></div></div>
+<div id="coinModal" class="modal hidden"><div class="modal-box"><h3>🪙 コインを変更</h3><p id="coinTarget"></p><div id="coinCurrent" class="frame-status">🔄 現在の残高を読み込んでいます...</div><div class="form-row" style="margin-top:12px"><label>新しいコイン残高</label><input id="coinNewBalance" type="number" min="0" step="1" value="0"><div class="hint">0以上の整数を入力してください。</div></div><div class="actions"><button id="confirmCoinButton" type="button">🪙 変更する</button><button id="cancelCoinButton" class="gray" type="button">キャンセル</button></div></div></div>
+<div id="banModal" class="modal hidden"><div class="modal-box"><h3>🚫 ユーザーをBAN</h3><p id="banTarget"></p><div class="form-row"><label>理由</label><textarea id="banReason" placeholder="BAN理由を入力"></textarea></div><div class="actions"><button id="confirmBanButton" class="danger" type="button">🚫 BANする</button><button id="cancelBanButton" class="gray" type="button">キャンセル</button></div></div></div>
 <div id="editModal" class="modal hidden">
 <div class="modal-box">
 <h3>✏️ 掲示板メッセージを編集</h3>
@@ -662,6 +699,9 @@ let supabaseClient = null;
 let currentUsername = "";
 let banTargetUsername = "";
 let editTargetMessageId = null;
+let allAdminProfiles = [];
+let adminBanMap = new Map();
+let adminCoinMap = new Map();
 
 const ADMIN_USERNAMES =
 new Set([
@@ -790,106 +830,92 @@ async function checkBan() {
   return false;
 }
 
-async function loadUsers(searchText = null) {
+async function loadUsers(searchText = null){
   const loading = document.getElementById("usersLoading");
-  const list = document.getElementById("usersList");
-  const searchInput = document.getElementById("userSearchInput");
-
-  if (searchText === null) {
-    searchText = searchInput?.value || "";
+  if(searchText === null){
+    searchText = document.getElementById("userSearchInput")?.value || "";
   }
-
-  searchText = String(searchText).trim().toLowerCase();
 
   loading.classList.remove("hidden");
   loading.textContent = "ユーザーを読み込んでいます...";
+
+  const [{data:profiles,error},{data:bans,error:banError}] = await Promise.all([
+    supabaseClient.from("profiles")
+      .select("user_id,name,avatar_url,created_at,bio,equipped_item_key")
+      .order("created_at",{ascending:false}),
+    supabaseClient.from("user_bans")
+      .select("user_id,reason,banned_at,expires_at")
+  ]);
+
+  if(error){
+    loading.textContent = "❌ ユーザー読み込みエラー：\n" + error.message;
+    return;
+  }
+  if(banError){
+    loading.textContent = "❌ BAN情報読み込みエラー：\n" + banError.message;
+    return;
+  }
+
+  allAdminProfiles = profiles || [];
+  adminBanMap = new Map((bans || []).map(b => [b.user_id,b]));
+
+  const coinResults = await Promise.all(allAdminProfiles.map(async p => {
+    const u = p.user_id || "";
+    const {data,error} = await supabaseClient.rpc("admin_get_user_coins",{
+      target_username:u
+    });
+    return [u,error ? null : Number(data || 0)];
+  }));
+
+  adminCoinMap = new Map(coinResults);
+  loading.classList.add("hidden");
+  renderUsers(searchText);
+}
+
+function renderUsers(searchText = null){
+  const list = document.getElementById("usersList");
+  const input = document.getElementById("userSearchInput");
+  const q = String(searchText ?? input?.value ?? "").trim().toLowerCase();
+
+  let rows = allAdminProfiles.filter(p => {
+    const username = p.user_id || "";
+    const name = p.name || "";
+    return !q || `${username} ${name}`.toLowerCase().includes(q);
+  });
+
+  if(!rows.length){
+    list.innerHTML = '<div class="empty">該当するユーザーがいません。</div>';
+    return;
+  }
+
   list.innerHTML = "";
 
-  const { data: profiles, error } =
-    await supabaseClient
-      .from("profiles")
-      .select("user_id,name,avatar_url,created_at")
-      .order("created_at", { ascending: false });
-
-  if (error) {
-    loading.textContent =
-      "❌ ユーザー読み込みエラー：\n" + error.message;
-    return;
-  }
-
-  const { data: bans, error: banError } =
-    await supabaseClient
-      .from("user_bans")
-      .select("user_id,reason,banned_at,expires_at");
-
-  if (banError) {
-    loading.textContent =
-      "❌ BAN情報読み込みエラー：\n" + banError.message;
-    return;
-  }
-
-  const banMap = new Map();
-  (bans || []).forEach(ban => banMap.set(ban.user_id, ban));
-
-  const allProfiles = profiles || [];
-  const filteredProfiles = searchText
-    ? allProfiles.filter(profile =>
-        String(profile.user_id || "").toLowerCase().includes(searchText)
-      )
-    : allProfiles;
-
-  loading.classList.add("hidden");
-
-  const resultInfo = document.createElement("div");
-  resultInfo.className = "user-search-result";
-  resultInfo.textContent = searchText
-    ? `🔎 「${searchText}」の検索結果：${filteredProfiles.length}人 / ${allProfiles.length}人`
-    : `👥 ユーザー：${allProfiles.length}人`;
-  list.appendChild(resultInfo);
-
-  if (!filteredProfiles.length) {
-    const empty = document.createElement("div");
-    empty.className = "empty";
-    empty.textContent = searchText
-      ? "そのユーザーIDは見つかりませんでした。"
-      : "ユーザーがいません。";
-    list.appendChild(empty);
-    return;
-  }
-
-  filteredProfiles.forEach(profile => {
-    const username = profile.user_id || "";
+  rows.forEach(p => {
+    const username = p.user_id || "";
     const isAdmin = ADMIN_USERNAMES.has(username);
-    const ban = banMap.get(username);
+    const ban = adminBanMap.get(username);
+    const balance = adminCoinMap.get(username);
 
     const card = document.createElement("div");
     card.className = "user-card";
 
-    const avatar = profile.avatar_url || "https://via.placeholder.com/100";
-
     card.innerHTML = `
-      <img class="avatar" src="${escapeAttribute(avatar)}" alt="">
-
+      <img class="avatar"
+        src="${escapeAttribute(p.avatar_url || "https://via.placeholder.com/100")}"
+        alt="">
       <div class="user-info">
-        <div class="user-name">
-          ${escapeHtml(profile.name || username)}
+        <div class="user-name">${escapeHtml(p.name || username)}</div>
+        <div class="user-id">ID：${escapeHtml(username)}</div>
+        <div class="user-coins">
+          🪙 残高：
+          ${balance == null ? "取得できません" : Number(balance).toLocaleString("ja-JP") + " COIN"}
         </div>
-
-        <div class="user-id">
-          ID：${escapeHtml(username)}
-        </div>
-
-        ${
-          isAdmin
-            ? `<div style="color:#8f6b00;font-weight:bold;font-size:13px;">👑 管理者</div>`
-            : ""
-        }
-
-        ${ban ? `<div class="banned">🚫 BAN中</div>` : ""}
+        ${isAdmin ? '<div style="color:#8f6b00;font-weight:bold;font-size:13px">👑 管理者</div>' : ""}
+        ${ban ? '<div class="banned">🚫 BAN中</div>' : ""}
       </div>
-
       <div class="actions">
-        <button class="coin small" data-coin="${escapeAttribute(username)}" type="button">🪙 コイン変更</button>
+        <button class="small" data-detail="${escapeAttribute(username)}" type="button">👤 詳細</button>
+        <button class="coin small" data-coin="${escapeAttribute(username)}" type="button">🪙 コイン</button>
         ${
           isAdmin
             ? ""
@@ -897,23 +923,32 @@ async function loadUsers(searchText = null) {
               ? `<button class="success small" data-unban="${escapeAttribute(username)}" type="button">🔓 BAN解除</button>`
               : `<button class="danger small" data-ban="${escapeAttribute(username)}" type="button">🚫 BAN</button>`
         }
+        ${
+          isAdmin
+            ? ""
+            : `<button class="danger small" data-delete-user="${escapeAttribute(username)}" type="button">🗑️ アカウント削除</button>`
+        }
       </div>
     `;
 
     list.appendChild(card);
   });
 
-  list.querySelectorAll("[data-ban]").forEach(button => {
-    button.addEventListener("click", () => openBanModal(button.dataset.ban));
-  });
-
-  list.querySelectorAll("[data-unban]").forEach(button => {
-    button.addEventListener("click", () => unbanUser(button.dataset.unban));
-  });
-
-  list.querySelectorAll("[data-coin]").forEach(button => {
-    button.addEventListener("click", () => openCoinModal(button.dataset.coin));
-  });
+  list.querySelectorAll("[data-detail]").forEach(b =>
+    b.onclick = () => openUserDetail(b.dataset.detail)
+  );
+  list.querySelectorAll("[data-ban]").forEach(b =>
+    b.onclick = () => openBanModal(b.dataset.ban)
+  );
+  list.querySelectorAll("[data-unban]").forEach(b =>
+    b.onclick = () => unbanUser(b.dataset.unban)
+  );
+  list.querySelectorAll("[data-coin]").forEach(b =>
+    b.onclick = () => openCoinModal(b.dataset.coin)
+  );
+  list.querySelectorAll("[data-delete-user]").forEach(b =>
+    b.onclick = () => deleteUserAccount(b.dataset.deleteUser)
+  );
 }
 
 async function openCoinModal(username) {
@@ -1041,6 +1076,72 @@ async function unbanUser(username) {
 
   await loadUsers();
   alert(`${username} のBANを解除しました。`);
+}
+
+async function deleteUserAccount(username){
+ if(!username)return;
+ if(ADMIN_USERNAMES.has(username)){
+  alert("管理者アカウントは削除できません。");
+  return;
+ }
+ if(!confirm(`⚠️ 「${username}」のアカウントを削除しますか？\n\nこの操作は取り消せません。\nログイン用アカウントも削除されます。`))return;
+ if(!confirm(`最終確認です。\n\nユーザーID：${username}\n\n本当にこのアカウントを完全に削除しますか？`))return;
+
+ try{
+  setStatus(`🗑️ ${username} のアカウントを削除しています...`,"info");
+
+  const {data,error}=await supabaseClient.rpc("admin_delete_user",{
+   target_username:username
+  });
+
+  if(error)throw error;
+
+  // 画面内の古いユーザー情報を即時削除
+  allAdminProfiles=allAdminProfiles.filter(
+   p=>(p.user_id||"")!==username
+  );
+  adminBanMap.delete(username);
+  adminCoinMap.delete(username);
+  renderUsers();
+
+  // 操作ログ
+  await logOperation(
+   `ユーザー「${username}」のアカウントを削除しました。`,
+   {target_username:username}
+  );
+
+  // Supabaseから最新状態を再取得
+  await loadUsers();
+
+  document.getElementById("userDetailModal")?.classList.add("hidden");
+
+  setStatus(`✅ ${username} のアカウントを削除しました。`,"success");
+
+  alert(`🗑️ アカウントを削除しました。\n\nユーザーID：${username}`);
+
+ }catch(error){
+  console.error("deleteUserAccount:",error);
+  setStatus(`❌ ${username} のアカウント削除に失敗しました。\n\n${error.message||error}`,"error");
+  alert("❌ アカウント削除に失敗しました。\n\n"+(error.message||error));
+ }
+}
+
+async function openUserDetail(username){
+ const modal=document.getElementById("userDetailModal"),box=document.getElementById("userDetailContent");
+ modal.classList.remove("hidden");box.textContent="読み込み中...";
+ const {data,error}=await supabaseClient.rpc("admin_get_user_detail",{target_username:username});
+ if(error){box.innerHTML='<div class="danger-text">❌ '+escapeHtml(error.message)+'</div>';return}
+ const d=data||{},ban=adminBanMap.get(username);
+ box.innerHTML=`<div class="detail-row"><b>ID</b><span>${escapeHtml(username)}</span></div><div class="detail-row"><b>名前</b><span>${escapeHtml(d.name||username)}</span></div><div class="detail-row"><b>登録日時</b><span>${escapeHtml(formatDate(d.created_at))}</span></div><div class="detail-row"><b>コイン</b><span>🪙 ${Number(d.coins||0).toLocaleString("ja-JP")}</span></div><div class="detail-row"><b>1対1メッセージ</b><span>${Number(d.direct_messages||0).toLocaleString("ja-JP")}</span></div><div class="detail-row"><b>グループメッセージ</b><span>${Number(d.group_messages||0).toLocaleString("ja-JP")}</span></div><div class="detail-row"><b>通報数</b><span>${Number(d.reports||0).toLocaleString("ja-JP")}</span></div><div class="detail-row"><b>状態</b><span>${ban?"🚫 BAN中":"🟢 通常"}</span></div><div style="margin-top:12px"><b>自己紹介</b><div class="muted" style="white-space:pre-wrap;margin-top:6px">${escapeHtml(d.bio||"なし")}</div></div>`;
+}
+
+function openUserDetail(username){
+ const modal=document.getElementById("userDetailModal"),box=document.getElementById("userDetailContent");
+ modal.classList.remove("hidden");box.textContent="読み込み中...";
+ const {data,error}=await supabaseClient.rpc("admin_get_user_detail",{target_username:username});
+ if(error){box.innerHTML='<div class="danger-text">❌ '+escapeHtml(error.message)+'</div>';return}
+ const d=data||{},ban=adminBanMap.get(username);
+ box.innerHTML=`<div class="detail-row"><b>ID</b><span>${escapeHtml(username)}</span></div><div class="detail-row"><b>名前</b><span>${escapeHtml(d.name||username)}</span></div><div class="detail-row"><b>登録日時</b><span>${escapeHtml(formatDate(d.created_at))}</span></div><div class="detail-row"><b>コイン</b><span>🪙 ${Number(d.coins||0).toLocaleString("ja-JP")}</span></div><div class="detail-row"><b>1対1メッセージ</b><span>${Number(d.direct_messages||0).toLocaleString("ja-JP")}</span></div><div class="detail-row"><b>グループメッセージ</b><span>${Number(d.group_messages||0).toLocaleString("ja-JP")}</span></div><div class="detail-row"><b>通報数</b><span>${Number(d.reports||0).toLocaleString("ja-JP")}</span></div><div class="detail-row"><b>状態</b><span>${ban?"🚫 BAN中":"🟢 通常"}</span></div><div style="margin-top:12px"><b>自己紹介</b><div class="muted" style="white-space:pre-wrap;margin-top:6px">${escapeHtml(d.bio||"なし")}</div></div>`;
 }
 
 async function loadBoardMessages() {
@@ -1818,6 +1919,9 @@ function setupButtons() {
 
   document.getElementById("cancelEditButton")
     .addEventListener("click", closeEditModal);
+
+  document.getElementById("closeUserDetailButton")
+    .addEventListener("click", closeUserDetail);
 
   document.getElementById("createRewardCodeButton")
     .addEventListener("click", createRewardCode);
