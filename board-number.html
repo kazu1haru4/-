@@ -1,1046 +1,184 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>番号参加掲示板</title>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Hiragino Kaku Gothic ProN",
-        "Yu Gothic",
-        "Meiryo",
-        sans-serif;
-      background: linear-gradient(135deg, #fff4fb, #eef7ff);
-      color: #333;
-    }
-
-    .container {
-      width: min(100%, 520px);
-      margin: 0 auto;
-      padding: 22px 16px 40px;
-    }
-
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 18px;
-    }
-
-    .back-button {
-      border: 0;
-      background: white;
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      font-size: 20px;
-      cursor: pointer;
-      box-shadow: 0 4px 14px rgba(0,0,0,.08);
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 25px;
-    }
-
-    .subtitle {
-      margin: 4px 0 0;
-      color: #777;
-      font-size: 13px;
-    }
-
-    .panel {
-      background: rgba(255,255,255,.94);
-      border-radius: 22px;
-      padding: 20px;
-      margin-bottom: 16px;
-      box-shadow: 0 8px 25px rgba(80,80,120,.09);
-    }
-
-    .panel h2 {
-      margin: 0 0 14px;
-      font-size: 18px;
-    }
-
-    label {
-      display: block;
-      font-size: 13px;
-      font-weight: bold;
-      margin-bottom: 7px;
-    }
-
-    input {
-      width: 100%;
-      min-height: 48px;
-      border: 1px solid #ddd;
-      border-radius: 14px;
-      padding: 0 14px;
-      font-size: 16px;
-      outline: none;
-      background: #fff;
-    }
-
-    input:focus {
-      border-color: #8f7cff;
-      box-shadow: 0 0 0 3px rgba(143,124,255,.12);
-    }
-
-    button.primary {
-      width: 100%;
-      min-height: 48px;
-      border: 0;
-      border-radius: 14px;
-      background: #8f7cff;
-      color: white;
-      font-size: 15px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 12px;
-    }
-
-    button.primary:disabled {
-      opacity: .55;
-      cursor: not-allowed;
-    }
-
-    .join-code {
-      margin-top: 14px;
-      padding: 15px;
-      border-radius: 16px;
-      background: #f5f2ff;
-      text-align: center;
-      display: none;
-    }
-
-    .join-code-label {
-      color: #777;
-      font-size: 12px;
-      margin-bottom: 5px;
-    }
-
-    .join-code-value {
-      font-size: 31px;
-      font-weight: 900;
-      letter-spacing: 5px;
-      color: #6655d9;
-    }
-
-    .join-code-note {
-      margin-top: 6px;
-      font-size: 11px;
-      color: #777;
-    }
-
-    .status {
-      display: none;
-      padding: 12px 14px;
-      border-radius: 13px;
-      margin-bottom: 15px;
-      font-size: 13px;
-      white-space: pre-wrap;
-    }
-
-    .status.success {
-      display: block;
-      background: #eafaf0;
-      color: #207442;
-    }
-
-    .status.error {
-      display: block;
-      background: #fff0f0;
-      color: #b32b2b;
-    }
-
-    .status.loading {
-      display: block;
-      background: #f2f2f7;
-      color: #666;
-    }
-
-    .room-list {
-      display: flex;
-      flex-direction: column;
-      gap: 11px;
-    }
-
-    .room-card {
-      border: 1px solid #eee;
-      border-radius: 17px;
-      padding: 15px;
-      background: #fff;
-    }
-
-    .room-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .room-name {
-      font-size: 17px;
-      font-weight: 800;
-      min-width: 0;
-      word-break: break-word;
-    }
-
-    .role {
-      flex-shrink: 0;
-      padding: 5px 9px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: bold;
-    }
-
-    .role.owner {
-      background: #fff0b8;
-      color: #8a6800;
-    }
-
-    .role.member {
-      background: #edf1ff;
-      color: #5967a9;
-    }
-
-    .room-code {
-      margin-top: 8px;
-      font-size: 13px;
-      color: #777;
-    }
-
-    .room-code strong {
-      color: #555;
-      letter-spacing: 2px;
-    }
-
-    .open-button {
-      width: 100%;
-      min-height: 43px;
-      margin-top: 11px;
-      border: 0;
-      border-radius: 12px;
-      background: #f0edff;
-      color: #5f51c7;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .empty {
-      text-align: center;
-      color: #888;
-      padding: 22px 10px;
-      font-size: 14px;
-    }
-
-    .user-info {
-      font-size: 12px;
-      color: #777;
-      margin-bottom: 14px;
-    }
-
-    .logout-button {
-      width: 100%;
-      min-height: 44px;
-      border: 1px solid #ddd;
-      border-radius: 13px;
-      background: white;
-      color: #666;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    @media (max-width: 420px) {
-      .container {
-        padding: 16px 12px 30px;
-      }
-
-      .panel {
-        padding: 17px;
-        border-radius: 19px;
-      }
-
-      h1 {
-        font-size: 22px;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>番号参加掲示板</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="ban-check.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;background:linear-gradient(135deg,#fff4fb,#eef7ff);color:#333}
+.container{width:min(100%,520px);margin:0 auto;padding:22px 16px 40px}
+.header{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.back-button{border:0;background:white;width:44px;height:44px;border-radius:14px;font-size:20px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.08)}
+h1{margin:0;font-size:25px}.subtitle{margin:4px 0 0;color:#777;font-size:13px}
+.panel{background:rgba(255,255,255,.94);border-radius:22px;padding:20px;margin-bottom:16px;box-shadow:0 8px 25px rgba(80,80,120,.09)}
+.panel h2{margin:0 0 14px;font-size:18px}
+label{display:block;font-size:13px;font-weight:bold;margin-bottom:7px}
+input{width:100%;min-height:48px;border:1px solid #ddd;border-radius:14px;padding:0 14px;font-size:16px;outline:none;background:#fff}
+input:focus{border-color:#8f7cff;box-shadow:0 0 0 3px rgba(143,124,255,.12)}
+button.primary{width:100%;min-height:48px;border:0;border-radius:14px;background:#8f7cff;color:white;font-size:15px;font-weight:bold;cursor:pointer;margin-top:12px}
+button.primary:disabled{opacity:.55;cursor:not-allowed}
+.join-code{margin-top:14px;padding:15px;border-radius:16px;background:#f5f2ff;text-align:center;display:none}
+.join-code-label{color:#777;font-size:12px;margin-bottom:5px}.join-code-value{font-size:31px;font-weight:900;letter-spacing:5px;color:#6655d9}.join-code-note{margin-top:6px;font-size:11px;color:#777}
+.status{display:none;padding:12px 14px;border-radius:13px;margin-bottom:15px;font-size:13px;white-space:pre-wrap}
+.status.success{display:block;background:#eafaf0;color:#207442}.status.error{display:block;background:#fff0f0;color:#b32b2b}.status.loading{display:block;background:#f2f2f7;color:#666}
+.room-list{display:flex;flex-direction:column;gap:11px}.room-card{border:1px solid #eee;border-radius:17px;padding:15px;background:#fff}
+.room-top{display:flex;align-items:center;justify-content:space-between;gap:10px}.room-name{font-size:17px;font-weight:800;min-width:0;word-break:break-word}
+.role{flex-shrink:0;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:bold}.role.owner{background:#fff0b8;color:#8a6800}.role.member{background:#edf1ff;color:#5967a9}
+.room-code{margin-top:8px;font-size:13px;color:#777}.room-code strong{color:#555;letter-spacing:2px}
+.open-button{width:100%;min-height:43px;margin-top:11px;border:0;border-radius:12px;background:#f0edff;color:#5f51c7;font-weight:bold;cursor:pointer}
+.empty{text-align:center;color:#888;padding:22px 10px;font-size:14px}
+@media(max-width:420px){.container{padding:16px 12px 30px}.panel{padding:17px;border-radius:19px}h1{font-size:22px}}
+</style>
 </head>
-
 <body>
-
 <div class="container">
+<div class="header">
+<button class="back-button" type="button" id="backButton" aria-label="ホームに戻る">🏠</button>
+<div><h1>🔢 番号参加掲示板</h1><div class="subtitle">参加番号を知っている人だけ参加できます</div></div>
+</div>
 
-  <div class="header">
-    <button
-      class="back-button"
-      type="button"
-      id="backButton"
-      aria-label="戻る"
-    >←</button>
+<div id="status" class="status"></div>
 
-    <div>
-      <h1>🔢 番号参加掲示板</h1>
-      <div class="subtitle">
-        参加番号を知っている人だけ参加できます
-      </div>
-    </div>
-  </div>
+<div class="panel">
+<h2>📝 掲示板を作る</h2>
+<label for="roomName">掲示板の名前</label>
+<input id="roomName" type="text" maxlength="50" placeholder="例：ゲーム仲間" autocomplete="off">
+<button class="primary" type="button" id="createButton">＋ 掲示板を作成</button>
+<div id="createdCode" class="join-code">
+<div class="join-code-label">この番号を友達に教えてください</div>
+<div id="createdCodeValue" class="join-code-value"></div>
+<div class="join-code-note">この番号を入力すると掲示板に参加できます</div>
+</div>
+</div>
 
-  <div id="status" class="status"></div>
+<div class="panel">
+<h2>🔑 掲示板に参加</h2>
+<label for="joinCode">6桁の参加番号</label>
+<input id="joinCode" type="text" inputmode="numeric" maxlength="6" placeholder="123456" autocomplete="off">
+<button class="primary" type="button" id="joinButton">🚪 参加する</button>
+</div>
 
-  <div class="panel">
-    <h2>👤 ログイン中</h2>
-
-    <div class="user-info">
-      ユーザーID：
-      <strong id="currentUsername">読み込み中...</strong>
-    </div>
-
-    <button
-      class="logout-button"
-      type="button"
-      id="logoutButton"
-    >
-      ログアウト
-    </button>
-  </div>
-
-  <div class="panel">
-    <h2>📝 掲示板を作る</h2>
-
-    <label for="roomName">
-      掲示板の名前
-    </label>
-
-    <input
-      id="roomName"
-      type="text"
-      maxlength="50"
-      placeholder="例：ゲーム仲間"
-      autocomplete="off"
-    >
-
-    <button
-      class="primary"
-      type="button"
-      id="createButton"
-    >
-      ＋ 掲示板を作成
-    </button>
-
-    <div id="createdCode" class="join-code">
-      <div class="join-code-label">
-        この番号を友達に教えてください
-      </div>
-
-      <div
-        id="createdCodeValue"
-        class="join-code-value"
-      ></div>
-
-      <div class="join-code-note">
-        この番号を入力すると掲示板に参加できます
-      </div>
-    </div>
-  </div>
-
-  <div class="panel">
-    <h2>🔑 掲示板に参加</h2>
-
-    <label for="joinCode">
-      6桁の参加番号
-    </label>
-
-    <input
-      id="joinCode"
-      type="text"
-      inputmode="numeric"
-      maxlength="6"
-      placeholder="123456"
-      autocomplete="off"
-    >
-
-    <button
-      class="primary"
-      type="button"
-      id="joinButton"
-    >
-      🚪 参加する
-    </button>
-  </div>
-
-  <div class="panel">
-    <h2>📋 参加中の掲示板</h2>
-
-    <div
-      id="roomList"
-      class="room-list"
-    >
-      <div class="empty">
-        読み込み中...
-      </div>
-    </div>
-  </div>
-
+<div class="panel">
+<h2>📋 参加中の掲示板</h2>
+<div id="roomList" class="room-list"><div class="empty">読み込み中...</div></div>
+</div>
 </div>
 
 <script>
-  const SUPABASE_URL =
-    "https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let currentUsername="";
 
-  const SUPABASE_KEY =
-    "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+function escapeHtml(value){return String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}
+function showStatus(message,type="success"){const status=document.getElementById("status");status.className="status "+type;status.textContent=message}
+function hideStatus(){const status=document.getElementById("status");status.className="status";status.textContent=""}
+function generateJoinCode(){return String(Math.floor(100000+Math.random()*900000))}
 
-  const supabaseClient =
-    window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_KEY
-    );
-
-
-  let currentUsername = "";
-
-
-  function escapeHtml(value) {
-    return String(value ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+async function createBoard(){
+ hideStatus();
+ const name=document.getElementById("roomName").value.trim();
+ const button=document.getElementById("createButton");
+ if(!name)return showStatus("掲示板の名前を入力してください。","error");
+ if(name.length>50)return showStatus("掲示板の名前は50文字以内にしてください。","error");
+ button.disabled=true;button.textContent="⏳ 作成中...";
+ try{
+  let createdRoom=null;
+  for(let i=0;i<5;i++){
+   const joinCode=generateJoinCode();
+   const {data,error}=await supabaseClient.from("board_rooms").insert({name,join_code:joinCode,created_by:currentUsername}).select().single();
+   if(!error){createdRoom=data;break}
+   if(!String(error.message||"").toLowerCase().includes("duplicate"))throw error;
   }
-
-
-  function showStatus(message, type = "success") {
-    const status =
-      document.getElementById("status");
-
-    status.className =
-      "status " + type;
-
-    status.textContent = message;
-  }
-
-
-  function hideStatus() {
-    const status =
-      document.getElementById("status");
-
-    status.className = "status";
-    status.textContent = "";
-  }
-
-
-  /*
-   * 6桁の参加番号を作る
-   */
-  function generateJoinCode() {
-    return String(
-      Math.floor(
-        100000 + Math.random() * 900000
-      )
-    );
-  }
-
-
-  /*
-   * 掲示板作成
-   */
-  async function createBoard() {
-
-    hideStatus();
-
-    const name =
-      document
-        .getElementById("roomName")
-        .value
-        .trim();
-
-    const button =
-      document.getElementById("createButton");
-
-    if (!name) {
-      showStatus(
-        "掲示板の名前を入力してください。",
-        "error"
-      );
-      return;
-    }
-
-    if (name.length > 50) {
-      showStatus(
-        "掲示板の名前は50文字以内にしてください。",
-        "error"
-      );
-      return;
-    }
-
-    button.disabled = true;
-    button.textContent = "⏳ 作成中...";
-
-    try {
-
-      let created = false;
-      let createdRoom = null;
-
-      /*
-       * 番号が重複した場合に備えて最大5回試す
-       */
-      for (let i = 0; i < 5; i++) {
-
-        const joinCode =
-          generateJoinCode();
-
-        const {
-          data,
-          error
-        } =
-          await supabaseClient
-            .from("board_rooms")
-            .insert({
-              name: name,
-              join_code: joinCode,
-              created_by: currentUsername
-            })
-            .select()
-            .single();
-
-        if (!error) {
-          created = true;
-          createdRoom = data;
-          break;
-        }
-
-        /*
-         * 番号重複以外のエラーなら終了
-         */
-        if (
-          !String(error.message || "")
-            .toLowerCase()
-            .includes("duplicate")
-        ) {
-          throw error;
-        }
-      }
-
-      if (!created || !createdRoom) {
-        throw new Error(
-          "参加番号の作成に失敗しました。もう一度試してください。"
-        );
-      }
-
-
-      /*
-       * 作成者自身もメンバーとして登録
-       */
-      const {
-        error: memberError
-      } =
-        await supabaseClient
-          .from("board_room_members")
-          .insert({
-            board_id: createdRoom.id,
-            user_id: currentUsername
-          });
-
-      if (
-        memberError &&
-        !String(memberError.message || "")
-          .toLowerCase()
-          .includes("duplicate")
-      ) {
-        throw memberError;
-      }
-
-
-      /*
-       * 発行された番号を表示
-       */
-      document
-        .getElementById("createdCodeValue")
-        .textContent =
-        createdRoom.join_code;
-
-      document
-        .getElementById("createdCode")
-        .style.display = "block";
-
-
-      document
-        .getElementById("roomName")
-        .value = "";
-
-
-      showStatus(
-        "✅ 掲示板を作成しました！",
-        "success"
-      );
-
-      await loadBoards();
-
-    } catch (error) {
-
-      console.error(
-        "掲示板作成エラー:",
-        error
-      );
-
-      showStatus(
-        "掲示板の作成に失敗しました。\n\n" +
-        (error.message || "不明なエラー"),
-        "error"
-      );
-
-    } finally {
-
-      button.disabled = false;
-      button.textContent =
-        "＋ 掲示板を作成";
-    }
-  }
-
-
-  /*
-   * 参加番号で参加
-   */
-  async function joinBoard() {
-
-    hideStatus();
-
-    const input =
-      document
-        .getElementById("joinCode");
-
-    const code =
-      input.value.trim();
-
-    const button =
-      document.getElementById("joinButton");
-
-    if (!/^\d{6}$/.test(code)) {
-      showStatus(
-        "6桁の参加番号を入力してください。",
-        "error"
-      );
-      return;
-    }
-
-    button.disabled = true;
-    button.textContent = "⏳ 参加中...";
-
-    try {
-
-      const {
-        data,
-        error
-      } =
-        await supabaseClient
-          .rpc(
-            "join_board_by_code",
-            {
-              input_code: code
-            }
-          );
-
-      if (error) {
-        throw error;
-      }
-
-
-      input.value = "";
-
-
-      showStatus(
-        "✅ 掲示板に参加しました！",
-        "success"
-      );
-
-
-      await loadBoards();
-
-    } catch (error) {
-
-      console.error(
-        "掲示板参加エラー:",
-        error
-      );
-
-      showStatus(
-        "掲示板への参加に失敗しました。\n\n" +
-        (error.message || "不明なエラー"),
-        "error"
-      );
-
-    } finally {
-
-      button.disabled = false;
-      button.textContent =
-        "🚪 参加する";
-    }
-  }
-
-
-  /*
-   * 参加中の掲示板を読み込む
-   */
-  async function loadBoards() {
-
-    const list =
-      document.getElementById("roomList");
-
-    list.innerHTML =
-      '<div class="empty">読み込み中...</div>';
-
-
-    try {
-
-      const {
-        data: rooms,
-        error
-      } =
-        await supabaseClient
-          .from("board_rooms")
-          .select(
-            "id,name,join_code,created_by,created_at"
-          )
-          .order(
-            "created_at",
-            {
-              ascending: false
-            }
-          );
-
-
-      if (error) {
-        throw error;
-      }
-
-
-      if (!rooms || rooms.length === 0) {
-
-        list.innerHTML =
-          '<div class="empty">' +
-          "まだ参加している掲示板はありません。" +
-          "</div>";
-
-        return;
-      }
-
-
-      list.innerHTML = "";
-
-
-      for (const room of rooms) {
-
-        const isOwner =
-          room.created_by ===
-          currentUsername;
-
-
-        const card =
-          document.createElement("div");
-
-        card.className = "room-card";
-
-
-        card.innerHTML = `
-          <div class="room-top">
-            <div class="room-name">
-              ${escapeHtml(room.name)}
-            </div>
-
-            <div class="role ${
-              isOwner
-                ? "owner"
-                : "member"
-            }">
-              ${
-                isOwner
-                  ? "👑 管理者"
-                  : "👤 メンバー"
-              }
-            </div>
-          </div>
-
-          <div class="room-code">
-            参加番号：
-            <strong>
-              ${escapeHtml(room.join_code)}
-            </strong>
-          </div>
-
-          <button
-            class="open-button"
-            type="button"
-            data-room-id="${room.id}"
-          >
-            💬 掲示板を開く
-          </button>
-        `;
-
-
-        const openButton =
-          card.querySelector(
-            ".open-button"
-          );
-
-
-        openButton.addEventListener(
-          "click",
-          () => {
-
-            /*
-             * 次に作る
-             * board-number-chat.html
-             * へ移動
-             */
-            location.href =
-              "board-number-chat.html?board=" +
-              encodeURIComponent(room.id);
-          }
-        );
-
-
-        list.appendChild(card);
-      }
-
-    } catch (error) {
-
-      console.error(
-        "掲示板一覧取得エラー:",
-        error
-      );
-
-      list.innerHTML =
-        '<div class="empty">' +
-        "掲示板一覧の読み込みに失敗しました。<br><br>" +
-        escapeHtml(
-          error.message ||
-          "不明なエラー"
-        ) +
-        "</div>";
-    }
-  }
-
-
-  /*
-   * ログイン確認
-   */
-  async function initialize() {
-
-    try {
-
-      const {
-        data,
-        error
-      } =
-        await supabaseClient
-          .auth
-          .getSession();
-
-
-      if (error) {
-        throw error;
-      }
-
-
-      const session =
-        data.session;
-
-
-      if (!session) {
-
-        alert(
-          "ログインしてください。"
-        );
-
-        location.href =
-          "index.html";
-
-        return;
-      }
-
-
-      currentUsername =
-        session.user
-          .user_metadata
-          ?.username || "";
-
-
-      if (!currentUsername) {
-
-        alert(
-          "ユーザー情報を取得できませんでした。"
-        );
-
-        location.href =
-          "index.html";
-
-        return;
-      }
-
-
-      document
-        .getElementById(
-          "currentUsername"
-        )
-        .textContent =
-        currentUsername;
-
-
-      await loadBoards();
-
-    } catch (error) {
-
-      console.error(
-        "初期化エラー:",
-        error
-      );
-
-      showStatus(
-        "読み込みに失敗しました。\n\n" +
-        (error.message || "不明なエラー"),
-        "error"
-      );
-    }
-  }
-
-
-  /*
-   * ログアウト
-   */
-  async function logout() {
-
-    const ok =
-      confirm(
-        "ログアウトしますか？"
-      );
-
-    if (!ok) {
-      return;
-    }
-
-    await supabaseClient.auth.signOut();
-
-    location.href =
-      "index.html";
-  }
-
-
-  /*
-   * 戻る
-   */
-  function goBack() {
-
-    if (history.length > 1) {
-      history.back();
-    } else {
-      location.href =
-        "home.html";
-    }
-  }
-
-
-  /*
-   * ボタン設定
-   */
-  document
-    .getElementById("createButton")
-    .addEventListener(
-      "click",
-      createBoard
-    );
-
-
-  document
-    .getElementById("joinButton")
-    .addEventListener(
-      "click",
-      joinBoard
-    );
-
-
-  document
-    .getElementById("logoutButton")
-    .addEventListener(
-      "click",
-      logout
-    );
-
-
-  document
-    .getElementById("backButton")
-    .addEventListener(
-      "click",
-      goBack
-    );
-
-
-  /*
-   * 参加番号入力欄ではEnterでも参加
-   */
-  document
-    .getElementById("joinCode")
-    .addEventListener(
-      "keydown",
-      event => {
-
-        if (event.key === "Enter") {
-          joinBoard();
-        }
-      }
-    );
-
-
-  /*
-   * 掲示板名入力欄ではEnterでも作成
-   */
-  document
-    .getElementById("roomName")
-    .addEventListener(
-      "keydown",
-      event => {
-
-        if (event.key === "Enter") {
-          createBoard();
-        }
-      }
-    );
-
-
-  /*
-   * 参加番号は数字だけ
-   */
-  document
-    .getElementById("joinCode")
-    .addEventListener(
-      "input",
-      event => {
-
-        event.target.value =
-          event.target.value
-            .replace(/\D/g, "")
-            .slice(0, 6);
-      }
-    );
-
-
-  initialize();
+  if(!createdRoom)throw new Error("参加番号の作成に失敗しました。もう一度試してください。");
+  const {error:memberError}=await supabaseClient.from("board_room_members").insert({board_id:createdRoom.id,user_id:currentUsername});
+  if(memberError&&!String(memberError.message||"").toLowerCase().includes("duplicate"))throw memberError;
+  document.getElementById("createdCodeValue").textContent=createdRoom.join_code;
+  document.getElementById("createdCode").style.display="block";
+  document.getElementById("roomName").value="";
+  showStatus("✅ 掲示板を作成しました！","success");
+  await loadBoards();
+ }catch(error){
+  console.error("掲示板作成エラー:",error);
+  showStatus("掲示板の作成に失敗しました。\n\n"+(error.message||"不明なエラー"),"error");
+ }finally{button.disabled=false;button.textContent="＋ 掲示板を作成"}
+}
+
+async function joinBoard(){
+ hideStatus();
+ const input=document.getElementById("joinCode");
+ const code=input.value.trim();
+ const button=document.getElementById("joinButton");
+ if(!/^\d{6}$/.test(code))return showStatus("6桁の参加番号を入力してください。","error");
+ button.disabled=true;button.textContent="⏳ 参加中...";
+ try{
+  const {data,error}=await supabaseClient.rpc("join_board_by_code",{input_code:code});
+  if(error)throw error;
+  input.value="";
+  showStatus("✅ 掲示板に参加しました！","success");
+  await loadBoards();
+ }catch(error){
+  console.error("掲示板参加エラー:",error);
+  showStatus("掲示板への参加に失敗しました。\n\n"+(error.message||"不明なエラー"),"error");
+ }finally{button.disabled=false;button.textContent="🚪 参加する"}
+}
+
+async function loadBoards(){
+ const list=document.getElementById("roomList");
+ list.innerHTML='<div class="empty">読み込み中...</div>';
+ try{
+  const {data:memberRows,error:memberError}=await supabaseClient.from("board_room_members").select("board_id").eq("user_id",currentUsername);
+  if(memberError)throw memberError;
+  const memberIds=(memberRows||[]).map(x=>x.board_id);
+  const {data:owned,error:ownedError}=await supabaseClient.from("board_rooms").select("id,name,join_code,created_by,created_at").eq("created_by",currentUsername).order("created_at",{ascending:false});
+  if(ownedError)throw ownedError;
+  const ids=[...new Set([...memberIds,...(owned||[]).map(x=>x.id)])];
+  if(!ids.length){list.innerHTML='<div class="empty">まだ参加している掲示板はありません。</div>';return}
+  const {data:rooms,error}=await supabaseClient.from("board_rooms").select("id,name,join_code,created_by,created_at").in("id",ids).order("created_at",{ascending:false});
+  if(error)throw error;
+  list.innerHTML="";
+  (rooms||[]).forEach(room=>{
+   const isOwner=room.created_by===currentUsername;
+   const card=document.createElement("div");
+   card.className="room-card";
+   card.innerHTML=`<div class="room-top"><div class="room-name">${escapeHtml(room.name)}</div><div class="role ${isOwner?"owner":"member"}">${isOwner?"👑 管理者":"👤 メンバー"}</div></div><div class="room-code">参加番号：<strong>${escapeHtml(room.join_code)}</strong></div>`;
+   const button=document.createElement("button");
+   button.className="open-button";button.type="button";button.textContent="💬 掲示板を開く";
+   button.onclick=()=>location.href="board-number-chat.html?board="+encodeURIComponent(room.id);
+   card.appendChild(button);list.appendChild(card);
+  });
+ }catch(error){
+  console.error("掲示板一覧取得エラー:",error);
+  list.innerHTML='<div class="empty">掲示板一覧の読み込みに失敗しました。<br><br>'+escapeHtml(error.message||"不明なエラー")+'</div>';
+ }
+}
+
+async function initialize(){
+ try{
+  const {data,error}=await supabaseClient.auth.getSession();
+  if(error)throw error;
+  const session=data.session;
+  if(!session){alert("ログインしてください。");location.href="index.html";return}
+  currentUsername=session.user.user_metadata?.username||"";
+  if(!currentUsername){alert("ユーザー情報を取得できませんでした。");location.href="index.html";return}
+  if(typeof checkFriendChatBan==="function" && await checkFriendChatBan())return;
+  await loadBoards();
+ }catch(error){
+  console.error("初期化エラー:",error);
+  showStatus("読み込みに失敗しました。\n\n"+(error.message||"不明なエラー"),"error");
+ }
+}
+
+document.getElementById("createButton").addEventListener("click",createBoard);
+document.getElementById("joinButton").addEventListener("click",joinBoard);
+document.getElementById("backButton").addEventListener("click",()=>{location.href="home.html"});
+document.getElementById("joinCode").addEventListener("keydown",e=>{if(e.key==="Enter")joinBoard()});
+document.getElementById("roomName").addEventListener("keydown",e=>{if(e.key==="Enter")createBoard()});
+document.getElementById("joinCode").addEventListener("input",e=>{e.target.value=e.target.value.replace(/\D/g,"").slice(0,6)});
+initialize();
 </script>
-
 </body>
 </html>
