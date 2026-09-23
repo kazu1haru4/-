@@ -61,6 +61,10 @@ h1{text-align:center;margin:0 0 20px;font-size:27px;color:#7158cf}
 .item-icon{position:relative;width:54px;height:54px;margin:0 auto 6px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:29px;background:#fff}
 .item-name{font-size:11px;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .equip-button{width:100%;border:none;border-radius:9px;padding:6px 3px;background:#7658d9;color:white;font-size:11px;font-weight:bold;cursor:pointer}.equip-button.equipped{background:#bbb}
+.item-preview{position:relative;width:54px;height:54px;margin:0 auto 6px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:#fff;overflow:hidden}
+.name-item-preview{font-size:17px;font-weight:900;white-space:nowrap}
+.background-item-preview{font-size:25px;width:54px;height:54px;border-radius:14px;border:2px solid #eee}
+.item-type-label{font-size:9px;color:#888;margin:-2px 0 5px}
 .no-items{color:#999;text-align:center;font-size:13px;padding:10px 0;width:100%}
 .image-button{display:block;width:100%;padding:14px;border:none;border-radius:15px;background:#f0eaff;color:#7158cf;font-size:16px;font-weight:bold;cursor:pointer;text-align:center;margin-bottom:24px}
 #imageInput{display:none}
@@ -70,14 +74,12 @@ input[type=text]:focus,textarea:focus{border-color:#b8a7ef}
 textarea{min-height:120px;resize:vertical}
 .save-button{width:100%;margin-top:25px;border:none;border-radius:16px;padding:15px;background:#7658d9;color:white;font-size:17px;font-weight:bold;cursor:pointer}
 #message{text-align:center;margin-top:15px;min-height:22px;font-size:14px;color:#7658d9}
-<style>
 .item-details{margin-bottom:12px;border-radius:18px;overflow:hidden;background:#faf9ff}
 .item-summary{list-style:none;cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border:2px solid #e8e3ff;border-radius:18px;background:linear-gradient(135deg,#f8f5ff,#fff4fb);font-size:16px;font-weight:bold}
 .item-summary::-webkit-details-marker{display:none}
 .item-arrow{font-size:17px;transition:transform .2s ease}
 .item-details[open] .item-arrow{transform:rotate(180deg)}
 .item-content{padding:12px 10px 10px}
-</style>
 </style>
 </head>
 <body>
@@ -198,6 +200,24 @@ async function loadItems(){
 function itemKey(row){return row?.coin_items?.item_key||row?.item_key||""}
 function getItem(key){return ownedItems.find(x=>(x.item_key||"")===key)||ADMIN_ITEMS[key]||null}
 
+function normalizeItemType(item){
+ const key=String(item?.item_key||"");
+ if(item?.item_type==="frame"||item?.item_type==="name_decoration"||item?.item_type==="background")return item.item_type;
+ if(key.startsWith("nd_")||key==="admin_name")return "name_decoration";
+ if(key.startsWith("bg_")||key==="admin_bg")return "background";
+ return "frame";
+}
+
+function getFrameClass(key){
+ return {sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",heart:"frame-heart",rainbow:"frame-rainbow",flame:"frame-flame",sea:"frame-sea",neon:"frame-neon",space:"frame-space",admin:"admin-frame"}[key]||"";
+}
+function getNameClass(key){
+ return {nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",nd_neon:"name-decoration-neon",admin_name:"name-decoration-admin"}[key]||"";
+}
+function getBackgroundClass(key){
+ return {bg_sakura:"background-sakura",bg_star:"background-star",bg_diamond:"background-diamond",bg_heart:"background-heart",bg_rainbow:"background-rainbow",bg_flame:"background-flame",bg_sea:"background-sea",bg_space:"background-space",bg_neon:"background-neon",admin_bg:"background-admin"}[key]||"";
+}
+
 function renderItems(){
  const groups={
   frame:document.getElementById("frameItems"),
@@ -211,30 +231,39 @@ function renderItems(){
   background:currentProfile?.equipped_background_key||""
  };
 
- for(const item of ownedItems){
-  const key=item.item_key;
-  const type=item.item_type||"frame";
+ for(const raw of ownedItems){
+  const item={...raw};
+  const key=String(item.item_key||"");
+  const type=normalizeItemType(item);
   if(!groups[type]||(!isAdmin()&&["admin","admin_name","admin_bg"].includes(key)))continue;
   const isEquipped=equipped[type]===key;
   const card=document.createElement("div");
   card.className="item-card"+(key.startsWith("admin")?" admin-item":"");
-  let iconStyle=`border:4px solid ${escapeHtml(item.frame_color||"#ffd9ec")};`;
+
+  let preview="";
+  let typeLabel="";
   if(type==="frame"){
-   const cls={sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",heart:"frame-heart",rainbow:"frame-rainbow",flame:"frame-flame",sea:"frame-sea",neon:"frame-neon",space:"frame-space",admin:"admin-frame"}[key];
-   if(cls)iconStyle="";
-   card.innerHTML=`
-   <div class="item-icon ${cls||""}" style="${iconStyle}">${escapeHtml(item.icon||"🎁")}</div>
-   <div class="item-name">${escapeHtml(item.name||key)}</div>
-   <button class="equip-button ${isEquipped?"equipped":""}" data-type="${type}" data-key="${escapeHtml(key)}">${isEquipped?"装備中":"装備する"}</button>`;
+   const cls=getFrameClass(key);
+   typeLabel="フレーム";
+   preview=`<div class="item-preview ${cls}" style="${cls?"":`border:4px solid ${escapeHtml(item.frame_color||"#ffd9ec")};`}">${escapeHtml(item.icon||"🎁")}</div>`;
+  }else if(type==="name_decoration"){
+   const cls=getNameClass(key);
+   typeLabel="名前装飾";
+   preview=`<div class="item-preview name-item-preview ${cls}">名前${key==="admin_name"?" 👑":""}</div>`;
   }else{
-   card.innerHTML=`
-   <div class="item-icon" style="${iconStyle}">${escapeHtml(item.icon||"🎁")}</div>
+   const cls=getBackgroundClass(key);
+   typeLabel="プロフィール背景";
+   preview=`<div class="item-preview background-item-preview ${cls}">${escapeHtml(item.icon||"🎨")}</div>`;
+  }
+
+  card.innerHTML=`
+   ${preview}
+   <div class="item-type-label">${typeLabel}</div>
    <div class="item-name">${escapeHtml(item.name||key)}</div>
    <button class="equip-button ${isEquipped?"equipped":""}" data-type="${type}" data-key="${escapeHtml(key)}">${isEquipped?"装備中":"装備する"}</button>`;
-  }
   groups[type].appendChild(card);
  }
- for(const [type,el] of Object.entries(groups)){
+ for(const el of Object.values(groups)){
   if(!el.children.length)el.innerHTML='<div class="no-items">まだこの種類のアイテムはありません</div>';
  }
  document.querySelectorAll(".equip-button").forEach(btn=>btn.addEventListener("click",()=>equipItem(btn.dataset.type,btn.dataset.key)));
@@ -261,27 +290,34 @@ async function equipItem(type,key){
 function updatePreview(){
  const frame=document.getElementById("avatarFrame"),badge=document.getElementById("equippedBadge");
  frame.className="avatar-frame";frame.style.background="";frame.style.boxShadow="";frame.style.animation="";
- badge.className="equipped-badge";badge.textContent="";
+ badge.className="equipped-badge";badge.textContent="";badge.style.border="";
+
  const frameKey=currentProfile?.equipped_item_key;
  const frameItem=getItem(frameKey);
  if(frameItem){
-  const cls={sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",heart:"frame-heart",rainbow:"frame-rainbow",flame:"frame-flame",sea:"frame-sea",neon:"frame-neon",space:"frame-space",admin:"admin-frame"}[frameKey];
+  const cls=getFrameClass(frameKey);
   if(cls)frame.classList.add(cls);
   else if(frameItem.frame_color){frame.style.background=frameItem.frame_color;frame.style.boxShadow=`0 0 0 3px white,0 0 15px ${frameItem.frame_color}`;}
   badge.textContent=frameItem.icon||"🎁";badge.classList.add("show");
-  if(frameKey==="admin"){badge.style.border="3px solid #ffd700";badge.textContent="👑"}
+  if(frameKey==="admin"){badge.style.border="3px solid #ffd700";badge.textContent="👑";}
  }
+
  const name=document.getElementById("name").value.trim()||"名前";
  const nameEl=document.getElementById("namePreview");
  const nameKey=currentProfile?.equipped_name_decoration_key;
- const nameClass={nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",nd_neon:"name-decoration-neon",admin_name:"name-decoration-admin"}[nameKey]||"";
+ const nameClass=getNameClass(nameKey);
  nameEl.className="name-preview "+nameClass;
  nameEl.innerHTML=escapeHtml(name)+(nameKey==="admin_name"?'<span class="admin-name-badge">👑</span>':"");
+
  const bgKey=currentProfile?.equipped_background_key;
  document.body.className="";
- document.getElementById("profileContainer").className="container";
- const bgClass={bg_sakura:"background-sakura",bg_star:"background-star",bg_diamond:"background-diamond",bg_heart:"background-heart",bg_rainbow:"background-rainbow",bg_flame:"background-flame",bg_sea:"background-sea",bg_space:"background-space",bg_neon:"background-neon",admin_bg:"background-admin"}[bgKey];
- if(bgClass){document.body.classList.add(bgClass);document.getElementById("profileContainer").classList.add(bgClass)}
+ const container=document.getElementById("profileContainer");
+ container.className="container";
+ const bgClass=getBackgroundClass(bgKey);
+ if(bgClass){
+  document.body.classList.add(bgClass);
+  container.classList.add(bgClass);
+ }
 }
 
 document.getElementById("name").addEventListener("input",updatePreview);
