@@ -168,6 +168,46 @@ header h1 {
   word-break: break-all;
 }
 
+.user-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.detail-item {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f7f8fc;
+}
+
+.detail-label {
+  color: #777;
+  font-size: 12px;
+  margin-bottom: 3px;
+}
+
+.detail-value {
+  font-weight: bold;
+  word-break: break-word;
+}
+
+.detail-avatar {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  margin: 0 auto 14px;
+  background: #eee;
+}
+
+@media(max-width:600px) {
+  .user-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .banned {
   color: #e53935;
   font-weight: bold;
@@ -579,6 +619,32 @@ textarea {
 </div>
 </div>
 
+<div id="coinModal" class="modal hidden">
+<div class="modal-box">
+<h3>🪙 コイン変更</h3>
+<p id="coinTarget"></p>
+<div id="coinCurrent" class="frame-status">🔄 読み込み中...</div>
+<div class="form-row">
+<label>新しいコイン残高</label>
+<input id="coinNewBalance" type="number" min="0" step="1" value="0">
+</div>
+<div class="actions">
+<button id="confirmCoinButton" class="coin" type="button">🪙 変更する</button>
+<button id="cancelCoinButton" class="gray" type="button">キャンセル</button>
+</div>
+</div>
+</div>
+
+<div id="userDetailModal" class="modal hidden">
+<div class="modal-box">
+<h3>👤 ユーザー詳細</h3>
+<div id="userDetailContent">読み込み中...</div>
+<div class="actions">
+<button id="closeUserDetailButton" class="gray" type="button">閉じる</button>
+</div>
+</div>
+</div>
+
 <div id="editModal" class="modal hidden">
 <div class="modal-box">
 <h3>✏️ 掲示板メッセージを編集</h3>
@@ -836,6 +902,7 @@ async function loadUsers() {
       </div>
 
       <div class="actions">
+        <button class="small" data-detail="${escapeAttribute(username)}" type="button">👤 詳細</button>
         <button class="coin small" data-coin="${escapeAttribute(username)}" type="button">🪙 コイン変更</button>
         ${
           isAdmin
@@ -871,6 +938,12 @@ async function loadUsers() {
     list.appendChild(card);
   });
 
+  list.querySelectorAll("[data-detail]").forEach(button => {
+    button.addEventListener("click", () => {
+      openUserDetail(button.dataset.detail);
+    });
+  });
+
   list.querySelectorAll("[data-ban]").forEach(button => {
     button.addEventListener("click", () => {
       openBanModal(button.dataset.ban);
@@ -894,6 +967,63 @@ async function loadUsers() {
       deleteUserAccount(button.dataset.deleteUser);
     });
   });
+}
+
+async function openUserDetail(username) {
+  if (!username) return;
+
+  const modal = document.getElementById("userDetailModal");
+  const content = document.getElementById("userDetailContent");
+  content.innerHTML = "🔄 ユーザー詳細を読み込んでいます...";
+  modal.classList.remove("hidden");
+
+  try {
+    const [{ data: profile, error: profileError },
+           { data: ban, error: banError },
+           { data: coin, error: coinError }] = await Promise.all([
+      supabaseClient.from("profiles")
+        .select("user_id,name,avatar_url,created_at,equipped_item_key,equipped_name_decoration_key,equipped_background_key")
+        .eq("user_id", username).maybeSingle(),
+      supabaseClient.from("user_bans")
+        .select("user_id,reason,banned_at,expires_at,banned_by")
+        .eq("user_id", username).maybeSingle(),
+      supabaseClient.rpc("admin_get_user_coins", { target_username: username })
+    ]);
+
+    if (profileError) throw profileError;
+    if (banError) throw banError;
+    if (coinError) throw coinError;
+
+    const isAdmin = ADMIN_USERNAMES.has(username);
+    const avatar = profile?.avatar_url || "https://via.placeholder.com/100";
+    const coinText = Number(coin || 0).toLocaleString("ja-JP") + " COIN";
+    const banText = ban
+      ? (ban.expires_at ? `BAN中（${formatDate(ban.expires_at)}まで）` : "BAN中（無期限）")
+      : "BANされていません";
+
+    content.innerHTML = `
+      <img class="detail-avatar" src="${escapeAttribute(avatar)}" alt="">
+      <div style="text-align:center;font-size:20px;font-weight:bold;margin-bottom:4px;">${escapeHtml(profile?.name || username)}</div>
+      ${isAdmin ? '<div style="text-align:center;color:#8f6b00;font-weight:bold;margin-bottom:12px;">👑 管理者</div>' : ''}
+      <div class="user-detail-grid">
+        <div class="detail-item"><div class="detail-label">ユーザーID</div><div class="detail-value">${escapeHtml(username)}</div></div>
+        <div class="detail-item"><div class="detail-label">コイン</div><div class="detail-value">🪙 ${coinText}</div></div>
+        <div class="detail-item"><div class="detail-label">登録日時</div><div class="detail-value">${escapeHtml(formatDate(profile?.created_at) || "不明")}</div></div>
+        <div class="detail-item"><div class="detail-label">アカウント状態</div><div class="detail-value">${escapeHtml(banText)}</div></div>
+        <div class="detail-item"><div class="detail-label">装備フレーム</div><div class="detail-value">${escapeHtml(profile?.equipped_item_key || "なし")}</div></div>
+        <div class="detail-item"><div class="detail-label">名前装飾</div><div class="detail-value">${escapeHtml(profile?.equipped_name_decoration_key || "なし")}</div></div>
+        <div class="detail-item"><div class="detail-label">背景</div><div class="detail-value">${escapeHtml(profile?.equipped_background_key || "なし")}</div></div>
+        <div class="detail-item"><div class="detail-label">BAN理由</div><div class="detail-value">${escapeHtml(ban?.reason || "なし")}</div></div>
+      </div>
+      ${ban ? `<div style="margin-top:10px;color:#777;font-size:13px;">BAN実施者：${escapeHtml(ban.banned_by || "不明")} / 実施日時：${escapeHtml(formatDate(ban.banned_at) || "不明")}</div>` : ""}
+    `;
+  } catch (error) {
+    content.innerHTML = `<div class="status error">❌ 詳細の取得に失敗しました。<br>${escapeHtml(error.message || error)}</div>`;
+  }
+}
+
+function closeUserDetail() {
+  document.getElementById("userDetailModal").classList.add("hidden");
 }
 
 async function deleteUserAccount(username) {
@@ -1830,6 +1960,15 @@ function setupButtons() {
   document.getElementById("cancelBanButton")
     .addEventListener("click", closeBanModal);
 
+  document.getElementById("confirmCoinButton")
+    .addEventListener("click", saveUserCoins);
+
+  document.getElementById("cancelCoinButton")
+    .addEventListener("click", closeCoinModal);
+
+  document.getElementById("closeUserDetailButton")
+    .addEventListener("click", closeUserDetail);
+
   document.getElementById("saveEditButton")
     .addEventListener("click", saveBoardEdit);
 
@@ -1850,6 +1989,16 @@ function setupButtons() {
       ) {
         closeBanModal();
       }
+    });
+
+  document.getElementById("coinModal")
+    .addEventListener("click", event => {
+      if (event.target === document.getElementById("coinModal")) closeCoinModal();
+    });
+
+  document.getElementById("userDetailModal")
+    .addEventListener("click", event => {
+      if (event.target === document.getElementById("userDetailModal")) closeUserDetail();
     });
 
   document.getElementById("editModal")
