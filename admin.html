@@ -551,6 +551,30 @@ textarea {
 
 </div>
 
+
+<div id="coinModal" class="modal hidden">
+<div class="modal-box">
+<h3>🪙 コインを変更</h3>
+
+<p id="coinTarget"></p>
+
+<div id="coinCurrent" class="frame-status">
+🔄 現在の残高を読み込んでいます...
+</div>
+
+<div class="form-row" style="margin-top:12px;">
+<label>新しいコイン残高</label>
+<input id="coinNewBalance" type="number" min="0" step="1" value="0">
+<div class="hint">0以上の整数を入力してください。</div>
+</div>
+
+<div class="actions">
+<button id="confirmCoinButton" type="button">🪙 変更する</button>
+<button id="cancelCoinButton" class="gray" type="button">キャンセル</button>
+</div>
+</div>
+</div>
+
 <div id="banModal" class="modal hidden">
 <div class="modal-box">
 <h3>🚫 ユーザーをBAN</h3>
@@ -1733,6 +1757,19 @@ async function deleteEvent(id) {
 }
 
 function setupButtons() {
+  document.getElementById("confirmCoinButton")
+    .addEventListener("click", saveUserCoins);
+
+  document.getElementById("cancelCoinButton")
+    .addEventListener("click", closeCoinModal);
+
+  document.getElementById("coinModal")
+    .addEventListener("click", event => {
+      if (event.target === document.getElementById("coinModal")) {
+        closeCoinModal();
+      }
+    });
+
   document.getElementById("confirmBanButton")
     .addEventListener("click", banUser);
 
