@@ -196,7 +196,7 @@ async function editMessage(id,currentContent){
  if(value===null)return;
  const text=value.trim();
  if(!text)return;
- const {error}=await db.from("messages").update({content:text}).eq("id",id).eq("sender_id",currentUsername);
+ const {error}=await db.from("messages").update({content:text,is_edited:true}).eq("id",id).eq("sender_id",currentUsername);
  if(error){alert("メッセージの編集に失敗しました。\n\n"+error.message);return}
  await loadMessages();
 }
@@ -301,7 +301,19 @@ function createMessageElement(message,imageUrl,extras={replies:[],reactions:[]})
   });
   bubble.appendChild(reactions);
  }
- const time=document.createElement("div");time.className="time";time.textContent=new Date(message.created_at).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});bubble.appendChild(time);box.appendChild(bubble);
+ const time=document.createElement("div");
+time.className="time";
+time.textContent=new Date(message.created_at).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
+if(message.is_edited){
+  const edited=document.createElement("span");
+  edited.textContent=" 編集済み";
+  edited.style.marginLeft="5px";
+  edited.style.fontSize="10px";
+  edited.style.color=message.sender_id===currentUsername?"#eee":"#999";
+  time.appendChild(edited);
+}
+bubble.appendChild(time);
+box.appendChild(bubble);
  if(mine&&!message.is_deleted&&readMessageIds.has(message.id)){const r=document.createElement("div");r.className="read-status";r.textContent="既読";box.appendChild(r)}
 
  if(!message.is_deleted){
@@ -388,8 +400,8 @@ async function loadMessages(){
  if(!currentUsername||!friendId){messagesElement.innerHTML='<div class="empty">ユーザー情報を取得できませんでした</div>';return}
  messagesElement.innerHTML='<div class="empty">メッセージを読み込み中...</div>';
  const [a,b]=await Promise.all([
-  db.from("messages").select("id,sender_id,receiver_id,content,image_url,created_at,is_deleted").eq("sender_id",currentUsername).eq("receiver_id",friendId),
-  db.from("messages").select("id,sender_id,receiver_id,content,image_url,created_at,is_deleted").eq("sender_id",friendId).eq("receiver_id",currentUsername)
+  db.from("messages").select("id,sender_id,receiver_id,content,image_url,created_at,is_deleted,is_edited").eq("sender_id",currentUsername).eq("receiver_id",friendId),
+  db.from("messages").select("id,sender_id,receiver_id,content,image_url,created_at,is_deleted,is_edited").eq("sender_id",friendId).eq("receiver_id",currentUsername)
  ]);
  if(a.error||b.error){console.error(a.error||b.error);messagesElement.innerHTML='<div class="empty">メッセージを読み込めませんでした</div>';return}
  const messages=[...(a.data||[]),...(b.data||[])].sort((x,y)=>new Date(x.created_at)-new Date(y.created_at));
@@ -426,7 +438,7 @@ messageForm.onsubmit=async e=>{
  e.preventDefault();const text=messageInput.value.trim();if(!text||!currentUsername||!friendId)return;
  if(replyTarget){sendButton.disabled=true;const ok=await sendReply(text);sendButton.disabled=false;if(ok)messageInput.value="";return}
  sendButton.disabled=true;
- const {data,error}=await db.from("messages").insert({sender_id:currentUsername,receiver_id:friendId,content:text,image_url:"",is_deleted:false}).select().single();
+ const {data,error}=await db.from("messages").insert({sender_id:currentUsername,receiver_id:friendId,content:text,image_url:"",is_deleted:false,is_edited:false}).select().single();
  sendButton.disabled=false;
  if(error){alert("メッセージを送信できませんでした。\n\n"+error.message);return}
  messageInput.value="";messagesElement.appendChild(createMessageElement(data,""));scrollToBottom();updateLatestButton();await createNotification(text);await sendPushToUser(friendId,"💬 "+currentUsername+"さんからメッセージ",currentUsername+"さん: "+text,"./chat.html?user="+encodeURIComponent(currentUsername));
@@ -440,7 +452,7 @@ imageInput.onchange=async()=>{
  try{
   const ext=file.name.split(".").pop()||"jpg",path=currentUsername+"/"+Date.now()+"_"+Math.random().toString(36).slice(2)+"."+ext;
   const up=await db.storage.from("chat-images").upload(path,file,{contentType:file.type,upsert:false});if(up.error)throw up.error;
-  const {data,error}=await db.from("messages").insert({sender_id:currentUsername,receiver_id:friendId,content:"",image_url:path,is_deleted:false}).select().single();if(error)throw error;
+  const {data,error}=await db.from("messages").insert({sender_id:currentUsername,receiver_id:friendId,content:"",image_url:path,is_deleted:false,is_edited:false}).select().single();if(error)throw error;
   const {data:signed}=await db.storage.from("chat-images").createSignedUrl(path,3600);messagesElement.appendChild(createMessageElement(data,signed?.signedUrl||""));scrollToBottom();updateLatestButton();await createNotification("🖼️ 画像を送信しました");await sendPushToUser(friendId,"💬 "+currentUsername+"さんからメッセージ","🖼️ "+currentUsername+"さんが画像を送信しました","./chat.html?user="+encodeURIComponent(currentUsername));
  }catch(e){console.error(e);alert("画像を送信できませんでした。\n\n"+e.message)}
  finally{imageButton.disabled=false;sendButton.disabled=false;imageInput.value=""}
