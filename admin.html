@@ -168,6 +168,17 @@ header h1 {
   word-break: break-all;
 }
 
+.user-coins {
+  margin-top: 5px;
+  color: #8f6b00;
+  font-size: 14px;
+  font-weight: 800;
+}
+.user-coins-error {
+  color: #d9534f;
+  font-weight: 600;
+}
+
 .banned {
   color: #e53935;
   font-weight: bold;
@@ -742,23 +753,45 @@ async function loadUsers() {
   }
 
   const banMap = new Map();
-
-  (bans || []).forEach(ban => {
-    banMap.set(ban.user_id, ban);
-  });
+  (bans || []).forEach(ban => banMap.set(ban.user_id, ban));
 
   loading.classList.add("hidden");
 
   if (!profiles?.length) {
-    list.innerHTML =
-      `<div class="empty">ユーザーがいません。</div>`;
+    list.innerHTML = `<div class="empty">ユーザーがいません。</div>`;
     return;
   }
+
+  // 管理者専用RPCで各ユーザーの現在のコイン残高を取得
+  const coinResults = await Promise.all(
+    profiles.map(async profile => {
+      const username = profile.user_id || "";
+      try {
+        const { data, error } = await supabaseClient.rpc(
+          "admin_get_user_coins",
+          { target_username: username }
+        );
+
+        if (error) {
+          console.error("コイン残高取得エラー:", username, error);
+          return [username, null];
+        }
+
+        return [username, Number(data || 0)];
+      } catch (error) {
+        console.error("コイン残高取得エラー:", username, error);
+        return [username, null];
+      }
+    })
+  );
+
+  const coinMap = new Map(coinResults);
 
   profiles.forEach(profile => {
     const username = profile.user_id || "";
     const isAdmin = ADMIN_USERNAMES.has(username);
     const ban = banMap.get(username);
+    const coinBalance = coinMap.get(username);
 
     const card = document.createElement("div");
     card.className = "user-card";
@@ -766,6 +799,11 @@ async function loadUsers() {
     const avatar =
       profile.avatar_url ||
       "https://via.placeholder.com/100";
+
+    const coinHtml =
+      coinBalance === null || coinBalance === undefined
+      ? `<div class="user-coins user-coins-error">🪙 残高：取得できません</div>`
+      : `<div class="user-coins">🪙 残高：${coinBalance.toLocaleString("ja-JP")} COIN</div>`;
 
     card.innerHTML = `
       <img class="avatar" src="${escapeAttribute(avatar)}" alt="">
@@ -779,9 +817,11 @@ async function loadUsers() {
           ID：${escapeHtml(username)}
         </div>
 
+        ${coinHtml}
+
         ${
           isAdmin
-          ? `<div style="color:#8f6b00;font-weight:bold;font-size:13px;">👑 管理者</div>`
+          ? `<div style="color:#8f6b00;font-weight:bold;font-size:13px;margin-top:3px;">👑 管理者</div>`
           : ""
         }
 
