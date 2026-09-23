@@ -789,9 +789,23 @@
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", function() {
-        navigator.serviceWorker.register("./service-worker.js")
-          .then(function() {
+        navigator.serviceWorker.register("./service-worker.js", {
+          updateViaCache: "none"
+        })
+          .then(function(registration) {
             console.log("Friend Chat PWA 起動");
+
+            // GitHub Pagesで更新されたService Workerを毎回確認
+            registration.update().catch(function(error) {
+              console.warn("PWA更新確認エラー:", error);
+            });
+
+            // アプリを開いている間も更新確認
+            setInterval(function() {
+              registration.update().catch(function(error) {
+                console.warn("PWA定期更新確認エラー:", error);
+              });
+            }, 60 * 60 * 1000);
           })
           .catch(function(error) {
             console.error("PWA登録エラー:", error);
