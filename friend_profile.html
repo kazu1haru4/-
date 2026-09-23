@@ -17,6 +17,16 @@
     .avatar-placeholder{width:100%;height:100%;aspect-ratio:1/1;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:55px;color:#aaa}
     .equipped-badge{position:absolute;right:-7px;top:-7px;width:48px;height:48px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:27px;box-shadow:0 4px 12px rgba(0,0,0,.15);border:3px solid #eee;z-index:2}
     .name{font-size:24px;font-weight:bold;color:#444;margin-top:8px;word-break:break-word}
+    .name-decoration-sakura{color:#ff4f9b;text-shadow:0 2px 8px rgba(255,80,160,.3)}
+    .name-decoration-star{color:#d79a00;text-shadow:0 2px 8px rgba(244,191,63,.45)}
+    .name-decoration-diamond{color:#159ed6;text-shadow:0 2px 8px rgba(66,185,238,.45)}
+    .name-decoration-heart{color:#ff3d7e;text-shadow:0 2px 8px rgba(255,79,129,.4)}
+    .name-decoration-rainbow{background:linear-gradient(90deg,#ff4d4d,#ffb84d,#5cff8d,#4ddcff,#7b6cff,#ff4dd8);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .name-decoration-flame{color:#ff5b00;text-shadow:0 2px 10px rgba(255,90,0,.5)}
+    .name-decoration-sea{color:#0077ff;text-shadow:0 2px 8px rgba(0,150,255,.4)}
+    .name-decoration-space{color:#8c63ff;text-shadow:0 0 10px rgba(110,60,255,.65)}
+    .name-decoration-neon{color:#00cfcf;text-shadow:0 0 7px #00ff88,0 0 14px #00e5ff,0 0 20px #ff00d4}
+    .name-decoration-admin{color:#d49b00;text-shadow:0 0 8px rgba(255,215,0,.8),0 0 18px rgba(255,215,0,.45)}
     .user-id{margin-top:6px;color:#999;font-size:14px;word-break:break-word}
     .bio-box{margin-top:22px;padding:18px;border-radius:16px;background:#fafafa;text-align:left}
     .bio-title{font-weight:bold;color:#777;margin-bottom:8px}
@@ -139,7 +149,7 @@ async function loadProfile(){
   const isOwnProfile=currentUsername===friendUsername;
 
   const {data,error}=await db.from("profiles")
-    .select("user_id,name,bio,avatar_url,equipped_item_key")
+    .select("user_id,name,bio,avatar_url,equipped_item_key,equipped_name_decoration_key,equipped_background_key")
     .eq("user_id",friendUsername).maybeSingle();
 
   if(error){console.error(error);throw new Error("プロフィールを読み込めませんでした。")}
@@ -151,8 +161,31 @@ async function loadProfile(){
   const avatarContent=document.getElementById("avatarContent");
 
   frame.className="avatar-frame";
-  frame.style.background=item?.frame_color||"#ffdff0";
-  frame.style.borderColor=item?.frame_color||"#ffd0e7";
+  frame.style.background="";
+  frame.style.borderColor="#ffd0e7";
+  frame.style.boxShadow="";
+
+  const frameClasses={
+    sakura:"frame-sakura",
+    star:"frame-star",
+    diamond:"frame-diamond",
+    heart:"frame-heart",
+    rainbow:"frame-rainbow",
+    flame:"frame-flame",
+    sea:"frame-sea",
+    neon:"frame-neon",
+    space:"frame-space",
+    admin:"admin-frame"
+  };
+
+  const frameClass=frameClasses[data.equipped_item_key]||"";
+  if(frameClass){
+    frame.classList.add(frameClass);
+  }else if(item?.frame_color){
+    frame.style.background=item.frame_color;
+    frame.style.borderColor=item.frame_color;
+    frame.style.boxShadow=`0 0 0 3px white,0 0 15px ${item.frame_color}`;
+  }
 
   badge.style.display="none";
   badge.className="equipped-badge";
@@ -163,13 +196,51 @@ async function loadProfile(){
     badge.style.display="flex";
   }
 
+  // プロフィール背景
+  const backgroundClasses={
+    bg_sakura:"background-sakura",
+    bg_star:"background-star",
+    bg_diamond:"background-diamond",
+    bg_heart:"background-heart",
+    bg_rainbow:"background-rainbow",
+    bg_flame:"background-flame",
+    bg_sea:"background-sea",
+    bg_space:"background-space",
+    bg_neon:"background-neon",
+    admin_bg:"background-admin"
+  };
+
+  document.body.className="";
+  const bgClass=backgroundClasses[data.equipped_background_key]||"";
+  if(bgClass)document.body.classList.add(bgClass);
+
+  // 名前装飾
+  const nameClasses={
+    nd_sakura:"name-decoration-sakura",
+    nd_star:"name-decoration-star",
+    nd_diamond:"name-decoration-diamond",
+    nd_heart:"name-decoration-heart",
+    nd_rainbow:"name-decoration-rainbow",
+    nd_flame:"name-decoration-flame",
+    nd_sea:"name-decoration-sea",
+    nd_space:"name-decoration-space",
+    nd_neon:"name-decoration-neon",
+    admin_name:"name-decoration-admin"
+  };
+
   if(data.avatar_url){
     avatarContent.innerHTML=`<img class="avatar" src="${escapeHtml(data.avatar_url)}" alt="プロフィール画像">`;
   }else{
     avatarContent.innerHTML=`<div class="avatar-placeholder">👤</div>`;
   }
 
-  document.getElementById("name").textContent=data.name||data.user_id;
+  const nameEl=document.getElementById("name");
+  const nameClass=nameClasses[data.equipped_name_decoration_key]||"";
+  nameEl.className="name "+nameClass;
+  nameEl.textContent=data.name||data.user_id;
+  if(data.equipped_name_decoration_key==="admin_name"){
+    nameEl.textContent=(data.name||data.user_id)+" 👑";
+  }
   document.getElementById("userId").textContent="@"+data.user_id;
 
   const bio=document.getElementById("bio");
