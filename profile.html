@@ -53,8 +53,6 @@ h1{text-align:center;margin:0 0 20px;font-size:27px;color:#7158cf}
 .background-neon{background:linear-gradient(135deg,#c8ffe7,#b9ffff,#ffd0f8,#d9c8ff)!important}
 .background-admin{background:radial-gradient(circle at 20% 20%,rgba(255,255,255,.8) 0 5px,transparent 6px),linear-gradient(135deg,#fff9cf,#ffd700,#fff2a1,#fffbe1)!important}
 .items-section{margin-bottom:25px}
-.category{margin-bottom:15px;border-radius:18px;background:#faf9ff;padding:12px}
-.category-title{font-weight:bold;font-size:15px;margin:2px 4px 10px}
 .items{display:flex;gap:10px;flex-wrap:wrap}
 .item-card{width:calc(50% - 5px);min-height:125px;border-radius:16px;background:white;border:2px solid #eee;padding:9px;text-align:center}
 .item-card.admin-item{border-color:#ffd700;background:linear-gradient(135deg,#fffdf0,#fff8cf);box-shadow:0 3px 12px rgba(255,215,0,.2)}
@@ -73,12 +71,13 @@ input[type=text],textarea{width:100%;border:2px solid #eee;border-radius:14px;pa
 input[type=text]:focus,textarea:focus{border-color:#b8a7ef}
 textarea{min-height:120px;resize:vertical}
 .save-button{width:100%;margin-top:25px;border:none;border-radius:16px;padding:15px;background:#7658d9;color:white;font-size:17px;font-weight:bold;cursor:pointer}
-#message{text-align:center;margin-top:15px;min-height:22px;font-size:14px;color:#7658d9}
+.save-button:disabled{opacity:.65;cursor:wait}
+#message{text-align:center;margin-top:15px;min-height:22px;font-size:14px;white-space:pre-line;color:#7658d9}
 .item-details{margin-bottom:12px;border-radius:18px;overflow:hidden;background:#faf9ff}
 .item-summary{list-style:none;cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border:2px solid #e8e3ff;border-radius:18px;background:linear-gradient(135deg,#f8f5ff,#fff4fb);font-size:16px;font-weight:bold}
 .item-summary::-webkit-details-marker{display:none}
-.item-arrow{font-size:17px;transition:transform .2s ease}
 .item-details[open] .item-arrow{transform:rotate(180deg)}
+.item-arrow{font-size:17px;transition:transform .2s ease}
 .item-content{padding:12px 10px 10px}
 </style>
 </head>
@@ -98,34 +97,20 @@ textarea{min-height:120px;resize:vertical}
 </div>
 
 <div class="items-section">
-
 <details class="item-details">
-<summary class="item-summary">
-<span>🖼️ フレーム</span><span class="item-arrow">▼</span>
-</summary>
-<div class="item-content">
-<div id="frameItems" class="items"><div class="no-items">読み込み中...</div></div>
-</div>
+<summary class="item-summary"><span>🖼️ フレーム</span><span class="item-arrow">▼</span></summary>
+<div class="item-content"><div id="frameItems" class="items"><div class="no-items">読み込み中...</div></div></div>
 </details>
 
 <details class="item-details">
-<summary class="item-summary">
-<span>✨ 名前装飾</span><span class="item-arrow">▼</span>
-</summary>
-<div class="item-content">
-<div id="nameDecorationItems" class="items"><div class="no-items">読み込み中...</div></div>
-</div>
+<summary class="item-summary"><span>✨ 名前装飾</span><span class="item-arrow">▼</span></summary>
+<div class="item-content"><div id="nameDecorationItems" class="items"><div class="no-items">読み込み中...</div></div></div>
 </details>
 
 <details class="item-details">
-<summary class="item-summary">
-<span>🎨 プロフィール背景</span><span class="item-arrow">▼</span>
-</summary>
-<div class="item-content">
-<div id="backgroundItems" class="items"><div class="no-items">読み込み中...</div></div>
-</div>
+<summary class="item-summary"><span>🎨 プロフィール背景</span><span class="item-arrow">▼</span></summary>
+<div class="item-content"><div id="backgroundItems" class="items"><div class="no-items">読み込み中...</div></div></div>
 </details>
-
 </div>
 
 <label for="imageInput" class="image-button">📷 アイコン画像を選ぶ</label>
@@ -154,51 +139,126 @@ const ADMIN_ITEMS={
 };
 
 let currentUsername="",currentProfile=null,ownedItems=[];
+let selectedAvatarFile=null;
+let saving=false;
 
 function isAdmin(){return ADMIN_USERNAMES.has(currentUsername)}
-function showMessage(text,error=false){const el=document.getElementById("message");el.textContent=text;el.style.color=error?"#e05252":"#7658d9"}
-function escapeHtml(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
+
+function showMessage(text,error=false){
+ const el=document.getElementById("message");
+ el.textContent=text;
+ el.style.color=error?"#e05252":"#7658d9";
+}
+
+function escapeHtml(v){
+ return String(v??"")
+  .replaceAll("&","&amp;")
+  .replaceAll("<","&lt;")
+  .replaceAll(">","&gt;")
+  .replaceAll('"',"&quot;")
+  .replaceAll("'","&#039;");
+}
 
 async function getCurrentUser(){
  if(typeof checkFriendChatBan==="function"&&await checkFriendChatBan())return null;
+
  const {data,error}=await supabaseClient.auth.getUser();
- if(error||!data.user){location.href="index.html";return null}
+
+ if(error||!data.user){
+  location.href="index.html";
+  return null;
+ }
+
  currentUsername=data.user.user_metadata?.username||"";
- if(!currentUsername){showMessage("ユーザー情報を取得できませんでした。",true);return null}
+
+ if(!currentUsername){
+  showMessage("ユーザー情報を取得できませんでした。",true);
+  return null;
+ }
+
  return data.user;
 }
 
 async function loadProfile(){
- const {data,error}=await supabaseClient.from("profiles").select("*").eq("user_id",currentUsername).maybeSingle();
- if(error){console.error(error);showMessage("プロフィールの読み込みに失敗しました。",true);return}
- currentProfile=data||{};
- document.getElementById("name").value=data?.name||"";
- document.getElementById("bio").value=data?.bio||"";
- displayAvatar(data?.avatar_url);
+ const {data,error}=await supabaseClient
+  .from("profiles")
+  .select("*")
+  .eq("user_id",currentUsername)
+  .maybeSingle();
+
+ if(error){
+  console.error("loadProfile:",error);
+  showMessage("プロフィールの読み込みに失敗しました。\n"+error.message,true);
+  return;
+ }
+
+ currentProfile=data||{
+  user_id:currentUsername,
+  name:"",
+  bio:"",
+  avatar_url:null,
+  equipped_item_key:null,
+  equipped_name_decoration_key:null,
+  equipped_background_key:null
+ };
+
+ document.getElementById("name").value=currentProfile.name||"";
+ document.getElementById("bio").value=currentProfile.bio||"";
+
+ displayAvatar(currentProfile.avatar_url);
  updatePreview();
 }
 
 function displayAvatar(url){
- const content=document.getElementById("avatarContent");
- if(url) content.outerHTML=`<img id="avatarContent" class="avatar-image" src="${escapeHtml(url)}" alt="プロフィール画像">`;
- else content.outerHTML=`<div id="avatarContent" class="avatar-placeholder">😊</div>`;
+ const old=document.getElementById("avatarContent");
+ if(!old)return;
+
+ if(url){
+  const img=document.createElement("img");
+  img.id="avatarContent";
+  img.className="avatar-image";
+  img.src=url;
+  img.alt="プロフィール画像";
+  img.onerror=()=>{
+   showMessage("プロフィール画像を表示できませんでした。",true);
+  };
+  old.replaceWith(img);
+ }else{
+  const div=document.createElement("div");
+  div.id="avatarContent";
+  div.className="avatar-placeholder";
+  div.textContent="😊";
+  old.replaceWith(div);
+ }
 }
 
 async function loadItems(){
- const {data,error}=await supabaseClient.from("user_coin_items").select("item_key,coin_items(item_key,name,icon,frame_color,item_type)").eq("user_id",currentUsername);
- if(error){console.error(error);showMessage("アイテムを読み込めませんでした。",true);return}
+ const {data,error}=await supabaseClient
+  .from("user_coin_items")
+  .select("item_key,coin_items(item_key,name,icon,frame_color,item_type)")
+  .eq("user_id",currentUsername);
+
+ if(error){
+  console.error("loadItems:",error);
+  showMessage("アイテムを読み込めませんでした。\n"+error.message,true);
+  return;
+ }
+
  ownedItems=(data||[]).map(row=>row.coin_items||{item_key:row.item_key});
+
  if(isAdmin()){
   for(const key of Object.keys(ADMIN_ITEMS)){
    if(!ownedItems.some(x=>x.item_key===key))ownedItems.push(ADMIN_ITEMS[key]);
   }
  }
+
  renderItems();
  updatePreview();
 }
 
-function itemKey(row){return row?.coin_items?.item_key||row?.item_key||""}
-function getItem(key){return ownedItems.find(x=>(x.item_key||"")===key)||ADMIN_ITEMS[key]||null}
+function getItem(key){
+ return ownedItems.find(x=>(x.item_key||"")===key)||ADMIN_ITEMS[key]||null;
+}
 
 function normalizeItemType(item){
  const key=String(item?.item_key||"");
@@ -209,13 +269,31 @@ function normalizeItemType(item){
 }
 
 function getFrameClass(key){
- return {sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",heart:"frame-heart",rainbow:"frame-rainbow",flame:"frame-flame",sea:"frame-sea",neon:"frame-neon",space:"frame-space",admin:"admin-frame"}[key]||"";
+ return {
+  sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",
+  heart:"frame-heart",rainbow:"frame-rainbow",flame:"frame-flame",
+  sea:"frame-sea",neon:"frame-neon",space:"frame-space",admin:"admin-frame"
+ }[key]||"";
 }
+
 function getNameClass(key){
- return {nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",nd_neon:"name-decoration-neon",admin_name:"name-decoration-admin"}[key]||"";
+ return {
+  nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",
+  nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",
+  nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",
+  nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",
+  nd_neon:"name-decoration-neon",admin_name:"name-decoration-admin"
+ }[key]||"";
 }
+
 function getBackgroundClass(key){
- return {bg_sakura:"background-sakura",bg_star:"background-star",bg_diamond:"background-diamond",bg_heart:"background-heart",bg_rainbow:"background-rainbow",bg_flame:"background-flame",bg_sea:"background-sea",bg_space:"background-space",bg_neon:"background-neon",admin_bg:"background-admin"}[key]||"";
+ return {
+  bg_sakura:"background-sakura",bg_star:"background-star",
+  bg_diamond:"background-diamond",bg_heart:"background-heart",
+  bg_rainbow:"background-rainbow",bg_flame:"background-flame",
+  bg_sea:"background-sea",bg_space:"background-space",
+  bg_neon:"background-neon",admin_bg:"background-admin"
+ }[key]||"";
 }
 
 function renderItems(){
@@ -224,7 +302,9 @@ function renderItems(){
   name_decoration:document.getElementById("nameDecorationItems"),
   background:document.getElementById("backgroundItems")
  };
+
  Object.values(groups).forEach(x=>x.innerHTML="");
+
  const equipped={
   frame:currentProfile?.equipped_item_key||"",
   name_decoration:currentProfile?.equipped_name_decoration_key||"",
@@ -235,13 +315,16 @@ function renderItems(){
   const item={...raw};
   const key=String(item.item_key||"");
   const type=normalizeItemType(item);
+
   if(!groups[type]||(!isAdmin()&&["admin","admin_name","admin_bg"].includes(key)))continue;
+
   const isEquipped=equipped[type]===key;
   const card=document.createElement("div");
   card.className="item-card"+(key.startsWith("admin")?" admin-item":"");
 
   let preview="";
   let typeLabel="";
+
   if(type==="frame"){
    const cls=getFrameClass(key);
    typeLabel="フレーム";
@@ -261,36 +344,58 @@ function renderItems(){
    <div class="item-type-label">${typeLabel}</div>
    <div class="item-name">${escapeHtml(item.name||key)}</div>
    <button class="equip-button ${isEquipped?"equipped":""}" data-type="${type}" data-key="${escapeHtml(key)}">${isEquipped?"装備中":"装備する"}</button>`;
+
   groups[type].appendChild(card);
  }
+
  for(const el of Object.values(groups)){
   if(!el.children.length)el.innerHTML='<div class="no-items">まだこの種類のアイテムはありません</div>';
  }
- document.querySelectorAll(".equip-button").forEach(btn=>btn.addEventListener("click",()=>equipItem(btn.dataset.type,btn.dataset.key)));
+
+ document.querySelectorAll(".equip-button").forEach(btn=>{
+  btn.addEventListener("click",()=>equipItem(btn.dataset.type,btn.dataset.key));
+ });
 }
 
 async function equipItem(type,key){
  try{
   if(typeof checkFriendChatBan==="function"&&await checkFriendChatBan())return;
-  if(["admin","admin_name","admin_bg"].includes(key)&&!isAdmin()){showMessage("管理者専用アイテムです。",true);return}
-  if(!["frame","name_decoration","background"].includes(type)){showMessage("アイテム種類が不正です。",true);return}
-  const item=getItem(key);
-  if(!item){showMessage("このアイテムを所有していません。",true);return}
 
-  const column=type==="frame"?"equipped_item_key":type==="name_decoration"?"equipped_name_decoration_key":"equipped_background_key";
+  if(["admin","admin_name","admin_bg"].includes(key)&&!isAdmin()){
+   showMessage("管理者専用アイテムです。",true);
+   return;
+  }
+
+  if(!["frame","name_decoration","background"].includes(type)){
+   showMessage("アイテム種類が不正です。",true);
+   return;
+  }
+
+  const item=getItem(key);
+  if(!item){
+   showMessage("このアイテムを所有していません。",true);
+   return;
+  }
+
+  const column=
+   type==="frame"
+    ?"equipped_item_key"
+    :type==="name_decoration"
+    ?"equipped_name_decoration_key"
+    :"equipped_background_key";
+
   showMessage("装備しています...");
 
-  // まずDBを更新
   const {data,error}=await supabaseClient
-    .from("profiles")
-    .update({[column]:key})
-    .eq("user_id",currentUsername)
-    .select("user_id")
-    .maybeSingle();
+   .from("profiles")
+   .update({[column]:key})
+   .eq("user_id",currentUsername)
+   .select("*")
+   .maybeSingle();
 
   if(error){
    console.error("equipItem update error:",error);
-   showMessage("装備に失敗しました："+(error.message||"DBエラー"),true);
+   showMessage("装備に失敗しました。\n"+error.message,true);
    return;
   }
 
@@ -299,44 +404,70 @@ async function equipItem(type,key){
    return;
   }
 
-  if(!currentProfile)currentProfile={};
-  currentProfile[column]=key;
+  currentProfile=data;
   renderItems();
   updatePreview();
   showMessage("装備しました！✨");
+
  }catch(e){
   console.error("equipItem exception:",e);
-  showMessage("装備中にエラーが発生しました。",true);
+  showMessage("装備中にエラーが発生しました。\n"+(e.message||e),true);
  }
 }
 
 function updatePreview(){
- const frame=document.getElementById("avatarFrame"),badge=document.getElementById("equippedBadge");
- frame.className="avatar-frame";frame.style.background="";frame.style.boxShadow="";frame.style.animation="";
- badge.className="equipped-badge";badge.textContent="";badge.style.border="";
+ const frame=document.getElementById("avatarFrame");
+ const badge=document.getElementById("equippedBadge");
+
+ frame.className="avatar-frame";
+ frame.style.background="";
+ frame.style.boxShadow="";
+ frame.style.animation="";
+
+ badge.className="equipped-badge";
+ badge.textContent="";
+ badge.style.border="";
 
  const frameKey=currentProfile?.equipped_item_key;
  const frameItem=getItem(frameKey);
+
  if(frameItem){
   const cls=getFrameClass(frameKey);
-  if(cls)frame.classList.add(cls);
-  else if(frameItem.frame_color){frame.style.background=frameItem.frame_color;frame.style.boxShadow=`0 0 0 3px white,0 0 15px ${frameItem.frame_color}`;}
-  badge.textContent=frameItem.icon||"🎁";badge.classList.add("show");
-  if(frameKey==="admin"){badge.style.border="3px solid #ffd700";badge.textContent="👑";}
+
+  if(cls){
+   frame.classList.add(cls);
+  }else if(frameItem.frame_color){
+   frame.style.background=frameItem.frame_color;
+   frame.style.boxShadow=`0 0 0 3px white,0 0 15px ${frameItem.frame_color}`;
+  }
+
+  badge.textContent=frameItem.icon||"🎁";
+  badge.classList.add("show");
+
+  if(frameKey==="admin"){
+   badge.style.border="3px solid #ffd700";
+   badge.textContent="👑";
+  }
  }
 
  const name=document.getElementById("name").value.trim()||"名前";
  const nameEl=document.getElementById("namePreview");
  const nameKey=currentProfile?.equipped_name_decoration_key;
  const nameClass=getNameClass(nameKey);
+
  nameEl.className="name-preview "+nameClass;
- nameEl.innerHTML=escapeHtml(name)+(nameKey==="admin_name"?'<span class="admin-name-badge">👑</span>':"");
+ nameEl.innerHTML=
+  escapeHtml(name)+
+  (nameKey==="admin_name"?'<span class="admin-name-badge">👑</span>':"");
 
  const bgKey=currentProfile?.equipped_background_key;
+
  document.body.className="";
  const container=document.getElementById("profileContainer");
  container.className="container";
+
  const bgClass=getBackgroundClass(bgKey);
+
  if(bgClass){
   document.body.classList.add(bgClass);
   container.classList.add(bgClass);
@@ -347,49 +478,188 @@ document.getElementById("name").addEventListener("input",updatePreview);
 
 document.getElementById("imageInput").addEventListener("change",async function(){
  if(typeof checkFriendChatBan==="function"&&await checkFriendChatBan())return;
- const file=this.files?.[0];if(!file)return;
- if(!file.type.startsWith("image/")){showMessage("画像ファイルを選んでください。",true);return}
- if(file.size>5*1024*1024){showMessage("画像は5MB以下にしてください。",true);return}
- showMessage("画像をアップロードしています...");
- const extension=file.name.split(".").pop().toLowerCase();
- const path=`${currentUsername}/${Date.now()}.${extension}`;
- const {error}=await supabaseClient.storage.from("avatars").upload(path,file,{upsert:true,contentType:file.type});
- if(error){console.error(error);showMessage("画像のアップロードに失敗しました。",true);return}
- const {data}=supabaseClient.storage.from("avatars").getPublicUrl(path);
- displayAvatar(data.publicUrl);
- if(!currentProfile)currentProfile={};
- currentProfile.avatar_url=data.publicUrl;
- showMessage("画像を選びました。最後に「プロフィールを保存」を押してください。");
+
+ const file=this.files?.[0];
+ if(!file)return;
+
+ if(!file.type.startsWith("image/")){
+  showMessage("画像ファイルを選んでください。",true);
+  this.value="";
+  return;
+ }
+
+ if(file.size>5*1024*1024){
+  showMessage("画像は5MB以下にしてください。",true);
+  this.value="";
+  return;
+ }
+
+ selectedAvatarFile=file;
+
+ showMessage("画像を確認しています...");
+
+ try{
+  // 選択時点ではDBへ保存せず、プロフィール保存時にアップロードする
+  const localUrl=URL.createObjectURL(file);
+  displayAvatar(localUrl);
+
+  if(!currentProfile)currentProfile={};
+  currentProfile._avatarFile=file;
+
+  showMessage("画像を選びました。最後に「プロフィールを保存」を押してください。");
+
+ }catch(error){
+  console.error("image preview error:",error);
+  showMessage("画像の読み込みに失敗しました。\n"+(error.message||error),true);
+ }
 });
 
 document.getElementById("saveButton").addEventListener("click",saveProfile);
 
+async function uploadAvatar(file){
+ if(!file)return currentProfile?.avatar_url||null;
+
+ const extension=
+  (file.name.split(".").pop()||"jpg")
+   .toLowerCase()
+   .replace(/[^a-z0-9]/g,"");
+
+ const safeExtension=extension||"jpg";
+
+ const path=
+  `${currentUsername}/${Date.now()}-${Math.random().toString(36).slice(2)}.${safeExtension}`;
+
+ const upload=await supabaseClient
+  .storage
+  .from("avatars")
+  .upload(
+   path,
+   file,
+   {
+    upsert:false,
+    contentType:file.type
+   }
+  );
+
+ if(upload.error){
+  throw new Error("画像のアップロードに失敗しました。\n"+upload.error.message);
+ }
+
+ const {data:urlData}=supabaseClient
+  .storage
+  .from("avatars")
+  .getPublicUrl(path);
+
+ if(!urlData?.publicUrl){
+  throw new Error("画像URLを取得できませんでした。");
+ }
+
+ return urlData.publicUrl;
+}
+
 async function saveProfile(){
+ if(saving)return;
+
  if(typeof checkFriendChatBan==="function"&&await checkFriendChatBan())return;
+
+ if(!currentUsername){
+  showMessage("ユーザーIDを取得できませんでした。",true);
+  return;
+ }
+
  const name=document.getElementById("name").value.trim();
  const bio=document.getElementById("bio").value.trim();
- const avatar=currentProfile?.avatar_url||null;
- showMessage("プロフィールを保存しています...");
- const {error}=await supabaseClient.from("profiles").upsert({
-  user_id:currentUsername,
-  name,
-  bio,
-  avatar_url:avatar,
-  equipped_item_key:currentProfile?.equipped_item_key||null,
-  equipped_name_decoration_key:currentProfile?.equipped_name_decoration_key||null,
-  equipped_background_key:currentProfile?.equipped_background_key||null
- },{onConflict:"user_id"});
- if(error){console.error(error);showMessage("保存に失敗しました。",true);return}
- showMessage("プロフィールを保存しました！✨");
+
+ const saveButton=document.getElementById("saveButton");
+ saving=true;
+ saveButton.disabled=true;
+
+ try{
+  showMessage("プロフィールを保存しています...");
+
+  let avatarUrl=currentProfile?.avatar_url||null;
+
+  // 新しい画像が選択されていた場合、先にStorageへ保存
+  if(selectedAvatarFile){
+   showMessage("📷 画像をアップロードしています...");
+   avatarUrl=await uploadAvatar(selectedAvatarFile);
+  }
+
+  // profilesはUPDATEで保存する
+  showMessage("💾 プロフィール情報を保存しています...");
+
+  const payload={
+   name:name,
+   bio:bio,
+   avatar_url:avatarUrl,
+   equipped_item_key:currentProfile?.equipped_item_key||null,
+   equipped_name_decoration_key:
+    currentProfile?.equipped_name_decoration_key||null,
+   equipped_background_key:
+    currentProfile?.equipped_background_key||null
+  };
+
+  const {data,error}=await supabaseClient
+   .from("profiles")
+   .update(payload)
+   .eq("user_id",currentUsername)
+   .select("*")
+   .maybeSingle();
+
+  if(error){
+   console.error("プロフィール保存エラー:",error);
+   showMessage(
+    "プロフィールの保存に失敗しました。\n"+error.message,
+    true
+   );
+   return;
+  }
+
+  if(!data){
+   showMessage(
+    "プロフィールを保存できませんでした。\n"+
+    "profiles の更新権限を確認してください。",
+    true
+   );
+   return;
+  }
+
+  currentProfile=data;
+  selectedAvatarFile=null;
+
+  if(currentProfile._avatarFile){
+   delete currentProfile._avatarFile;
+  }
+
+  displayAvatar(data.avatar_url);
+  updatePreview();
+
+  showMessage("プロフィールを保存しました！✨");
+
+ }catch(error){
+  console.error("saveProfile exception:",error);
+  showMessage(
+   "プロフィールの保存中にエラーが発生しました。\n"+
+   (error.message||error),
+   true
+  );
+ }finally{
+  saving=false;
+  saveButton.disabled=false;
+ }
 }
 
 async function init(){
  if(typeof checkFriendChatBan==="function"&&await checkFriendChatBan())return;
- const user=await getCurrentUser();if(!user)return;
+
+ const user=await getCurrentUser();
+ if(!user)return;
+
  await loadProfile();
  await loadItems();
  updatePreview();
 }
+
 init();
 </script>
 </body>
