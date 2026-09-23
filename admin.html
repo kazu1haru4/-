@@ -168,44 +168,38 @@ header h1 {
   word-break: break-all;
 }
 
-.user-detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 12px;
+.user-search-box {
+  padding: 14px;
+  margin-bottom: 14px;
+  border-radius: 16px;
+  background: #f7f5ff;
 }
 
-.detail-item {
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: #f7f8fc;
-}
-
-.detail-label {
-  color: #777;
-  font-size: 12px;
-  margin-bottom: 3px;
-}
-
-.detail-value {
-  font-weight: bold;
-  word-break: break-word;
-}
-
-.detail-avatar {
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
-  object-fit: cover;
+.user-search-box label {
   display: block;
-  margin: 0 auto 14px;
-  background: #eee;
+  font-weight: 800;
+  margin-bottom: 7px;
 }
 
-@media(max-width:600px) {
-  .user-detail-grid {
-    grid-template-columns: 1fr;
-  }
+.user-search-row {
+  display: flex;
+  gap: 8px;
+}
+
+.user-search-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-search-row button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.user-search-result {
+  color: #777;
+  font-size: 13px;
+  margin: 0 0 10px;
 }
 
 .banned {
@@ -460,14 +454,45 @@ textarea {
 </details>
 
 <details class="panel collapsible-panel">
+<summary>🚨 通報一覧</summary>
+<div style="margin-top:12px">
+<select id="reportStatusFilter" style="width:100%;padding:12px;border-radius:12px;border:1px solid #ddd">
+<option value="all">すべて</option><option value="open">未対応</option><option value="resolved">対応済み</option>
+</select>
+<div id="reportsList" class="loading" style="margin-top:12px">読み込み中...</div>
+</div>
+</details>
+
+<details class="panel collapsible-panel">
 <summary>🖼️ フレーム一覧</summary>
 <div id="framesLoading" class="loading">フレームを読み込んでいます...</div>
 <div id="framesList"></div>
 </details>
 
 <details class="panel collapsible-panel">
+<summary>✨ 名前装飾一覧</summary>
+<div id="nameDecorationsLoading" class="loading">名前装飾を読み込んでいます...</div>
+<div id="nameDecorationsList"></div>
+</details>
+
+<details class="panel collapsible-panel">
+<summary>🎨 背景一覧</summary>
+<div id="backgroundsLoading" class="loading">背景を読み込んでいます...</div>
+<div id="backgroundsList"></div>
+</details>
+
+<details class="panel collapsible-panel">
 
 <summary>👤 ユーザー管理</summary>
+
+<div class="user-search-box">
+  <label for="userSearchInput">🔎 ユーザーIDで検索</label>
+  <div class="user-search-row">
+    <input id="userSearchInput" type="search" placeholder="ユーザーIDを入力…" autocomplete="off">
+    <button id="clearUserSearchButton" class="gray small" type="button">クリア</button>
+  </div>
+  <div class="hint">入力するとユーザー一覧をユーザーIDで絞り込みます。</div>
+</div>
 
 <div id="usersLoading" class="loading">ユーザーを読み込んでいます...</div>
 <div id="usersList"></div>
@@ -500,21 +525,13 @@ textarea {
 
 <div class="form-row">
 <label>🖼️ フレーム報酬</label>
-<select id="rewardFrameItem"><option value="">なし</option></select>
-</div>
-
-<div class="form-row">
-<label>✨ 名前装飾報酬</label>
-<select id="rewardNameDecorationItem"><option value="">なし</option></select>
-</div>
-
-<div class="form-row">
-<label>🎨 背景報酬</label>
-<select id="rewardBackgroundItem"><option value="">なし</option></select>
-</div>
+<select id="rewardCodeItem">
+<option value="">なし</option>
+</select>
 
 <div id="rewardFrameStatus" class="frame-status">
-🔄 フレーム・名前装飾・背景を読み込んでいます...
+🔄 フレーム一覧を読み込んでいます...
+</div>
 </div>
 
 <div class="form-row">
@@ -594,20 +611,6 @@ textarea {
 <p id="banTarget"></p>
 
 <div class="form-row">
-<label>BAN期間</label>
-<select id="banDuration">
-<option value="10m">10分</option>
-<option value="1h">1時間</option>
-<option value="6h">6時間</option>
-<option value="1d" selected>1日</option>
-<option value="3d">3日</option>
-<option value="7d">7日</option>
-<option value="30d">30日</option>
-<option value="permanent">無期限</option>
-</select>
-</div>
-
-<div class="form-row">
 <label>理由</label>
 <textarea id="banReason" placeholder="BAN理由を入力"></textarea>
 </div>
@@ -615,32 +618,6 @@ textarea {
 <div class="actions">
 <button id="confirmBanButton" class="danger" type="button">🚫 BANする</button>
 <button id="cancelBanButton" class="gray" type="button">キャンセル</button>
-</div>
-</div>
-</div>
-
-<div id="coinModal" class="modal hidden">
-<div class="modal-box">
-<h3>🪙 コイン変更</h3>
-<p id="coinTarget"></p>
-<div id="coinCurrent" class="frame-status">🔄 読み込み中...</div>
-<div class="form-row">
-<label>新しいコイン残高</label>
-<input id="coinNewBalance" type="number" min="0" step="1" value="0">
-</div>
-<div class="actions">
-<button id="confirmCoinButton" class="coin" type="button">🪙 変更する</button>
-<button id="cancelCoinButton" class="gray" type="button">キャンセル</button>
-</div>
-</div>
-</div>
-
-<div id="userDetailModal" class="modal hidden">
-<div class="modal-box">
-<h3>👤 ユーザー詳細</h3>
-<div id="userDetailContent">読み込み中...</div>
-<div class="actions">
-<button id="closeUserDetailButton" class="gray" type="button">閉じる</button>
 </div>
 </div>
 </div>
@@ -799,18 +776,26 @@ async function checkBan() {
   return false;
 }
 
-async function loadUsers() {
+async function loadUsers(searchText = null) {
   const loading = document.getElementById("usersLoading");
   const list = document.getElementById("usersList");
+  const searchInput = document.getElementById("userSearchInput");
+
+  if (searchText === null) {
+    searchText = searchInput?.value || "";
+  }
+
+  searchText = String(searchText).trim().toLowerCase();
 
   loading.classList.remove("hidden");
+  loading.textContent = "ユーザーを読み込んでいます...";
   list.innerHTML = "";
 
-  const { data:profiles, error } =
+  const { data: profiles, error } =
     await supabaseClient
       .from("profiles")
       .select("user_id,name,avatar_url,created_at")
-      .order("created_at",{ascending:false});
+      .order("created_at", { ascending: false });
 
   if (error) {
     loading.textContent =
@@ -818,7 +803,7 @@ async function loadUsers() {
     return;
   }
 
-  const { data:bans, error:banError } =
+  const { data: bans, error: banError } =
     await supabaseClient
       .from("user_bans")
       .select("user_id,reason,banned_at,expires_at");
@@ -830,33 +815,35 @@ async function loadUsers() {
   }
 
   const banMap = new Map();
+  (bans || []).forEach(ban => banMap.set(ban.user_id, ban));
 
-  (bans || []).forEach(ban => {
-    banMap.set(ban.user_id, ban);
-  });
-
-  // 各ユーザーの現在のコイン残高も取得
-  const coinResults = await Promise.all(
-    (profiles || []).map(async profile => {
-      const username = profile.user_id || "";
-      const { data, error } = await supabaseClient.rpc(
-        "admin_get_user_coins",
-        { target_username: username }
-      );
-      return [username, error ? null : Number(data || 0)];
-    })
-  );
-  const coinMap = new Map(coinResults);
+  const allProfiles = profiles || [];
+  const filteredProfiles = searchText
+    ? allProfiles.filter(profile =>
+        String(profile.user_id || "").toLowerCase().includes(searchText)
+      )
+    : allProfiles;
 
   loading.classList.add("hidden");
 
-  if (!profiles?.length) {
-    list.innerHTML =
-      `<div class="empty">ユーザーがいません。</div>`;
+  const resultInfo = document.createElement("div");
+  resultInfo.className = "user-search-result";
+  resultInfo.textContent = searchText
+    ? `🔎 「${searchText}」の検索結果：${filteredProfiles.length}人 / ${allProfiles.length}人`
+    : `👥 ユーザー：${allProfiles.length}人`;
+  list.appendChild(resultInfo);
+
+  if (!filteredProfiles.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = searchText
+      ? "そのユーザーIDは見つかりませんでした。"
+      : "ユーザーがいません。";
+    list.appendChild(empty);
     return;
   }
 
-  profiles.forEach(profile => {
+  filteredProfiles.forEach(profile => {
     const username = profile.user_id || "";
     const isAdmin = ADMIN_USERNAMES.has(username);
     const ban = banMap.get(username);
@@ -864,9 +851,7 @@ async function loadUsers() {
     const card = document.createElement("div");
     card.className = "user-card";
 
-    const avatar =
-      profile.avatar_url ||
-      "https://via.placeholder.com/100";
+    const avatar = profile.avatar_url || "https://via.placeholder.com/100";
 
     card.innerHTML = `
       <img class="avatar" src="${escapeAttribute(avatar)}" alt="">
@@ -880,57 +865,23 @@ async function loadUsers() {
           ID：${escapeHtml(username)}
         </div>
 
-        <div class="user-coins">
-          🪙 コイン：${
-            coinMap.get(username) == null
-              ? "取得できません"
-              : Number(coinMap.get(username)).toLocaleString("ja-JP") + " COIN"
-          }
-        </div>
-
         ${
           isAdmin
-          ? `<div style="color:#8f6b00;font-weight:bold;font-size:13px;">👑 管理者</div>`
-          : ""
+            ? `<div style="color:#8f6b00;font-weight:bold;font-size:13px;">👑 管理者</div>`
+            : ""
         }
 
-        ${
-          ban
-          ? `<div class="banned">🚫 BAN中</div>`
-          : ""
-        }
+        ${ban ? `<div class="banned">🚫 BAN中</div>` : ""}
       </div>
 
       <div class="actions">
-        <button class="small" data-detail="${escapeAttribute(username)}" type="button">👤 詳細</button>
         <button class="coin small" data-coin="${escapeAttribute(username)}" type="button">🪙 コイン変更</button>
         ${
           isAdmin
-          ? ""
-          : ban
-          ? `
-            <button class="success small"
-              data-unban="${escapeAttribute(username)}"
-              type="button">
-              🔓 BAN解除
-            </button>
-          `
-          : `
-            <button class="danger small"
-              data-ban="${escapeAttribute(username)}"
-              type="button">
-              🚫 BAN
-            </button>
-          `
-        }
-        ${
-          isAdmin
-          ? ""
-          : `<button class="danger small"
-              data-delete-user="${escapeAttribute(username)}"
-              type="button">
-              🗑️ アカウント削除
-            </button>`
+            ? ""
+            : ban
+              ? `<button class="success small" data-unban="${escapeAttribute(username)}" type="button">🔓 BAN解除</button>`
+              : `<button class="danger small" data-ban="${escapeAttribute(username)}" type="button">🚫 BAN</button>`
         }
       </div>
     `;
@@ -938,127 +889,17 @@ async function loadUsers() {
     list.appendChild(card);
   });
 
-  list.querySelectorAll("[data-detail]").forEach(button => {
-    button.addEventListener("click", () => {
-      openUserDetail(button.dataset.detail);
-    });
-  });
-
   list.querySelectorAll("[data-ban]").forEach(button => {
-    button.addEventListener("click", () => {
-      openBanModal(button.dataset.ban);
-    });
+    button.addEventListener("click", () => openBanModal(button.dataset.ban));
   });
 
   list.querySelectorAll("[data-unban]").forEach(button => {
-    button.addEventListener("click", () => {
-      unbanUser(button.dataset.unban);
-    });
+    button.addEventListener("click", () => unbanUser(button.dataset.unban));
   });
 
   list.querySelectorAll("[data-coin]").forEach(button => {
-    button.addEventListener("click", () => {
-      openCoinModal(button.dataset.coin);
-    });
+    button.addEventListener("click", () => openCoinModal(button.dataset.coin));
   });
-
-  list.querySelectorAll("[data-delete-user]").forEach(button => {
-    button.addEventListener("click", () => {
-      deleteUserAccount(button.dataset.deleteUser);
-    });
-  });
-}
-
-async function openUserDetail(username) {
-  if (!username) return;
-
-  const modal = document.getElementById("userDetailModal");
-  const content = document.getElementById("userDetailContent");
-  content.innerHTML = "🔄 ユーザー詳細を読み込んでいます...";
-  modal.classList.remove("hidden");
-
-  try {
-    const [{ data: profile, error: profileError },
-           { data: ban, error: banError },
-           { data: coin, error: coinError }] = await Promise.all([
-      supabaseClient.from("profiles")
-        .select("user_id,name,avatar_url,created_at,equipped_item_key,equipped_name_decoration_key,equipped_background_key")
-        .eq("user_id", username).maybeSingle(),
-      supabaseClient.from("user_bans")
-        .select("user_id,reason,banned_at,expires_at,banned_by")
-        .eq("user_id", username).maybeSingle(),
-      supabaseClient.rpc("admin_get_user_coins", { target_username: username })
-    ]);
-
-    if (profileError) throw profileError;
-    if (banError) throw banError;
-    if (coinError) throw coinError;
-
-    const isAdmin = ADMIN_USERNAMES.has(username);
-    const avatar = profile?.avatar_url || "https://via.placeholder.com/100";
-    const coinText = Number(coin || 0).toLocaleString("ja-JP") + " COIN";
-    const banText = ban
-      ? (ban.expires_at ? `BAN中（${formatDate(ban.expires_at)}まで）` : "BAN中（無期限）")
-      : "BANされていません";
-
-    content.innerHTML = `
-      <img class="detail-avatar" src="${escapeAttribute(avatar)}" alt="">
-      <div style="text-align:center;font-size:20px;font-weight:bold;margin-bottom:4px;">${escapeHtml(profile?.name || username)}</div>
-      ${isAdmin ? '<div style="text-align:center;color:#8f6b00;font-weight:bold;margin-bottom:12px;">👑 管理者</div>' : ''}
-      <div class="user-detail-grid">
-        <div class="detail-item"><div class="detail-label">ユーザーID</div><div class="detail-value">${escapeHtml(username)}</div></div>
-        <div class="detail-item"><div class="detail-label">コイン</div><div class="detail-value">🪙 ${coinText}</div></div>
-        <div class="detail-item"><div class="detail-label">登録日時</div><div class="detail-value">${escapeHtml(formatDate(profile?.created_at) || "不明")}</div></div>
-        <div class="detail-item"><div class="detail-label">アカウント状態</div><div class="detail-value">${escapeHtml(banText)}</div></div>
-        <div class="detail-item"><div class="detail-label">装備フレーム</div><div class="detail-value">${escapeHtml(profile?.equipped_item_key || "なし")}</div></div>
-        <div class="detail-item"><div class="detail-label">名前装飾</div><div class="detail-value">${escapeHtml(profile?.equipped_name_decoration_key || "なし")}</div></div>
-        <div class="detail-item"><div class="detail-label">背景</div><div class="detail-value">${escapeHtml(profile?.equipped_background_key || "なし")}</div></div>
-        <div class="detail-item"><div class="detail-label">BAN理由</div><div class="detail-value">${escapeHtml(ban?.reason || "なし")}</div></div>
-      </div>
-      ${ban ? `<div style="margin-top:10px;color:#777;font-size:13px;">BAN実施者：${escapeHtml(ban.banned_by || "不明")} / 実施日時：${escapeHtml(formatDate(ban.banned_at) || "不明")}</div>` : ""}
-    `;
-  } catch (error) {
-    content.innerHTML = `<div class="status error">❌ 詳細の取得に失敗しました。<br>${escapeHtml(error.message || error)}</div>`;
-  }
-}
-
-function closeUserDetail() {
-  document.getElementById("userDetailModal").classList.add("hidden");
-}
-
-async function deleteUserAccount(username) {
-  if (!username) return;
-
-  if (ADMIN_USERNAMES.has(username)) {
-    alert("管理者アカウントは削除できません。");
-    return;
-  }
-
-  if (!confirm(`⚠️ 「${username}」のアカウントを削除しますか？\n\nこの操作は取り消せません。\nログイン用アカウントも削除されます。`)) return;
-  if (!confirm(`最終確認です。\n\nユーザーID：${username}\n\n本当に完全に削除しますか？`)) return;
-
-  try {
-    setStatus(`🗑️ ${username} のアカウントを削除しています...`, "info");
-
-    const { error } = await supabaseClient.rpc("admin_delete_user", {
-      target_username: username
-    });
-
-    if (error) throw error;
-
-    const target = username;
-    await loadUsers();
-    await logOperation(`ユーザー「${target}」のアカウントを削除しました。`, {
-      target_username: target
-    });
-
-    setStatus(`✅ ${target} のアカウントを削除しました。`, "success");
-    alert(`🗑️ アカウントを削除しました。\n\nユーザーID：${target}`);
-  } catch (error) {
-    console.error("deleteUserAccount:", error);
-    setStatus(`❌ ${username} のアカウント削除に失敗しました。\n\n${error.message || error}`, "error");
-    alert("❌ アカウント削除に失敗しました。\n\n" + (error.message || error));
-  }
 }
 
 async function openCoinModal(username) {
@@ -1130,7 +971,6 @@ function openBanModal(username) {
   document.getElementById("banTarget").textContent =
     `対象ユーザー：${username}`;
   document.getElementById("banReason").value = "";
-  document.getElementById("banDuration").value = "1d";
   document.getElementById("banModal").classList.remove("hidden");
 }
 
@@ -1149,26 +989,6 @@ async function banUser() {
 
   const reason =
     document.getElementById("banReason").value.trim();
-  const duration = document.getElementById("banDuration").value;
-
-  let expiresAt = null;
-  if (duration !== "permanent") {
-    const minutesMap = {
-      "10m": 10,
-      "1h": 60,
-      "6h": 360,
-      "1d": 1440,
-      "3d": 4320,
-      "7d": 10080,
-      "30d": 43200
-    };
-    const minutes = minutesMap[duration];
-    if (!minutes) {
-      alert("BAN期間を選択してください。");
-      return;
-    }
-    expiresAt = new Date(Date.now() + minutes * 60 * 1000).toISOString();
-  }
 
   const { error } =
     await supabaseClient
@@ -1176,8 +996,7 @@ async function banUser() {
       .insert({
         user_id: banTargetUsername,
         reason,
-        banned_by: currentUsername,
-        expires_at: expiresAt
+        banned_by: currentUsername
       });
 
   if (error) {
@@ -1187,12 +1006,9 @@ async function banUser() {
 
   const target = banTargetUsername;
   closeBanModal();
+  setupUserSearch();
   await loadUsers();
-  const durationLabel = {
-    "10m":"10分", "1h":"1時間", "6h":"6時間", "1d":"1日",
-    "3d":"3日", "7d":"7日", "30d":"30日", "permanent":"無期限"
-  }[duration] || "指定期間";
-  alert(`${target} を${durationLabel}BANしました。`);
+  alert(`${target} をBANしました。`);
 }
 
 async function unbanUser(username) {
@@ -1362,77 +1178,82 @@ async function deleteBoardMessage(id) {
 }
 
 async function loadItems() {
-  const frameSelect = document.getElementById("rewardFrameItem");
-  const nameSelect = document.getElementById("rewardNameDecorationItem");
-  const bgSelect = document.getElementById("rewardBackgroundItem");
-  const eventSelect = document.getElementById("eventItem");
-  const status = document.getElementById("rewardFrameStatus");
+  const rewardSelect =
+    document.getElementById("rewardCodeItem");
 
-  status.className = "frame-status";
-  status.textContent = "🔄 フレーム・名前装飾・背景を読み込んでいます...";
+  const eventSelect =
+    document.getElementById("eventItem");
 
-  frameSelect.innerHTML = '<option value="">なし</option>';
-  nameSelect.innerHTML = '<option value="">なし</option>';
-  bgSelect.innerHTML = '<option value="">なし</option>';
-  eventSelect.innerHTML = '<option value="">なし</option>';
+  const frameStatus =
+    document.getElementById("rewardFrameStatus");
 
-  const { data, error } = await supabaseClient
-    .from("coin_items")
-    .select("item_key,name,icon,price,frame_color,item_type")
-    .order("price", { ascending:true });
+  frameStatus.className = "frame-status";
+  frameStatus.textContent =
+    "🔄 coin_itemsからフレームを取得しています...";
+
+  rewardSelect.innerHTML =
+    `<option value="">なし</option>`;
+
+  eventSelect.innerHTML =
+    `<option value="">なし</option>`;
+
+  const { data, error } =
+    await supabaseClient
+      .from("coin_items")
+      .select("item_key,name,icon,price,frame_color,item_type")
+      .not("item_key","in","(admin,admin_name,admin_bg)")
+      .order("price",{ascending:true});
 
   if (error) {
     console.error("coin_items error:", error);
-    status.className = "frame-status error";
-    status.textContent = "❌ アイテム取得失敗\n\n" + error.message;
+
+    frameStatus.className = "frame-status error";
+    frameStatus.textContent =
+      "❌ フレーム取得失敗\n\n" + error.message;
+
+    rewardSelect.innerHTML =
+      `<option value="">❌ 取得失敗</option>`;
+
+    eventSelect.innerHTML =
+      `<option value="">❌ 取得失敗</option>`;
+
     return;
   }
 
-  // 管理者専用アイテムは配布対象から完全に除外
-  const items = (data || []).filter(item =>
-    !["admin", "admin_name", "admin_bg"].includes(item.item_key)
-  );
+  const publicItems = (data || []).filter(item => !isAdminOnlyItem(item));
 
-  const getType = item => {
-    if (["frame", "name_decoration", "background"].includes(item.item_type)) {
-      return item.item_type;
-    }
-    if (item.item_key?.startsWith("nd_")) return "name_decoration";
-    if (item.item_key?.startsWith("bg_")) return "background";
-    return "frame";
-  };
+  if (!publicItems.length) {
+    frameStatus.className = "frame-status error";
+    frameStatus.textContent =
+      "⚠️ 配布できるアイテムがありません。";
+    return;
+  }
 
-  items.forEach(item => {
-    const type = getType(item);
-    const icon = item.icon || (type === "name_decoration" ? "✨" : type === "background" ? "🎨" : "🖼️");
+  publicItems.forEach(item => {
+    const icon = item.icon || "🖼️";
 
-    const option = document.createElement("option");
-    option.value = item.item_key;
-    option.textContent = `${icon} ${item.name}`;
+    const rewardOption =
+      document.createElement("option");
 
-    if (type === "frame") frameSelect.appendChild(option);
-    if (type === "name_decoration") nameSelect.appendChild(option);
-    if (type === "background") bgSelect.appendChild(option);
+    rewardOption.value = item.item_key;
+    rewardOption.textContent =
+      `${icon} ${item.name}`;
 
-    const eventOption = document.createElement("option");
+    rewardSelect.appendChild(rewardOption);
+
+    const eventOption =
+      document.createElement("option");
+
     eventOption.value = item.item_key;
-    eventOption.textContent = `${icon} ${item.name}`;
+    eventOption.textContent =
+      `${icon} ${item.name}`;
+
     eventSelect.appendChild(eventOption);
   });
 
-  // 3つから同時に選ばれないようにする
-  const selects = [frameSelect, nameSelect, bgSelect];
-  selects.forEach(current => {
-    current.addEventListener("change", () => {
-      if (!current.value) return;
-      selects.forEach(other => {
-        if (other !== current) other.value = "";
-      });
-    });
-  });
-
-  status.className = "frame-status success";
-  status.textContent = `✅ 配布可能なアイテム ${items.length}個\n管理者限定の名前装飾・背景は配布できません。`;
+  frameStatus.className = "frame-status success";
+  frameStatus.textContent =
+    `✅ ${publicItems.length}個のアイテムを読み込みました。`;
 }
 
 async function createRewardCode() {
@@ -1457,10 +1278,8 @@ async function createRewardCode() {
         document.getElementById("rewardCodeCoins").value || 0
       );
 
-    const rewardFrame = document.getElementById("rewardFrameItem").value || "";
-    const rewardNameDecoration = document.getElementById("rewardNameDecorationItem").value || "";
-    const rewardBackground = document.getElementById("rewardBackgroundItem").value || "";
-    const rewardItem = rewardFrame || rewardNameDecoration || rewardBackground || null;
+    const rewardItem =
+      document.getElementById("rewardCodeItem").value || null;
 
     const maxUses =
       Number(
@@ -1481,7 +1300,7 @@ async function createRewardCode() {
 
     if (rewardCoins === 0 && !rewardItem) {
       throw new Error(
-        "コインまたは配布アイテムを1つ以上設定してください。"
+        "コインまたはフレームを1つ以上設定してください。"
       );
     }
 
@@ -1513,9 +1332,7 @@ async function createRewardCode() {
 
     document.getElementById("rewardCode").value = "";
     document.getElementById("rewardCodeCoins").value = "0";
-    document.getElementById("rewardFrameItem").value = "";
-    document.getElementById("rewardNameDecorationItem").value = "";
-    document.getElementById("rewardBackgroundItem").value = "";
+    document.getElementById("rewardCodeItem").value = "";
     document.getElementById("rewardCodeMaxUses").value = "0";
 
     await loadRewardCodes();
@@ -1555,7 +1372,7 @@ async function loadRewardCodes() {
 
   const { data: codes, error } = await supabaseClient
     .from("coin_reward_codes")
-    .select(`id,code,reward_coins,reward_item_key,max_uses,is_active,created_by,created_at,coin_items(name,icon,item_type)`)
+    .select(`id,code,reward_coins,reward_item_key,max_uses,is_active,created_by,created_at,coin_items(name,icon)`)
     .order("created_at", { ascending:false });
 
   if (error) {
@@ -1588,18 +1405,7 @@ async function loadRewardCodes() {
     const item = code.coin_items;
     const rewards = [];
     if (Number(code.reward_coins) > 0) rewards.push(`🪙 ${Number(code.reward_coins).toLocaleString()} COIN`);
-    if (item) {
-      const itemTypeLabel =
-        item.item_type === "name_decoration"
-          ? "✨ 名前装飾"
-          : item.item_type === "background"
-            ? "🎨 背景"
-            : "🖼️ フレーム";
-
-      rewards.push(
-        `${itemTypeLabel}：${item.icon || ""} ${escapeHtml(item.name)}`
-      );
-    }
+    if (item) rewards.push(`${item.icon || "🖼️"} ${escapeHtml(item.name)}`);
 
     const historyHtml = history.length
       ? `<div class="history"><div class="history-title">👥 受取履歴（${history.length}人）</div>${history.map(row => `<div class="history-row">👤 ${escapeHtml(row.user_id)}　${escapeHtml(formatDate(row.used_at))}</div>`).join("")}</div>`
@@ -1960,15 +1766,6 @@ function setupButtons() {
   document.getElementById("cancelBanButton")
     .addEventListener("click", closeBanModal);
 
-  document.getElementById("confirmCoinButton")
-    .addEventListener("click", saveUserCoins);
-
-  document.getElementById("cancelCoinButton")
-    .addEventListener("click", closeCoinModal);
-
-  document.getElementById("closeUserDetailButton")
-    .addEventListener("click", closeUserDetail);
-
   document.getElementById("saveEditButton")
     .addEventListener("click", saveBoardEdit);
 
@@ -1989,16 +1786,6 @@ function setupButtons() {
       ) {
         closeBanModal();
       }
-    });
-
-  document.getElementById("coinModal")
-    .addEventListener("click", event => {
-      if (event.target === document.getElementById("coinModal")) closeCoinModal();
-    });
-
-  document.getElementById("userDetailModal")
-    .addEventListener("click", event => {
-      if (event.target === document.getElementById("userDetailModal")) closeUserDetail();
     });
 
   document.getElementById("editModal")
@@ -2076,74 +1863,143 @@ async function loadSiteStats() {
 フレーム一覧
 ======================================== */
 
-async function loadFrameList() {
-  const loading = document.getElementById("framesLoading");
-  const list = document.getElementById("framesList");
+function isAdminOnlyItem(item) {
+  return ["admin", "admin_name", "admin_bg"].includes(item.item_key);
+}
+
+function renderAdminItemCard(item) {
+  const card = document.createElement("div");
+  card.className = "frame-admin-card";
+
+  const icon = item.icon || "🖼️";
+  const frameColor = item.frame_color || "#ffd0e7";
+
+  card.innerHTML = `
+    <div class="frame-preview"
+         style="--frame-color:${escapeAttribute(frameColor)}">
+      ${escapeHtml(icon)}
+    </div>
+    <div class="frame-admin-info">
+      <div class="frame-admin-name">${escapeHtml(item.name || item.item_key)}</div>
+      <div class="frame-admin-meta">
+        ID：${escapeHtml(item.item_key)}<br>
+        価格：${Number(item.price || 0).toLocaleString("ja-JP")} COIN
+      </div>
+    </div>
+  `;
+
+  return card;
+}
+
+async function loadItemListByType(type, loadingId, listId, emptyText, errorText) {
+  const loading = document.getElementById(loadingId);
+  const list = document.getElementById(listId);
 
   if (!loading || !list) return;
 
   loading.classList.remove("hidden");
   list.innerHTML = "";
 
-  try {
-    const { data, error } = await supabaseClient
-      .from("coin_items")
-      .select("item_key,name,icon,price,frame_color")
-      .neq("item_key", "admin")
-      .order("price", { ascending: true });
+  const { data, error } = await supabaseClient
+    .from("coin_items")
+    .select("item_key,name,icon,price,frame_color,item_type")
+    .eq("item_type", type)
+    .order("price", { ascending: true });
 
-    if (error) throw error;
-
-    loading.classList.add("hidden");
-
-    if (!data?.length) {
-      list.innerHTML = `<div class="empty">フレームがありません。</div>`;
-      return;
-    }
-
-    data.forEach(item => {
-      const card = document.createElement("div");
-      card.className = "reward-code-card";
-
-      const icon = item.icon || "🖼️";
-      const frameColor = item.frame_color || "#ffd0e7";
-
-      card.innerHTML = `
-        <div style="display:flex;align-items:center;gap:12px;">
-          <div style="
-            width:52px;
-            height:52px;
-            border-radius:50%;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:26px;
-            background:${escapeAttribute(frameColor)};
-            border:4px solid ${escapeAttribute(frameColor)};
-          ">${escapeHtml(icon)}</div>
-
-          <div style="flex:1;min-width:0;">
-            <div class="reward-code-title">
-              ${escapeHtml(item.name || item.item_key)}
-            </div>
-            <div class="reward-code-info">
-              ID：${escapeHtml(item.item_key)}
-              <br>
-              価格：${Number(item.price || 0).toLocaleString("ja-JP")} COIN
-              <br>
-              フレーム色：${escapeHtml(frameColor)}
-            </div>
-          </div>
-        </div>
-      `;
-
-      list.appendChild(card);
-    });
-  } catch (error) {
-    loading.textContent =
-      "❌ フレーム一覧の読み込みに失敗しました：\n" +
-      (error.message || error);
+  if (error) {
+    loading.textContent = "❌ " + errorText + "：\n" + error.message;
+    return;
   }
+
+  const items = (data || []).filter(item => !isAdminOnlyItem(item));
+
+  loading.classList.add("hidden");
+
+  if (!items.length) {
+    list.innerHTML = `<div class="empty">${emptyText}</div>`;
+    return;
+  }
+
+  items.forEach(item => list.appendChild(renderAdminItemCard(item)));
+}
+
+async function loadFrameList() {
+  await loadItemListByType(
+    "frame",
+    "framesLoading",
+    "framesList",
+    "フレームはありません。",
+    "フレーム一覧の読み込みに失敗しました"
+  );
+}
+
+async function loadNameDecorationList() {
+  await loadItemListByType(
+    "name_decoration",
+    "nameDecorationsLoading",
+    "nameDecorationsList",
+    "名前装飾はありません。",
+    "名前装飾一覧の読み込みに失敗しました"
+  );
+}
+
+async function loadBackgroundList() {
+  await loadItemListByType(
+    "background",
+    "backgroundsLoading",
+    "backgroundsList",
+    "背景はありません。",
+    "背景一覧の読み込みに失敗しました"
+  );
+}
+
+async function loadItemLists() {
+  await Promise.all([
+    loadFrameList(),
+    loadNameDecorationList(),
+    loadBackgroundList()
+  ]);
+}
+
+
+
+async function loadReports(){
+ const box=document.getElementById("reportsList");
+ const filter=document.getElementById("reportStatusFilter")?.value||"all";
+ if(!box)return;
+ box.className="loading";box.textContent="読み込み中...";
+ let q=supabaseClient.from("user_reports").select("id,reporter_id,target_type,target_id,target_user,reason,status,created_at,message_id,message_content,message_image_url").order("created_at",{ascending:false}).limit(100);
+ if(filter!=="all")q=q.eq("status",filter);
+ const {data,error}=await q;
+ if(error){box.textContent="❌ "+error.message;return}
+ box.className="";
+ if(!data?.length){box.textContent="通報はありません。";return}
+ box.innerHTML="";
+ data.forEach(r=>{
+  const card=document.createElement("div");card.className="reward-code-card";
+  const status=r.status==="resolved"?"対応済み":"未対応";
+  card.innerHTML=`<div><b>🚨 ${escapeHtml(status)}</b>　対象：${escapeHtml(r.target_user||"不明")}</div><div style="margin-top:7px">通報者：${escapeHtml(r.reporter_id||"不明")}</div><div style="margin-top:7px">理由：${escapeHtml(r.reason||"理由なし")}</div><div style="margin-top:7px">チャット：${escapeHtml(r.target_type||"message")} / メッセージID：${escapeHtml(r.message_id||r.target_id||"不明")}</div><div style="margin-top:7px;padding:10px;background:#f7f7f9;border-radius:10px;white-space:pre-wrap">内容：${escapeHtml(r.message_content||"画像または内容なし")}</div><div class="muted" style="margin-top:7px">${escapeHtml(new Date(r.created_at).toLocaleString("ja-JP"))}</div>`;
+  if(r.status!=="resolved"){const b=document.createElement("button");b.className="success small";b.textContent="✅ 対応済みにする";b.style.marginTop="8px";b.onclick=async()=>{const {error}=await supabaseClient.from("user_reports").update({status:"resolved",resolved_by:currentUsername,resolved_at:new Date().toISOString()}).eq("id",r.id);if(error)alert(error.message);else loadReports()};card.appendChild(b)}
+  box.appendChild(card);
+ });
+}
+
+function setupUserSearch() {
+  const input = document.getElementById("userSearchInput");
+  const clearButton = document.getElementById("clearUserSearchButton");
+  if (!input || !clearButton) return;
+
+  let timer = null;
+  input.addEventListener("input", () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => loadUsers(input.value), 180);
+  });
+
+  clearButton.addEventListener("click", () => {
+    input.value = "";
+    loadUsers("");
+    input.focus();
+  });
 }
 
 async function init() {
@@ -2176,8 +2032,9 @@ async function init() {
     setStatus("📊 サイト統計を読み込んでいます...", "info");
     await loadSiteStats();
 
-    setStatus("🖼️ フレーム一覧を読み込んでいます...", "info");
-    await loadFrameList();
+    setStatus("🖼️✨🎨 アイテム一覧を読み込んでいます...", "info");
+    await loadItemLists();
+  await loadReports();
 
     setStatus(
       "👤 ユーザーを読み込んでいます...",
@@ -2227,6 +2084,7 @@ async function init() {
 
 try {
   setupButtons();
+  setupUserSearch();
   init();
 } catch(error) {
   console.error(error);
