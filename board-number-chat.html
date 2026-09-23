@@ -13,8 +13,6 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
 .header a,.header button{position:absolute;top:9px;border:0;border-radius:11px;padding:9px 11px;background:#8f7cff;color:#fff;font-weight:bold;text-decoration:none;cursor:pointer}
 .header a{left:9px}.header button{right:9px}
 .title{font-weight:bold;font-size:19px}.room{font-size:12px;color:#888;margin-top:3px}
-.board-title-button{position:static!important;background:transparent!important;color:#333!important;padding:0!important;border:0!important;box-shadow:none!important;font:inherit!important;cursor:pointer!important}
-.board-title-button:active{opacity:.7}
 .main{flex:1;min-height:0;overflow-y:auto;padding:14px}
 .messages{max-width:700px;margin:auto}
 .row{display:flex;gap:8px;margin:8px 0}
@@ -46,6 +44,7 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
 .read{text-align:right;color:#6354c8;font-size:11px;margin-top:4px}
 .menu,.picker{display:none;position:absolute;z-index:50;background:#fff;border-radius:12px;box-shadow:0 5px 18px #0003;padding:6px}
 .menu{left:8px;top:calc(100% + 4px);min-width:195px}.menu button{display:block;width:100%;border:0;background:#fff;text-align:left;padding:10px;border-radius:8px;cursor:pointer}.menu button:hover{background:#f5f3ff}
+.admin-message-control{font-weight:bold;color:#6b4fd3}
 .picker{left:8px;top:calc(100% + 4px);gap:4px}.picker button{width:40px;height:40px;border:0;border-radius:9px;background:#f1f2f7;font-size:20px}
 .inputbar{display:flex;gap:7px;padding:9px;background:#fff;box-shadow:0 -2px 8px #0001;z-index:20}
 .inputbar input{flex:1;min-width:0;border:1px solid #ddd;border-radius:12px;padding:11px;font-size:16px}
@@ -73,7 +72,7 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
 <header class="header">
 <a href="board-number.html">🔢 一覧</a>
 <button id="memberButton">👥 メンバー</button>
-<button id="boardTitleButton" class="title board-title-button" type="button">🔢 掲示板チャット</button>
+<div class="title">🔢 掲示板チャット</div>
 <div id="roomInfo" class="room">読み込み中...</div>
 </header>
 
@@ -339,7 +338,7 @@ async function renderMembers(){
   roleEl.textContent=roleText;
   info.appendChild(roleEl);
 
-  if(isOwner && member.user_id!==username && member.user_id!==room.created_by && member.role!=="admin"){
+  if(isOwner && member.user_id!==username){
    const select=document.createElement("select");
    select.className="control";
    select.innerHTML=
@@ -398,7 +397,7 @@ async function renderMembers(){
    info.append(minutes,muteButton);
   }
 
-  if(isOwner && member.user_id!==username && member.user_id!==room.created_by && member.role!=="admin"){
+  if(isOwner && member.user_id!==username){
    const kick=document.createElement("button");
    kick.className="control danger";
    kick.textContent="🚪 掲示板から蹴る";
@@ -411,7 +410,7 @@ async function renderMembers(){
      target_username:member.user_id
     });
 
-    if(error){alert("メンバーを退出させられませんでした\n\n"+error.message);return;}
+    if(error)alert(error.message);
     await renderMembers();
    };
 
@@ -422,39 +421,6 @@ async function renderMembers(){
   list.appendChild(item);
  });
 }
-
-async function renameBoard(){
- if(!isBoardAdmin)return;
- const currentName=room?.name||"";
- const nextName=prompt("新しい掲示板名を入力してください",currentName);
- if(nextName===null)return;
- const name=nextName.trim();
- if(!name){alert("掲示板名を入力してください");return;}
- if(name.length>40){alert("掲示板名は40文字以内にしてください");return;}
- const {error}=await supabaseClient.rpc("board_rename",{target_board_id:Number(boardId),new_name:name});
- if(error){alert("掲示板名を変更できませんでした\n\n"+error.message);return;}
- room.name=name;
- $("roomInfo").textContent=name+"　🔢 "+room.join_code;
- alert("✅ 掲示板名を変更しました");
-}
-
-async function leaveBoard(){
- if(!room||!username)return;
- if(isOwner){
-  alert("掲示板の管理者はこの掲示板から抜けられません。先に管理者の引き継ぎ機能を用意してください。");
-  return;
- }
- const ok=confirm("この掲示板から抜けますか？\n抜けると、この掲示板のメッセージを見られなくなります。");
- if(!ok)return;
- const {error}=await supabaseClient.rpc("board_leave",{target_board_id:Number(boardId)});
- if(error){alert("掲示板から抜けられませんでした\n\n"+error.message);return;}
- location.href="board-number.html";
-}
-
-$("boardTitleButton").onclick=async()=>{
- if(isOwner)await renameBoard();
- else await leaveBoard();
-};
 
 function closeMemberModal(){
  $("memberModal").style.display="none";
@@ -653,41 +619,87 @@ async function loadMessages(){
    menu.appendChild(gift);
   }
 
-  if(message.sender_id===username&&!message.is_deleted){
+  const canManageMessage =
+   !message.is_deleted &&
+   (
+    message.sender_id===username ||
+    ADMIN_USERNAMES.has(username)
+   );
+
+  if(canManageMessage){
    const edit=document.createElement("button");
-   edit.textContent="✏️ 編集";
+   edit.textContent=ADMIN_USERNAMES.has(username) && message.sender_id!==username?"🛡️ 管理者編集":"✏️ 編集";
    edit.onclick=async e=>{
     e.stopPropagation();
-    const value=prompt("メッセージを編集してください",message.content);
+
+    const value=prompt(
+     ADMIN_USERNAMES.has(username) && message.sender_id!==username
+      ?"管理者としてメッセージを編集してください"
+      :"メッセージを編集してください",
+     message.content
+    );
+
     if(value===null||!value.trim())return;
 
-    const {error}=await supabaseClient
-     .from("board_room_messages")
-     .update({
-      content:value.trim(),
-      edited_at:new Date().toISOString()
-     })
-     .eq("id",message.id)
-     .eq("sender_id",username);
+    let error;
+
+    if(ADMIN_USERNAMES.has(username) && message.sender_id!==username){
+     const result=await supabaseClient.rpc(
+      "admin_edit_board_message",
+      {
+       target_message_id:message.id,
+       new_content:value.trim()
+      }
+     );
+     error=result.error;
+    }else{
+     const result=await supabaseClient
+      .from("board_room_messages")
+      .update({
+       content:value.trim(),
+       edited_at:new Date().toISOString()
+      })
+      .eq("id",message.id)
+      .eq("sender_id",username);
+     error=result.error;
+    }
 
     if(error)alert(error.message);
     else await loadMessages();
    };
 
    const del=document.createElement("button");
-   del.textContent="🗑️ 削除";
+   del.textContent=ADMIN_USERNAMES.has(username) && message.sender_id!==username?"🛡️ 管理者削除":"🗑️ 削除";
    del.onclick=async e=>{
     e.stopPropagation();
-    if(!confirm("このメッセージを削除しますか？"))return;
 
-    const {error}=await supabaseClient
-     .from("board_room_messages")
-     .update({
-      is_deleted:true,
-      content:""
-     })
-     .eq("id",message.id)
-     .eq("sender_id",username);
+    if(!confirm(
+     ADMIN_USERNAMES.has(username) && message.sender_id!==username
+      ?"管理者としてこのメッセージを削除しますか？"
+      :"このメッセージを削除しますか？"
+    ))return;
+
+    let error;
+
+    if(ADMIN_USERNAMES.has(username) && message.sender_id!==username){
+     const result=await supabaseClient.rpc(
+      "admin_delete_board_message",
+      {
+       target_message_id:message.id
+      }
+     );
+     error=result.error;
+    }else{
+     const result=await supabaseClient
+      .from("board_room_messages")
+      .update({
+       is_deleted:true,
+       content:""
+      })
+      .eq("id",message.id)
+      .eq("sender_id",username);
+     error=result.error;
+    }
 
     if(error)alert(error.message);
     else await loadMessages();
