@@ -407,6 +407,8 @@ textarea {
     flex-direction: column;
   }
 }
+
+.feature-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}.feature-card{padding:14px;border-radius:16px;background:#f7f8fc}.feature-card .big{font-size:24px;font-weight:800;margin-top:4px}.toolbar{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-bottom:12px}.toolbar button{width:100%}.detail-row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid #eee}.detail-row:last-child{border-bottom:0}.log-row,.report-row,.history-row{padding:12px;border-radius:14px;background:#f7f8fc;margin-bottom:8px}.tag{display:inline-block;padding:3px 8px;border-radius:999px;background:#eee;font-size:12px;font-weight:700}.tag.open{background:#fff3cd;color:#856404}.tag.done{background:#e8f5e9;color:#2e7d32}.danger-text{color:#c62828;font-weight:700}.switch-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border-radius:14px;background:#f7f8fc}.switch-row button{min-width:110px}.muted{color:#777;font-size:13px}.user-card .actions{display:flex;gap:6px;flex-wrap:wrap}.user-card .actions button{margin:0}@media(max-width:600px){.toolbar{grid-template-columns:1fr}.feature-grid{grid-template-columns:1fr}.user-card .actions{width:100%}}
 </style>
 </head>
 
@@ -440,9 +442,44 @@ textarea {
 
 <summary>👤 ユーザー管理</summary>
 
+<div class="toolbar">
+<input id="userSearch" type="search" placeholder="ID・名前で検索">
+<select id="userFilter"><option value="all">すべて</option><option value="active">通常ユーザー</option><option value="banned">BAN中</option><option value="admin">管理者</option></select>
+<select id="userSort"><option value="new">新しい順</option><option value="old">古い順</option><option value="name">名前順</option><option value="coins">コイン順</option></select>
+</div>
 <div id="usersLoading" class="loading">ユーザーを読み込んでいます...</div>
 <div id="usersList"></div>
 
+</details>
+
+<details class="panel collapsible-panel">
+<summary>📈 詳細サイト統計</summary>
+<div id="advancedStatsLoading" class="loading">統計を読み込んでいます...</div>
+<div id="advancedStatsGrid" class="feature-grid"></div>
+</details>
+
+<details class="panel collapsible-panel">
+<summary>🪙 コイン履歴</summary>
+<div class="toolbar"><input id="coinHistorySearch" type="search" placeholder="ユーザーIDで検索"><button id="refreshCoinHistory" type="button">🔄 更新</button></div>
+<div id="coinHistoryList" class="loading">読み込んでいません。</div>
+</details>
+
+<details class="panel collapsible-panel">
+<summary>🚨 通報管理</summary>
+<div class="toolbar"><select id="reportStatusFilter"><option value="open">未対応</option><option value="all">すべて</option><option value="resolved">対応済み</option></select><button id="refreshReports" type="button">🔄 更新</button></div>
+<div id="reportsList" class="loading">読み込んでいません。</div>
+</details>
+
+<details class="panel collapsible-panel">
+<summary>🛠️ メンテナンスモード</summary>
+<div class="switch-row"><div><b id="maintenanceTitle">状態を確認中...</b><div id="maintenanceMessage" class="muted"></div></div><button id="toggleMaintenance" type="button">切り替え</button></div>
+<div class="form-row" style="margin-top:12px"><label>表示メッセージ</label><input id="maintenanceText" type="text" maxlength="200" placeholder="現在メンテナンス中です。しばらくお待ちください。"></div>
+</details>
+
+<details class="panel collapsible-panel">
+<summary>📝 管理者操作ログ</summary>
+<div class="toolbar"><input id="operationLogSearch" type="search" placeholder="操作内容・管理者IDで検索"><button id="refreshOperationLogs" type="button">🔄 更新</button></div>
+<div id="operationLogsList" class="loading">読み込んでいません。</div>
 </details>
 
 <details class="panel collapsible-panel">
@@ -551,6 +588,8 @@ textarea {
 
 </div>
 
+
+<div id="userDetailModal" class="modal hidden"><div class="modal-box"><h3>👤 ユーザー詳細</h3><div id="userDetailContent">読み込み中...</div><div class="actions"><button id="closeUserDetail" class="gray" type="button">閉じる</button></div></div></div>
 
 <div id="coinModal" class="modal hidden">
 <div class="modal-box">
@@ -746,162 +785,47 @@ async function checkBan() {
   return false;
 }
 
+let allAdminProfiles=[];
+let adminBanMap=new Map();
+let adminCoinMap=new Map();
+
 async function loadUsers() {
-  const loading = document.getElementById("usersLoading");
-  const list = document.getElementById("usersList");
-
-  loading.classList.remove("hidden");
-  list.innerHTML = "";
-
-  const { data:profiles, error } =
-    await supabaseClient
-      .from("profiles")
-      .select("user_id,name,avatar_url,created_at")
-      .order("created_at",{ascending:false});
-
-  if (error) {
-    loading.textContent =
-      "❌ ユーザー読み込みエラー：\n" + error.message;
-    return;
-  }
-
-  const { data:bans, error:banError } =
-    await supabaseClient
-      .from("user_bans")
-      .select("user_id,reason,banned_at,expires_at");
-
-  if (banError) {
-    loading.textContent =
-      "❌ BAN情報読み込みエラー：\n" + banError.message;
-    return;
-  }
-
-  const banMap = new Map();
-  (bans || []).forEach(ban => banMap.set(ban.user_id, ban));
-
-  loading.classList.add("hidden");
-
-  if (!profiles?.length) {
-    list.innerHTML = `<div class="empty">ユーザーがいません。</div>`;
-    return;
-  }
-
-  // 管理者専用RPCで各ユーザーの現在のコイン残高を取得
-  const coinResults = await Promise.all(
-    profiles.map(async profile => {
-      const username = profile.user_id || "";
-      try {
-        const { data, error } = await supabaseClient.rpc(
-          "admin_get_user_coins",
-          { target_username: username }
-        );
-
-        if (error) {
-          console.error("コイン残高取得エラー:", username, error);
-          return [username, null];
-        }
-
-        return [username, Number(data || 0)];
-      } catch (error) {
-        console.error("コイン残高取得エラー:", username, error);
-        return [username, null];
-      }
-    })
-  );
-
-  const coinMap = new Map(coinResults);
-
-  profiles.forEach(profile => {
-    const username = profile.user_id || "";
-    const isAdmin = ADMIN_USERNAMES.has(username);
-    const ban = banMap.get(username);
-    const coinBalance = coinMap.get(username);
-
-    const card = document.createElement("div");
-    card.className = "user-card";
-
-    const avatar =
-      profile.avatar_url ||
-      "https://via.placeholder.com/100";
-
-    const coinHtml =
-      coinBalance === null || coinBalance === undefined
-      ? `<div class="user-coins user-coins-error">🪙 残高：取得できません</div>`
-      : `<div class="user-coins">🪙 残高：${coinBalance.toLocaleString("ja-JP")} COIN</div>`;
-
-    card.innerHTML = `
-      <img class="avatar" src="${escapeAttribute(avatar)}" alt="">
-
-      <div class="user-info">
-        <div class="user-name">
-          ${escapeHtml(profile.name || username)}
-        </div>
-
-        <div class="user-id">
-          ID：${escapeHtml(username)}
-        </div>
-
-        ${coinHtml}
-
-        ${
-          isAdmin
-          ? `<div style="color:#8f6b00;font-weight:bold;font-size:13px;margin-top:3px;">👑 管理者</div>`
-          : ""
-        }
-
-        ${
-          ban
-          ? `<div class="banned">🚫 BAN中</div>`
-          : ""
-        }
-      </div>
-
-      <div class="actions">
-        <button class="coin small" data-coin="${escapeAttribute(username)}" type="button">🪙 コイン変更</button>
-        ${
-          isAdmin
-          ? ""
-          : ban
-          ? `
-            <button class="success small"
-              data-unban="${escapeAttribute(username)}"
-              type="button">
-              🔓 BAN解除
-            </button>
-          `
-          : `
-            <button class="danger small"
-              data-ban="${escapeAttribute(username)}"
-              type="button">
-              🚫 BAN
-            </button>
-          `
-        }
-      </div>
-    `;
-
-    list.appendChild(card);
-  });
-
-  list.querySelectorAll("[data-ban]").forEach(button => {
-    button.addEventListener("click", () => {
-      openBanModal(button.dataset.ban);
-    });
-  });
-
-  list.querySelectorAll("[data-unban]").forEach(button => {
-    button.addEventListener("click", () => {
-      unbanUser(button.dataset.unban);
-    });
-  });
-
-  list.querySelectorAll("[data-coin]").forEach(button => {
-    button.addEventListener("click", () => {
-      openCoinModal(button.dataset.coin);
-    });
-  });
+  const loading=document.getElementById("usersLoading"), list=document.getElementById("usersList");
+  loading.classList.remove("hidden"); list.innerHTML="";
+  const [{data:profiles,error},{data:bans,error:banError}]=await Promise.all([
+    supabaseClient.from("profiles").select("user_id,name,avatar_url,created_at,bio,equipped_item_key").order("created_at",{ascending:false}),
+    supabaseClient.from("user_bans").select("user_id,reason,banned_at,expires_at")
+  ]);
+  if(error){loading.textContent="❌ ユーザー読み込みエラー：\n"+error.message;return}
+  if(banError){loading.textContent="❌ BAN情報読み込みエラー：\n"+banError.message;return}
+  allAdminProfiles=profiles||[]; adminBanMap=new Map((bans||[]).map(b=>[b.user_id,b]));
+  const coinResults=await Promise.all(allAdminProfiles.map(async p=>{
+    const u=p.user_id||""; const {data,error}=await supabaseClient.rpc("admin_get_user_coins",{target_username:u});
+    return [u,error?null:Number(data||0)];
+  }));
+  adminCoinMap=new Map(coinResults); loading.classList.add("hidden"); renderUsers();
 }
 
+function renderUsers(){
+  const list=document.getElementById("usersList"), q=(document.getElementById("userSearch")?.value||"").trim().toLowerCase(), filter=document.getElementById("userFilter")?.value||"all", sort=document.getElementById("userSort")?.value||"new";
+  let rows=allAdminProfiles.filter(p=>{const u=p.user_id||"",name=p.name||"",ban=adminBanMap.get(u),isAdmin=ADMIN_USERNAMES.has(u); if(q&&!(`${u} ${name}`.toLowerCase().includes(q)))return false; if(filter==="banned"&&!ban)return false; if(filter==="active"&&(ban||isAdmin))return false; if(filter==="admin"&&!isAdmin)return false; return true;});
+  rows.sort((a,b)=>{if(sort==="name")return (a.name||a.user_id).localeCompare(b.name||b.user_id,"ja"); if(sort==="old")return new Date(a.created_at)-new Date(b.created_at); if(sort==="coins")return Number(adminCoinMap.get(b.user_id)||0)-Number(adminCoinMap.get(a.user_id)||0); return new Date(b.created_at)-new Date(a.created_at)});
+  if(!rows.length){list.innerHTML='<div class="empty">該当するユーザーがいません。</div>';return}
+  list.innerHTML="";
+  rows.forEach(p=>{const username=p.user_id||"",isAdmin=ADMIN_USERNAMES.has(username),ban=adminBanMap.get(username),balance=adminCoinMap.get(username),card=document.createElement("div");card.className="user-card";card.innerHTML=`<img class="avatar" src="${escapeAttribute(p.avatar_url||"https://via.placeholder.com/100")}" alt=""><div class="user-info"><div class="user-name">${escapeHtml(p.name||username)}</div><div class="user-id">ID：${escapeHtml(username)}</div><div class="user-coins">🪙 残高：${balance==null?"取得できません":Number(balance).toLocaleString("ja-JP")+" COIN"}</div>${isAdmin?'<div style="color:#8f6b00;font-weight:bold;font-size:13px">👑 管理者</div>':""}${ban?'<div class="banned">🚫 BAN中</div>':""}</div><div class="actions"><button class="small" data-detail="${escapeAttribute(username)}" type="button">👤 詳細</button><button class="coin small" data-coin="${escapeAttribute(username)}" type="button">🪙 コイン</button>${isAdmin?"":ban?`<button class="success small" data-unban="${escapeAttribute(username)}" type="button">🔓 BAN解除</button>`:`<button class="danger small" data-ban="${escapeAttribute(username)}" type="button">🚫 BAN</button>`}</div>`;list.appendChild(card)});
+  list.querySelectorAll("[data-detail]").forEach(b=>b.onclick=()=>openUserDetail(b.dataset.detail));
+  list.querySelectorAll("[data-ban]").forEach(b=>b.onclick=()=>openBanModal(b.dataset.ban));
+  list.querySelectorAll("[data-unban]").forEach(b=>b.onclick=()=>unbanUser(b.dataset.unban));
+  list.querySelectorAll("[data-coin]").forEach(b=>b.onclick=()=>openCoinModal(b.dataset.coin));
+}
+
+async function openUserDetail(username){
+  const modal=document.getElementById("userDetailModal"),box=document.getElementById("userDetailContent"); modal.classList.remove("hidden"); box.textContent="読み込み中...";
+  const {data,error}=await supabaseClient.rpc("admin_get_user_detail",{target_username:username});
+  if(error){box.innerHTML='<div class="danger-text">❌ '+escapeHtml(error.message)+'</div>';return}
+  const d=data||{}; const ban=adminBanMap.get(username);
+  box.innerHTML=`<div class="detail-row"><b>ID</b><span>${escapeHtml(username)}</span></div><div class="detail-row"><b>名前</b><span>${escapeHtml(d.name||username)}</span></div><div class="detail-row"><b>登録日時</b><span>${escapeHtml(formatDate(d.created_at))}</span></div><div class="detail-row"><b>コイン</b><span>🪙 ${Number(d.coins||0).toLocaleString("ja-JP")}</span></div><div class="detail-row"><b>1対1メッセージ</b><span>${Number(d.direct_messages||0).toLocaleString("ja-JP")}</span></div><div class="detail-row"><b>グループメッセージ</b><span>${Number(d.group_messages||0).toLocaleString("ja-JP")}</span></div><div class="detail-row"><b>通報数</b><span>${Number(d.reports||0).toLocaleString("ja-JP")}</span></div><div class="detail-row"><b>状態</b><span>${ban?'🚫 BAN中':'🟢 通常'}</span></div><div style="margin-top:12px"><b>自己紹介</b><div class="muted" style="white-space:pre-wrap;margin-top:6px">${escapeHtml(d.bio||"なし")}</div></div>`;
+}
 async function openCoinModal(username) {
   document.getElementById("coinTarget").textContent = `対象ユーザー：${username}`;
   document.getElementById("coinCurrent").textContent = "🔄 現在の残高を読み込んでいます...";
@@ -1943,6 +1867,21 @@ async function loadFrameList() {
   }
 }
 
+
+async function loadAdvancedStats(){
+ const box=document.getElementById("advancedStatsGrid"), loading=document.getElementById("advancedStatsLoading"); loading.classList.remove("hidden"); box.innerHTML="";
+ const {data,error}=await supabaseClient.rpc("admin_dashboard_stats"); if(error){loading.textContent="❌ "+error.message;return}
+ const labels={users:"👤 ユーザー",direct_messages:"💬 1対1",groups:"👥 グループ",group_messages:"💬 グループ投稿",boards:"📢 掲示板投稿",number_boards:"🔢 番号掲示板",number_messages:"🔢 番号掲示板投稿",reports:"🚨 通報",bans:"🚫 BAN",coin_gifts:"🎁 コインギフト",reward_uses:"🎟️ コード利用"}; Object.entries(labels).forEach(([k,l])=>{const c=document.createElement("div");c.className="feature-card";c.innerHTML=`<div>${l}</div><div class="big">${Number(data?.[k]||0).toLocaleString("ja-JP")}</div>`;box.appendChild(c)});loading.classList.add("hidden");
+}
+async function loadCoinHistory(){const box=document.getElementById("coinHistoryList"),q=(document.getElementById("coinHistorySearch").value||"").trim();box.className="loading";box.textContent="読み込み中...";let query=supabaseClient.from("coin_history").select("id,user_id,change_amount,balance_after,reason,created_at,actor_id").order("created_at",{ascending:false}).limit(100);if(q)query=query.ilike("user_id",`%${q}%`);const {data,error}=await query;if(error){box.textContent="❌ "+error.message;return}box.className="";box.innerHTML=data?.length?data.map(r=>`<div class="history-row"><b>${escapeHtml(r.user_id)}</b>　${Number(r.change_amount)>=0?"➕":"➖"}${Math.abs(Number(r.change_amount)).toLocaleString("ja-JP")} COIN　→ 残高 ${Number(r.balance_after||0).toLocaleString("ja-JP")}<div class="muted">${escapeHtml(r.reason||"残高変更")} / ${escapeHtml(r.actor_id||"system")} / ${escapeHtml(formatDate(r.created_at))}</div></div>`).join(""):'履歴はありません。'}
+async function loadReports(){const box=document.getElementById("reportsList"),filter=document.getElementById("reportStatusFilter").value;box.className="loading";box.textContent="読み込み中...";let q=supabaseClient.from("user_reports").select("id,reporter_id,target_type,target_id,target_user,reason,status,created_at,resolved_by,resolved_at").order("created_at",{ascending:false}).limit(100);if(filter!=="all")q=q.eq("status",filter);const {data,error}=await q;if(error){box.textContent="❌ "+error.message;return}box.className="";box.innerHTML=data?.length?data.map(r=>`<div class="report-row"><div><span class="tag ${r.status==='resolved'?'done':'open'}">${r.status==='resolved'?'対応済み':'未対応'}</span> <b>${escapeHtml(r.target_user||r.target_id||"対象不明")}</b></div><div style="margin-top:6px">${escapeHtml(r.reason||"理由なし")}</div><div class="muted">通報者：${escapeHtml(r.reporter_id)} / ${escapeHtml(r.target_type)} / ${escapeHtml(formatDate(r.created_at))}</div>${r.status!=='resolved'?`<button class="success small" data-resolve-report="${escapeAttribute(String(r.id))}" style="margin-top:8px">✅ 対応済みにする</button>`:""}</div>`).join(""):'通報はありません。';box.querySelectorAll("[data-resolve-report]").forEach(b=>b.onclick=()=>resolveReport(Number(b.dataset.resolveReport)))}
+async function resolveReport(id){const {error}=await supabaseClient.from("user_reports").update({status:"resolved",resolved_by:currentUsername,resolved_at:new Date().toISOString()}).eq("id",id);if(error){alert(error.message);return}await logOperation("通報 #"+id+" を対応済みにしました");loadReports()}
+async function loadMaintenance(){const {data,error}=await supabaseClient.from("site_settings").select("maintenance_enabled,maintenance_message").eq("id",1).maybeSingle();if(error){document.getElementById("maintenanceTitle").textContent="❌ "+error.message;return}const on=!!data?.maintenance_enabled;document.getElementById("maintenanceTitle").textContent=on?"🔴 メンテナンス中":"🟢 通常稼働";document.getElementById("maintenanceMessage").textContent=data?.maintenance_message||"";document.getElementById("maintenanceText").value=data?.maintenance_message||"";document.getElementById("toggleMaintenance").textContent=on?"OFFにする":"ONにする"}
+async function toggleMaintenance(){const {data}=await supabaseClient.from("site_settings").select("maintenance_enabled").eq("id",1).single();const next=!data.maintenance_enabled;const msg=document.getElementById("maintenanceText").value.trim()||"現在メンテナンス中です。しばらくお待ちください。";const {error}=await supabaseClient.from("site_settings").update({maintenance_enabled:next,maintenance_message:msg,updated_by:currentUsername,updated_at:new Date().toISOString()}).eq("id",1);if(error){alert(error.message);return}await logOperation("メンテナンスモードを"+(next?"ON":"OFF")+"にしました");loadMaintenance()}
+async function loadOperationLogs(){const box=document.getElementById("operationLogsList"),q=(document.getElementById("operationLogSearch").value||"").trim();box.className="loading";box.textContent="読み込み中...";let query=supabaseClient.from("admin_operation_logs").select("id,admin_id,action,created_at,metadata").order("created_at",{ascending:false}).limit(100);if(q)query=query.or(`admin_id.ilike.%${q}%,action.ilike.%${q}%`);const {data,error}=await query;if(error){box.textContent="❌ "+error.message;return}box.className="";box.innerHTML=data?.length?data.map(r=>`<div class="log-row"><b>${escapeHtml(r.action)}</b><div class="muted">${escapeHtml(r.admin_id)} / ${escapeHtml(formatDate(r.created_at))}</div></div>`).join(""):'操作ログはありません。'}
+async function logOperation(action,metadata={}){try{await supabaseClient.from("admin_operation_logs").insert({admin_id:currentUsername,action,metadata})}catch(e){console.warn("操作ログ保存失敗",e)}}
+function setupNewFeatures(){document.getElementById("userSearch")?.addEventListener("input",renderUsers);document.getElementById("userFilter")?.addEventListener("change",renderUsers);document.getElementById("userSort")?.addEventListener("change",renderUsers);document.getElementById("coinHistorySearch")?.addEventListener("input",loadCoinHistory);document.getElementById("refreshCoinHistory")?.addEventListener("click",loadCoinHistory);document.getElementById("refreshReports")?.addEventListener("click",loadReports);document.getElementById("reportStatusFilter")?.addEventListener("change",loadReports);document.getElementById("toggleMaintenance")?.addEventListener("click",toggleMaintenance);document.getElementById("refreshOperationLogs")?.addEventListener("click",loadOperationLogs);document.getElementById("operationLogSearch")?.addEventListener("input",loadOperationLogs);document.getElementById("closeUserDetail")?.addEventListener("click",()=>document.getElementById("userDetailModal").classList.add("hidden"));document.getElementById("userDetailModal")?.addEventListener("click",e=>{if(e.target.id==="userDetailModal")document.getElementById("userDetailModal").classList.add("hidden")})}
+
 async function init() {
   try {
     setStatus(
@@ -1981,6 +1920,11 @@ async function init() {
       "info"
     );
     await loadUsers();
+    await loadAdvancedStats();
+    await loadCoinHistory();
+    await loadReports();
+    await loadMaintenance();
+    await loadOperationLogs();
 
     setStatus(
       "💬 掲示板を読み込んでいます...",
@@ -2024,6 +1968,7 @@ async function init() {
 
 try {
   setupButtons();
+  setupNewFeatures();
   init();
 } catch(error) {
   console.error(error);
