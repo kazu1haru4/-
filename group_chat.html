@@ -11,14 +11,10 @@
 :root{--theme:#8f7cff;--theme-light:#f0edff;--theme-text:#5e50c9}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:sans-serif;background:linear-gradient(135deg,var(--theme-light),#f7efff)}
 body{display:flex;flex-direction:column}
-.header{position:relative;flex:0 0 auto;height:118px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.08);z-index:40}
-.home-button{position:absolute;top:12px;left:12px;padding:9px 12px;background:#fff;color:#555;text-decoration:none;border-radius:12px;font-size:13px;font-weight:bold;box-shadow:0 3px 10px rgba(0,0,0,.08);z-index:5}
-.header-center{position:absolute;left:50%;top:42px;transform:translateX(-50%);width:max-content;max-width:60%;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.group-chat-title-button{appearance:none;-webkit-appearance:none;border:0!important;outline:0;background:transparent!important;box-shadow:none!important;padding:0;margin:0;font:700 22px/1.25 sans-serif;color:#222;cursor:pointer;white-space:nowrap}
-.group-name{margin-top:5px;font-size:14px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.header-right{position:absolute;top:12px;right:12px;display:flex;flex-direction:column;align-items:flex-end;gap:6px;z-index:5}
-.member-button{position:static;border:none;padding:9px 12px;background:var(--theme);color:#fff;border-radius:12px;font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.08)}
-@media(max-width:430px){.header{height:118px}.header-center{top:42px;max-width:58%}.group-chat-title-button{font-size:20px}.group-name{font-size:13px}.home-button,.member-button{font-size:13px;padding:9px 12px}}
+.header{position:relative;flex:0 0 auto;background:white;padding:14px 120px 14px 60px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.08);display:flex;align-items:center;justify-content:center;z-index:40}
+.home-button{position:absolute;top:12px;left:12px;padding:9px 12px;background:white;color:#555;text-decoration:none;border-radius:12px;font-size:13px;font-weight:bold;box-shadow:0 3px 10px rgba(0,0,0,.08)}
+.member-button{position:absolute;top:12px;right:12px;border:none;padding:9px 12px;background:var(--theme);color:white;border-radius:12px;font-size:13px;font-weight:bold;cursor:pointer}
+.title{font-size:22px;font-weight:bold;color:#444}.group-name{font-size:14px;color:#888;margin-top:4px}
 .messages-wrapper{position:relative;flex:1 1 auto;min-height:0;overflow:hidden}
 .messages{width:100%;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:15px;padding-bottom:25px;max-width:700px;margin:auto}
 #latestButton{position:absolute;right:18px;bottom:18px;border:none;background:var(--theme);color:white;border-radius:50px;padding:11px 15px;font-size:14px;font-weight:bold;box-shadow:0 4px 14px rgba(0,0,0,.18);cursor:pointer;display:none;z-index:30}#latestButton.show{display:block}
@@ -51,18 +47,8 @@ body{display:flex;flex-direction:column}
 </style>
 </head>
 <body>
-<div class="header">
-  <a href="home.html" class="home-button">🏠 ホーム</a>
-
-  <div class="header-center">
-    <button id="groupChatTitleButton" class="group-chat-title-button" type="button" aria-label="グループチャット">👥 グループチャット</button>
-    <div id="groupName" class="group-name">読み込み中...</div>
-  </div>
-
-  <div class="header-right">
-    <button id="memberButton" class="member-button" type="button">👥 メンバー</button>
-  </div>
-</div><div class="messages-wrapper"><div id="messages" class="messages"></div><button id="latestButton" type="button">⬇️ 最新へ</button></div>
+<div class="header"><a href="home.html" class="home-button">🏠 ホーム</a><button id="memberButton" class="member-button" type="button">👥 メンバー</button><div><div class="title">👥 グループチャット</div><div id="groupName" class="group-name">読み込み中...</div></div></div>
+<div class="messages-wrapper"><div id="messages" class="messages"></div><button id="latestButton" type="button">⬇️ 最新へ</button></div>
 <div id="muteBanner" class="mute-banner"></div>
 <div id="replyArea" class="reply-area"><div class="reply-info"><div id="replyText" class="reply-text"></div><button id="cancelReplyButton" type="button">✕</button></div></div>
 <div class="input-area"><input id="messageInput" type="text" placeholder="メッセージを入力..." autocomplete="off"><button id="imageButton" type="button">🖼️</button><button id="sendButton" type="button">送信</button></div>
@@ -139,7 +125,7 @@ async function createGroupMessageNotifications(messageText,messageId){
 const themes={pink:{main:"#ff82b2",light:"#fff0f7",text:"#e34f85"},purple:{main:"#8f7cff",light:"#f0edff",text:"#5e50c9"},blue:{main:"#5c9eff",light:"#eef5ff",text:"#397bd8"},green:{main:"#48c78e",light:"#eef9f3",text:"#279b68"},orange:{main:"#ff9b52",light:"#fff4e8",text:"#df7628"},cyan:{main:"#36c9d8",light:"#eafcff",text:"#1599a8"}};
 function applyTheme(themeName){const theme=themes[themeName]||themes.purple;document.documentElement.style.setProperty("--theme",theme.main);document.documentElement.style.setProperty("--theme-light",theme.light);document.documentElement.style.setProperty("--theme-text",theme.text)}
 applyTheme(localStorage.getItem("friendChatTheme")||"purple");
-const params=new URLSearchParams(window.location.search),groupId=params.get("id"),groupName=document.getElementById("groupName"),groupChatTitleButton=document.getElementById("groupChatTitleButton"),messages=document.getElementById("messages"),latestButton=document.getElementById("latestButton"),messageInput=document.getElementById("messageInput"),sendButton=document.getElementById("sendButton"),imageButton=document.getElementById("imageButton"),imageInput=document.getElementById("imageInput"),memberButton=document.getElementById("memberButton"),memberModal=document.getElementById("memberModal"),memberList=document.getElementById("memberList"),memberInput=document.getElementById("memberInput"),addMemberButton=document.getElementById("addMemberButton"),closeModalButton=document.getElementById("closeModalButton"),replyArea=document.getElementById("replyArea"),replyText=document.getElementById("replyText"),cancelReplyButton=document.getElementById("cancelReplyButton"),mentionList=document.getElementById("mentionList"),adminNote=document.getElementById("adminNote"),muteBanner=document.getElementById("muteBanner");
+const params=new URLSearchParams(window.location.search),groupId=params.get("id"),groupName=document.getElementById("groupName"),messages=document.getElementById("messages"),latestButton=document.getElementById("latestButton"),messageInput=document.getElementById("messageInput"),sendButton=document.getElementById("sendButton"),imageButton=document.getElementById("imageButton"),imageInput=document.getElementById("imageInput"),memberButton=document.getElementById("memberButton"),memberModal=document.getElementById("memberModal"),memberList=document.getElementById("memberList"),memberInput=document.getElementById("memberInput"),addMemberButton=document.getElementById("addMemberButton"),closeModalButton=document.getElementById("closeModalButton"),replyArea=document.getElementById("replyArea"),replyText=document.getElementById("replyText"),cancelReplyButton=document.getElementById("cancelReplyButton"),mentionList=document.getElementById("mentionList"),adminNote=document.getElementById("adminNote"),muteBanner=document.getElementById("muteBanner");
 let currentUsername="",replyingToMessage=null,editingMessage=null,groupMembersCache=[],presenceTimer=null,groupOwnerId="",currentGroupRole="member",isGroupAdmin=false,groupMutesCache=[],currentMute=null,muteTimer=null;const profileCache={},itemCache={},groupReadCounts={};let loadingMessages=false,realtimeQueue=Promise.resolve(),readUpdateTimer=null;
 const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
 const NAME_DECORATION_MAP={nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",nd_neon:"name-decoration-neon",name_sakura:"name-decoration-sakura",admin_name:"name-decoration-admin"};
@@ -156,59 +142,6 @@ async function getItems(itemKeys){const unique=[...new Set((itemKeys||[]).filter
 async function getEquippedItem(itemKey){if(!itemKey)return null;if(Object.prototype.hasOwnProperty.call(itemCache,itemKey))return itemCache[itemKey];await getItems([itemKey]);return itemCache[itemKey]||null}
 function createAvatarSync(profile){const username=profile?.user_id||"",item=profile?.equipped_item_key?itemCache[profile.equipped_item_key]:null,frame=document.createElement("div");frame.className="message-avatar-frame";const frameClass=getFrameClass(profile?.equipped_item_key,username);if(frameClass)frame.classList.add(frameClass);else frame.style.background=item?.frame_color||"#eee8ff";const avatar=document.createElement("div");avatar.className="message-avatar";if(profile?.avatar_url){const img=document.createElement("img");img.src=profile.avatar_url;img.alt="プロフィール画像";avatar.appendChild(img)}else avatar.textContent="👤";frame.appendChild(avatar);if(item?.icon){const badge=document.createElement("div");badge.className="message-avatar-badge show";badge.textContent=item.icon;badge.style.border="2px solid "+(item.frame_color||"#eee8ff");frame.appendChild(badge)}return frame}
 async function loadGroup(){if(!groupId){groupName.textContent="グループIDがありません";return}const {data,error}=await supabaseClient.from("groups").select("id,name,owner_id").eq("id",groupId).maybeSingle();if(error){console.error("グループ取得エラー:",error);groupName.textContent="グループを読み込めませんでした";return}if(!data){groupName.textContent="グループが見つかりません";return}groupName.textContent=data.name||"グループ";groupOwnerId=data.owner_id||"";updateGroupAdminState()}
-async function renameGroup(){
- if(!groupId)return;
- if(!isGroupAdmin){
-  alert("グループ管理者だけが名前を変更できます");
-  return;
- }
- const currentName=(groupName.textContent||"").trim();
- const nextName=prompt("新しいグループ名を入力してください",currentName);
- if(nextName===null)return;
- const name=nextName.trim();
- if(!name){
-  alert("グループ名を入力してください");
-  return;
- }
- if(name.length>40){
-  alert("グループ名は40文字以内にしてください");
-  return;
- }
- const {error}=await supabaseClient
-  .from("groups")
-  .update({name:name})
-  .eq("id",groupId)
-  .eq("owner_id",currentUsername);
- if(error){
-  console.error(error);
-  alert("グループ名の変更に失敗しました\\n\\n"+error.message);
-  return;
- }
- groupName.textContent=name;
- alert("✅ グループ名を変更しました");
-}
-
-async function leaveGroup(){
- if(!groupId||!currentUsername)return;
- if(currentUsername===groupOwnerId){
-  alert("グループオーナーはこのボタンから抜けられません。先に管理権限の引き継ぎ機能を用意してください。");
-  return;
- }
- const ok=confirm("このグループから抜けますか？\\n抜けると、このグループのメッセージを見られなくなります。");
- if(!ok)return;
- const {error}=await supabaseClient
-  .from("group_members")
-  .delete()
-  .eq("group_id",groupId)
-  .eq("user_id",currentUsername);
- if(error){
-  console.error(error);
-  alert("グループを抜けられませんでした\\n\\n"+error.message);
-  return;
- }
- location.href="groups.html";
-}
-
 async function loadGroupMembers(){const {data,error}=await supabaseClient.from("group_members").select("id,group_id,user_id,role,created_at").eq("group_id",groupId).order("created_at",{ascending:true});if(error){console.error("グループメンバー取得エラー:",error);return}groupMembersCache=data||[];await getProfiles(groupMembersCache.map(member=>member.user_id));await getItems(Object.values(profileCache).filter(Boolean).map(profile=>profile.equipped_item_key));const me=groupMembersCache.find(member=>member.user_id===currentUsername);currentGroupRole=me?.role||"member";updateGroupAdminState()}
 async function loadGroupMutes(){const {data,error}=await supabaseClient.from("group_mutes").select("id,group_id,user_id,muted_until,created_by,created_at").eq("group_id",groupId);if(error){console.error("発言禁止情報取得エラー:",error);return}groupMutesCache=data||[];updateCurrentMute()}
 function updateCurrentMute(){currentMute=groupMutesCache.find(mute=>mute.user_id===currentUsername&&new Date(mute.muted_until).getTime()>Date.now())||null;if(muteTimer){clearTimeout(muteTimer);muteTimer=null}if(currentMute){const until=new Date(currentMute.muted_until);muteBanner.textContent="🔇 発言禁止中です。解除予定："+until.toLocaleString("ja-JP");muteBanner.classList.add("show");messageInput.disabled=true;sendButton.disabled=true;imageButton.disabled=true;const remaining=until.getTime()-Date.now();if(remaining>0)muteTimer=setTimeout(async()=>{await loadGroupMutes()},Math.min(remaining+500,2147483647))}else{muteBanner.textContent="";muteBanner.classList.remove("show");messageInput.disabled=false;sendButton.disabled=false;imageButton.disabled=false}}
@@ -221,11 +154,114 @@ async function markMessagesRead(ids){if(!currentUsername||!ids?.length)return;co
 function scheduleReadRefresh(){if(readUpdateTimer)return;readUpdateTimer=setTimeout(()=>{readUpdateTimer=null;loadGroupReadCounts()},150)}
 function isNearBottom(){return messages.scrollHeight-messages.scrollTop-messages.clientHeight<120}function scrollToBottom(){messages.scrollTop=messages.scrollHeight}messages.addEventListener("scroll",()=>{latestButton.classList.toggle("show",!isNearBottom())});latestButton.addEventListener("click",scrollToBottom)
 function renderMentions(text){if(!text)return "";const escaped=String(text).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");return escaped.replace(/@([a-zA-Z0-9_\-]+)/g,(match,username)=>groupMembersCache.some(member=>member.user_id===username)?'<span class="mention">'+match+"</span>":match)}
-async function editMessage(messageId,content){const newContent=prompt("メッセージを編集してください",content);if(newContent===null)return;const value=newContent.trim();if(!value)return;let query=supabaseClient.from("group_messages").update({content:value,edited_at:new Date().toISOString()}).eq("id",messageId);if(!isGroupAdmin)query=query.eq("sender_id",currentUsername);const {error}=await query;if(error){console.error(error);alert("メッセージの編集に失敗しました");return}await refreshSingleMessage(messageId)}
-async function deleteMessage(messageId){if(!confirm("このメッセージを削除しますか？"))return;let query=supabaseClient.from("group_messages").update({is_deleted:true,content:""}).eq("id",messageId);if(!isGroupAdmin)query=query.eq("sender_id",currentUsername);const {error}=await query;if(error){console.error(error);alert("メッセージの削除に失敗しました");return}await refreshSingleMessage(messageId)}
+async function editMessage(messageId,content){
+ const isGlobalAdmin=ADMIN_USERNAMES.has(currentUsername);
+ const newContent=prompt(
+  isGlobalAdmin
+   ?"🛡️ 管理者としてメッセージを編集してください"
+   :"メッセージを編集してください",
+  content
+ );
+ if(newContent===null)return;
+ const value=newContent.trim();
+ if(!value)return;
+
+ let error=null;
+
+ if(isGlobalAdmin){
+  const result=await supabaseClient.rpc("admin_edit_group_message",{
+   target_message_id:messageId,
+   new_content:value
+  });
+  error=result.error;
+ }else{
+  let query=supabaseClient
+   .from("group_messages")
+   .update({
+    content:value,
+    edited_at:new Date().toISOString()
+   })
+   .eq("id",messageId);
+
+  if(!isGroupAdmin)query=query.eq("sender_id",currentUsername);
+
+  const result=await query;
+  error=result.error;
+ }
+
+ if(error){
+  console.error(error);
+  alert("メッセージの編集に失敗しました\n\n"+error.message);
+  return;
+ }
+
+ await refreshSingleMessage(messageId);
+}
+async function deleteMessage(messageId){
+ const isGlobalAdmin=ADMIN_USERNAMES.has(currentUsername);
+
+ if(!confirm(
+  isGlobalAdmin
+   ?"🛡️ 管理者としてこのメッセージを削除しますか？"
+   :"このメッセージを削除しますか？"
+ ))return;
+
+ let error=null;
+
+ if(isGlobalAdmin){
+  const result=await supabaseClient.rpc("admin_delete_group_message",{
+   target_message_id:messageId
+  });
+  error=result.error;
+ }else{
+  let query=supabaseClient
+   .from("group_messages")
+   .update({
+    is_deleted:true,
+    content:""
+   })
+   .eq("id",messageId);
+
+  if(!isGroupAdmin)query=query.eq("sender_id",currentUsername);
+
+  const result=await query;
+  error=result.error;
+ }
+
+ if(error){
+  console.error(error);
+  alert("メッセージの削除に失敗しました\n\n"+error.message);
+  return;
+ }
+
+ await refreshSingleMessage(messageId);
+}
 async function fetchMessageExtras(list){if(!list.length)return{profiles:[],replies:[],reactions:[],signedUrls:{}};const messageIds=list.map(message=>message.id),senderIds=list.map(message=>message.sender_id);const {data:replies}=await supabaseClient.from("group_replies").select("id,group_message_id,sender_id,content,created_at").in("group_message_id",messageIds).order("created_at",{ascending:true});const {data:reactions}=await supabaseClient.from("group_reactions").select("id,group_message_id,user_id,reaction").in("group_message_id",messageIds);await getProfiles([...senderIds,...(replies||[]).map(reply=>reply.sender_id)]);await getItems(Object.values(profileCache).filter(Boolean).map(profile=>profile.equipped_item_key));const signedUrls={};await Promise.all(list.filter(message=>message.image_url&&!message.is_deleted).map(async message=>{try{const {data,error}=await supabaseClient.storage.from("chat-images").createSignedUrl(message.image_url,3600);if(!error&&data?.signedUrl)signedUrls[message.id]=data.signedUrl}catch(error){console.error("画像URL取得エラー:",error)}}));return{replies:replies||[],reactions:reactions||[],signedUrls}}
 function applyDecoratedName(el,profile,username){const decorationClasses=Object.values(NAME_DECORATION_MAP);decorationClasses.forEach(cls=>el.classList.remove(cls));el.querySelectorAll(".admin-name-badge").forEach(badge=>badge.remove());const name=profile?.name||username;const cls=getNameClass(profile?.equipped_name_decoration_key);if(cls)el.classList.add(cls);el.textContent=name;if(profile?.equipped_name_decoration_key==="admin_name"&&ADMIN_USERNAMES.has(username)){const crown=document.createElement("span");crown.className="admin-name-badge";crown.textContent="👑";el.appendChild(crown)}}
-function buildMessageElement(message,extras){const profile=profileCache[message.sender_id]||null,row=document.createElement("div");row.className="message-row";row.dataset.messageId=message.id;row.appendChild(createAvatarSync(profile));const box=document.createElement("div");box.className="message";const senderRow=document.createElement("div");senderRow.className="sender-row";const sender=document.createElement("div");sender.className="sender";applyDecoratedName(sender,profile,message.sender_id);senderRow.appendChild(sender);const time=document.createElement("span");time.className="message-time";time.textContent=formatMessageTime(message.created_at);senderRow.appendChild(time);box.appendChild(senderRow);if(message.is_deleted){const deleted=document.createElement("div");deleted.className="deleted-message";deleted.textContent="このメッセージは削除されました";box.appendChild(deleted)}else{if(message.content){const content=document.createElement("div");content.className="content";content.innerHTML=renderMentions(message.content);box.appendChild(content)}if(extras.signedUrls[message.id]){const img=document.createElement("img");img.className="chat-image";img.src=extras.signedUrls[message.id];img.alt="送信画像";box.appendChild(img)}if(message.edited_at){const edited=document.createElement("span");edited.className="edited-label";edited.textContent="編集済み";sender.appendChild(edited)}}const replies=extras.replies.filter(reply=>String(reply.group_message_id)===String(message.id));replies.forEach(reply=>{const preview=document.createElement("div");preview.className="reply-preview";const replyProfile=profileCache[reply.sender_id]||null;const strong=document.createElement("strong");applyDecoratedName(strong,replyProfile,reply.sender_id);preview.appendChild(strong);preview.appendChild(document.createTextNode("："+(reply.content||"")));box.appendChild(preview)});const reactionRows=extras.reactions.filter(reaction=>String(reaction.group_message_id)===String(message.id));if(reactionRows.length){const reactionMap={};reactionRows.forEach(r=>{if(!reactionMap[r.reaction])reactionMap[r.reaction]=0;reactionMap[r.reaction]++});const reactions=document.createElement("div");reactions.className="reactions";Object.entries(reactionMap).forEach(([reaction,count])=>{const item=document.createElement("div");item.className="reaction-item";item.textContent=reaction+" "+count;reactions.appendChild(item)});box.appendChild(reactions)}if(message.sender_id===currentUsername){const read=document.createElement("div");read.dataset.readMessageId=message.id;read.className="read-status";const count=groupReadCounts[String(message.id)]||0;read.textContent=count>0?"既読 "+count+"人":"";read.style.display=count>0?"block":"none";box.appendChild(read)}const menu=document.createElement("div");menu.className="message-menu";const reactionButton=document.createElement("button");reactionButton.type="button";reactionButton.textContent="😀 リアクション";menu.appendChild(reactionButton);const replyButton=document.createElement("button");replyButton.type="button";replyButton.textContent="↩️ 返信";menu.appendChild(replyButton);if(message.sender_id!==currentUsername&&!message.is_deleted){const reportButton=document.createElement("button");reportButton.type="button";reportButton.textContent="🚨 通報";reportButton.addEventListener("click",async event=>{event.stopPropagation();menu.style.display="none";await reportGroupMessage(message)});menu.appendChild(reportButton)}if((message.sender_id===currentUsername||isGroupAdmin)&&!message.is_deleted){const editButton=document.createElement("button");editButton.type="button";editButton.className="edit-button";editButton.textContent="✏️ 編集";editButton.addEventListener("click",async event=>{event.stopPropagation();menu.style.display="none";await editMessage(message.id,message.content||"")});menu.appendChild(editButton);const deleteButton=document.createElement("button");deleteButton.type="button";deleteButton.className="delete-button";deleteButton.textContent="🗑️ 削除";deleteButton.addEventListener("click",async event=>{event.stopPropagation();menu.style.display="none";await deleteMessage(message.id)});menu.appendChild(deleteButton)}const picker=document.createElement("div");picker.className="reaction-picker";["👍","❤️","😂","😮","😢","👏"].forEach(reaction=>{const button=document.createElement("button");button.type="button";button.textContent=reaction;button.addEventListener("click",async event=>{event.stopPropagation();await addReaction(message.id,reaction);picker.style.display="none";menu.style.display="none"});picker.appendChild(button)});reactionButton.addEventListener("click",event=>{event.stopPropagation();picker.style.display=picker.style.display==="flex"?"none":"flex"});replyButton.addEventListener("click",event=>{event.stopPropagation();startReply(message);menu.style.display="none";picker.style.display="none"});box.appendChild(menu);box.appendChild(picker);box.addEventListener("click",event=>{if(event.target.closest(".message-menu")||event.target.closest(".reaction-picker"))return;document.querySelectorAll(".message-menu").forEach(el=>{if(el!==menu)el.style.display="none"});document.querySelectorAll(".reaction-picker").forEach(el=>{if(el!==picker)el.style.display="none"});menu.style.display=menu.style.display==="block"?"none":"block"});row.appendChild(box);return row}
+function buildMessageElement(message,extras){const profile=profileCache[message.sender_id]||null,row=document.createElement("div");row.className="message-row";row.dataset.messageId=message.id;row.appendChild(createAvatarSync(profile));const box=document.createElement("div");box.className="message";const senderRow=document.createElement("div");senderRow.className="sender-row";const sender=document.createElement("div");sender.className="sender";applyDecoratedName(sender,profile,message.sender_id);senderRow.appendChild(sender);const time=document.createElement("span");time.className="message-time";time.textContent=formatMessageTime(message.created_at);senderRow.appendChild(time);box.appendChild(senderRow);if(message.is_deleted){const deleted=document.createElement("div");deleted.className="deleted-message";deleted.textContent="このメッセージは削除されました";box.appendChild(deleted)}else{if(message.content){const content=document.createElement("div");content.className="content";content.innerHTML=renderMentions(message.content);box.appendChild(content)}if(extras.signedUrls[message.id]){const img=document.createElement("img");img.className="chat-image";img.src=extras.signedUrls[message.id];img.alt="送信画像";box.appendChild(img)}if(message.edited_at){const edited=document.createElement("span");edited.className="edited-label";edited.textContent="編集済み";sender.appendChild(edited)}}const replies=extras.replies.filter(reply=>String(reply.group_message_id)===String(message.id));replies.forEach(reply=>{const preview=document.createElement("div");preview.className="reply-preview";const replyProfile=profileCache[reply.sender_id]||null;const strong=document.createElement("strong");applyDecoratedName(strong,replyProfile,reply.sender_id);preview.appendChild(strong);preview.appendChild(document.createTextNode("："+(reply.content||"")));box.appendChild(preview)});const reactionRows=extras.reactions.filter(reaction=>String(reaction.group_message_id)===String(message.id));if(reactionRows.length){const reactionMap={};reactionRows.forEach(r=>{if(!reactionMap[r.reaction])reactionMap[r.reaction]=0;reactionMap[r.reaction]++});const reactions=document.createElement("div");reactions.className="reactions";Object.entries(reactionMap).forEach(([reaction,count])=>{const item=document.createElement("div");item.className="reaction-item";item.textContent=reaction+" "+count;reactions.appendChild(item)});box.appendChild(reactions)}if(message.sender_id===currentUsername){const read=document.createElement("div");read.dataset.readMessageId=message.id;read.className="read-status";const count=groupReadCounts[String(message.id)]||0;read.textContent=count>0?"既読 "+count+"人":"";read.style.display=count>0?"block":"none";box.appendChild(read)}const menu=document.createElement("div");menu.className="message-menu";const reactionButton=document.createElement("button");reactionButton.type="button";reactionButton.textContent="😀 リアクション";menu.appendChild(reactionButton);const replyButton=document.createElement("button");replyButton.type="button";replyButton.textContent="↩️ 返信";menu.appendChild(replyButton);if(message.sender_id!==currentUsername&&!message.is_deleted){const reportButton=document.createElement("button");reportButton.type="button";reportButton.textContent="🚨 通報";reportButton.addEventListener("click",async event=>{event.stopPropagation();menu.style.display="none";await reportGroupMessage(message)});menu.appendChild(reportButton)}if((message.sender_id===currentUsername||isGroupAdmin||ADMIN_USERNAMES.has(currentUsername))&&!message.is_deleted){
+ const globalAdmin=ADMIN_USERNAMES.has(currentUsername);
+ const editButton=document.createElement("button");
+ editButton.type="button";
+ editButton.className="edit-button";
+ editButton.textContent=globalAdmin&&message.sender_id!==currentUsername?"🛡️ 管理者編集":"✏️ 編集";
+ editButton.addEventListener("click",async event=>{
+  event.stopPropagation();
+  menu.style.display="none";
+  await editMessage(message.id,message.content||"")
+ });
+ menu.appendChild(editButton);
+
+ const deleteButton=document.createElement("button");
+ deleteButton.type="button";
+ deleteButton.className="delete-button";
+ deleteButton.textContent=globalAdmin&&message.sender_id!==currentUsername?"🛡️ 管理者削除":"🗑️ 削除";
+ deleteButton.addEventListener("click",async event=>{
+  event.stopPropagation();
+  menu.style.display="none";
+  await deleteMessage(message.id)
+ });
+ menu.appendChild(deleteButton);
+}const picker=document.createElement("div");picker.className="reaction-picker";["👍","❤️","😂","😮","😢","👏"].forEach(reaction=>{const button=document.createElement("button");button.type="button";button.textContent=reaction;button.addEventListener("click",async event=>{event.stopPropagation();await addReaction(message.id,reaction);picker.style.display="none";menu.style.display="none"});picker.appendChild(button)});reactionButton.addEventListener("click",event=>{event.stopPropagation();picker.style.display=picker.style.display==="flex"?"none":"flex"});replyButton.addEventListener("click",event=>{event.stopPropagation();startReply(message);menu.style.display="none";picker.style.display="none"});box.appendChild(menu);box.appendChild(picker);box.addEventListener("click",event=>{if(event.target.closest(".message-menu")||event.target.closest(".reaction-picker"))return;document.querySelectorAll(".message-menu").forEach(el=>{if(el!==menu)el.style.display="none"});document.querySelectorAll(".reaction-picker").forEach(el=>{if(el!==picker)el.style.display="none"});menu.style.display=menu.style.display==="block"?"none":"block"});row.appendChild(box);return row}
 async function renderMessages(list,keepBottom=true){if(!list.length){messages.innerHTML='<div class="member-empty">まだメッセージはありません</div>';return}const extras=await fetchMessageExtras(list),fragment=document.createDocumentFragment(),unreadIds=[];list.forEach(message=>{fragment.appendChild(buildMessageElement(message,extras));if(message.sender_id!==currentUsername)unreadIds.push(message.id)});messages.innerHTML="";messages.appendChild(fragment);if(keepBottom)requestAnimationFrame(scrollToBottom);if(unreadIds.length)void markMessagesRead(unreadIds)}
 async function loadMessages(){if(!groupId||loadingMessages)return;loadingMessages=true;const keepBottom=isNearBottom();try{const {data,error}=await supabaseClient.from("group_messages").select("id,group_id,sender_id,content,image_url,created_at,is_deleted,edited_at").eq("group_id",groupId).order("created_at",{ascending:true});if(error){console.error("メッセージ取得エラー:",error);messages.innerHTML='<div class="error">メッセージを読み込めませんでした</div>';return}await renderMessages(data||[],keepBottom);await loadGroupReadCounts()}catch(error){console.error("高速メッセージ読み込みエラー:",error)}finally{loadingMessages=false}}
 async function refreshSingleMessage(messageId){const wasBottom=isNearBottom();const {data,error}=await supabaseClient.from("group_messages").select("id,group_id,sender_id,content,image_url,created_at,is_deleted,edited_at").eq("id",messageId).eq("group_id",groupId).maybeSingle();if(error){console.error(error);return}if(!data)return;const old=messages.querySelector(`[data-message-id="${messageId}"]`);if(!old){await loadMessages();return}const extras=await fetchMessageExtras([data]);old.replaceWith(buildMessageElement(data,extras));if(wasBottom)scrollToBottom();await loadGroupReadCounts()}
@@ -310,32 +346,9 @@ const {error}=await supabaseClient.from("notifications").insert(rows);
 if(error)console.error("メンション通知エラー:",error)
 }
 
-async function loadMembers(){memberList.innerHTML='<div class="member-loading">読み込み中...</div>';const {data:members,error}=await supabaseClient.from("group_members").select("id,group_id,user_id,role,created_at").eq("group_id",groupId).order("created_at",{ascending:true});if(error){console.error(error);memberList.innerHTML='<div class="member-empty">メンバーを読み込めませんでした</div>';return}if(!members?.length){memberList.innerHTML='<div class="member-empty">メンバーがいません</div>';return}const usernames=members.map(member=>member.user_id),{data:presenceData}=await supabaseClient.from("user_presence").select("user_id,last_seen").in("user_id",usernames),presenceMap={};(presenceData||[]).forEach(item=>{presenceMap[item.user_id]=item.last_seen});await getProfiles(usernames);await getItems(usernames.map(username=>profileCache[username]?.equipped_item_key));const fragment=document.createDocumentFragment();members.forEach(member=>{const profile=profileCache[member.user_id]||null,item=profile?.equipped_item_key?itemCache[profile.equipped_item_key]:null,itemElement=document.createElement("div");itemElement.className="member-item";const iconFrame=document.createElement("div");iconFrame.className="member-icon-frame";const frameClass=getFrameClass(profile?.equipped_item_key,member.user_id);if(frameClass)iconFrame.classList.add(frameClass);else iconFrame.style.background=item?.frame_color||"#eee8ff";const icon=document.createElement("div");icon.className="member-icon";if(profile?.avatar_url){const img=document.createElement("img");img.src=profile.avatar_url;img.alt="プロフィール画像";icon.appendChild(img)}else icon.textContent="👤";iconFrame.appendChild(icon);if(item?.icon){const badge=document.createElement("div");badge.className="member-icon-badge show";badge.textContent=item.icon;badge.style.border="2px solid "+(item.frame_color||"#eee8ff");iconFrame.appendChild(badge)}itemElement.appendChild(iconFrame);const info=document.createElement("div");info.className="member-info";const name=document.createElement("div");name.className="member-name";applyDecoratedName(name,profile,member.user_id);info.appendChild(name);const id=document.createElement("div");id.className="member-id";id.textContent="@"+member.user_id;info.appendChild(id);const lastSeen=presenceMap[member.user_id],online=isOnline(lastSeen),status=document.createElement("div");status.className="member-status "+(online?"online":"offline");status.textContent=online?"● オンライン":"● オフライン";info.appendChild(status);if(!online){const last=document.createElement("div");last.className="last-online";last.textContent=formatLastOnline(lastSeen);info.appendChild(last)}const roleBadge=document.createElement("div");roleBadge.className="role-badge";if(member.user_id===groupOwnerId){roleBadge.classList.add("role-owner");roleBadge.textContent="👑 オーナー"}else if(member.role==="admin"){roleBadge.classList.add("role-admin");roleBadge.textContent="🛡️ 副管理者"}else{roleBadge.classList.add("role-member");roleBadge.textContent="メンバー"}info.appendChild(roleBadge);const mute=groupMutesCache.find(m=>m.user_id===member.user_id&&new Date(m.muted_until).getTime()>Date.now());if(mute){const muteStatus=document.createElement("div");muteStatus.className="member-mute-status";muteStatus.textContent="🔇 発言禁止中";info.appendChild(muteStatus)}if(currentUsername===groupOwnerId&&member.user_id!==groupOwnerId){const roleControl=document.createElement("select");roleControl.className="role-control";const memberOption=document.createElement("option");memberOption.value="member";memberOption.textContent="通常メンバー";const adminOption=document.createElement("option");adminOption.value="admin";adminOption.textContent="副管理者";roleControl.appendChild(memberOption);roleControl.appendChild(adminOption);roleControl.value=member.role==="admin"?"admin":"member";roleControl.addEventListener("change",async()=>{await setDeputyAdmin(member.user_id,roleControl.value==="admin")});info.appendChild(roleControl)}if(isGroupAdmin&&member.user_id!==currentUsername&&member.user_id!==groupOwnerId){
-const kickButton=document.createElement("button");
-kickButton.type="button";
-kickButton.className="mute-clear-button";
-kickButton.style.background="#ffe8e8";
-kickButton.style.color="#c94b4b";
-kickButton.textContent="🚪 メンバーから外す";
-kickButton.addEventListener("click",async()=>{
- const ok=confirm("@"+member.user_id+" さんをグループから外しますか？");
- if(!ok)return;
- const {error}=await supabaseClient.from("group_members").delete()
-  .eq("group_id",groupId)
-  .eq("user_id",member.user_id);
- if(error){
-  console.error(error);
-  alert("メンバーを外せませんでした\n\n"+error.message);
-  return;
- }
- await loadGroupMembers();
- await loadMembers();
-});
-info.appendChild(kickButton);
-
-const muteControl=document.createElement("input");muteControl.type="number";muteControl.min="1";muteControl.placeholder="発言禁止（分）";muteControl.className="mute-control";info.appendChild(muteControl);const muteButton=document.createElement("button");muteButton.type="button";muteButton.className="mute-control";muteButton.textContent="🔇 発言禁止";muteButton.addEventListener("click",async()=>{await setMute(member.user_id,muteControl.value)});info.appendChild(muteButton);if(mute){const clearButton=document.createElement("button");clearButton.type="button";clearButton.className="mute-clear-button";clearButton.textContent="🔊 発言禁止を解除";clearButton.addEventListener("click",async()=>{await clearMute(member.user_id)});info.appendChild(clearButton)}}itemElement.appendChild(info);fragment.appendChild(itemElement)});memberList.innerHTML="";memberList.appendChild(fragment)}
+async function loadMembers(){memberList.innerHTML='<div class="member-loading">読み込み中...</div>';const {data:members,error}=await supabaseClient.from("group_members").select("id,group_id,user_id,role,created_at").eq("group_id",groupId).order("created_at",{ascending:true});if(error){console.error(error);memberList.innerHTML='<div class="member-empty">メンバーを読み込めませんでした</div>';return}if(!members?.length){memberList.innerHTML='<div class="member-empty">メンバーがいません</div>';return}const usernames=members.map(member=>member.user_id),{data:presenceData}=await supabaseClient.from("user_presence").select("user_id,last_seen").in("user_id",usernames),presenceMap={};(presenceData||[]).forEach(item=>{presenceMap[item.user_id]=item.last_seen});await getProfiles(usernames);await getItems(usernames.map(username=>profileCache[username]?.equipped_item_key));const fragment=document.createDocumentFragment();members.forEach(member=>{const profile=profileCache[member.user_id]||null,item=profile?.equipped_item_key?itemCache[profile.equipped_item_key]:null,itemElement=document.createElement("div");itemElement.className="member-item";const iconFrame=document.createElement("div");iconFrame.className="member-icon-frame";const frameClass=getFrameClass(profile?.equipped_item_key,member.user_id);if(frameClass)iconFrame.classList.add(frameClass);else iconFrame.style.background=item?.frame_color||"#eee8ff";const icon=document.createElement("div");icon.className="member-icon";if(profile?.avatar_url){const img=document.createElement("img");img.src=profile.avatar_url;img.alt="プロフィール画像";icon.appendChild(img)}else icon.textContent="👤";iconFrame.appendChild(icon);if(item?.icon){const badge=document.createElement("div");badge.className="member-icon-badge show";badge.textContent=item.icon;badge.style.border="2px solid "+(item.frame_color||"#eee8ff");iconFrame.appendChild(badge)}itemElement.appendChild(iconFrame);const info=document.createElement("div");info.className="member-info";const name=document.createElement("div");name.className="member-name";applyDecoratedName(name,profile,member.user_id);info.appendChild(name);const id=document.createElement("div");id.className="member-id";id.textContent="@"+member.user_id;info.appendChild(id);const lastSeen=presenceMap[member.user_id],online=isOnline(lastSeen),status=document.createElement("div");status.className="member-status "+(online?"online":"offline");status.textContent=online?"● オンライン":"● オフライン";info.appendChild(status);if(!online){const last=document.createElement("div");last.className="last-online";last.textContent=formatLastOnline(lastSeen);info.appendChild(last)}const roleBadge=document.createElement("div");roleBadge.className="role-badge";if(member.user_id===groupOwnerId){roleBadge.classList.add("role-owner");roleBadge.textContent="👑 オーナー"}else if(member.role==="admin"){roleBadge.classList.add("role-admin");roleBadge.textContent="🛡️ 副管理者"}else{roleBadge.classList.add("role-member");roleBadge.textContent="メンバー"}info.appendChild(roleBadge);const mute=groupMutesCache.find(m=>m.user_id===member.user_id&&new Date(m.muted_until).getTime()>Date.now());if(mute){const muteStatus=document.createElement("div");muteStatus.className="member-mute-status";muteStatus.textContent="🔇 発言禁止中";info.appendChild(muteStatus)}if(currentUsername===groupOwnerId&&member.user_id!==groupOwnerId){const roleControl=document.createElement("select");roleControl.className="role-control";const memberOption=document.createElement("option");memberOption.value="member";memberOption.textContent="通常メンバー";const adminOption=document.createElement("option");adminOption.value="admin";adminOption.textContent="副管理者";roleControl.appendChild(memberOption);roleControl.appendChild(adminOption);roleControl.value=member.role==="admin"?"admin":"member";roleControl.addEventListener("change",async()=>{await setDeputyAdmin(member.user_id,roleControl.value==="admin")});info.appendChild(roleControl)}if(isGroupAdmin&&member.user_id!==currentUsername&&member.user_id!==groupOwnerId){const muteControl=document.createElement("input");muteControl.type="number";muteControl.min="1";muteControl.placeholder="発言禁止（分）";muteControl.className="mute-control";info.appendChild(muteControl);const muteButton=document.createElement("button");muteButton.type="button";muteButton.className="mute-control";muteButton.textContent="🔇 発言禁止";muteButton.addEventListener("click",async()=>{await setMute(member.user_id,muteControl.value)});info.appendChild(muteButton);if(mute){const clearButton=document.createElement("button");clearButton.type="button";clearButton.className="mute-clear-button";clearButton.textContent="🔊 発言禁止を解除";clearButton.addEventListener("click",async()=>{await clearMute(member.user_id)});info.appendChild(clearButton)}}itemElement.appendChild(info);fragment.appendChild(itemElement)});memberList.innerHTML="";memberList.appendChild(fragment)}
 async function addMember(){const username=memberInput.value.trim();if(!username){alert("ユーザーIDを入力してください");return}if(groupMembersCache.some(member=>member.user_id===username)){alert("すでにメンバーです");return}const {data:profile,error:profileError}=await supabaseClient.from("profiles").select("user_id").eq("user_id",username).maybeSingle();if(profileError){console.error(profileError);alert("ユーザー確認に失敗しました");return}if(!profile){alert("そのユーザーIDは見つかりません");return}const {error}=await supabaseClient.from("group_members").insert({group_id:Number(groupId),user_id:username,role:"member"});if(error){console.error(error);alert("メンバー追加に失敗しました");return}memberInput.value="";await loadGroupMembers();await loadMembers()}
-groupChatTitleButton.addEventListener("click",async()=>{if(isGroupAdmin){await renameGroup();}else{await leaveGroup();}});addMemberButton.addEventListener("click",addMember);memberButton.addEventListener("click",async()=>{memberModal.style.display="flex";await loadMembers()});closeModalButton.addEventListener("click",()=>{memberModal.style.display="none"});memberModal.addEventListener("click",event=>{if(event.target===memberModal)memberModal.style.display="none"});
+addMemberButton.addEventListener("click",addMember);memberButton.addEventListener("click",async()=>{memberModal.style.display="flex";await loadMembers()});closeModalButton.addEventListener("click",()=>{memberModal.style.display="none"});memberModal.addEventListener("click",event=>{if(event.target===memberModal)memberModal.style.display="none"});
 function setupRealtime(){const channel=supabaseClient.channel("group-chat-"+groupId);channel.on("postgres_changes",{event:"INSERT",schema:"public",table:"group_messages",filter:"group_id=eq."+groupId},payload=>{realtimeQueue=realtimeQueue.then(async()=>{const message=payload.new;if(messages.querySelector(`[data-message-id="${message.id}"]`))return;const wasBottom=isNearBottom(),extras=await fetchMessageExtras([message]);messages.appendChild(buildMessageElement(message,extras));if(wasBottom)scrollToBottom();void markMessagesRead(message.sender_id!==currentUsername?[message.id]:[])}).catch(error=>console.error("Realtime INSERT処理エラー:",error))});channel.on("postgres_changes",{event:"UPDATE",schema:"public",table:"group_messages",filter:"group_id=eq."+groupId},payload=>{realtimeQueue=realtimeQueue.then(async()=>{const message=payload.new,old=messages.querySelector(`[data-message-id="${message.id}"]`);if(!old){await loadMessages();return}const extras=await fetchMessageExtras([message]);old.replaceWith(buildMessageElement(message,extras));await loadGroupReadCounts()}).catch(error=>console.error("Realtime UPDATE処理エラー:",error))});channel.on("postgres_changes",{event:"INSERT",schema:"public",table:"group_message_reads"},()=>{scheduleReadRefresh()});channel.on("postgres_changes",{event:"UPDATE",schema:"public",table:"group_message_reads"},()=>{scheduleReadRefresh()});channel.on("postgres_changes",{event:"INSERT",schema:"public",table:"group_mutes",filter:"group_id=eq."+groupId},async()=>{await loadGroupMutes()});channel.on("postgres_changes",{event:"UPDATE",schema:"public",table:"group_mutes",filter:"group_id=eq."+groupId},async()=>{await loadGroupMutes()});channel.on("postgres_changes",{event:"DELETE",schema:"public",table:"group_mutes",filter:"group_id=eq."+groupId},async()=>{await loadGroupMutes()});channel.subscribe()}
 async function start(){const wasBanned=await checkFriendChatBan();if(wasBanned)return;if(!groupId){groupName.textContent="グループIDがありません";return}const {data:{session}}=await supabaseClient.auth.getSession();if(!session){location.href="index.html";return}currentUsername=session.user.user_metadata?.username||"";if(!currentUsername){alert("ログイン情報が取得できませんでした");location.href="index.html";return}await Promise.all([updateMyPresence(),loadGroup()]);await loadGroupMembers();await loadGroupMutes();await loadMessages();setupRealtime();if(presenceTimer)clearInterval(presenceTimer);presenceTimer=setInterval(updateMyPresence,30000)}
 start();
