@@ -1,1759 +1,247 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>フレンドコイン</title>
-
 <style>
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Hiragino Kaku Gothic ProN",
-    "Yu Gothic",
-    sans-serif;
-
-  background: linear-gradient(135deg,#fff4fb,#eef7ff);
-  color: #333;
-}
-
-.container {
-  width: min(92%,460px);
-  margin: 0 auto;
-  padding: 24px 0 40px;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.back {
-  border: none;
-  background: white;
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  font-size: 26px;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,.08);
-}
-
-.header h1 {
-  margin: 0;
-  font-size: 24px;
-}
-
-.balance-card {
-  background: linear-gradient(135deg,#8f7cff,#b49cff);
-  color: white;
-  border-radius: 24px;
-  padding: 26px;
-  box-shadow: 0 10px 25px rgba(143,124,255,.25);
-  margin-bottom: 18px;
-}
-
-.balance-label {
-  font-size: 14px;
-  opacity: .9;
-}
-
-.balance {
-  font-size: 42px;
-  font-weight: bold;
-  margin-top: 5px;
-}
-
-.coin {
-  font-size: 18px;
-  margin-left: 4px;
-}
-
-.card {
-  background: rgba(255,255,255,.94);
-  border-radius: 22px;
-  padding: 20px;
-  margin-bottom: 16px;
-  box-shadow: 0 6px 18px rgba(0,0,0,.07);
-}
-
-.card h2 {
-  margin: 0 0 8px;
-  font-size: 20px;
-}
-
-.description {
-  margin: 0 0 16px;
-  color: #777;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-
-/* 配布コード */
-
-.reward-code-box {
-  display: flex;
-  gap: 8px;
-}
-
-.reward-code-box input {
-  min-width: 0;
-  flex: 1;
-  border: 1px solid #ddd;
-  border-radius: 14px;
-  padding: 13px;
-  font-size: 16px;
-  font-family: inherit;
-  text-transform: uppercase;
-}
-
-.reward-code-box button {
-  border: none;
-  border-radius: 14px;
-  padding: 12px 15px;
-  background: #8f7cff;
-  color: white;
-  font-weight: bold;
-  white-space: nowrap;
-}
-
-.reward-message {
-  margin-top: 10px;
-  min-height: 22px;
-  text-align: center;
-  font-weight: bold;
-}
-
-
-/* スロット */
-
-.slot {
-  background: #faf9ff;
-  border: 2px solid #e8e3ff;
-  border-radius: 20px;
-  padding: 18px;
-  text-align: center;
-}
-
-.slot-machine {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin: 10px 0 18px;
-}
-
-.reel {
-  width: 72px;
-  height: 72px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: white;
-  border-radius: 16px;
-  font-size: 40px;
-  box-shadow: inset 0 0 0 2px #eee;
-}
-
-.result {
-  min-height: 26px;
-  margin: 10px 0;
-  font-weight: bold;
-}
-
-.main-button {
-  width: 100%;
-  border: none;
-  border-radius: 16px;
-  padding: 14px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  background: #8f7cff;
-  color: white;
-}
-
-.main-button:disabled {
-  opacity: .5;
-}
-
-
-/* 集める */
-
-.actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.action {
-  border: none;
-  background: #f7f5ff;
-  border-radius: 18px;
-  padding: 18px 10px;
-  cursor: pointer;
-  text-align: center;
-}
-
-.action .icon {
-  font-size: 30px;
-  margin-bottom: 7px;
-}
-
-.action strong {
-  display: block;
-  font-size: 15px;
-}
-
-.action span {
-  display: block;
-  color: #777;
-  font-size: 12px;
-  margin-top: 4px;
-}
-
-
-/* ショップ */
-
-.shop-details {
-  border-radius: 18px;
-  overflow: hidden;
-}
-
-.shop-summary {
-  list-style: none;
-  cursor: pointer;
-  user-select: none;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  background: linear-gradient(135deg,#f8f5ff,#fff4fb);
-
-  border: 2px solid #e8e3ff;
-  border-radius: 18px;
-
-  padding: 16px;
-  font-weight: bold;
-}
-
-.shop-summary::-webkit-details-marker {
-  display: none;
-}
-
-.shop-summary-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.shop-summary-icon {
-  font-size: 28px;
-}
-
-.shop-summary-text {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.shop-summary-title {
-  font-size: 16px;
-}
-
-.shop-summary-sub {
-  color: #777;
-  font-size: 12px;
-  font-weight: normal;
-}
-
-.shop-arrow {
-  font-size: 18px;
-  transition: transform .2s;
-}
-
-.shop-details[open] .shop-arrow {
-  transform: rotate(180deg);
-}
-
-.shop-content {
-  padding-top: 14px;
-}
-
-.shop {
-  display: grid;
-  gap: 12px;
-}
-
-.shop-item {
-  background: #faf9ff;
-  border: 2px solid #e8e3ff;
-  border-radius: 18px;
-  padding: 15px;
-
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.shop-preview {
-  width: 58px;
-  height: 58px;
-  border-radius: 50%;
-  padding: 4px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  flex-shrink: 0;
-
-  background: #ffd0e7;
-}
-
-.shop-preview-inner {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: white;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  font-size: 27px;
-}
-
-
-/* フレーム */
-
-.frame-sakura {
-  background: linear-gradient(135deg,#ff9bc9,#ff5da8,#ffd1e7)!important;
-}
-
-.frame-star {
-  background: linear-gradient(135deg,#ffe98a,#f4bf3f,#fff1a8)!important;
-}
-
-.frame-diamond {
-  background: linear-gradient(135deg,#a8ecff,#4db9ee,#d4f7ff)!important;
-}
-
-.frame-heart {
-  background: linear-gradient(135deg,#ff9bb8,#ff4f81,#ffc4d5)!important;
-}
-
-.frame-rainbow {
-  background: conic-gradient(
-    #ff4d4d,#ffb84d,#ffff66,#5cff8d,
-    #4ddcff,#7b6cff,#ff4dd8,#ff4d4d
-  )!important;
-}
-
-.frame-flame {
-  background: linear-gradient(135deg,#ff3b1f,#ff8c00,#ffd400)!important;
-}
-
-.frame-sea {
-  background: linear-gradient(135deg,#0077ff,#00cfff,#9ff5ff)!important;
-}
-
-.frame-space {
-  background:
-    radial-gradient(circle at 20% 20%,#fff 1px,transparent 2px),
-    radial-gradient(circle at 70% 35%,#fff 1px,transparent 2px),
-    radial-gradient(circle at 45% 75%,#fff 1px,transparent 2px),
-    linear-gradient(135deg,#08051c,#25104f,#09031c)!important;
-}
-
-.frame-neon {
-  background: linear-gradient(
-    135deg,#00ff88,#00e5ff,#ff00d4
-  )!important;
-}
-
-
-/* ショップ情報 */
-
-.shop-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.shop-name {
-  font-size: 15px;
-  font-weight: bold;
-}
-
-.shop-price {
-  margin-top: 4px;
-  color: #777;
-  font-size: 13px;
-}
-
-.buy-button {
-  border: none;
-  background: #8f7cff;
-  color: white;
-  border-radius: 12px;
-  padding: 10px 12px;
-  font-size: 13px;
-  font-weight: bold;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.buy-button:disabled {
-  opacity: .45;
-}
-
-.buy-button.owned {
-  background: #e8e5ff;
-  color: #6255c7;
-}
-
-
-/* 説明 */
-
-.notice {
-  background: #fff8df;
-  border-radius: 16px;
-  padding: 13px;
-  font-size: 13px;
-  color: #735f19;
-  line-height: 1.6;
-}
-
-.message {
-  text-align: center;
-  margin-top: 12px;
-  min-height: 22px;
-  font-size: 14px;
-  font-weight: bold;
-}
-
-@media(max-width:380px){
-
-.reward-code-box {
-  flex-direction: column;
-}
-
-.reward-code-box button {
-  width: 100%;
-}
-
-.shop-item {
-  padding: 12px;
-}
-
-.shop-preview {
-  width: 50px;
-  height: 50px;
-}
-
-.shop-preview-inner {
-  font-size: 23px;
-}
-
-.buy-button {
-  padding: 9px 10px;
-}
-
-}
-
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:linear-gradient(135deg,#fff4fb,#eef7ff);color:#333}
+.container{width:min(92%,460px);margin:0 auto;padding:24px 0 40px}
+.header{display:flex;align-items:center;gap:12px;margin-bottom:20px}.back{border:none;background:white;width:42px;height:42px;border-radius:14px;font-size:26px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.08)}.header h1{margin:0;font-size:24px}
+.balance-card{background:linear-gradient(135deg,#8f7cff,#b49cff);color:white;border-radius:24px;padding:26px;box-shadow:0 10px 25px rgba(143,124,255,.25);margin-bottom:18px}.balance-label{font-size:14px;opacity:.9}.balance{font-size:42px;font-weight:bold;margin-top:5px}.coin{font-size:18px;margin-left:4px}
+.card{background:rgba(255,255,255,.94);border-radius:22px;padding:20px;margin-bottom:16px;box-shadow:0 6px 18px rgba(0,0,0,.07)}.card h2{margin:0 0 8px;font-size:20px}.description{margin:0 0 16px;color:#777;font-size:14px;line-height:1.6}
+.reward-code-box{display:flex;gap:8px}.reward-code-box input{min-width:0;flex:1;border:1px solid #ddd;border-radius:14px;padding:13px;font-size:16px;font-family:inherit;text-transform:uppercase}.reward-code-box button{border:none;border-radius:14px;padding:12px 15px;background:#8f7cff;color:white;font-weight:bold;white-space:nowrap}.reward-message{margin-top:10px;min-height:22px;text-align:center;font-weight:bold}
+.slot{background:#faf9ff;border:2px solid #e8e3ff;border-radius:20px;padding:18px;text-align:center}.slot-machine{display:flex;justify-content:center;gap:10px;margin:10px 0 18px}.reel{width:72px;height:72px;display:flex;justify-content:center;align-items:center;background:white;border-radius:16px;font-size:40px;box-shadow:inset 0 0 0 2px #eee}.result{min-height:26px;margin:10px 0;font-weight:bold}.main-button{width:100%;border:none;border-radius:16px;padding:14px;font-size:16px;font-weight:bold;cursor:pointer;background:#8f7cff;color:white}.main-button:disabled{opacity:.5}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}.action{border:none;background:#f7f5ff;border-radius:18px;padding:18px 10px;cursor:pointer;text-align:center}.action .icon{font-size:30px;margin-bottom:7px}.action strong{display:block;font-size:15px}.action span{display:block;color:#777;font-size:12px;margin-top:4px}
+.shop-details{border-radius:18px;overflow:hidden;margin-bottom:12px}.shop-summary{list-style:none;cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#f8f5ff,#fff4fb);border:2px solid #e8e3ff;border-radius:18px;padding:16px;font-weight:bold}.shop-summary::-webkit-details-marker{display:none}.shop-summary-left{display:flex;align-items:center;gap:10px}.shop-summary-icon{font-size:28px}.shop-summary-text{display:flex;flex-direction:column;gap:3px}.shop-summary-title{font-size:16px}.shop-summary-sub{color:#777;font-size:12px;font-weight:normal}.shop-arrow{font-size:18px;transition:transform .2s}.shop-details[open] .shop-arrow{transform:rotate(180deg)}.shop-content{padding-top:14px}.shop{display:grid;gap:12px}
+.shop-item{background:#faf9ff;border:2px solid #e8e3ff;border-radius:18px;padding:15px;display:flex;align-items:center;gap:12px}.shop-preview{width:58px;height:58px;border-radius:50%;padding:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#ffd0e7}.shop-preview-inner{width:100%;height:100%;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:27px}
+.frame-sakura{background:linear-gradient(135deg,#ff9bc9,#ff5da8,#ffd1e7)!important}.frame-star{background:linear-gradient(135deg,#ffe98a,#f4bf3f,#fff1a8)!important}.frame-diamond{background:linear-gradient(135deg,#a8ecff,#4db9ee,#d4f7ff)!important}.frame-heart{background:linear-gradient(135deg,#ff9bb8,#ff4f81,#ffc4d5)!important}.frame-rainbow{background:conic-gradient(#ff4d4d,#ffb84d,#ffff66,#5cff8d,#4ddcff,#7b6cff,#ff4dd8,#ff4d4d)!important}.frame-flame{background:linear-gradient(135deg,#ff3b1f,#ff8c00,#ffd400)!important}.frame-sea{background:linear-gradient(135deg,#0077ff,#00cfff,#9ff5ff)!important}.frame-space{background:radial-gradient(circle at 20% 20%,#fff 1px,transparent 2px),radial-gradient(circle at 70% 35%,#fff 1px,transparent 2px),radial-gradient(circle at 45% 75%,#fff 1px,transparent 2px),linear-gradient(135deg,#08051c,#25104f,#09031c)!important}.frame-neon{background:linear-gradient(135deg,#00ff88,#00e5ff,#ff00d4)!important}
+.shop-info{flex:1;min-width:0}.shop-name{font-size:15px;font-weight:bold}.shop-price{margin-top:4px;color:#777;font-size:13px}.buy-button{border:none;background:#8f7cff;color:white;border-radius:12px;padding:10px 12px;font-size:13px;font-weight:bold;cursor:pointer;white-space:nowrap}.buy-button:disabled{opacity:.45}.buy-button.owned{background:#e8e5ff;color:#6255c7}
+.notice{background:#fff8df;border-radius:16px;padding:13px;font-size:13px;color:#735f19;line-height:1.6}.message{text-align:center;margin-top:12px;min-height:22px;font-size:14px;font-weight:bold}
+@media(max-width:380px){.reward-code-box{flex-direction:column}.reward-code-box button{width:100%}.shop-item{padding:12px}.shop-preview{width:50px;height:50px}.shop-preview-inner{font-size:23px}.buy-button{padding:9px 10px}}
 </style>
 </head>
-
 <body>
-
 <div class="container">
+<div class="header"><button class="back" onclick="history.back()">‹</button><h1>🪙 フレンドコイン</h1></div>
 
-
-<div class="header">
-
-<button
-class="back"
-onclick="history.back()">
-‹
-</button>
-
-<h1>🪙 フレンドコイン</h1>
-
-</div>
-
-
-<!-- 残高 -->
-
-<div class="balance-card">
-
-<div class="balance-label">
-現在のコイン
-</div>
-
-<div class="balance">
-
-<span id="balance">---</span>
-
-<span class="coin">
-COIN
-</span>
-
-</div>
-
-</div>
-
-
-<!-- 配布コード -->
+<div class="balance-card"><div class="balance-label">現在のコイン</div><div class="balance"><span id="balance">---</span><span class="coin">COIN</span></div></div>
 
 <div class="card">
-
 <h2>🎁 配布コード</h2>
-
-<p class="description">
-管理者からもらった配布コードを入力すると、
-コインやフレームを受け取れます。
-</p>
-
-<div class="reward-code-box">
-
-<input
-id="rewardCodeInput"
-type="text"
-maxlength="100"
-placeholder="配布コード">
-
-<button
-id="redeemRewardCodeButton"
-onclick="redeemRewardCode()">
-🎁 受け取る
-</button>
-
+<p class="description">管理者からもらった配布コードを入力すると、コインやアイテムを受け取れます。</p>
+<div class="reward-code-box"><input id="rewardCodeInput" type="text" maxlength="100" placeholder="配布コード"><button id="redeemRewardCodeButton" onclick="redeemRewardCode()">🎁 受け取る</button></div>
+<div id="rewardCodeMessage" class="reward-message"></div>
 </div>
-
-<div
-id="rewardCodeMessage"
-class="reward-message">
-</div>
-
-</div>
-
-
-<!-- 運試し -->
 
 <div class="card">
-
-<h2>🎰 今日の運試し</h2>
-
-<p class="description">
-1日1回、無料で運試しできます！
-</p>
-
-<div class="slot">
-
-<div class="slot-machine">
-
-<div class="reel" id="reel1">❓</div>
-<div class="reel" id="reel2">❓</div>
-<div class="reel" id="reel3">❓</div>
-
+<h2>🎰 今日の運試し</h2><p class="description">1日1回、無料で運試しできます！</p>
+<div class="slot"><div class="slot-machine"><div class="reel" id="reel1">❓</div><div class="reel" id="reel2">❓</div><div class="reel" id="reel3">❓</div></div><div class="result" id="slotResult">今日の運試しをしてみよう！</div><button class="main-button" id="slotButton" onclick="playSlot()" disabled>🎰 運試しする</button></div>
 </div>
-
-<div
-class="result"
-id="slotResult">
-今日の運試しをしてみよう！
-</div>
-
-<button
-class="main-button"
-id="slotButton"
-onclick="playSlot()"
-disabled>
-🎰 運試しする
-</button>
-
-</div>
-
-</div>
-
-
-<!-- 集める -->
 
 <div class="card">
-
-<h2>🎮 コインを集める</h2>
-
-<p class="description">
-フレンドチャットのいろいろな機能でコインを集めよう！
-</p>
-
+<h2>🎮 コインを集める</h2><p class="description">フレンドチャットのいろいろな機能でコインを集めよう！</p>
 <div class="actions">
-
-<button class="action" onclick="showComingSoon()">
-<div class="icon">🎮</div>
-<strong>ゲーム</strong>
-<span>ゲームで獲得</span>
-</button>
-
-<button class="action" onclick="showComingSoon()">
-<div class="icon">🎯</div>
-<strong>チャレンジ</strong>
-<span>達成して獲得</span>
-</button>
-
-<button class="action" onclick="claimLoginBonus()">
-<div class="icon">📅</div>
-<strong>ログイン</strong>
-<span>+10 COIN</span>
-</button>
-
-<button class="action" onclick="scrollToShop()">
-<div class="icon">🖼️</div>
-<strong>フレーム</strong>
-<span>フレームと交換</span>
-</button>
-
+<button class="action" onclick="showComingSoon()"><div class="icon">🎮</div><strong>ゲーム</strong><span>ゲームで獲得</span></button>
+<button class="action" onclick="showComingSoon()"><div class="icon">🎯</div><strong>チャレンジ</strong><span>達成して獲得</span></button>
+<button class="action" onclick="claimLoginBonus()"><div class="icon">📅</div><strong>ログイン</strong><span>+10 COIN</span></button>
+<button class="action" onclick="scrollToShop()"><div class="icon">🛍️</div><strong>ショップ</strong><span>アイテムと交換</span></button>
+</div>
 </div>
 
-</div>
+<div class="card" id="shopCard">
 
+<details class="shop-details" id="frameShopDetails">
+<summary class="shop-summary"><div class="shop-summary-left"><div class="shop-summary-icon">🖼️</div><div class="shop-summary-text"><div class="shop-summary-title">フレームショップ</div><div class="shop-summary-sub">プロフィールのフレームを交換</div></div></div><div class="shop-arrow">▼</div></summary>
+<div class="shop-content"><p class="description">集めたコインでプロフィールのフレームを交換できます！</p><div id="frameShop" class="shop">読み込み中……</div></div>
+</details>
 
-<!-- ショップ -->
+<details class="shop-details" id="nameDecorationShopDetails">
+<summary class="shop-summary"><div class="shop-summary-left"><div class="shop-summary-icon">✨</div><div class="shop-summary-text"><div class="shop-summary-title">名前装飾ショップ</div><div class="shop-summary-sub">名前に表示する装飾を交換</div></div></div><div class="shop-arrow">▼</div></summary>
+<div class="shop-content"><p class="description">個別チャット・グループチャット・掲示板・プロフィールなどで表示する名前装飾を交換できます！</p><div id="nameDecorationShop" class="shop">読み込み中……</div></div>
+</details>
 
-<div
-class="card"
-id="shopCard">
-
-<details
-class="shop-details"
-id="shopDetails">
-
-<summary class="shop-summary">
-
-<div class="shop-summary-left">
-
-<div class="shop-summary-icon">
-🖼️
-</div>
-
-<div class="shop-summary-text">
-
-<div class="shop-summary-title">
-フレームショップ
-</div>
-
-<div class="shop-summary-sub">
-コインでプロフィールフレームを交換
-</div>
-
-</div>
-
-</div>
-
-<div class="shop-arrow">
-▼
-</div>
-
-</summary>
-
-<div class="shop-content">
-
-<p class="description">
-集めたコインでプロフィールのフレームを交換できます！
-</p>
-
-<div id="shop" class="shop">
-読み込み中……
-</div>
-
-</div>
-
+<details class="shop-details" id="backgroundShopDetails">
+<summary class="shop-summary"><div class="shop-summary-left"><div class="shop-summary-icon">🎨</div><div class="shop-summary-text"><div class="shop-summary-title">背景ショップ</div><div class="shop-summary-sub">プロフィールの背景を交換</div></div></div><div class="shop-arrow">▼</div></summary>
+<div class="shop-content"><p class="description">自分や友達のプロフィールに表示する背景を交換できます！</p><div id="backgroundShop" class="shop">読み込み中……</div></div>
 </details>
 
 </div>
 
-
-<!-- 説明 -->
-
-<div class="card">
-
-<h2>ℹ️ コインについて</h2>
-
-<div class="notice">
-
-フレンドコインは
-フレンドチャット内で使える
-ゲーム内ポイントです。<br>
-
-ゲームやチャレンジなどで集めて、
-プロフィールフレームなどと
-交換できます。
-
+<div class="card"><h2>ℹ️ コインについて</h2><div class="notice">フレンドコインはフレンドチャット内で使えるゲーム内ポイントです。<br>ゲームやチャレンジなどで集めて、フレーム・名前装飾・背景などと交換できます。</div></div>
+<div class="message" id="message"></div>
 </div>
-
-</div>
-
-
-<div
-class="message"
-id="message">
-</div>
-
-</div>
-
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="ban-check.js"></script>
-
 <script>
+const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-const SUPABASE_URL =
-"https://yxonmqdyekwenyzekjwj.supabase.co";
+let currentUsername="",balance=0,shopItems=[],ownedItems=new Set();
 
-const SUPABASE_KEY =
-"sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
-
-const supabaseClient =
-window.supabase.createClient(
-SUPABASE_URL,
-SUPABASE_KEY
-);
-
-
-let currentUsername="";
-let balance=0;
-let shopItems=[];
-let ownedItems=new Set();
-
-
-/* =========================
-今日
-========================= */
-
-function getToday(){
-
-const now=new Date();
-
-return (
-now.getFullYear()+"-"+
-String(now.getMonth()+1).padStart(2,"0")+"-"+
-String(now.getDate()).padStart(2,"0")
-);
-
-}
-
-
-/* =========================
-残高
-========================= */
-
-function updateBalance(){
-
-document.getElementById("balance")
-.textContent=balance;
-
-}
-
-
-/* =========================
-メッセージ
-========================= */
-
-function showMessage(text){
-
-document.getElementById("message")
-.textContent=text;
-
-}
-
-
-function showRewardMessage(text){
-
-document.getElementById("rewardCodeMessage")
-.textContent=text;
-
-}
-
-
-/* =========================
-ユーザー
-========================= */
+function getToday(){const now=new Date();return now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0")}
+function updateBalance(){document.getElementById("balance").textContent=balance}
+function showMessage(text){document.getElementById("message").textContent=text}
+function showRewardMessage(text){document.getElementById("rewardCodeMessage").textContent=text}
 
 async function getCurrentUser(){
-
-const {
-data,
-error
-} =
-await supabaseClient.auth.getUser();
-
-
-if(error || !data.user){
-return false;
+ const {data,error}=await supabaseClient.auth.getUser();
+ if(error||!data.user)return false;
+ currentUsername=data.user.user_metadata?.username||"";
+ return !!currentUsername;
 }
-
-
-currentUsername =
-data.user.user_metadata?.username || "";
-
-
-return !!currentUsername;
-
-}
-
-
-/* =========================
-コイン
-========================= */
 
 async function loadCoins(){
-
-const loggedIn =
-await getCurrentUser();
-
-
-if(!loggedIn){
-
-document.getElementById("balance")
-.textContent="ログインしてください";
-
-return false;
-
+ if(!await getCurrentUser()){document.getElementById("balance").textContent="ログインしてください";return false}
+ const {data,error}=await supabaseClient.from("user_coins").select("coins,last_login_bonus_date").eq("user_id",currentUsername).maybeSingle();
+ if(error){console.error(error);document.getElementById("balance").textContent="エラー";return false}
+ if(!data){
+  const {data:created,error:createError}=await supabaseClient.from("user_coins").insert({user_id:currentUsername,coins:0}).select("coins,last_login_bonus_date").single();
+  if(createError){console.error(createError);document.getElementById("balance").textContent="エラー";return false}
+  balance=Number(created.coins||0);
+ }else balance=Number(data.coins||0);
+ updateBalance();document.getElementById("slotButton").disabled=false;return true;
 }
-
-
-const {
-data,
-error
-} =
-await supabaseClient
-.from("user_coins")
-.select("coins,last_login_bonus_date")
-.eq("user_id",currentUsername)
-.maybeSingle();
-
-
-if(error){
-
-console.error(error);
-
-document.getElementById("balance")
-.textContent="エラー";
-
-return false;
-
-}
-
-
-if(!data){
-
-const {
-data:created,
-error:createError
-} =
-await supabaseClient
-.from("user_coins")
-.insert({
-user_id:currentUsername,
-coins:0
-})
-.select("coins,last_login_bonus_date")
-.single();
-
-
-if(createError){
-
-console.error(createError);
-
-document.getElementById("balance")
-.textContent="エラー";
-
-return false;
-
-}
-
-
-balance=Number(created.coins||0);
-
-}else{
-
-balance=Number(data.coins||0);
-
-}
-
-
-updateBalance();
-
-document.getElementById("slotButton")
-.disabled=false;
-
-return true;
-
-}
-
-
-/* =========================
-コイン保存
-========================= */
 
 async function saveCoins(){
-
-const {
-error
-} =
-await supabaseClient
-.from("user_coins")
-.update({
-
-coins:balance,
-
-updated_at:
-new Date().toISOString()
-
-})
-.eq("user_id",currentUsername);
-
-
-if(error){
-
-console.error(error);
-return false;
-
+ const {error}=await supabaseClient.from("user_coins").update({coins:balance,updated_at:new Date().toISOString()}).eq("user_id",currentUsername);
+ if(error){console.error(error);return false}return true;
 }
-
-return true;
-
-}
-
-
-/* =========================
-配布コード
-========================= */
 
 async function redeemRewardCode(){
-
-const input =
-document.getElementById("rewardCodeInput");
-
-const button =
-document.getElementById("redeemRewardCodeButton");
-
-const code =
-input.value.trim().toUpperCase();
-
-
-if(!code){
-
-showRewardMessage(
-"❌ 配布コードを入力してください"
-);
-
-return;
-
+ const input=document.getElementById("rewardCodeInput"),button=document.getElementById("redeemRewardCodeButton"),code=input.value.trim().toUpperCase();
+ if(!code){showRewardMessage("❌ 配布コードを入力してください");return}
+ button.disabled=true;showRewardMessage("🎁 受け取っています……");
+ try{
+  const {data,error}=await supabaseClient.rpc("redeem_coin_reward_code",{input_code:code});
+  if(error){showRewardMessage("❌ "+error.message);return}
+  await loadCoins();await loadShop();
+  const rewardCoins=Number(data?.reward_coins||0),rewardItem=data?.reward_item_key,parts=[];
+  if(rewardCoins>0)parts.push(`🪙 ${rewardCoins.toLocaleString()} COIN`);
+  if(rewardItem){const item=shopItems.find(x=>x.item_key===rewardItem);parts.push(`🎁 ${item?.name||"アイテム"}`)}
+  showRewardMessage("🎉 "+(parts.join(" ＋ ")||"報酬")+" を受け取りました！");
+  input.value="";
+ }catch(error){console.error(error);showRewardMessage("❌ 受け取りに失敗しました")}finally{button.disabled=false}
 }
-
-
-button.disabled=true;
-
-showRewardMessage(
-"🎁 受け取っています……"
-);
-
-
-try{
-
-const {
-data,
-error
-} =
-await supabaseClient.rpc(
-"redeem_coin_reward_code",
-{
-input_code:code
-}
-);
-
-
-if(error){
-
-showRewardMessage(
-"❌ "+error.message
-);
-
-return;
-
-}
-
-
-await loadCoins();
-await loadShop();
-
-
-const rewardCoins =
-Number(data?.reward_coins||0);
-
-const rewardItem =
-data?.reward_item_key;
-
-
-const parts=[];
-
-
-if(rewardCoins>0){
-
-parts.push(
-`🪙 ${rewardCoins.toLocaleString()} COIN`
-);
-
-}
-
-
-if(rewardItem){
-
-const item =
-shopItems.find(
-x=>x.item_key===rewardItem
-);
-
-parts.push(
-`🖼️ ${item?.name || "フレーム"}`
-);
-
-}
-
-
-showRewardMessage(
-"🎉 "+parts.join(" ＋ ")+" を受け取りました！"
-);
-
-input.value="";
-
-
-}catch(error){
-
-console.error(error);
-
-showRewardMessage(
-"❌ 受け取りに失敗しました"
-);
-
-}finally{
-
-button.disabled=false;
-
-}
-
-}
-
-
-/* =========================
-ログインボーナス
-========================= */
 
 async function claimLoginBonus(){
-
-if(!currentUsername){
-
-const loggedIn =
-await getCurrentUser();
-
-if(!loggedIn){
-
-showMessage("❌ ログインしてください");
-return;
-
+ if(!currentUsername&&!await getCurrentUser()){showMessage("❌ ログインしてください");return}
+ const today=getToday();
+ const {data,error}=await supabaseClient.from("user_coins").select("coins,last_login_bonus_date").eq("user_id",currentUsername).maybeSingle();
+ if(error||!data){showMessage("❌ コイン情報を取得できませんでした");return}
+ if(data.last_login_bonus_date===today){showMessage("📅 今日のログインボーナスは受け取り済みだよ！");return}
+ const newCoins=Number(data.coins||0)+10;
+ const {error:updateError}=await supabaseClient.from("user_coins").update({coins:newCoins,last_login_bonus_date:today,updated_at:new Date().toISOString()}).eq("user_id",currentUsername);
+ if(updateError){showMessage("❌ ボーナスの受け取りに失敗しました");return}
+ balance=newCoins;updateBalance();showMessage("🎉 ログインボーナス +10 COIN！");
 }
-
-}
-
-
-const today=getToday();
-
-
-const {
-data,
-error
-} =
-await supabaseClient
-.from("user_coins")
-.select("coins,last_login_bonus_date")
-.eq("user_id",currentUsername)
-.maybeSingle();
-
-
-if(error||!data){
-
-showMessage(
-"❌ コイン情報を取得できませんでした"
-);
-
-return;
-
-}
-
-
-if(data.last_login_bonus_date===today){
-
-showMessage(
-"📅 今日のログインボーナスは受け取り済みだよ！"
-);
-
-return;
-
-}
-
-
-const newCoins=
-Number(data.coins||0)+10;
-
-
-const {
-error:updateError
-} =
-await supabaseClient
-.from("user_coins")
-.update({
-
-coins:newCoins,
-
-last_login_bonus_date:today,
-
-updated_at:
-new Date().toISOString()
-
-})
-.eq("user_id",currentUsername);
-
-
-if(updateError){
-
-showMessage(
-"❌ ボーナスの受け取りに失敗しました"
-);
-
-return;
-
-}
-
-
-balance=newCoins;
-
-updateBalance();
-
-showMessage(
-"🎉 ログインボーナス +10 COIN！"
-);
-
-}
-
-
-/* =========================
-スロット
-========================= */
 
 async function playSlot(){
-
-const button =
-document.getElementById("slotButton");
-
-const result =
-document.getElementById("slotResult");
-
-const today=getToday();
-
-
-const lastPlay =
-localStorage.getItem("friendCoinSlotDate");
-
-
-if(lastPlay===today){
-
-result.textContent=
-"今日はもう運試し済みだよ！😊";
-
-return;
-
+ const button=document.getElementById("slotButton"),result=document.getElementById("slotResult"),today=getToday();
+ if(localStorage.getItem("friendCoinSlotDate")===today){result.textContent="今日はもう運試し済みだよ！😊";return}
+ button.disabled=true;result.textContent="運試し中……";
+ const symbols=["🍒","⭐","🍋","💎","🍀","🎁"];let count=0;
+ const animation=setInterval(async()=>{
+  ["reel1","reel2","reel3"].forEach(id=>document.getElementById(id).textContent=symbols[Math.floor(Math.random()*symbols.length)]);
+  count++;
+  if(count>=12){
+   clearInterval(animation);
+   const a=symbols[Math.floor(Math.random()*symbols.length)],b=symbols[Math.floor(Math.random()*symbols.length)],c=symbols[Math.floor(Math.random()*symbols.length)];
+   document.getElementById("reel1").textContent=a;document.getElementById("reel2").textContent=b;document.getElementById("reel3").textContent=c;
+   let reward;
+   if(a===b&&b===c){reward=100;result.textContent="🎉 大当たり！ +100 COIN"}else if(a===b||b===c||a===c){reward=50;result.textContent="✨ 当たり！ +50 COIN"}else{reward=10;result.textContent="🍀 参加賞！ +10 COIN"}
+   balance+=reward;updateBalance();
+   if(!await saveCoins()){balance-=reward;updateBalance();result.textContent="❌ コインの保存に失敗しました";button.disabled=false;return}
+   localStorage.setItem("friendCoinSlotDate",today);button.disabled=false;
+  }
+ },100);
 }
-
-
-button.disabled=true;
-
-result.textContent="運試し中……";
-
-
-const symbols=[
-"🍒","⭐","🍋","💎","🍀","🎁"
-];
-
-
-let count=0;
-
-
-const animation=setInterval(async()=>{
-
-document.getElementById("reel1")
-.textContent=
-symbols[Math.floor(Math.random()*symbols.length)];
-
-document.getElementById("reel2")
-.textContent=
-symbols[Math.floor(Math.random()*symbols.length)];
-
-document.getElementById("reel3")
-.textContent=
-symbols[Math.floor(Math.random()*symbols.length)];
-
-
-count++;
-
-
-if(count>=12){
-
-clearInterval(animation);
-
-
-const a=
-symbols[Math.floor(Math.random()*symbols.length)];
-
-const b=
-symbols[Math.floor(Math.random()*symbols.length)];
-
-const c=
-symbols[Math.floor(Math.random()*symbols.length)];
-
-
-document.getElementById("reel1").textContent=a;
-document.getElementById("reel2").textContent=b;
-document.getElementById("reel3").textContent=c;
-
-
-let reward;
-
-
-if(a===b&&b===c){
-
-reward=100;
-
-result.textContent=
-"🎉 大当たり！ +100 COIN";
-
-}else if(a===b||b===c||a===c){
-
-reward=50;
-
-result.textContent=
-"✨ 当たり！ +50 COIN";
-
-}else{
-
-reward=10;
-
-result.textContent=
-"🍀 参加賞！ +10 COIN";
-
-}
-
-
-balance+=reward;
-
-updateBalance();
-
-
-const saved=await saveCoins();
-
-
-if(!saved){
-
-balance-=reward;
-
-updateBalance();
-
-result.textContent=
-"❌ コインの保存に失敗しました";
-
-button.disabled=false;
-
-return;
-
-}
-
-
-localStorage.setItem(
-"friendCoinSlotDate",
-today
-);
-
-
-button.disabled=false;
-
-}
-
-},100);
-
-}
-
-
-/* =========================
-フレームクラス
-========================= */
 
 function getFrameClass(itemKey){
-
-const map={
-
-sakura:"frame-sakura",
-star:"frame-star",
-diamond:"frame-diamond",
-space:"frame-space",
-neon:"frame-neon",
-rainbow:"frame-rainbow",
-flame:"frame-flame",
-sea:"frame-sea",
-heart:"frame-heart"
-
-};
-
-return map[itemKey]||"";
-
+ const map={sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",space:"frame-space",neon:"frame-neon",rainbow:"frame-rainbow",flame:"frame-flame",sea:"frame-sea",heart:"frame-heart"};
+ return map[itemKey]||"";
 }
-
-
-/* =========================
-ショップ
-========================= */
 
 async function loadShop(){
-
-const shop=
-document.getElementById("shop");
-
-
-const {
-data:items,
-error:itemError
-} =
-await supabaseClient
-.from("coin_items")
-.select("item_key,name,icon,price,frame_color")
-.order("price",{ascending:true});
-
-
-if(itemError){
-
-shop.innerHTML=
-"❌ フレームショップを読み込めませんでした";
-
-return;
-
+ const {data:items,error:itemError}=await supabaseClient.from("coin_items").select("item_key,name,icon,price,frame_color,item_type").order("price",{ascending:true});
+ if(itemError){
+  console.error(itemError);
+  ["frameShop","nameDecorationShop","backgroundShop"].forEach(id=>document.getElementById(id).innerHTML="❌ ショップを読み込めませんでした");
+  return;
+ }
+ shopItems=(items||[]).filter(item=>item.item_key!=="admin");
+ const {data:owned,error:ownedError}=await supabaseClient.from("user_coin_items").select("item_key").eq("user_id",currentUsername);
+ ownedItems=ownedError?new Set() : new Set((owned||[]).map(x=>x.item_key));
+ renderAllShops();
 }
 
-
-shopItems=
-(items||[]).filter(
-item=>item.item_key!=="admin"
-);
-
-
-const {
-data:owned,
-error:ownedError
-} =
-await supabaseClient
-.from("user_coin_items")
-.select("item_key")
-.eq("user_id",currentUsername);
-
-
-if(ownedError){
-
-ownedItems=new Set();
-
-}else{
-
-ownedItems=
-new Set(
-(owned||[]).map(x=>x.item_key)
-);
-
+function renderAllShops(){
+ renderShopType("frame","frameShop","現在交換できるフレームはありません。","🖼️");
+ renderShopType("name_decoration","nameDecorationShop","現在交換できる名前装飾はありません。","✨");
+ renderShopType("background","backgroundShop","現在交換できる背景はありません。","🎨");
 }
 
-
-renderShop();
-
+function renderShopType(type,elementId,emptyText,defaultIcon){
+ const shop=document.getElementById(elementId);
+ const items=shopItems.filter(item=>(item.item_type||"frame")===type);
+ if(!items.length){shop.innerHTML=emptyText;return}
+ shop.innerHTML=items.map(item=>{
+  const owned=ownedItems.has(item.item_key),frameClass=type==="frame"?getFrameClass(item.item_key):"";
+  const inlineStyle=frameClass?"":`style="background:${escapeAttribute(item.frame_color||"#ffd0e7")}"`;
+  return `<div class="shop-item">
+   <div class="shop-preview ${frameClass}" ${inlineStyle}>
+    <div class="shop-preview-inner">${escapeHtml(item.icon||defaultIcon)}</div>
+   </div>
+   <div class="shop-info"><div class="shop-name">${escapeHtml(item.name)}</div><div class="shop-price">🪙 ${Number(item.price).toLocaleString()} COIN</div></div>
+   ${owned?`<button class="buy-button owned" disabled>交換済み</button>`:`<button class="buy-button" data-buy-item="${escapeAttribute(item.item_key)}">交換</button>`}
+  </div>`;
+ }).join("");
+ shop.querySelectorAll("[data-buy-item]").forEach(button=>button.addEventListener("click",()=>buyItem(button.dataset.buyItem)));
 }
 
-
-/* =========================
-ショップ表示
-========================= */
-
-function renderShop(){
-
-const shop=
-document.getElementById("shop");
-
-
-if(!shopItems.length){
-
-shop.innerHTML=
-"現在交換できるフレームはありません。";
-
-return;
-
-}
-
-
-shop.innerHTML=
-shopItems.map(item=>{
-
-const owned=
-ownedItems.has(item.item_key);
-
-const frameClass=
-getFrameClass(item.item_key);
-
-
-const inlineStyle=
-frameClass
-?""
-:`style="background:${escapeAttribute(item.frame_color||"#ffd0e7")}"`;
-
-
-return `
-
-<div class="shop-item">
-
-<div
-class="shop-preview ${frameClass}"
-${inlineStyle}>
-
-<div class="shop-preview-inner">
-${escapeHtml(item.icon||"🖼️")}
-</div>
-
-</div>
-
-
-<div class="shop-info">
-
-<div class="shop-name">
-${escapeHtml(item.name)}
-</div>
-
-<div class="shop-price">
-🪙 ${Number(item.price).toLocaleString()} COIN
-</div>
-
-</div>
-
-
-${
-owned
-?
-`
-<button
-class="buy-button owned"
-disabled>
-交換済み
-</button>
-`
-:
-`
-<button
-class="buy-button"
-onclick="buyItem('${escapeAttribute(item.item_key)}')">
-交換
-</button>
-`
-}
-
-</div>
-
-`;
-
-}).join("");
-
-}
-
-
-/* =========================
-安全化
-========================= */
-
-function escapeHtml(value){
-
-return String(value??"")
-.replaceAll("&","&amp;")
-.replaceAll("<","&lt;")
-.replaceAll(">","&gt;")
-.replaceAll('"',"&quot;")
-.replaceAll("'","&#039;");
-
-}
-
-
-function escapeAttribute(value){
-
-return String(value??"")
-.replaceAll("&","&amp;")
-.replaceAll('"',"&quot;")
-.replaceAll("<","&lt;")
-.replaceAll(">","&gt;");
-
-}
-
-
-/* =========================
-購入
-========================= */
+function escapeHtml(value){return String(value??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
+function escapeAttribute(value){return String(value??"").replaceAll("&","&amp;").replaceAll('"',"&quot;").replaceAll("<","&lt;").replaceAll(">","&gt;")}
 
 async function buyItem(itemKey){
-
-const item=
-shopItems.find(
-x=>x.item_key===itemKey
-);
-
-
-if(!item){
-
-showMessage("❌ フレームが見つかりません");
-return;
-
+ const item=shopItems.find(x=>x.item_key===itemKey);
+ if(!item){showMessage("❌ アイテムが見つかりません");return}
+ if(itemKey==="admin"){showMessage("❌ このアイテムは交換できません");return}
+ if(ownedItems.has(itemKey)){showMessage("このアイテムはすでに交換済みだよ！");return}
+ const price=Number(item.price);
+ if(balance<price){showMessage("🪙 コインが足りません！");return}
+ if(!confirm(`${item.icon||"🎁"} ${item.name}を\n${price.toLocaleString()} COINで交換しますか？`))return;
+ renderShopButtonsDisabled();
+ const oldBalance=balance,newBalance=balance-price;
+ const {error:coinError}=await supabaseClient.from("user_coins").update({coins:newBalance,updated_at:new Date().toISOString()}).eq("user_id",currentUsername);
+ if(coinError){renderAllShops();showMessage("❌ コインの更新に失敗しました");return}
+ const {error:itemError}=await supabaseClient.from("user_coin_items").insert({user_id:currentUsername,item_key:itemKey});
+ if(itemError){
+  await supabaseClient.from("user_coins").update({coins:oldBalance,updated_at:new Date().toISOString()}).eq("user_id",currentUsername);
+  renderAllShops();showMessage("❌ 交換に失敗しました。コインは戻しました。");return
+ }
+ balance=newBalance;ownedItems.add(itemKey);updateBalance();renderAllShops();showMessage(`🎉 ${item.icon||"🎁"} ${item.name}を交換しました！`);
 }
 
-
-if(itemKey==="admin"){
-
-showMessage("❌ このフレームは交換できません");
-return;
-
-}
-
-
-if(ownedItems.has(itemKey)){
-
-showMessage("このフレームはすでに交換済みだよ！");
-return;
-
-}
-
-
-const price=Number(item.price);
-
-
-if(balance<price){
-
-showMessage("🪙 コインが足りません！");
-return;
-
-}
-
-
-if(!confirm(
-`${item.icon} ${item.name}を\n${price.toLocaleString()} COINで交換しますか？`
-)){
-
-return;
-
-}
-
-
-renderShopButtonsDisabled();
-
-
-const oldBalance=balance;
-const newBalance=balance-price;
-
-
-const {
-error:coinError
-} =
-await supabaseClient
-.from("user_coins")
-.update({
-
-coins:newBalance,
-
-updated_at:
-new Date().toISOString()
-
-})
-.eq("user_id",currentUsername);
-
-
-if(coinError){
-
-renderShop();
-
-showMessage(
-"❌ コインの更新に失敗しました"
-);
-
-return;
-
-}
-
-
-const {
-error:itemError
-} =
-await supabaseClient
-.from("user_coin_items")
-.insert({
-
-user_id:currentUsername,
-item_key:itemKey
-
-});
-
-
-if(itemError){
-
-await supabaseClient
-.from("user_coins")
-.update({
-
-coins:oldBalance,
-
-updated_at:
-new Date().toISOString()
-
-})
-.eq("user_id",currentUsername);
-
-
-renderShop();
-
-showMessage(
-"❌ 交換に失敗しました。コインは戻しました。"
-);
-
-return;
-
-}
-
-
-balance=newBalance;
-
-ownedItems.add(itemKey);
-
-updateBalance();
-
-renderShop();
-
-showMessage(
-`🎉 ${item.icon} ${item.name}を交換しました！`
-);
-
-}
-
-
-/* =========================
-ボタン停止
-========================= */
-
-function renderShopButtonsDisabled(){
-
-document
-.querySelectorAll(".buy-button:not(.owned)")
-.forEach(button=>{
-button.disabled=true;
-});
-
-}
-
-
-/* =========================
-ショップへ
-========================= */
+function renderShopButtonsDisabled(){document.querySelectorAll(".buy-button:not(.owned)").forEach(button=>button.disabled=true)}
 
 function scrollToShop(){
-
-const details=
-document.getElementById("shopDetails");
-
-if(details){
-details.open=true;
+ const card=document.getElementById("shopCard");
+ const details=document.getElementById("frameShopDetails");
+ if(details)details.open=true;
+ if(card)setTimeout(()=>card.scrollIntoView({behavior:"smooth",block:"start"}),50);
 }
 
-
-const card=
-document.getElementById("shopCard");
-
-
-if(card){
-
-setTimeout(()=>{
-
-card.scrollIntoView({
-behavior:"smooth",
-block:"start"
-});
-
-},50);
-
-}
-
-}
-
-
-/* =========================
-準備中
-========================= */
-
-function showComingSoon(){
-
-showMessage(
-"🚧 この機能はこれから追加するよ！"
-);
-
-}
-
-
-/* =========================
-開始
-========================= */
+function showComingSoon(){showMessage("🚧 この機能はこれから追加するよ！")}
 
 async function start(){
-
-if(typeof checkFriendChatBan==="function"){
-
-const banned =
-await checkFriendChatBan();
-
-if(banned)return;
-
+ if(typeof checkFriendChatBan==="function"&&await checkFriendChatBan())return;
+ if(!await loadCoins())return;
+ await loadShop();
 }
-
-
-const loaded =
-await loadCoins();
-
-
-if(!loaded)return;
-
-
-await loadShop();
-
-}
-
-
 start();
-
 </script>
-
 </body>
 </html>
