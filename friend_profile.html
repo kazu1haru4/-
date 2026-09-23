@@ -4,349 +4,61 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>プロフィール</title>
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Hiragino Kaku Gothic ProN",
-        "Yu Gothic",
-        sans-serif;
-      background: linear-gradient(135deg, #fff4fb, #eef7ff);
-      min-height: 100vh;
-      padding: 24px 16px;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 420px;
-      margin: 0 auto;
-      background: white;
-      border-radius: 24px;
-      padding: 28px 22px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-      text-align: center;
-    }
-
-    h1 {
-      margin: 0 0 25px;
-      color: #555;
-      font-size: 25px;
-    }
-
-    .avatar-area {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 22px;
-    }
-
-    .avatar-frame {
-      position: relative;
-      width: 155px;
-      height: 155px;
-      border-radius: 50%;
-      padding: 7px;
-      background: #ffdff0;
-      border: 6px solid #ffd0e7;
-    }
-
-    .avatar {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      object-fit: cover;
-      display: block;
-      background: #f5f5f5;
-    }
-
-    .avatar-placeholder {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      background: #f5f5f5;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 55px;
-      color: #aaa;
-    }
-
-    .equipped-badge {
-      position: absolute;
-      right: -7px;
-      top: -7px;
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 27px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      border: 3px solid #eee;
-      z-index: 2;
-    }
-
-    .name {
-      font-size: 24px;
-      font-weight: bold;
-      color: #444;
-      margin-top: 8px;
-      word-break: break-word;
-    }
-
-    .user-id {
-      margin-top: 6px;
-      color: #999;
-      font-size: 14px;
-      word-break: break-word;
-    }
-
-    .bio-box {
-      margin-top: 22px;
-      padding: 18px;
-      border-radius: 16px;
-      background: #fafafa;
-      text-align: left;
-    }
-
-    .bio-title {
-      font-weight: bold;
-      color: #777;
-      margin-bottom: 8px;
-    }
-
-    .bio {
-      color: #555;
-      line-height: 1.7;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    .empty-bio {
-      color: #aaa;
-    }
-
-    /* ギフト */
-
-    .gift-section {
-      margin-top: 22px;
-      padding: 18px;
-      border-radius: 18px;
-      background: linear-gradient(135deg, #fff4fb, #f5f1ff);
-    }
-
-    .gift-title {
-      font-size: 18px;
-      font-weight: bold;
-      color: #555;
-      margin-bottom: 8px;
-    }
-
-    .gift-balance {
-      font-size: 14px;
-      color: #888;
-      margin-bottom: 14px;
-    }
-
-    .gift-button {
-      width: 100%;
-      border: none;
-      border-radius: 14px;
-      padding: 14px;
-      background: linear-gradient(135deg, #ff8fc7, #9b8cff);
-      color: white;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 5px 14px rgba(155,140,255,0.22);
-    }
-
-    .gift-button:hover {
-      opacity: 0.9;
-    }
-
-    .gift-modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.45);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .gift-modal.show {
-      display: flex;
-    }
-
-    .gift-modal-box {
-      width: 100%;
-      max-width: 360px;
-      background: white;
-      border-radius: 22px;
-      padding: 24px;
-      text-align: center;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.2);
-    }
-
-    .gift-modal-title {
-      font-size: 21px;
-      font-weight: bold;
-      color: #555;
-      margin-bottom: 8px;
-    }
-
-    .gift-target {
-      color: #888;
-      font-size: 14px;
-      margin-bottom: 18px;
-    }
-
-    .amount-buttons {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-bottom: 14px;
-    }
-
-    .amount-button {
-      border: none;
-      border-radius: 12px;
-      padding: 11px 5px;
-      background: #f3efff;
-      color: #6554b8;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .amount-button.selected {
-      background: #8f7cff;
-      color: white;
-    }
-
-    .amount-input {
-      width: 100%;
-      padding: 13px;
-      border: 2px solid #eee;
-      border-radius: 12px;
-      font-size: 16px;
-      text-align: center;
-      outline: none;
-    }
-
-    .amount-input:focus {
-      border-color: #9b8cff;
-    }
-
-    .gift-confirm-button {
-      width: 100%;
-      margin-top: 14px;
-      border: none;
-      border-radius: 13px;
-      padding: 13px;
-      background: #8f7cff;
-      color: white;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .gift-cancel-button {
-      width: 100%;
-      margin-top: 8px;
-      border: none;
-      border-radius: 13px;
-      padding: 12px;
-      background: #f2f2f2;
-      color: #777;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .gift-status {
-      margin-top: 12px;
-      font-size: 14px;
-      min-height: 20px;
-    }
-
-    .gift-success {
-      color: #35a66b;
-    }
-
-    .gift-error {
-      color: #e25555;
-    }
-
-    .back-buttons {
-      display: flex;
-      gap: 10px;
-      margin-top: 24px;
-    }
-
-    .back-button {
-      flex: 1;
-      display: block;
-      padding: 13px 10px;
-      border-radius: 14px;
-      background: #f3efff;
-      color: #6554b8;
-      text-decoration: none;
-      font-weight: bold;
-    }
-
-    .back-button:hover {
-      opacity: 0.85;
-    }
-
-    .message {
-      padding: 25px 10px;
-      color: #777;
-    }
-
-    .error {
-      color: #e25555;
-    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:linear-gradient(135deg,#fff4fb,#eef7ff);min-height:100vh;padding:24px 16px}
+    .container{width:100%;max-width:420px;margin:0 auto;background:white;border-radius:24px;padding:28px 22px;box-shadow:0 10px 30px rgba(0,0,0,.08);text-align:center}
+    h1{margin:0 0 25px;color:#555;font-size:25px}
+    .avatar-area{display:flex;justify-content:center;margin-bottom:22px}
+    .avatar-frame{position:relative;width:155px;height:155px;border-radius:50%;padding:7px;background:#ffdff0;border:6px solid #ffd0e7}
+    .avatar{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;background:#f5f5f5}
+    .avatar-placeholder{width:100%;height:100%;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:55px;color:#aaa}
+    .equipped-badge{position:absolute;right:-7px;top:-7px;width:48px;height:48px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:27px;box-shadow:0 4px 12px rgba(0,0,0,.15);border:3px solid #eee;z-index:2}
+    .name{font-size:24px;font-weight:bold;color:#444;margin-top:8px;word-break:break-word}
+    .user-id{margin-top:6px;color:#999;font-size:14px;word-break:break-word}
+    .bio-box{margin-top:22px;padding:18px;border-radius:16px;background:#fafafa;text-align:left}
+    .bio-title{font-weight:bold;color:#777;margin-bottom:8px}
+    .bio{color:#555;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+    .empty-bio{color:#aaa}
+    .gift-section{margin-top:22px;padding:18px;border-radius:18px;background:linear-gradient(135deg,#fff4fb,#f5f1ff)}
+    .gift-title{font-size:18px;font-weight:bold;color:#555;margin-bottom:8px}
+    .gift-balance{font-size:14px;color:#888;margin-bottom:14px}
+    .gift-button{width:100%;border:none;border-radius:14px;padding:14px;background:linear-gradient(135deg,#ff8fc7,#9b8cff);color:white;font-size:16px;font-weight:bold;cursor:pointer;box-shadow:0 5px 14px rgba(155,140,255,.22)}
+    .gift-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;padding:20px}
+    .gift-modal.show{display:flex}
+    .gift-modal-box{width:100%;max-width:360px;background:white;border-radius:22px;padding:24px;text-align:center;box-shadow:0 15px 40px rgba(0,0,0,.2)}
+    .gift-modal-title{font-size:21px;font-weight:bold;color:#555;margin-bottom:8px}
+    .gift-target{color:#888;font-size:14px;margin-bottom:18px}
+    .amount-buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+    .amount-button{border:none;border-radius:12px;padding:11px 5px;background:#f3efff;color:#6554b8;font-weight:bold;cursor:pointer}
+    .amount-button.selected{background:#8f7cff;color:white}
+    .amount-input{width:100%;padding:13px;border:2px solid #eee;border-radius:12px;font-size:16px;text-align:center;outline:none}
+    .gift-confirm-button{width:100%;margin-top:14px;border:none;border-radius:13px;padding:13px;background:#8f7cff;color:white;font-size:16px;font-weight:bold;cursor:pointer}
+    .gift-cancel-button{width:100%;margin-top:8px;border:none;border-radius:13px;padding:12px;background:#f2f2f2;color:#777;font-weight:bold;cursor:pointer}
+    .gift-status{margin-top:12px;font-size:14px;min-height:20px}
+    .gift-success{color:#35a66b}.gift-error{color:#e25555}
+    .profile-actions{display:flex;gap:10px;margin-top:24px}
+    .action-button{flex:1;display:block;padding:13px 10px;border-radius:14px;text-decoration:none;font-weight:bold;text-align:center;border:none;font-size:14px}
+    .chat-button{background:linear-gradient(135deg,#8f7cff,#6e9cff);color:white;box-shadow:0 5px 14px rgba(110,140,255,.2)}
+    .back-button{background:#f3efff;color:#6554b8}
+    .message{padding:25px 10px;color:#777}.error{color:#e25555}
   </style>
 </head>
-
 <body>
-
 <div class="container">
-
   <h1>プロフィール</h1>
-
-  <div id="loading" class="message">
-    読み込み中...
-  </div>
+  <div id="loading" class="message">読み込み中...</div>
 
   <div id="profile" style="display:none;">
-
     <div class="avatar-area">
       <div id="avatarFrame" class="avatar-frame">
-
         <div id="avatarContent"></div>
-
-        <div id="equippedBadge"
-             class="equipped-badge"
-             style="display:none;">
-        </div>
-
+        <div id="equippedBadge" class="equipped-badge" style="display:none;"></div>
       </div>
     </div>
 
     <div id="name" class="name"></div>
-
     <div id="userId" class="user-id"></div>
 
     <div class="bio-box">
@@ -354,919 +66,241 @@
       <div id="bio" class="bio"></div>
     </div>
 
-    <!-- コインギフト -->
     <div id="giftSection" class="gift-section" style="display:none;">
-
-      <div class="gift-title">
-        🎁 コインギフト
-      </div>
-
-      <div id="giftBalance" class="gift-balance">
-        残高を確認中...
-      </div>
-
-      <button
-        id="openGiftButton"
-        class="gift-button"
-        type="button">
-        🎁 コインをギフト
-      </button>
-
+      <div class="gift-title">🎁 コインギフト</div>
+      <div id="giftBalance" class="gift-balance">残高を確認中...</div>
+      <button id="openGiftButton" class="gift-button" type="button">🎁 コインをギフト</button>
     </div>
 
-    <div class="back-buttons">
-      <a href="friends.html" class="back-button">
-        ← 友達一覧
-      </a>
-
-      <a href="home.html" class="back-button">
-        🏠 ホーム
-      </a>
+    <div class="profile-actions">
+      <a id="chatButton" class="action-button chat-button" href="#">💬 チャットする</a>
+      <a href="friends.html" class="action-button back-button">← 友達一覧</a>
     </div>
-
+    <a href="home.html" class="action-button back-button" style="display:block;margin-top:10px;">🏠 ホーム</a>
   </div>
 
   <div id="error" class="message error" style="display:none;"></div>
-
 </div>
-
-
-<!-- ギフトモーダル -->
 
 <div id="giftModal" class="gift-modal">
-
   <div class="gift-modal-box">
-
-    <div class="gift-modal-title">
-      🎁 コインをギフト
-    </div>
-
+    <div class="gift-modal-title">🎁 コインをギフト</div>
     <div id="giftTarget" class="gift-target"></div>
-
     <div class="amount-buttons">
-
-      <button
-        class="amount-button"
-        type="button"
-        data-amount="10">
-        10
-      </button>
-
-      <button
-        class="amount-button"
-        type="button"
-        data-amount="50">
-        50
-      </button>
-
-      <button
-        class="amount-button"
-        type="button"
-        data-amount="100">
-        100
-      </button>
-
+      <button class="amount-button" type="button" data-amount="10">10</button>
+      <button class="amount-button" type="button" data-amount="50">50</button>
+      <button class="amount-button" type="button" data-amount="100">100</button>
     </div>
-
-    <input
-      id="giftAmount"
-      class="amount-input"
-      type="number"
-      min="1"
-      step="1"
-      placeholder="送る枚数を入力">
-
-    <button
-      id="sendGiftButton"
-      class="gift-confirm-button"
-      type="button">
-      🎁 ギフトする
-    </button>
-
-    <button
-      id="closeGiftButton"
-      class="gift-cancel-button"
-      type="button">
-      キャンセル
-    </button>
-
-    <div
-      id="giftStatus"
-      class="gift-status">
-    </div>
-
+    <input id="giftAmount" class="amount-input" type="number" min="1" step="1" placeholder="送る枚数を入力">
+    <button id="sendGiftButton" class="gift-confirm-button" type="button">🎁 ギフトする</button>
+    <button id="closeGiftButton" class="gift-cancel-button" type="button">キャンセル</button>
+    <div id="giftStatus" class="gift-status"></div>
   </div>
-
 </div>
 
-
 <script>
-  const SUPABASE_URL =
-    "https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-  const SUPABASE_KEY =
-    "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+let currentUsername="";
+let friendUsername="";
+let selectedAmount=null;
+let currentBalance=0;
 
-  const { createClient } = supabase;
+function escapeHtml(value){
+  if(value===null||value===undefined)return "";
+  return String(value).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+}
 
-  const db = createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-  );
+function getFriendUsername(){
+  const params=new URLSearchParams(window.location.search);
+  return params.get("user")||params.get("username")||params.get("friend");
+}
 
+async function getEquippedItem(itemKey){
+  if(!itemKey)return null;
+  const {data,error}=await db.from("coin_items").select("item_key,name,icon,frame_color").eq("item_key",itemKey).maybeSingle();
+  if(error){console.error("アイテム取得エラー:",error);return null}
+  return data||null;
+}
 
-  let currentUsername = "";
-  let friendUsername = "";
-  let selectedAmount = null;
-  let currentBalance = 0;
+async function loadProfile(){
+  friendUsername=getFriendUsername();
+  if(!friendUsername)throw new Error("プロフィールのユーザーが指定されていません。");
 
+  const {data:{session}}=await db.auth.getSession();
+  if(!session)throw new Error("ログインしてください。");
 
-  function escapeHtml(value) {
+  currentUsername=session.user.user_metadata?.username||"";
+  if(!currentUsername)throw new Error("ログインユーザーを確認できませんでした。");
 
-    if (
-      value === null ||
-      value === undefined
-    ) {
-      return "";
-    }
+  const isOwnProfile=currentUsername===friendUsername;
 
-    return String(value)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+  const {data,error}=await db.from("profiles")
+    .select("user_id,name,bio,avatar_url,equipped_item_key")
+    .eq("user_id",friendUsername).maybeSingle();
+
+  if(error){console.error(error);throw new Error("プロフィールを読み込めませんでした。")}
+  if(!data)throw new Error("プロフィールが見つかりませんでした。");
+
+  const item=await getEquippedItem(data.equipped_item_key);
+  const frame=document.getElementById("avatarFrame");
+  const badge=document.getElementById("equippedBadge");
+  const avatarContent=document.getElementById("avatarContent");
+
+  frame.className="avatar-frame";
+  frame.style.background=item?.frame_color||"#ffdff0";
+  frame.style.borderColor=item?.frame_color||"#ffd0e7";
+
+  badge.style.display="none";
+  badge.className="equipped-badge";
+  badge.style.borderColor=item?.frame_color||"#eee";
+
+  if(item?.icon){
+    badge.textContent=item.icon;
+    badge.style.display="flex";
   }
 
-
-  function getFriendUsername() {
-
-    const params =
-      new URLSearchParams(
-        window.location.search
-      );
-
-    return (
-      params.get("user") ||
-      params.get("username") ||
-      params.get("friend")
-    );
+  if(data.avatar_url){
+    avatarContent.innerHTML=`<img class="avatar" src="${escapeHtml(data.avatar_url)}" alt="プロフィール画像">`;
+  }else{
+    avatarContent.innerHTML=`<div class="avatar-placeholder">👤</div>`;
   }
 
+  document.getElementById("name").textContent=data.name||data.user_id;
+  document.getElementById("userId").textContent="@"+data.user_id;
 
-  /*
-   * DBから装備アイテムを取得
-   * 新しいアイテムを追加しても自動対応
-   */
-  async function getEquippedItem(itemKey) {
+  const bio=document.getElementById("bio");
+  if(data.bio)bio.textContent=data.bio;
+  else bio.innerHTML='<span class="empty-bio">自己紹介はありません</span>';
 
-    if (!itemKey) {
-      return null;
-    }
+  // 個別チャットへのリンク
+  document.getElementById("chatButton").href="chat.html?user="+encodeURIComponent(friendUsername);
 
-    const {
-      data,
-      error
-    } = await db
-      .from("coin_items")
-      .select(`
-        item_key,
-        name,
-        icon,
-        frame_color
-      `)
-      .eq("item_key", itemKey)
-      .maybeSingle();
-
-    if (error) {
-
-      console.error(
-        "アイテム取得エラー:",
-        error
-      );
-
-      return null;
-    }
-
-    return data || null;
+  const giftSection=document.getElementById("giftSection");
+  if(!isOwnProfile){
+    giftSection.style.display="block";
+    document.getElementById("giftTarget").textContent="@"+friendUsername+" さんへ";
+    await loadMyBalance();
+  }else{
+    giftSection.style.display="none";
   }
 
-
-  /*
-   * プロフィール
-   */
-  async function loadProfile() {
-
-    friendUsername =
-      getFriendUsername();
-
-    if (!friendUsername) {
-
-      throw new Error(
-        "プロフィールのユーザーが指定されていません。"
-      );
-    }
-
-
-    const {
-      data: {
-        session
-      }
-    } =
-      await db.auth.getSession();
-
-
-    if (!session) {
-
-      throw new Error(
-        "ログインしてください。"
-      );
-    }
-
-
-    currentUsername =
-      session.user.user_metadata?.username ||
-      "";
-
-
-    if (!currentUsername) {
-
-      throw new Error(
-        "ログインユーザーを確認できませんでした。"
-      );
-    }
-
-
-    /*
-     * 自分自身にはギフトできない
-     */
-    const isOwnProfile =
-      currentUsername === friendUsername;
-
-
-    /*
-     * プロフィール取得
-     */
-    const {
-      data,
-      error
-    } = await db
-      .from("profiles")
-      .select(`
-        user_id,
-        name,
-        bio,
-        avatar_url,
-        equipped_item_key
-      `)
-      .eq("user_id", friendUsername)
-      .maybeSingle();
-
-
-    if (error) {
-
-      console.error(error);
-
-      throw new Error(
-        "プロフィールを読み込めませんでした。"
-      );
-    }
-
-
-    if (!data) {
-
-      throw new Error(
-        "プロフィールが見つかりませんでした。"
-      );
-    }
-
-
-    /*
-     * アイテム取得
-     */
-    const item =
-      await getEquippedItem(
-        data.equipped_item_key
-      );
-
-
-    const frame =
-      document.getElementById(
-        "avatarFrame"
-      );
-
-    const badge =
-      document.getElementById(
-        "equippedBadge"
-      );
-
-    const avatarContent =
-      document.getElementById(
-        "avatarContent"
-      );
-
-
-    /*
-     * 枠を初期化
-     */
-    frame.className =
-      "avatar-frame";
-
-    frame.style.background =
-      item?.frame_color ||
-      "#ffdff0";
-
-    frame.style.borderColor =
-      item?.frame_color ||
-      "#ffd0e7";
-
-
-    /*
-     * バッジ
-     */
-    badge.style.display =
-      "none";
-
-    badge.className =
-      "equipped-badge";
-
-    badge.style.borderColor =
-      item?.frame_color ||
-      "#eee";
-
-
-    if (item?.icon) {
-
-      badge.textContent =
-        item.icon;
-
-      badge.style.display =
-        "flex";
-    }
-
-
-    /*
-     * プロフィール画像
-     */
-    if (data.avatar_url) {
-
-      avatarContent.innerHTML = `
-        <img
-          class="avatar"
-          src="${escapeHtml(data.avatar_url)}"
-          alt="プロフィール画像"
-        >
-      `;
-
-    } else {
-
-      avatarContent.innerHTML = `
-        <div class="avatar-placeholder">
-          👤
-        </div>
-      `;
-    }
-
-
-    /*
-     * 名前
-     */
-    document.getElementById(
-      "name"
-    ).textContent =
-      data.name ||
-      data.user_id;
-
-
-    /*
-     * ID
-     */
-    document.getElementById(
-      "userId"
-    ).textContent =
-      "@" + data.user_id;
-
-
-    /*
-     * 自己紹介
-     */
-    const bio =
-      document.getElementById(
-        "bio"
-      );
-
-
-    if (data.bio) {
-
-      bio.textContent =
-        data.bio;
-
-    } else {
-
-      bio.innerHTML =
-        '<span class="empty-bio">自己紹介はありません</span>';
-    }
-
-
-    /*
-     * ギフト部分
-     */
-    const giftSection =
-      document.getElementById(
-        "giftSection"
-      );
-
-
-    if (!isOwnProfile) {
-
-      giftSection.style.display =
-        "block";
-
-      document.getElementById(
-        "giftTarget"
-      ).textContent =
-        "@" + friendUsername +
-        " さんへ";
-
-      await loadMyBalance();
-
-    } else {
-
-      giftSection.style.display =
-        "none";
-    }
-
-
-    document.getElementById(
-      "loading"
-    ).style.display =
-      "none";
-
-
-    document.getElementById(
-      "profile"
-    ).style.display =
-      "block";
+  document.getElementById("loading").style.display="none";
+  document.getElementById("profile").style.display="block";
+}
+
+async function loadMyBalance(){
+  const {data,error}=await db.from("user_coins").select("coins").eq("user_id",currentUsername).maybeSingle();
+  if(error){
+    console.error("コイン残高取得エラー:",error);
+    document.getElementById("giftBalance").textContent="コイン残高を取得できませんでした。";
+    return;
   }
+  currentBalance=Number(data?.coins||0);
+  document.getElementById("giftBalance").textContent="現在の残高：🪙 "+currentBalance+" COIN";
+}
 
+function openGiftModal(){
+  selectedAmount=null;
+  document.getElementById("giftAmount").value="";
+  document.getElementById("giftStatus").textContent="";
+  document.getElementById("giftStatus").className="gift-status";
+  document.querySelectorAll(".amount-button").forEach(button=>button.classList.remove("selected"));
+  document.getElementById("giftModal").classList.add("show");
+}
 
-  /*
-   * 自分のコイン残高
-   */
-  async function loadMyBalance() {
+function closeGiftModal(){
+  document.getElementById("giftModal").classList.remove("show");
+}
 
-    const {
-      data,
-      error
-    } = await db
-      .from("user_coins")
-      .select("coins")
-      .eq("user_id", currentUsername)
-      .maybeSingle();
-
-
-    if (error) {
-
-      console.error(
-        "コイン残高取得エラー:",
-        error
-      );
-
-      document.getElementById(
-        "giftBalance"
-      ).textContent =
-        "コイン残高を取得できませんでした。";
-
-      return;
-    }
-
-
-    currentBalance =
-      Number(data?.coins || 0);
-
-
-    document.getElementById(
-      "giftBalance"
-    ).textContent =
-      "現在の残高：🪙 " +
-      currentBalance +
-      " COIN";
-  }
-
-
-  /*
-   * ギフトモーダルを開く
-   */
-  function openGiftModal() {
-
-    selectedAmount = null;
-
-    document.getElementById(
-      "giftAmount"
-    ).value = "";
-
-    document.getElementById(
-      "giftStatus"
-    ).textContent = "";
-
-    document.getElementById(
-      "giftStatus"
-    ).className =
-      "gift-status";
-
-
-    document.querySelectorAll(
-      ".amount-button"
-    ).forEach(button => {
-
-      button.classList.remove(
-        "selected"
-      );
-
-    });
-
-
-    document.getElementById(
-      "giftModal"
-    ).classList.add(
-      "show"
-    );
-  }
-
-
-  /*
-   * ギフトモーダルを閉じる
-   */
-  function closeGiftModal() {
-
-    document.getElementById(
-      "giftModal"
-    ).classList.remove(
-      "show"
-    );
-  }
-
-
-  /*
-   * 金額ボタン
-   */
-  document.querySelectorAll(
-    ".amount-button"
-  ).forEach(button => {
-
-    button.addEventListener(
-      "click",
-      () => {
-
-        const amount =
-          Number(
-            button.dataset.amount
-          );
-
-        selectedAmount =
-          amount;
-
-        document.getElementById(
-          "giftAmount"
-        ).value =
-          amount;
-
-
-        document.querySelectorAll(
-          ".amount-button"
-        ).forEach(other => {
-
-          other.classList.remove(
-            "selected"
-          );
-
-        });
-
-
-        button.classList.add(
-          "selected"
-        );
-      }
-    );
+document.querySelectorAll(".amount-button").forEach(button=>{
+  button.addEventListener("click",()=>{
+    const amount=Number(button.dataset.amount);
+    selectedAmount=amount;
+    document.getElementById("giftAmount").value=amount;
+    document.querySelectorAll(".amount-button").forEach(other=>other.classList.remove("selected"));
+    button.classList.add("selected");
   });
-
-
-  /*
-   * 手入力
-   */
-  document.getElementById(
-    "giftAmount"
-  ).addEventListener(
-    "input",
-    () => {
-
-      selectedAmount =
-        null;
-
-      document.querySelectorAll(
-        ".amount-button"
-      ).forEach(button => {
-
-        button.classList.remove(
-          "selected"
-        );
-
-      });
-    }
-  );
-
-
-  /*
-   * ギフト送信
-   */
-  async function sendGift() {
-
-    const input =
-      document.getElementById(
-        "giftAmount"
-      );
-
-    const status =
-      document.getElementById(
-        "giftStatus"
-      );
-
-    const sendButton =
-      document.getElementById(
-        "sendGiftButton"
-      );
-
-
-    const amount =
-      Number(input.value);
-
-
-    status.textContent = "";
-    status.className =
-      "gift-status";
-
-
-    /*
-     * 入力チェック
-     */
-    if (
-      !Number.isInteger(amount) ||
-      amount <= 0
-    ) {
-
-      status.textContent =
-        "1枚以上のコインを入力してください。";
-
-      status.classList.add(
-        "gift-error"
-      );
-
-      return;
-    }
-
-
-    if (
-      amount > currentBalance
-    ) {
-
-      status.textContent =
-        "コインが足りません。";
-
-      status.classList.add(
-        "gift-error"
-      );
-
-      return;
-    }
-
-
-    if (
-      !friendUsername ||
-      friendUsername === currentUsername
-    ) {
-
-      status.textContent =
-        "このユーザーにはギフトできません。";
-
-      status.classList.add(
-        "gift-error"
-      );
-
-      return;
-    }
-
-
-    const confirmed =
-      window.confirm(
-        "@" +
-        friendUsername +
-        " さんに " +
-        amount +
-        " COIN を送りますか？"
-      );
-
-
-    if (!confirmed) {
-      return;
-    }
-
-
-    sendButton.disabled =
-      true;
-
-    sendButton.textContent =
-      "送信中...";
-
-
-    /*
-     * Supabase RPC
-     */
-    const {
-      data,
-      error
-    } = await db.rpc(
-      "send_coin_gift",
-      {
-        target_username:
-          friendUsername,
-
-        gift_amount:
-          amount
-      }
-    );
-
-
-    if (error) {
-
-      console.error(
-        "ギフト送信エラー:",
-        error
-      );
-
-
-      status.textContent =
-        error.message ||
-        "ギフトの送信に失敗しました。";
-
-      status.classList.add(
-        "gift-error"
-      );
-
-      sendButton.disabled =
-        false;
-
-      sendButton.textContent =
-        "🎁 ギフトする";
-
-      return;
-    }
-
-
-    /*
-     * 成功
-     */
-    currentBalance -=
-      amount;
-
-
-    document.getElementById(
-      "giftBalance"
-    ).textContent =
-      "現在の残高：🪙 " +
-      currentBalance +
-      " COIN";
-
-
-    status.textContent =
-      "🎉 " +
-      amount +
-      " COIN をギフトしました！";
-
-    status.classList.add(
-      "gift-success"
-    );
-
-
-    input.value = "";
-
-
-    document.querySelectorAll(
-      ".amount-button"
-    ).forEach(button => {
-
-      button.classList.remove(
-        "selected"
-      );
-
-    });
-
-
-    sendButton.disabled =
-      false;
-
-    sendButton.textContent =
-      "🎁 ギフトする";
-
-
-    /*
-     * 少し表示してから閉じる
-     */
-    setTimeout(
-      () => {
-
-        closeGiftModal();
-
-      },
-      1200
-    );
+});
+
+document.getElementById("giftAmount").addEventListener("input",()=>{
+  selectedAmount=null;
+  document.querySelectorAll(".amount-button").forEach(button=>button.classList.remove("selected"));
+});
+
+async function sendGift(){
+  const input=document.getElementById("giftAmount");
+  const status=document.getElementById("giftStatus");
+  const sendButton=document.getElementById("sendGiftButton");
+  const amount=Number(input.value);
+
+  status.textContent="";
+  status.className="gift-status";
+
+  if(!Number.isInteger(amount)||amount<=0){
+    status.textContent="1枚以上のコインを入力してください。";
+    status.classList.add("gift-error");
+    return;
+  }
+  if(amount>currentBalance){
+    status.textContent="コインが足りません。";
+    status.classList.add("gift-error");
+    return;
+  }
+  if(!friendUsername||friendUsername===currentUsername){
+    status.textContent="このユーザーにはギフトできません。";
+    status.classList.add("gift-error");
+    return;
   }
 
+  if(!window.confirm("@"+friendUsername+" さんに "+amount+" COIN を送りますか？"))return;
 
-  /*
-   * ボタンイベント
-   */
-  document.getElementById(
-    "openGiftButton"
-  ).addEventListener(
-    "click",
-    openGiftModal
-  );
+  sendButton.disabled=true;
+  sendButton.textContent="送信中...";
 
+  const {error}=await db.rpc("send_coin_gift",{target_username:friendUsername,gift_amount:amount});
 
-  document.getElementById(
-    "closeGiftButton"
-  ).addEventListener(
-    "click",
-    closeGiftModal
-  );
-
-
-  document.getElementById(
-    "sendGiftButton"
-  ).addEventListener(
-    "click",
-    sendGift
-  );
-
-
-  /*
-   * モーダル外側をタップしたら閉じる
-   */
-  document.getElementById(
-    "giftModal"
-  ).addEventListener(
-    "click",
-    event => {
-
-      if (
-        event.target.id ===
-        "giftModal"
-      ) {
-
-        closeGiftModal();
-      }
-    }
-  );
-
-
-  /*
-   * 起動
-   */
-  async function start() {
-
-    try {
-
-      await loadProfile();
-
-    } catch (error) {
-
-      console.error(error);
-
-      document.getElementById(
-        "loading"
-      ).style.display =
-        "none";
-
-
-      const errorBox =
-        document.getElementById(
-          "error"
-        );
-
-
-      errorBox.textContent =
-        error.message ||
-        "エラーが発生しました。";
-
-
-      errorBox.style.display =
-        "block";
-    }
+  if(error){
+    console.error("ギフト送信エラー:",error);
+    status.textContent=error.message||"ギフトの送信に失敗しました。";
+    status.classList.add("gift-error");
+    sendButton.disabled=false;
+    sendButton.textContent="🎁 ギフトする";
+    return;
   }
 
+  currentBalance-=amount;
+  document.getElementById("giftBalance").textContent="現在の残高：🪙 "+currentBalance+" COIN";
+  status.textContent="🎉 "+amount+" COIN をギフトしました！";
+  status.classList.add("gift-success");
+  input.value="";
+  document.querySelectorAll(".amount-button").forEach(button=>button.classList.remove("selected"));
+  sendButton.disabled=false;
+  sendButton.textContent="🎁 ギフトする";
+  setTimeout(closeGiftModal,1200);
+}
 
-  start();
+document.getElementById("openGiftButton").addEventListener("click",openGiftModal);
+document.getElementById("closeGiftButton").addEventListener("click",closeGiftModal);
+document.getElementById("sendGiftButton").addEventListener("click",sendGift);
+document.getElementById("giftModal").addEventListener("click",event=>{
+  if(event.target.id==="giftModal")closeGiftModal();
+});
+
+async function start(){
+  try{
+    await loadProfile();
+  }catch(error){
+    console.error(error);
+    document.getElementById("loading").style.display="none";
+    const errorBox=document.getElementById("error");
+    errorBox.textContent=error.message||"エラーが発生しました。";
+    errorBox.style.display="block";
+  }
+}
+start();
 </script>
-
 </body>
 </html>
