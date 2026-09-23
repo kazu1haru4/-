@@ -270,21 +270,44 @@ function renderItems(){
 }
 
 async function equipItem(type,key){
- if(typeof checkFriendChatBan==="function"&&await checkFriendChatBan())return;
- if(["admin","admin_name","admin_bg"].includes(key)&&!isAdmin()){showMessage("管理者専用アイテムです。",true);return}
- if(!["frame","name_decoration","background"].includes(type)){showMessage("アイテム種類が不正です。",true);return}
- const item=getItem(key);
- if(!item){showMessage("このアイテムを所有していません。",true);return}
- const column=type==="frame"?"equipped_item_key":type==="name_decoration"?"equipped_name_decoration_key":"equipped_background_key";
- showMessage("装備しています...");
- const update={};update[column]=key;
- const {error}=await supabaseClient.from("profiles").update(update).eq("user_id",currentUsername);
- if(error){console.error(error);showMessage("装備に失敗しました。",true);return}
- if(!currentProfile)currentProfile={};
- currentProfile[column]=key;
- renderItems();
- updatePreview();
- showMessage("装備しました！✨");
+ try{
+  if(typeof checkFriendChatBan==="function"&&await checkFriendChatBan())return;
+  if(["admin","admin_name","admin_bg"].includes(key)&&!isAdmin()){showMessage("管理者専用アイテムです。",true);return}
+  if(!["frame","name_decoration","background"].includes(type)){showMessage("アイテム種類が不正です。",true);return}
+  const item=getItem(key);
+  if(!item){showMessage("このアイテムを所有していません。",true);return}
+
+  const column=type==="frame"?"equipped_item_key":type==="name_decoration"?"equipped_name_decoration_key":"equipped_background_key";
+  showMessage("装備しています...");
+
+  // まずDBを更新
+  const {data,error}=await supabaseClient
+    .from("profiles")
+    .update({[column]:key})
+    .eq("user_id",currentUsername)
+    .select("user_id")
+    .maybeSingle();
+
+  if(error){
+   console.error("equipItem update error:",error);
+   showMessage("装備に失敗しました："+(error.message||"DBエラー"),true);
+   return;
+  }
+
+  if(!data){
+   showMessage("装備を保存できませんでした。プロフィールの更新権限を確認してください。",true);
+   return;
+  }
+
+  if(!currentProfile)currentProfile={};
+  currentProfile[column]=key;
+  renderItems();
+  updatePreview();
+  showMessage("装備しました！✨");
+ }catch(e){
+  console.error("equipItem exception:",e);
+  showMessage("装備中にエラーが発生しました。",true);
+ }
 }
 
 function updatePreview(){
