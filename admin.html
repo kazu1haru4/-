@@ -1055,7 +1055,6 @@ async function banUser() {
 
   const target = banTargetUsername;
   closeBanModal();
-  setupUserSearch();
   await loadUsers();
   alert(`${target} をBANしました。`);
 }
@@ -1127,21 +1126,41 @@ async function deleteUserAccount(username){
 }
 
 async function openUserDetail(username){
- const modal=document.getElementById("userDetailModal"),box=document.getElementById("userDetailContent");
- modal.classList.remove("hidden");box.textContent="読み込み中...";
- const {data,error}=await supabaseClient.rpc("admin_get_user_detail",{target_username:username});
- if(error){box.innerHTML='<div class="danger-text">❌ '+escapeHtml(error.message)+'</div>';return}
- const d=data||{},ban=adminBanMap.get(username);
- box.innerHTML=`<div class="detail-row"><b>ID</b><span>${escapeHtml(username)}</span></div><div class="detail-row"><b>名前</b><span>${escapeHtml(d.name||username)}</span></div><div class="detail-row"><b>登録日時</b><span>${escapeHtml(formatDate(d.created_at))}</span></div><div class="detail-row"><b>コイン</b><span>🪙 ${Number(d.coins||0).toLocaleString("ja-JP")}</span></div><div class="detail-row"><b>1対1メッセージ</b><span>${Number(d.direct_messages||0).toLocaleString("ja-JP")}</span></div><div class="detail-row"><b>グループメッセージ</b><span>${Number(d.group_messages||0).toLocaleString("ja-JP")}</span></div><div class="detail-row"><b>通報数</b><span>${Number(d.reports||0).toLocaleString("ja-JP")}</span></div><div class="detail-row"><b>状態</b><span>${ban?"🚫 BAN中":"🟢 通常"}</span></div><div style="margin-top:12px"><b>自己紹介</b><div class="muted" style="white-space:pre-wrap;margin-top:6px">${escapeHtml(d.bio||"なし")}</div></div>`;
-}
+  const modal = document.getElementById("userDetailModal");
+  const box = document.getElementById("userDetailContent");
 
-function openUserDetail(username){
- const modal=document.getElementById("userDetailModal"),box=document.getElementById("userDetailContent");
- modal.classList.remove("hidden");box.textContent="読み込み中...";
- const {data,error}=await supabaseClient.rpc("admin_get_user_detail",{target_username:username});
- if(error){box.innerHTML='<div class="danger-text">❌ '+escapeHtml(error.message)+'</div>';return}
- const d=data||{},ban=adminBanMap.get(username);
- box.innerHTML=`<div class="detail-row"><b>ID</b><span>${escapeHtml(username)}</span></div><div class="detail-row"><b>名前</b><span>${escapeHtml(d.name||username)}</span></div><div class="detail-row"><b>登録日時</b><span>${escapeHtml(formatDate(d.created_at))}</span></div><div class="detail-row"><b>コイン</b><span>🪙 ${Number(d.coins||0).toLocaleString("ja-JP")}</span></div><div class="detail-row"><b>1対1メッセージ</b><span>${Number(d.direct_messages||0).toLocaleString("ja-JP")}</span></div><div class="detail-row"><b>グループメッセージ</b><span>${Number(d.group_messages||0).toLocaleString("ja-JP")}</span></div><div class="detail-row"><b>通報数</b><span>${Number(d.reports||0).toLocaleString("ja-JP")}</span></div><div class="detail-row"><b>状態</b><span>${ban?"🚫 BAN中":"🟢 通常"}</span></div><div style="margin-top:12px"><b>自己紹介</b><div class="muted" style="white-space:pre-wrap;margin-top:6px">${escapeHtml(d.bio||"なし")}</div></div>`;
+  if(!modal || !box) return;
+
+  modal.classList.remove("hidden");
+  box.textContent = "読み込み中...";
+
+  const {data,error} = await supabaseClient.rpc(
+    "admin_get_user_detail",
+    {target_username: username}
+  );
+
+  if(error){
+    box.innerHTML =
+      '<div class="danger-text">❌ ' +
+      escapeHtml(error.message) +
+      '</div>';
+    return;
+  }
+
+  const d = data || {};
+  const ban = adminBanMap.get(username);
+
+  box.innerHTML =
+    `<div class="detail-row"><b>ID</b><span>${escapeHtml(username)}</span></div>` +
+    `<div class="detail-row"><b>名前</b><span>${escapeHtml(d.name || username)}</span></div>` +
+    `<div class="detail-row"><b>登録日時</b><span>${escapeHtml(formatDate(d.created_at))}</span></div>` +
+    `<div class="detail-row"><b>コイン</b><span>🪙 ${Number(d.coins || 0).toLocaleString("ja-JP")} COIN</span></div>` +
+    `<div class="detail-row"><b>1対1メッセージ</b><span>${Number(d.direct_messages || 0).toLocaleString("ja-JP")}</span></div>` +
+    `<div class="detail-row"><b>グループメッセージ</b><span>${Number(d.group_messages || 0).toLocaleString("ja-JP")}</span></div>` +
+    `<div class="detail-row"><b>通報数</b><span>${Number(d.reports || 0).toLocaleString("ja-JP")}</span></div>` +
+    `<div class="detail-row"><b>状態</b><span>${ban ? "🚫 BAN中" : "🟢 通常"}</span></div>` +
+    `<div style="margin-top:12px"><b>自己紹介</b>` +
+    `<div class="muted" style="white-space:pre-wrap;margin-top:6px">${escapeHtml(d.bio || "なし")}</div></div>`;
 }
 
 async function loadBoardMessages() {
@@ -1338,7 +1357,13 @@ async function loadItems() {
     frameStatus.textContent =
       "❌ フレーム取得失敗\n\n" + error.message;
 
-    rewardSelect.innerHTML =
+    rewardFrameSelect.innerHTML =
+      `<option value="">❌ 取得失敗</option>`;
+
+    rewardNameDecorationSelect.innerHTML =
+      `<option value="">❌ 取得失敗</option>`;
+
+    rewardBackgroundSelect.innerHTML =
       `<option value="">❌ 取得失敗</option>`;
 
     eventSelect.innerHTML =
@@ -1919,6 +1944,10 @@ function setupButtons() {
 
   document.getElementById("cancelEditButton")
     .addEventListener("click", closeEditModal);
+  document.getElementById("closeUserDetail")
+    ?.addEventListener("click", () => {
+      document.getElementById("userDetailModal")?.classList.add("hidden");
+    });
 
   document.getElementById("closeUserDetailButton")
     .addEventListener("click", closeUserDetail);
