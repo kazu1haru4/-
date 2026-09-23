@@ -1949,10 +1949,18 @@ function setupButtons() {
       document.getElementById("userDetailModal")?.classList.add("hidden");
     });
 
-  const closeUserDetailButton = document.getElementById("closeUserDetail");
-  if (closeUserDetailButton) {
-    closeUserDetailButton.addEventListener("click", closeUserDetail);
-  }
+  document.getElementById("confirmCoinButton")
+    .addEventListener("click", saveUserCoins);
+
+  document.getElementById("cancelCoinButton")
+    .addEventListener("click", closeCoinModal);
+
+  document.getElementById("coinModal")
+    .addEventListener("click", event => {
+      if (event.target === document.getElementById("coinModal")) {
+        closeCoinModal();
+      }
+    });
 
   document.getElementById("createRewardCodeButton")
     .addEventListener("click", createRewardCode);
