@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>お知らせ - Friend Chat</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+  background:linear-gradient(135deg,#fff4fb,#eef7ff);
+  color:#333;
+}
+.container{
+  width:min(100% - 24px,700px);
+  margin:18px auto 40px;
+}
+header{
+  background:white;
+  border-radius:24px;
+  padding:20px;
+  margin-bottom:18px;
+  box-shadow:0 8px 30px rgba(100,80,130,.10);
+}
+header h1{
+  margin:0;
+  font-size:25px;
+}
+.sub{
+  margin-top:6px;
+  color:#777;
+  font-size:13px;
+}
+.home-button{
+  display:inline-block;
+  margin-top:14px;
+  text-decoration:none;
+  border-radius:12px;
+  padding:10px 14px;
+  font-weight:bold;
+  background:#8f7cff;
+  color:white;
+}
+.status{
+  background:white;
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:14px;
+  white-space:pre-wrap;
+}
+.loading,.empty{
+  text-align:center;
+  color:#777;
+  padding:30px 10px;
+}
+.card{
+  background:white;
+  border-radius:20px;
+  padding:18px;
+  margin-bottom:14px;
+  box-shadow:0 6px 22px rgba(100,80,130,.08);
+}
+.card-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+}
+.badge{
+  flex-shrink:0;
+  border-radius:999px;
+  padding:5px 9px;
+  font-size:12px;
+  font-weight:bold;
+  background:#eee;
+}
+.badge.info{background:#eeeafe;color:#5b4bc4}
+.badge.important{background:#ffebee;color:#c62828}
+.badge.event{background:#fff3e0;color:#ef6c00}
+.badge.maintenance{background:#e8f5e9;color:#2e7d32}
+.title{
+  font-size:20px;
+  font-weight:800;
+  word-break:break-word;
+}
+.content{
+  margin-top:12px;
+  white-space:pre-wrap;
+  word-break:break-word;
+  line-height:1.7;
+}
+.date{
+  margin-top:14px;
+  color:#888;
+  font-size:12px;
+}
+.error{
+  background:#ffebee;
+  color:#c62828;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<header>
+  <h1>📢 お知らせ</h1>
+  <div class="sub">Friend Chatからのお知らせ</div>
+  <a class="home-button" href="home.html">🏠 ホームへ戻る</a>
+</header>
+
+<div id="status" class="status">🔄 お知らせを読み込んでいます...</div>
+<div id="list"></div>
+
+</div>
+
+<script>
+const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+
+const db=window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+function escapeHtml(value){
+  return String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function formatDate(value){
+  if(!value)return "";
+  const d=new Date(value);
+  if(Number.isNaN(d.getTime()))return String(value);
+  return d.toLocaleString("ja-JP");
+}
+
+function typeInfo(type){
+  return {
+    info:["📢 お知らせ","info"],
+    important:["⚠️ 重要","important"],
+    event:["🎉 イベント","event"],
+    maintenance:["🔧 メンテナンス","maintenance"]
+  }[type] || ["📢 お知らせ","info"];
+}
+
+async function loadAnnouncements(){
+  const status=document.getElementById("status");
+  const list=document.getElementById("list");
+
+  const {data,error}=await db
+    .from("announcements")
+    .select("id,title,content,type,created_at,updated_at")
+    .eq("is_published",true)
+    .order("created_at",{ascending:false})
+    .order("id",{ascending:false});
+
+  if(error){
+    console.error(error);
+    status.className="status error";
+    status.textContent="❌ お知らせの読み込みに失敗しました。\n"+error.message;
+    return;
+  }
+
+  status.style.display="none";
+
+  if(!data || data.length===0){
+    list.innerHTML='<div class="card empty">📭 現在公開されているお知らせはありません。</div>';
+    return;
+  }
+
+  list.innerHTML="";
+
+  data.forEach(item=>{
+    const [label,badgeClass]=typeInfo(item.type);
+
+    const card=document.createElement("article");
+    card.className="card";
+
+    card.innerHTML=`
+      <div class="card-head">
+        <div class="title">${escapeHtml(item.title)}</div>
+        <div class="badge ${badgeClass}">${label}</div>
+      </div>
+      <div class="content">${escapeHtml(item.content)}</div>
+      <div class="date">
+        📅 ${escapeHtml(formatDate(item.created_at))}
+        ${item.updated_at && item.updated_at !== item.created_at
+          ? `　（更新：${escapeHtml(formatDate(item.updated_at))}）`
+          : ""}
+      </div>
+    `;
+
+    list.appendChild(card);
+  });
+}
+
+async function start(){
+  try{
+    const {data:{session}}=await db.auth.getSession();
+
+    if(!session){
+      location.href="index.html";
+      return;
+    }
+
+    await loadAnnouncements();
+  }catch(error){
+    console.error(error);
+    const status=document.getElementById("status");
+    status.className="status error";
+    status.textContent="❌ ページの読み込みに失敗しました。\n"+(error.message||error);
+  }
+}
+
+start();
+</script>
+</body>
+</html>
