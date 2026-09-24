@@ -120,13 +120,18 @@ async function getMyProfile(){
   if(!user) return null;
 
   /*
-    profiles.id = Supabase Auth UID
-    profiles.user_id = フレンドチャットのユーザーID
+    profiles.id は bigint のため、Supabase Auth の UUID(user.id)を
+    profiles.id に入れて検索しません。
+    Friend Chat のログイン時に保存している username を
+    profiles.user_id として検索します。
   */
+  const username = user.user_metadata?.username || "";
+  if(!username) return null;
+
   const {data,error}=await supabaseClient
     .from("profiles")
     .select("id,user_id,name,avatar_url")
-    .eq("id",user.id)
+    .eq("user_id",username)
     .maybeSingle();
 
   if(error) throw error;
