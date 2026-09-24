@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>副管理者4 - フレンドチャット</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:linear-gradient(135deg,#fff4fb,#eef7ff);color:#333}
+header{height:64px;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 16px;box-shadow:0 2px 10px rgba(0,0,0,.08);position:sticky;top:0;z-index:20}
+.title{font-size:18px;font-weight:700}.badge{font-size:11px;background:#eef3ff;color:#3156c9;padding:5px 8px;border-radius:999px;margin-left:5px}
+.settings-btn{display:none;border:0;background:#222;color:#fff;padding:9px 12px;border-radius:10px;font-weight:700}
+main{max-width:720px;margin:0 auto;padding:16px}
+.card{background:#fff;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 5px 18px rgba(0,0,0,.06)}
+h2{font-size:16px;margin:0 0 12px}
+.notice{background:#fff8df;border:1px solid #f0d36b;border-radius:12px;padding:12px;font-size:13px;line-height:1.6;margin-bottom:14px}
+.user{border:1px solid #e5e8ee;border-radius:13px;padding:13px;margin-top:10px}
+.user-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.user-name{font-weight:700}.user-id{font-size:12px;color:#777;margin-top:3px}
+.ban-buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:12px}
+button{cursor:pointer;border:0;border-radius:9px;padding:9px 6px;font-weight:700}
+.ban-buttons button{background:#ffe8e8;color:#c62828}
+.primary{background:#3156c9;color:#fff}.danger{background:#ffe8e8;color:#c62828}
+.empty{color:#777;font-size:14px;padding:10px 0}
+details{border:1px solid #e5e8ee;border-radius:13px;padding:12px;margin-top:10px}
+summary{cursor:pointer;font-weight:700}
+.setting-box{margin-top:12px}.small{font-size:12px;color:#777}
+.setting-user{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid #eee}
+.setting-user input{width:auto}
+.setting-row{display:flex;gap:8px;margin-top:9px}
+select{width:100%;border:1px solid #d8dde6;border-radius:9px;padding:10px;font-size:14px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#222;color:#fff;padding:11px 15px;border-radius:999px;font-size:13px;display:none;z-index:100}
+@media(max-width:520px){.ban-buttons{grid-template-columns:repeat(2,1fr)}main{padding:12px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title">🛡️ 副管理者4 <span class="badge">BAN管理</span></div>
+  <button id="settingsBtn" class="settings-btn">⚙️ 設定</button>
+</header>
+
+<main>
+  <div id="notice" class="notice">
+    副管理者4に割り当てられたユーザーだけを管理できます。
+  </div>
+
+  <section class="card">
+    <h2>👥 管理できるユーザー</h2>
+    <div id="assignedUsers"><div class="empty">読み込み中...</div></div>
+  </section>
+
+  <!-- 管理者のみ -->
+  <section id="adminSettings" class="card" style="display:none">
+    <h2>⚙️ 管理者設定</h2>
+
+    <details>
+      <summary>管理できるユーザー</summary>
+      <div class="setting-box">
+        <p class="small">副管理者4が管理できるユーザーを選択してください。</p>
+        <div id="allUsersForAdmin"><div class="empty">読み込み中...</div></div>
+        <button id="saveAssignments" class="primary" style="width:100%;margin-top:12px">保存</button>
+      </div>
+    </details>
+
+    <details>
+      <summary>副管理者4を任命・解任</summary>
+      <div class="setting-box">
+        <div id="currentSubAdmin" class="small">確認中...</div>
+        <div class="setting-row">
+          <select id="appointUser">
+            <option value="">ユーザーを選択</option>
+          </select>
+          <button id="appointBtn" class="primary">任命</button>
+        </div>
+        <button id="dismissBtn" class="danger" style="width:100%;margin-top:10px">解任</button>
+      </div>
+    </details>
+  </section>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const SUPABASE_URL = "https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_KEY = "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+
+const supabaseClient = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+const SLOT = "sub_admin4";
+const ADMIN_IDS = ["kazu1haru100", "kazu1haru4sub"];
+
+let currentProfile = null;
+let allProfiles = [];
+let assignedIds = new Set();
+
+function esc(v){
+  return String(v ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function toast(msg){
+  const e=document.getElementById("toast");
+  e.textContent=msg;
+  e.style.display="block";
+  clearTimeout(toast.t);
+  toast.t=setTimeout(()=>e.style.display="none",2200);
+}
+
+async function getMyProfile(){
+  const {data:{user},error:authError}=await supabaseClient.auth.getUser();
+  if(authError) throw authError;
+  if(!user) return null;
+
+  /*
+    profiles.id = Supabase Auth UID
+    profiles.user_id = フレンドチャットのユーザーID
+  */
+  const {data,error}=await supabaseClient
+    .from("profiles")
+    .select("id,user_id,name,avatar_url")
+    .eq("id",user.id)
+    .maybeSingle();
+
+  if(error) throw error;
+  return data;
+}
+
+function isSiteAdmin(){
+  return currentProfile &&
+         ADMIN_IDS.includes(currentProfile.user_id);
+}
+
+async function checkSubAdmin1(){
+  const {data,error}=await supabaseClient
+    .from("sub_admins")
+    .select("user_id")
+    .eq("slot",SLOT)
+    .maybeSingle();
+
+  if(error) throw error;
+  return data?.user_id || null;
+}
+
+async function loadAssignedUsers(){
+  const {data,error}=await supabaseClient
+    .from("sub_admin_assignments")
+    .select("user_id")
+    .eq("slot",SLOT);
+
+  if(error) throw error;
+
+  assignedIds=new Set((data||[]).map(x=>x.user_id));
+
+  if(!assignedIds.size){
+    document.getElementById("assignedUsers").innerHTML=
+      '<div class="empty">現在、担当ユーザーはいません。</div>';
+    return;
+  }
+
+  const {data:users,error:userError}=await supabaseClient
+    .from("profiles")
+    .select("id,user_id,name")
+    .in("user_id",[...assignedIds]);
+
+  if(userError) throw userError;
+
+  renderAssignedUsers(users||[]);
+}
+
+async function getActiveBan(userId){
+  const {data,error}=await supabaseClient
+    .from("user_bans")
+    .select("user_id,reason,banned_at,expires_at,banned_by")
+    .eq("user_id",userId)
+    .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+    .order("banned_at",{ascending:false})
+    .limit(1)
+    .maybeSingle();
+
+  if(error) return null;
+  return data;
+}
+
+async function renderAssignedUsers(users){
+  const box=document.getElementById("assignedUsers");
+  box.innerHTML="";
+
+  if(!users.length){
+    box.innerHTML='<div class="empty">担当ユーザーが見つかりません。</div>';
+    return;
+  }
+
+  for(const u of users){
+    const ban=await getActiveBan(u.user_id);
+    const div=document.createElement("div");
+    div.className="user";
+
+    div.innerHTML=`
+      <div class="user-top">
+        <div>
+          <div class="user-name">${esc(u.name || u.user_id)}</div>
+          <div class="user-id">ID: ${esc(u.user_id)}</div>
+        </div>
+      </div>
+      <div class="ban-buttons">
+        <button data-id="${esc(u.user_id)}" data-min="5">5分BAN</button>
+        <button data-id="${esc(u.user_id)}" data-min="10">10分BAN</button>
+        <button data-id="${esc(u.user_id)}" data-min="30">30分BAN</button>
+        <button data-id="${esc(u.user_id)}" data-min="60">1時間BAN</button>
+      </div>
+      <div class="small" style="margin-top:9px">
+        ${ban ? "現在BAN中："+new Date(ban.expires_at).toLocaleString("ja-JP") : "現在BANされていません"}
+      </div>
+    `;
+
+    box.appendChild(div);
+  }
+
+  box.querySelectorAll(".ban-buttons button").forEach(btn=>{
+    btn.addEventListener("click",()=>banUser(btn.dataset.id,Number(btn.dataset.min)));
+  });
+}
+
+async function banUser(userId,minutes){
+  if(!assignedIds.has(userId)){
+    toast("このユーザーは管理対象ではありません");
+    return;
+  }
+
+  try{
+    const until=new Date(Date.now()+minutes*60*1000);
+
+    // 既存の管理画面と同じ user_bans の列構成を使用します。
+    // 既存BANがあれば更新、なければ新規作成します。
+    const payload={
+      reason:`副管理者BAN（${minutes}分）`,
+      banned_by:currentProfile.user_id,
+      banned_at:new Date().toISOString(),
+      expires_at:until.toISOString()
+    };
+
+    const {data:updated,error:updateError}=await supabaseClient
+      .from("user_bans")
+      .update(payload)
+      .eq("user_id",userId)
+      .select("user_id")
+      .limit(1);
+
+    if(updateError) throw updateError;
+
+    if(!updated || !updated.length){
+      const {error:insertError}=await supabaseClient
+        .from("user_bans")
+        .insert({
+          user_id:userId,
+          ...payload
+        });
+      if(insertError) throw insertError;
+    }
+
+    if(error) throw error;
+
+    toast(minutes+"分BANしました");
+    await loadAssignedUsers();
+  }catch(e){
+    console.error(e);
+    toast("BANに失敗しました");
+  }
+}
+
+async function loadAdminUsers(){
+  const {data,error}=await supabaseClient
+    .from("profiles")
+    .select("id,user_id,name")
+    .order("user_id");
+
+  if(error) throw error;
+
+  allProfiles=data||[];
+  renderAdminUsers();
+  renderAppointSelect();
+}
+
+function renderAdminUsers(){
+  const box=document.getElementById("allUsersForAdmin");
+  box.innerHTML="";
+
+  if(!allProfiles.length){
+    box.innerHTML='<div class="empty">ユーザーがいません。</div>';
+    return;
+  }
+
+  allProfiles.forEach(u=>{
+    const label=document.createElement("label");
+    label.className="setting-user";
+
+    label.innerHTML=`
+      <input type="checkbox" value="${esc(u.user_id)}" ${assignedIds.has(u.user_id)?"checked":""}>
+      <span>
+        <b>${esc(u.name || u.user_id)}</b><br>
+        <small class="small">${esc(u.user_id)}</small>
+      </span>
+    `;
+
+    box.appendChild(label);
+  });
+}
+
+function renderAppointSelect(){
+  const select=document.getElementById("appointUser");
+  select.innerHTML='<option value="">ユーザーを選択</option>';
+
+  allProfiles.forEach(u=>{
+    const o=document.createElement("option");
+    o.value=u.user_id;
+    o.textContent=(u.name ? u.name+" ("+u.user_id+")" : u.user_id);
+    select.appendChild(o);
+  });
+}
+
+async function saveAssignments(){
+  try{
+    const selected=[...document.querySelectorAll(
+      '#allUsersForAdmin input[type="checkbox"]:checked'
+    )].map(x=>x.value);
+
+    const {error:delError}=await supabaseClient
+      .from("sub_admin_assignments")
+      .delete()
+      .eq("slot",SLOT);
+
+    if(delError) throw delError;
+
+    if(selected.length){
+      const rows=selected.map(userId=>({
+        slot:SLOT,
+        user_id:userId,
+        created_at:new Date().toISOString()
+      }));
+
+      const {error:insError}=await supabaseClient
+        .from("sub_admin_assignments")
+        .insert(rows);
+
+      if(insError) throw insError;
+    }
+
+    toast("担当ユーザーを保存しました");
+    await loadAssignedUsers();
+  }catch(e){
+    console.error(e);
+    toast("保存に失敗しました");
+  }
+}
+
+async function loadSubAdmin(){
+  const userId=await checkSubAdmin1();
+  const box=document.getElementById("currentSubAdmin");
+
+  if(!userId){
+    box.textContent="現在：未任命";
+  }else{
+    box.textContent="現在："+userId;
+  }
+}
+
+async function appointSubAdmin(){
+  const userId=document.getElementById("appointUser").value;
+  if(!userId){
+    toast("ユーザーを選択してください");
+    return;
+  }
+
+  try{
+    const {error}=await supabaseClient
+      .from("sub_admins")
+      .upsert({
+        slot:SLOT,
+        user_id:userId,
+        created_at:new Date().toISOString()
+      },{onConflict:"slot"});
+
+    if(error) throw error;
+
+    toast("副管理者4に任命しました");
+    await loadSubAdmin();
+  }catch(e){
+    console.error(e);
+    toast("任命に失敗しました");
+  }
+}
+
+async function dismissSubAdmin(){
+  if(!confirm("副管理者4を解任しますか？")) return;
+
+  try{
+    const {error}=await supabaseClient
+      .from("sub_admins")
+      .delete()
+      .eq("slot",SLOT);
+
+    if(error) throw error;
+
+    toast("副管理者4を解任しました");
+    await loadSubAdmin();
+  }catch(e){
+    console.error(e);
+    toast("解任に失敗しました");
+  }
+}
+
+async function init(){
+  try{
+    currentProfile=await getMyProfile();
+
+    if(!currentProfile){
+      alert("ログインしてください。");
+      location.href="index.html";
+      return;
+    }
+
+    const admin=isSiteAdmin();
+
+    /*
+      管理者は設定画面を表示。
+      副管理者4は担当ユーザーを表示。
+      それ以外はアクセス拒否。
+    */
+    const appointedUserId=await checkSubAdmin1();
+    const isSubAdmin=appointedUserId===currentProfile.user_id;
+
+    if(!admin && !isSubAdmin){
+      document.body.innerHTML=`
+        <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:sans-serif">
+          <div>
+            <div style="font-size:48px">🔒</div>
+            <h2>アクセスできません</h2>
+            <p style="color:#777">このページは副管理者4専用です。</p>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    if(admin){
+      document.getElementById("settingsBtn").style.display="block";
+      document.getElementById("adminSettings").style.display="block";
+      await loadAdminUsers();
+      await loadSubAdmin();
+    }
+
+    await loadAssignedUsers();
+
+  }catch(e){
+    console.error(e);
+    document.getElementById("assignedUsers").innerHTML=
+      '<div class="empty">読み込みに失敗しました。SupabaseのRLSやテーブルを確認してください。</div>';
+  }
+}
+
+document.getElementById("settingsBtn").addEventListener("click",()=>{
+  document.getElementById("adminSettings").scrollIntoView({behavior:"smooth"});
+});
+
+document.getElementById("saveAssignments").addEventListener("click",saveAssignments);
+document.getElementById("appointBtn").addEventListener("click",appointSubAdmin);
+document.getElementById("dismissBtn").addEventListener("click",dismissSubAdmin);
+
+init();
+</script>
+</body>
+</html>
