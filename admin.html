@@ -430,6 +430,17 @@ textarea {
     flex-direction: column;
   }
 }
+
+/* ===== 副管理者管理：追加部分 ===== */
+.sub-admin-slot{padding:14px;border-radius:16px;background:#f7f8fc;margin-bottom:12px}
+.sub-admin-slot-title{font-size:18px;font-weight:800;margin-bottom:8px}
+.sub-admin-current{color:#666;font-size:13px;margin-bottom:10px}
+.sub-admin-assigned{padding:10px;border-radius:12px;background:#fff;margin-bottom:10px;white-space:pre-wrap}
+.sub-admin-checklist{display:grid;gap:8px;max-height:280px;overflow:auto;padding:8px;background:#fff;border-radius:12px;border:1px solid #eee}
+.sub-admin-check{display:flex;align-items:center;gap:8px;padding:8px;border-radius:10px;background:#f7f8fc}
+.sub-admin-check input{width:auto}
+.sub-admin-save-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+
 </style>
 </head>
 
@@ -541,6 +552,15 @@ textarea {
 <div id="usersLoading" class="loading">ユーザーを読み込んでいます...</div>
 <div id="usersList"></div>
 
+</details>
+
+
+
+<details class="panel collapsible-panel">
+<summary>🛡️ 副管理者管理</summary>
+<div class="hint" style="margin-bottom:12px">副管理者1〜5を任命・解除し、それぞれが管理できるユーザーを設定できます。</div>
+<div id="subAdminManagementLoading" class="loading">副管理者設定を読み込んでいます...</div>
+<div id="subAdminManagementList"></div>
 </details>
 
 <details class="panel collapsible-panel">
@@ -2037,6 +2057,234 @@ async function deleteEvent(id) {
   alert("イベントを削除しました。");
 }
 
+
+
+/* ========================================
+副管理者管理（追加機能）
+※既存の管理者機能は変更しません。
+======================================== */
+const SUB_ADMIN_SLOTS = [
+  "sub_admin1",
+  "sub_admin2",
+  "sub_admin3",
+  "sub_admin4",
+  "sub_admin5"
+];
+
+function subAdminNumber(slot){
+  return String(slot).replace("sub_admin", "");
+}
+
+async function getSubAdminUsers(){
+  const {data,error} = await supabaseClient
+    .from("profiles")
+    .select("user_id,name")
+    .order("user_id", {ascending:true});
+
+  if(error) throw error;
+
+  return (data || [])
+    .filter(row => row.user_id)
+    .filter(row => !ADMIN_USERNAMES.has(row.user_id));
+}
+
+async function loadSubAdminManagement(){
+  const loading = document.getElementById("subAdminManagementLoading");
+  const list = document.getElementById("subAdminManagementList");
+  if(!loading || !list) return;
+
+  loading.classList.remove("hidden");
+  loading.textContent = "副管理者設定を読み込んでいます...";
+  list.innerHTML = "";
+
+  try{
+    const [{data:admins,error:adminsError},{data:assignments,error:assignmentsError},users] = await Promise.all([
+      supabaseClient.from("sub_admins").select("slot,user_id,created_at"),
+      supabaseClient.from("sub_admin_assignments").select("slot,user_id,created_at"),
+      getSubAdminUsers()
+    ]);
+
+    if(adminsError) throw adminsError;
+    if(assignmentsError) throw assignmentsError;
+
+    const adminMap = new Map((admins || []).map(row => [row.slot,row.user_id]));
+    const assignmentMap = new Map();
+    SUB_ADMIN_SLOTS.forEach(slot => assignmentMap.set(slot,new Set()));
+    (assignments || []).forEach(row => {
+      if(!assignmentMap.has(row.slot)) assignmentMap.set(row.slot,new Set());
+      assignmentMap.get(row.slot).add(row.user_id);
+    });
+
+    SUB_ADMIN_SLOTS.forEach(slot => {
+      const appointed = adminMap.get(slot) || "";
+      const assigned = assignmentMap.get(slot) || new Set();
+      const number = subAdminNumber(slot);
+
+      const options = users.map(user => `
+        <label class="sub-admin-check">
+          <input type="checkbox" data-sub-assignment="${escapeAttribute(slot)}" value="${escapeAttribute(user.user_id)}" ${assigned.has(user.user_id) ? "checked" : ""}>
+          <span>${escapeHtml(user.user_id)}${user.name ? `（${escapeHtml(user.name)}）` : ""}</span>
+        </label>
+      `).join("");
+
+      const card = document.createElement("div");
+      card.className = "sub-admin-slot";
+      card.innerHTML = `
+        <div class="sub-admin-slot-title">🛡️ 副管理者${number}</div>
+        <div class="sub-admin-current">現在の担当者：<b>${escapeHtml(appointed || "未任命")}</b></div>
+
+        <div class="actions">
+          <button type="button" class="small" data-appoint-sub-admin="${escapeAttribute(slot)}">👤 任命</button>
+          <button type="button" class="danger small" data-dismiss-sub-admin="${escapeAttribute(slot)}">❌ 解除</button>
+        </div>
+
+        <details style="margin-top:10px">
+          <summary>👥 担当ユーザー（${assigned.size}人）</summary>
+          <div class="sub-admin-assigned">${assigned.size ? Array.from(assigned).map(escapeHtml).join("\n") : "まだ担当ユーザーはいません。"}</div>
+        </details>
+
+        <details style="margin-top:10px">
+          <summary>✏️ 担当ユーザーを変更</summary>
+          <div class="sub-admin-checklist">
+            ${options || "<div class='empty'>ユーザーがいません。</div>"}
+          </div>
+          <div class="sub-admin-save-row">
+            <button type="button" class="small success" data-save-sub-assignment="${escapeAttribute(slot)}">💾 担当を保存</button>
+          </div>
+        </details>
+      `;
+      list.appendChild(card);
+    });
+
+    list.querySelectorAll("[data-appoint-sub-admin]").forEach(button => {
+      button.addEventListener("click", () => appointSubAdminSlot(button.dataset.appointSubAdmin));
+    });
+    list.querySelectorAll("[data-dismiss-sub-admin]").forEach(button => {
+      button.addEventListener("click", () => dismissSubAdminSlot(button.dataset.dismissSubAdmin));
+    });
+    list.querySelectorAll("[data-save-sub-assignment]").forEach(button => {
+      button.addEventListener("click", () => saveSubAdminAssignments(button.dataset.saveSubAssignment));
+    });
+
+    loading.classList.add("hidden");
+  }catch(error){
+    console.error("loadSubAdminManagement:",error);
+    loading.textContent = "❌ 副管理者設定の読み込みに失敗しました：\n" + (error.message || error);
+  }
+}
+
+async function appointSubAdminSlot(slot){
+  try{
+    const users = await getSubAdminUsers();
+    if(!users.length){
+      alert("任命できるユーザーがいません。");
+      return;
+    }
+
+    const currentResult = await supabaseClient
+      .from("sub_admins")
+      .select("user_id")
+      .eq("slot",slot)
+      .maybeSingle();
+    if(currentResult.error) throw currentResult.error;
+
+    const current = currentResult.data?.user_id || "";
+    const candidates = users.map(user => user.user_id);
+    const input = prompt(
+      `副管理者${subAdminNumber(slot)}に任命するユーザーIDを入力してください。\n\n候補：\n${candidates.join("\n")}`,
+      current
+    );
+
+    if(input === null) return;
+
+    const username = input.trim();
+    if(!username || !candidates.includes(username)){
+      alert("候補にあるユーザーIDを入力してください。");
+      return;
+    }
+
+    const {error} = await supabaseClient
+      .from("sub_admins")
+      .upsert({slot,user_id:username},{onConflict:"slot"});
+
+    if(error) throw error;
+
+    await loadSubAdminManagement();
+    alert(`🛡️ ${username} を副管理者${subAdminNumber(slot)}に任命しました。`);
+  }catch(error){
+    console.error("appointSubAdminSlot:",error);
+    alert("❌ 副管理者の任命に失敗しました：\n" + (error.message || error));
+  }
+}
+
+async function dismissSubAdminSlot(slot){
+  try{
+    const {data,error:getError} = await supabaseClient
+      .from("sub_admins")
+      .select("user_id")
+      .eq("slot",slot)
+      .maybeSingle();
+
+    if(getError) throw getError;
+    if(!data?.user_id){
+      alert("この副管理者枠は未任命です。");
+      return;
+    }
+
+    if(!confirm(`副管理者${subAdminNumber(slot)}の「${data.user_id}」を解除しますか？`)) return;
+
+    const {error} = await supabaseClient
+      .from("sub_admins")
+      .delete()
+      .eq("slot",slot);
+    if(error) throw error;
+
+    const {error:assignmentError} = await supabaseClient
+      .from("sub_admin_assignments")
+      .delete()
+      .eq("slot",slot);
+    if(assignmentError) throw assignmentError;
+
+    await loadSubAdminManagement();
+    alert(`✅ 副管理者${subAdminNumber(slot)}を解除しました。`);
+  }catch(error){
+    console.error("dismissSubAdminSlot:",error);
+    alert("❌ 副管理者の解除に失敗しました：\n" + (error.message || error));
+  }
+}
+
+async function saveSubAdminAssignments(slot){
+  try{
+    const boxes = Array.from(document.querySelectorAll(`[data-sub-assignment="${CSS.escape(slot)}"]`));
+    const selected = boxes.filter(box => box.checked).map(box => box.value).filter(Boolean);
+
+    if(selected.some(id => ADMIN_USERNAMES.has(id))){
+      alert("管理者は担当ユーザーに設定できません。");
+      return;
+    }
+
+    const {error:deleteError} = await supabaseClient
+      .from("sub_admin_assignments")
+      .delete()
+      .eq("slot",slot);
+    if(deleteError) throw deleteError;
+
+    if(selected.length){
+      const rows = selected.map(user_id => ({slot,user_id}));
+      const {error:insertError} = await supabaseClient
+        .from("sub_admin_assignments")
+        .insert(rows);
+      if(insertError) throw insertError;
+    }
+
+    await loadSubAdminManagement();
+    alert(`✅ 副管理者${subAdminNumber(slot)}の担当ユーザーを保存しました。`);
+  }catch(error){
+    console.error("saveSubAdminAssignments:",error);
+    alert("❌ 担当ユーザーの保存に失敗しました：\n" + (error.message || error));
+  }
+}
+
 function setupButtons() {
   document.getElementById("confirmBanButton")
     .addEventListener("click", banUser);
@@ -2052,12 +2300,6 @@ function setupButtons() {
 
   document.getElementById("createRewardCodeButton")
     .addEventListener("click", createRewardCode);
-
-  document.getElementById("saveAnnouncementButton")
-    ?.addEventListener("click", saveAnnouncement);
-
-  document.getElementById("cancelAnnouncementEditButton")
-    ?.addEventListener("click", resetAnnouncementForm);
 
   document.getElementById("createEventButton")
     .addEventListener("click", createEvent);
@@ -2325,6 +2567,8 @@ async function init() {
       "info"
     );
     await loadUsers();
+
+    await loadSubAdminManagement();
 
     setStatus(
       "💬 掲示板を読み込んでいます...",
