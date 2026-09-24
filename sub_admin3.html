@@ -69,8 +69,7 @@ select{width:100%;border:1px solid #d8dde6;border-radius:9px;padding:10px;font-s
       <div class="setting-box">
         <div id="currentSubAdmin" class="small">確認中...</div>
         <div class="setting-row">
-          <select id="appointUser">
-            <option value="">ユーザーを選択</option>
+          <select id="appointUser" multiple size="7" style="min-height:170px">
           </select>
           <button id="appointBtn" class="primary">任命</button>
         </div>
@@ -143,11 +142,10 @@ async function checkSubAdmin1(){
   const {data,error}=await supabaseClient
     .from("sub_admins")
     .select("user_id")
-    .eq("slot",SLOT)
-    .maybeSingle();
+    .eq("slot",SLOT);
 
   if(error) throw error;
-  return data?.user_id || null;
+  return (data || []).map(x => x.user_id);
 }
 
 async function loadAssignedUsers(){
@@ -287,7 +285,7 @@ async function loadAdminUsers(){
 
   allProfiles=data||[];
   renderAdminUsers();
-  renderAppointSelect();
+  await renderAppointSelect();
 }
 
 function renderAdminUsers(){
@@ -315,14 +313,17 @@ function renderAdminUsers(){
   });
 }
 
-function renderAppointSelect(){
+async function renderAppointSelect(){
   const select=document.getElementById("appointUser");
-  select.innerHTML='<option value="">ユーザーを選択</option>';
+  select.innerHTML="";
+
+  const appointedIds=new Set(await checkSubAdmin1());
 
   allProfiles.forEach(u=>{
     const o=document.createElement("option");
     o.value=u.user_id;
     o.textContent=(u.name ? u.name+" ("+u.user_id+")" : u.user_id);
+    o.selected=appointedIds.has(u.user_id);
     select.appendChild(o);
   });
 }
@@ -363,42 +364,51 @@ async function saveAssignments(){
 }
 
 async function loadSubAdmin(){
-  const userId=await checkSubAdmin1();
+  const userIds=await checkSubAdmin1();
   const box=document.getElementById("currentSubAdmin");
 
-  if(!userId){
+  if(!userIds.length){
     box.textContent="現在：未任命";
   }else{
-    box.textContent="現在："+userId;
+    box.innerHTML="現在：<br>" + userIds.map(esc).join("<br>");
   }
+
+  await renderAppointSelect();
 }
 
 async function appointSubAdmin(){
-  const userId=document.getElementById("appointUser").value;
-  if(!userId){
-    toast("ユーザーを選択してください");
-    return;
-  }
+  const select=document.getElementById("appointUser");
+  const userIds=[...select.selectedOptions].map(o=>o.value).filter(Boolean);
 
   try{
-    const {error}=await supabaseClient
+    const {error:delError}=await supabaseClient
       .from("sub_admins")
-      .upsert({
+      .delete()
+      .eq("slot",SLOT);
+
+    if(delError) throw delError;
+
+    if(userIds.length){
+      const rows=userIds.map(userId=>({
         slot:SLOT,
         user_id:userId,
         created_at:new Date().toISOString()
-      },{onConflict:"slot"});
+      }));
 
-    if(error) throw error;
+      const {error:insError}=await supabaseClient
+        .from("sub_admins")
+        .insert(rows);
 
-    toast("副管理者3に任命しました");
+      if(insError) throw insError;
+    }
+
+    toast("副管理者" + SLOT.replace("sub_admin", "") + "を保存しました");
     await loadSubAdmin();
   }catch(e){
     console.error(e);
     toast("任命に失敗しました");
   }
 }
-
 async function dismissSubAdmin(){
   if(!confirm("副管理者3を解任しますか？")) return;
 
@@ -435,8 +445,8 @@ async function init(){
       副管理者3は担当ユーザーを表示。
       それ以外はアクセス拒否。
     */
-    const appointedUserId=await checkSubAdmin1();
-    const isSubAdmin=appointedUserId===currentProfile.user_id;
+    const appointedUserIds=await checkSubAdmin1();
+    const isSubAdmin=appointedUserIds.includes(currentProfile.user_id);
 
     if(!admin && !isSubAdmin){
       document.body.innerHTML=`
