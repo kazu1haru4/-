@@ -118,7 +118,7 @@ const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
 const frameMap={sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",heart:"frame-heart",rainbow:"frame-rainbow",flame:"frame-flame",sea:"frame-sea",space:"frame-space",neon:"frame-neon",admin:"admin-frame"};
 const nameMap={nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",nd_neon:"name-decoration-neon",name_sakura:"name-decoration-sakura",admin_name:"name-decoration-admin"};
 let currentUsername="",myAvatarUrl="",friendAvatarUrl="",myItem=null,friendItem=null,myName="",friendName="",myNameClass="",friendNameClass="",realtimeChannel=null,presenceTimer=null,readMessageIds=new Set(),replyTarget=null;
-let typingTimer=null,typingHideTimer=null;
+let typingTimer=null,typingHideTimer=null,typingChannel=null,typingChannelReady=false;
 const ONLINE_LIMIT=60000;
 
 function frameClass(key){return frameMap[String(key||"")]||""}
@@ -194,8 +194,8 @@ function showTyping(username){
  },1800);
 }
 function sendTypingState(isTyping){
- if(!realtimeChannel||!currentUsername||!friendId)return;
- realtimeChannel.send({
+ if(!typingChannel||!typingChannelReady||!currentUsername||!friendId)return;
+ typingChannel.send({
   type:"broadcast",
   event:"typing",
   payload:{
@@ -456,16 +456,6 @@ async function loadMessages(){
 function startRealtime(){
  if(realtimeChannel)return;
  realtimeChannel=db.channel("chat-"+currentUsername+"-"+friendId)
- .on("broadcast",{event:"typing"},payload=>{
-  const data=payload?.payload||{};
-  if(!data.username||data.username===currentUsername)return;
-  if(data.isTyping)showTyping(data.username);
-  else{
-   clearTimeout(typingHideTimer);
-   typingIndicator.classList.remove("show");
-   typingIndicator.textContent="";
-  }
- })
  .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},async p=>{
   const m=p.new,isChat=(m.sender_id===currentUsername&&m.receiver_id===friendId)||(m.sender_id===friendId&&m.receiver_id===currentUsername);if(!isChat||m.sender_id===currentUsername)return;
   await markMessagesAsRead([m]);let u="";if(m.image_url){const {data}=await db.storage.from("chat-images").createSignedUrl(m.image_url,3600);u=data?.signedUrl||""}messagesElement.appendChild(createMessageElement(m,u));scrollToBottom();updateLatestButton();
@@ -487,6 +477,23 @@ function startRealtime(){
   if(m?.sender_id===currentUsername&&m?.receiver_id===friendId){readMessageIds.add(r.message_id);await loadMessages()}
  })
  .subscribe();
+
+ // 入力中通知専用チャンネル。相手側と同じ名前になるようユーザーIDを並べ替える。
+ const pair=[currentUsername,friendId].sort().map(encodeURIComponent).join("-");
+ typingChannel=db.channel("chat-typing-"+pair)
+  .on("broadcast",{event:"typing"},payload=>{
+   const data=payload?.payload||{};
+   if(!data.username||data.username===currentUsername)return;
+   if(data.isTyping)showTyping(data.username);
+   else{
+    clearTimeout(typingHideTimer);
+    typingIndicator.classList.remove("show");
+    typingIndicator.textContent="";
+   }
+  })
+  .subscribe(status=>{
+   typingChannelReady=status==="SUBSCRIBED";
+  });
 }
 
 messageInput.addEventListener("input",handleTyping);
