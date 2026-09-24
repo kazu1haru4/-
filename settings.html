@@ -10,9 +10,7 @@
   <script src="ban-check.js"></script>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     :root {
       --theme: #8f7cff;
@@ -23,30 +21,14 @@
     body {
       margin: 0;
       min-height: 100vh;
-      font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        "Hiragino Kaku Gothic ProN",
-        "Yu Gothic",
-        sans-serif;
-
-      background:
-        linear-gradient(
-          135deg,
-          #fff3fb,
-          #eef5ff
-        );
-
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      background: linear-gradient(135deg, #fff3fb, #eef5ff);
       color: #333;
       padding: 20px;
     }
 
-    .page {
-      width: 100%;
-      max-width: 500px;
-      margin: 0 auto;
-    }
+    .page { width: 100%; max-width: 500px; margin: 0 auto; }
 
     .header {
       position: relative;
@@ -54,8 +36,7 @@
       border-radius: 24px;
       padding: 20px;
       text-align: center;
-      box-shadow:
-        0 8px 25px rgba(0, 0, 0, 0.07);
+      box-shadow: 0 8px 25px rgba(0,0,0,.07);
       margin-bottom: 15px;
     }
 
@@ -75,29 +56,16 @@
       font-size: 22px;
     }
 
-    .header-icon {
-      font-size: 38px;
-      margin-bottom: 5px;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 23px;
-    }
-
-    .subtitle {
-      margin: 6px 0 0;
-      color: #999;
-      font-size: 13px;
-    }
+    .header-icon { font-size: 38px; margin-bottom: 5px; }
+    h1 { margin: 0; font-size: 23px; }
+    .subtitle { margin: 6px 0 0; color: #999; font-size: 13px; }
 
     .section {
       background: white;
       border-radius: 22px;
       padding: 20px;
       margin-bottom: 14px;
-      box-shadow:
-        0 6px 18px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 6px 18px rgba(0,0,0,.05);
     }
 
     .section-title {
@@ -123,13 +91,8 @@
       color: #333;
     }
 
-    .theme-button:active {
-      transform: scale(0.96);
-    }
-
-    .theme-button.selected {
-      border-color: var(--theme);
-    }
+    .theme-button:active { transform: scale(.96); }
+    .theme-button.selected { border-color: var(--theme); }
 
     .theme-color {
       width: 38px;
@@ -138,29 +101,12 @@
       margin: 0 auto 8px;
     }
 
-    .pink .theme-color {
-      background: #ff82b2;
-    }
-
-    .purple .theme-color {
-      background: #8f7cff;
-    }
-
-    .blue .theme-color {
-      background: #5c9eff;
-    }
-
-    .green .theme-color {
-      background: #48c78e;
-    }
-
-    .orange .theme-color {
-      background: #ff9b52;
-    }
-
-    .cyan .theme-color {
-      background: #36c9d8;
-    }
+    .pink .theme-color { background: #ff82b2; }
+    .purple .theme-color { background: #8f7cff; }
+    .blue .theme-color { background: #5c9eff; }
+    .green .theme-color { background: #48c78e; }
+    .orange .theme-color { background: #ff9b52; }
+    .cyan .theme-color { background: #36c9d8; }
 
     .theme-preview {
       border-radius: 18px;
@@ -174,7 +120,8 @@
 
     .reset-button,
     .logout-button,
-    .admin-button {
+    .admin-button,
+    .sub-admin-button {
       width: 100%;
       border: none;
       border-radius: 16px;
@@ -191,36 +138,37 @@
 
     .reset-button:active,
     .logout-button:active,
-    .admin-button:active {
-      transform: scale(0.98);
+    .admin-button:active,
+    .sub-admin-button:active {
+      transform: scale(.98);
     }
 
     .admin-button {
-      background:
-        linear-gradient(
-          135deg,
-          #fff4a8,
-          #ffd700
-        );
-
+      background: linear-gradient(135deg, #fff4a8, #ffd700);
       color: #705500;
+      box-shadow: 0 5px 15px rgba(255,200,0,.18);
+    }
 
-      box-shadow:
-        0 5px 15px rgba(255, 200, 0, .18);
+    .sub-admin-list {
+      display: grid;
+      gap: 9px;
+    }
+
+    .sub-admin-button {
+      background: linear-gradient(135deg, #eee8ff, #dcd3ff);
+      color: #5945b7;
+      box-shadow: 0 4px 12px rgba(110,90,220,.12);
+    }
+
+    .sub-admin-button:disabled {
+      opacity: .55;
+      cursor: default;
     }
 
     .logout-button {
-      background:
-        linear-gradient(
-          135deg,
-          #ff8f8f,
-          #ff6262
-        );
-
+      background: linear-gradient(135deg, #ff8f8f, #ff6262);
       color: white;
-
-      box-shadow:
-        0 5px 15px rgba(255, 80, 80, .15);
+      box-shadow: 0 5px 15px rgba(255,80,80,.15);
     }
 
     .saved {
@@ -239,206 +187,108 @@
       font-size: 12px;
     }
 
-    .hidden {
-      display: none !important;
-    }
+    .hidden { display: none !important; }
   </style>
 </head>
 
 <body>
-
   <main class="page">
 
     <section class="header">
-
-      <a
-        href="home.html"
-        class="back-button"
-        aria-label="ホームへ戻る"
-      >
-        ←
-      </a>
-
-      <div class="header-icon">
-        ⚙️
-      </div>
-
-      <h1>
-        設定
-      </h1>
-
-      <p class="subtitle">
-        フレンドチャットを自分好みに設定
-      </p>
-
+      <a href="home.html" class="back-button" aria-label="ホームへ戻る">←</a>
+      <div class="header-icon">⚙️</div>
+      <h1>設定</h1>
+      <p class="subtitle">フレンドチャットを自分好みに設定</p>
     </section>
-
 
     <!-- =========================
          テーマ
     ========================== -->
-
     <section class="section">
-
-      <div class="section-title">
-        🎨 テーマカラー
-      </div>
+      <div class="section-title">🎨 テーマカラー</div>
 
       <div class="theme-grid">
-
-        <button
-          type="button"
-          class="theme-button pink"
-          data-theme="pink"
-        >
-          <div class="theme-color"></div>
-          ピンク
+        <button type="button" class="theme-button pink" data-theme="pink">
+          <div class="theme-color"></div>ピンク
         </button>
 
-        <button
-          type="button"
-          class="theme-button purple"
-          data-theme="purple"
-        >
-          <div class="theme-color"></div>
-          パープル
+        <button type="button" class="theme-button purple" data-theme="purple">
+          <div class="theme-color"></div>パープル
         </button>
 
-        <button
-          type="button"
-          class="theme-button blue"
-          data-theme="blue"
-        >
-          <div class="theme-color"></div>
-          ブルー
+        <button type="button" class="theme-button blue" data-theme="blue">
+          <div class="theme-color"></div>ブルー
         </button>
 
-        <button
-          type="button"
-          class="theme-button green"
-          data-theme="green"
-        >
-          <div class="theme-color"></div>
-          グリーン
+        <button type="button" class="theme-button green" data-theme="green">
+          <div class="theme-color"></div>グリーン
         </button>
 
-        <button
-          type="button"
-          class="theme-button orange"
-          data-theme="orange"
-        >
-          <div class="theme-color"></div>
-          オレンジ
+        <button type="button" class="theme-button orange" data-theme="orange">
+          <div class="theme-color"></div>オレンジ
         </button>
 
-        <button
-          type="button"
-          class="theme-button cyan"
-          data-theme="cyan"
-        >
-          <div class="theme-color"></div>
-          シアン
+        <button type="button" class="theme-button cyan" data-theme="cyan">
+          <div class="theme-color"></div>シアン
         </button>
-
       </div>
 
-
-      <div
-        class="theme-preview"
-        id="themePreview"
-      >
+      <div class="theme-preview" id="themePreview">
         この色でフレンドチャットを楽しもう！
       </div>
 
-
-      <div
-        class="saved"
-        id="savedMessage"
-      ></div>
-
+      <div class="saved" id="savedMessage"></div>
     </section>
-
 
     <!-- =========================
          設定リセット
     ========================== -->
-
     <section class="section">
+      <div class="section-title">🔄 設定をリセット</div>
 
-      <div class="section-title">
-        🔄 設定をリセット
-      </div>
-
-      <button
-        type="button"
-        class="reset-button"
-        id="resetButton"
-      >
+      <button type="button" class="reset-button" id="resetButton">
         デフォルトに戻す
       </button>
-
     </section>
-
 
     <!-- =========================
          管理者
     ========================== -->
+    <section class="section hidden" id="adminSection">
+      <div class="section-title">👑 管理者</div>
 
-    <section
-      class="section hidden"
-      id="adminSection"
-    >
-
-      <div class="section-title">
-        👑 管理者
-      </div>
-
-      <button
-        type="button"
-        class="admin-button"
-        id="adminButton"
-      >
+      <button type="button" class="admin-button" id="adminButton">
         👑 管理者パネルを開く
       </button>
-
     </section>
 
+    <!-- =========================
+         副管理者
+         管理者の下
+    ========================== -->
+    <section class="section hidden" id="subAdminSection">
+      <div class="section-title">🛡️ 副管理者パネル</div>
+
+      <div class="sub-admin-list" id="subAdminList"></div>
+    </section>
 
     <!-- =========================
          ログアウト
     ========================== -->
-
     <section class="section">
+      <div class="section-title">🚪 アカウント</div>
 
-      <div class="section-title">
-        🚪 アカウント
-      </div>
-
-      <button
-        type="button"
-        class="logout-button"
-        id="logoutButton"
-      >
+      <button type="button" class="logout-button" id="logoutButton">
         🚪 ログアウト
       </button>
 
-      <div
-        class="saved"
-        id="accountMessage"
-      ></div>
-
+      <div class="saved" id="accountMessage"></div>
     </section>
 
-
-    <div class="footer">
-      Friend Chat
-    </div>
-
+    <div class="footer">Friend Chat</div>
   </main>
 
-
   <script>
-
     /* =========================
        Supabase
     ========================= */
@@ -455,350 +305,318 @@
         SUPABASE_KEY
       );
 
-
     /* =========================
        管理者
     ========================= */
 
-    const ADMIN_USERNAMES =
-      new Set([
-        "kazu1haru100",
-        "kazu1haru4sub"
-      ]);
-
+    const ADMIN_USERNAMES = new Set([
+      "kazu1haru100",
+      "kazu1haru4sub"
+    ]);
 
     let currentUsername = "";
 
+    /* =========================
+       副管理者ページ
+    ========================= */
+
+    const SUB_ADMIN_PAGES = {
+      sub_admin1: "sub_admin1.html",
+      sub_admin2: "sub_admin2.html",
+      sub_admin3: "sub_admin3.html",
+      sub_admin4: "sub_admin4.html",
+      sub_admin5: "sub_admin5.html"
+    };
 
     /* =========================
        テーマ
     ========================= */
 
     const themes = {
-
       pink: {
         main: "#ff82b2",
         light: "#fff0f7",
         text: "#e34f85"
       },
-
       purple: {
         main: "#8f7cff",
         light: "#f0edff",
         text: "#5e50c9"
       },
-
       blue: {
         main: "#5c9eff",
         light: "#eef5ff",
         text: "#397bd8"
       },
-
       green: {
         main: "#48c78e",
         light: "#eef9f3",
         text: "#279b68"
       },
-
       orange: {
         main: "#ff9b52",
         light: "#fff4e8",
         text: "#df7628"
       },
-
       cyan: {
         main: "#36c9d8",
         light: "#eafcff",
         text: "#1599a8"
       }
-
     };
 
-
-    /* =========================
-       テーマ適用
-    ========================= */
-
     function applyTheme(themeName) {
+      const theme = themes[themeName] || themes.purple;
 
-      const theme =
-        themes[themeName] ||
-        themes.purple;
+      document.documentElement.style.setProperty(
+        "--theme", theme.main
+      );
 
+      document.documentElement.style.setProperty(
+        "--theme-light", theme.light
+      );
 
-      document.documentElement.style
-        .setProperty(
-          "--theme",
-          theme.main
-        );
+      document.documentElement.style.setProperty(
+        "--theme-text", theme.text
+      );
 
-
-      document.documentElement.style
-        .setProperty(
-          "--theme-light",
-          theme.light
-        );
-
-
-      document.documentElement.style
-        .setProperty(
-          "--theme-text",
-          theme.text
-        );
-
-
-      document
-        .querySelectorAll(
-          ".theme-button"
-        )
-        .forEach(
-          function(button) {
-
-            button.classList.toggle(
-              "selected",
-              button.dataset.theme === themeName
-            );
-
-          }
-        );
-
+      document.querySelectorAll(".theme-button").forEach(
+        function(button) {
+          button.classList.toggle(
+            "selected",
+            button.dataset.theme === themeName
+          );
+        }
+      );
     }
 
-
-    /* =========================
-       テーマ保存
-    ========================= */
-
     function saveTheme(themeName) {
-
-      localStorage.setItem(
-        "friendChatTheme",
-        themeName
-      );
-
-
-      applyTheme(
-        themeName
-      );
-
+      localStorage.setItem("friendChatTheme", themeName);
+      applyTheme(themeName);
 
       const savedMessage =
-        document.getElementById(
-          "savedMessage"
-        );
-
+        document.getElementById("savedMessage");
 
       savedMessage.textContent =
         "✓ テーマを保存しました";
 
-
-      setTimeout(
-        function() {
-
-          savedMessage.textContent = "";
-
-        },
-        1500
-      );
-
+      setTimeout(function() {
+        savedMessage.textContent = "";
+      }, 1500);
     }
 
+    document.querySelectorAll(".theme-button").forEach(
+      function(button) {
+        button.addEventListener(
+          "click",
+          async function() {
+            const wasBanned =
+              await checkFriendChatBan();
 
-    /* =========================
-       テーマ変更
-    ========================= */
+            if (wasBanned) return;
 
-    document
-      .querySelectorAll(
-        ".theme-button"
-      )
-      .forEach(
-        function(button) {
-
-          button.addEventListener(
-            "click",
-            async function() {
-
-              const wasBanned =
-                await checkFriendChatBan();
-
-              if (wasBanned) {
-                return;
-              }
-
-
-              saveTheme(
-                button.dataset.theme
-              );
-
-            }
-          );
-
-        }
-      );
-
+            saveTheme(button.dataset.theme);
+          }
+        );
+      }
+    );
 
     /* =========================
        リセット
     ========================= */
 
-    document
-      .getElementById(
-        "resetButton"
-      )
-      .addEventListener(
-        "click",
-        async function() {
+    document.getElementById("resetButton")
+      .addEventListener("click", async function() {
 
-          const wasBanned =
-            await checkFriendChatBan();
+        const wasBanned =
+          await checkFriendChatBan();
 
-          if (wasBanned) {
-            return;
-          }
+        if (wasBanned) return;
 
+        localStorage.removeItem("friendChatTheme");
+        applyTheme("purple");
 
-          localStorage.removeItem(
-            "friendChatTheme"
-          );
+        document.getElementById("savedMessage")
+          .textContent =
+          "✓ デフォルトに戻しました";
 
-
-          applyTheme(
-            "purple"
-          );
-
-
-          document
-            .getElementById(
-              "savedMessage"
-            )
-            .textContent =
-              "✓ デフォルトに戻しました";
-
-
-          setTimeout(
-            function() {
-
-              document
-                .getElementById(
-                  "savedMessage"
-                )
-                .textContent = "";
-
-            },
-            1500
-          );
-
-        }
-      );
-
+        setTimeout(function() {
+          document.getElementById("savedMessage")
+            .textContent = "";
+        }, 1500);
+      });
 
     /* =========================
        管理者パネル
     ========================= */
 
-    document
-      .getElementById(
-        "adminButton"
-      )
-      .addEventListener(
+    document.getElementById("adminButton")
+      .addEventListener("click", async function() {
+
+        const wasBanned =
+          await checkFriendChatBan();
+
+        if (wasBanned) return;
+
+        if (!ADMIN_USERNAMES.has(currentUsername)) {
+          alert("管理者専用ページです。");
+          return;
+        }
+
+        location.href = "admin.html";
+      });
+
+    /* =========================
+       副管理者パネル表示
+    ========================= */
+
+    function addSubAdminButton(slot) {
+      const list =
+        document.getElementById("subAdminList");
+
+      const button =
+        document.createElement("button");
+
+      button.type = "button";
+      button.className = "sub-admin-button";
+
+      const number =
+        slot.replace("sub_admin", "");
+
+      button.textContent =
+        "🛡️ 副管理者" + number + " パネルを開く";
+
+      button.addEventListener(
         "click",
         async function() {
 
           const wasBanned =
             await checkFriendChatBan();
 
-          if (wasBanned) {
-            return;
-          }
-
-
-          if (
-            !ADMIN_USERNAMES.has(
-              currentUsername
-            )
-          ) {
-
-            alert(
-              "管理者専用ページです。"
-            );
-
-            return;
-          }
-
+          if (wasBanned) return;
 
           location.href =
-            "admin.html";
-
+            SUB_ADMIN_PAGES[slot];
         }
       );
 
+      list.appendChild(button);
+    }
+
+    async function loadSubAdminPanel() {
+
+      const section =
+        document.getElementById("subAdminSection");
+
+      const list =
+        document.getElementById("subAdminList");
+
+      list.innerHTML = "";
+
+      const isAdmin =
+        ADMIN_USERNAMES.has(currentUsername);
+
+      /*
+       * 管理者は1〜5を全部表示
+       */
+      if (isAdmin) {
+
+        section.classList.remove("hidden");
+
+        for (let i = 1; i <= 5; i++) {
+          addSubAdminButton(
+            "sub_admin" + i
+          );
+        }
+
+        return;
+      }
+
+      /*
+       * 管理者ではない場合、
+       * 任命されている副管理者だけ表示
+       */
+      const {
+        data,
+        error
+      } = await supabaseClient
+        .from("sub_admins")
+        .select("slot")
+        .eq("user_id", currentUsername);
+
+      if (error) {
+        console.error(
+          "副管理者確認エラー:",
+          error
+        );
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        return;
+      }
+
+      section.classList.remove("hidden");
+
+      /*
+       * 自分が任命されているslotだけ表示
+       */
+      const allowedSlots =
+        new Set(
+          data
+            .map(function(row) {
+              return row.slot;
+            })
+            .filter(function(slot) {
+              return SUB_ADMIN_PAGES[slot];
+            })
+        );
+
+      allowedSlots.forEach(function(slot) {
+        addSubAdminButton(slot);
+      });
+    }
 
     /* =========================
        ログアウト
     ========================= */
 
-    document
-      .getElementById(
-        "logoutButton"
-      )
-      .addEventListener(
-        "click",
-        async function() {
+    document.getElementById("logoutButton")
+      .addEventListener("click", async function() {
 
-          const button =
-            document.getElementById(
-              "logoutButton"
-            );
+        const button =
+          document.getElementById("logoutButton");
 
-          const message =
-            document.getElementById(
-              "accountMessage"
-            );
+        const message =
+          document.getElementById("accountMessage");
 
+        button.disabled = true;
+        button.textContent =
+          "ログアウトしています...";
 
-          button.disabled = true;
+        const { error } =
+          await supabaseClient.auth.signOut();
 
-          button.textContent =
-            "ログアウトしています...";
+        if (error) {
 
+          console.error(error);
 
-          const {
-            error
-          } =
-            await supabaseClient.auth.signOut();
+          button.disabled = false;
+          button.textContent = "🚪 ログアウト";
 
+          message.style.color = "#e05252";
+          message.textContent =
+            "ログアウトに失敗しました。";
 
-          if (error) {
-
-            console.error(error);
-
-            button.disabled = false;
-
-            button.textContent =
-              "🚪 ログアウト";
-
-            message.style.color =
-              "#e05252";
-
-            message.textContent =
-              "ログアウトに失敗しました。";
-
-            return;
-          }
-
-
-          localStorage.removeItem(
-            "friendChatTheme"
-          );
-
-
-          location.href =
-            "index.html";
-
+          return;
         }
-      );
 
+        localStorage.removeItem(
+          "friendChatTheme"
+        );
+
+        location.href = "index.html";
+      });
 
     /* =========================
        初期化
@@ -809,10 +627,7 @@
       const wasBanned =
         await checkFriendChatBan();
 
-      if (wasBanned) {
-        return;
-      }
-
+      if (wasBanned) return;
 
       const {
         data,
@@ -820,71 +635,48 @@
       } =
         await supabaseClient.auth.getUser();
 
+      if (error || !data.user) {
 
-      if (
-        error ||
-        !data.user
-      ) {
-
-        location.href =
-          "index.html";
-
+        location.href = "index.html";
         return;
       }
 
-
+      /*
+       * 今のログインFunctionが保存している
+       * usernameをそのまま使用
+       */
       currentUsername =
-        data.user.user_metadata?.username ||
-        "";
+        data.user.user_metadata?.username || "";
 
-
-      if (
-        !currentUsername
-      ) {
-
-        location.href =
-          "index.html";
-
+      if (!currentUsername) {
+        location.href = "index.html";
         return;
       }
 
-
-      /* 管理者だけ表示 */
-
+      /* 管理者だけ管理者セクションを表示 */
       if (
-        ADMIN_USERNAMES.has(
-          currentUsername
-        )
+        ADMIN_USERNAMES.has(currentUsername)
       ) {
-
-        document
-          .getElementById(
-            "adminSection"
-          )
-          .classList.remove(
-            "hidden"
-          );
-
+        document.getElementById("adminSection")
+          .classList.remove("hidden");
       }
 
+      /*
+       * 管理者または任命済み副管理者の
+       * パネルを表示
+       */
+      await loadSubAdminPanel();
 
       /* 保存済みテーマ */
-
       const savedTheme =
         localStorage.getItem(
           "friendChatTheme"
         ) || "purple";
 
-
-      applyTheme(
-        savedTheme
-      );
-
+      applyTheme(savedTheme);
     }
 
-
     init();
-
   </script>
 
 </body>
