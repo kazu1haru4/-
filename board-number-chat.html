@@ -17,6 +17,7 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
 .board-action{border:0;border-radius:10px;padding:8px 9px;font-size:11px;font-weight:bold;cursor:pointer}
 .edit-board{background:#eeeaff!important;color:#5f50c4!important}
 .delete-board{background:#fff0f0!important;color:#d9534f!important}
+.leave-board{background:#fff4e8!important;color:#c87522!important}
 .member-button{background:#8f7cff!important;color:#fff!important}
 .title{font-weight:bold;font-size:19px}.room{font-size:12px;color:#888;margin-top:3px}
 .main{flex:1;min-height:0;overflow-y:auto;padding:14px}
@@ -71,7 +72,7 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
 <div class="header-actions">
 <button id="editBoardButton" class="board-action edit-board" style="display:none">✏️ 名前変更</button>
 <button id="deleteBoardButton" class="board-action delete-board" style="display:none">🗑️ 削除</button>
-<button id="memberButton" class="member-button">👥 メンバー</button>
+<button id="memberButton" class="member-button">👥 メンバー</button><button id="leaveBoardButton" class="board-action leave-board" style="display:none">🚪 抜ける</button>
 </div>
 <div class="title">🔢 掲示板チャット</div>
 <div id="roomInfo" class="room">読み込み中...</div>
@@ -122,6 +123,7 @@ async function loadRoom(){
  const canManage=isOwner||ADMIN_USERNAMES.has(username);
  $("editBoardButton").style.display=canManage?"inline-block":"none";
  $("deleteBoardButton").style.display=canManage?"inline-block":"none";
+ $("leaveBoardButton").style.display=isOwner?"none":"inline-block";
  return true;
 }
 async function renameBoard(){
@@ -143,6 +145,15 @@ async function deleteBoard(){
  alert("✅ 掲示板を削除しました");location.href="board-number.html";
 }
 $("editBoardButton").onclick=renameBoard;$("deleteBoardButton").onclick=deleteBoard;
+async function leaveBoard(){
+ if(!room||!username)return;
+ if(isOwner){alert("掲示板の管理者はこの掲示板から抜けられません。先に管理者の引き継ぎが必要です。");return}
+ if(!confirm("この掲示板から抜けますか？\n抜けると、この掲示板のメッセージを見られなくなります。"))return;
+ const {error}=await supabaseClient.rpc("board_leave",{target_board_id:Number(boardId)});
+ if(error){console.error(error);alert("掲示板から抜けられませんでした\n\n"+error.message);return}
+ alert("✅ 掲示板から抜けました");location.href="board-number.html";
+}
+
 async function loadMembers(){
  const {data,error}=await supabaseClient.from("board_room_members").select("user_id,role,joined_at").eq("board_id",boardId).order("joined_at",{ascending:true});
  if(error){console.error(error);return} members=data||[];await loadProfiles(members.map(m=>m.user_id));const me=members.find(m=>m.user_id===username);isBoardAdmin=isOwner||me?.role==="admin";
@@ -166,12 +177,13 @@ async function renderMembers(){
   if(isOwner&&member.user_id!==username){const select=document.createElement("select");select.className="control";select.innerHTML="<option value='member'>通常メンバー</option><option value='admin'>副管理者</option>";select.value=member.role==="admin"?"admin":"member";select.onchange=async()=>{const {error}=await supabaseClient.rpc("board_set_subadmin",{target_board_id:Number(boardId),target_username:member.user_id,make_admin:select.value==="admin"});if(error)alert(error.message);await renderMembers()};info.appendChild(select)}
   const myMember=members.find(m=>m.user_id===username);const canMute=isBoardAdmin&&member.user_id!==username&&member.user_id!==room.created_by&&!(myMember?.role==="admin"&&member.role==="admin");
   if(canMute){const minutes=document.createElement("input");minutes.type="number";minutes.min="1";minutes.placeholder="発言禁止（分）";minutes.className="control";const muteButton=document.createElement("button");muteButton.className="control";muteButton.textContent="🔇 発言禁止";muteButton.onclick=async()=>{const value=Number(minutes.value);if(!Number.isInteger(value)||value<1){alert("1分以上を入力してください");return}const {error}=await supabaseClient.rpc("board_set_mute",{target_board_id:Number(boardId),target_username:member.user_id,mute_minutes:value});if(error)alert(error.message);await renderMembers()};info.append(minutes,muteButton)}
-  if(isOwner&&member.user_id!==username){const kick=document.createElement("button");kick.className="control danger";kick.textContent="🚪 掲示板から蹴る";kick.onclick=async()=>{if(!confirm(member.user_id+"さんを掲示板から退出させますか？"))return;const {error}=await supabaseClient.rpc("board_kick_member",{target_board_id:Number(boardId),target_username:member.user_id});if(error)alert(error.message);await renderMembers()};info.appendChild(kick)}
+  if(isBoardAdmin&&member.user_id!==username&&member.user_id!==room.created_by&&!(members.find(m=>m.user_id===username)?.role==="admin"&&member.role==="admin")){const kick=document.createElement("button");kick.className="control danger";kick.textContent="🚪 掲示板から蹴る";kick.onclick=async()=>{if(!confirm(member.user_id+"さんを掲示板から退出させますか？"))return;const {error}=await supabaseClient.rpc("board_kick_member",{target_board_id:Number(boardId),target_username:member.user_id});if(error)alert(error.message);await renderMembers()};info.appendChild(kick)}
   item.appendChild(info);list.appendChild(item);
  });
 }
 function closeMemberModal(){$("memberModal").style.display="none"}
 $("memberButton").onclick=async()=>{$("memberModal").style.display="flex";await renderMembers()};
+$("leaveBoardButton").onclick=leaveBoard;
 async function loadMessages(){
  const {data,error}=await supabaseClient.from("board_room_messages").select("id,board_id,sender_id,content,image_url,created_at,is_deleted,edited_at").eq("board_id",boardId).order("created_at",{ascending:true});
  if(error){console.error(error);return} const messages=data||[],ids=messages.map(m=>m.id);let replies=[],reactions=[],reads=[];
