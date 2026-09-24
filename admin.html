@@ -2053,6 +2053,12 @@ function setupButtons() {
   document.getElementById("createRewardCodeButton")
     .addEventListener("click", createRewardCode);
 
+  document.getElementById("saveAnnouncementButton")
+    ?.addEventListener("click", saveAnnouncement);
+
+  document.getElementById("cancelAnnouncementEditButton")
+    ?.addEventListener("click", resetAnnouncementForm);
+
   document.getElementById("createEventButton")
     .addEventListener("click", createEvent);
 
