@@ -301,14 +301,9 @@ const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
 const NAME_DECORATION_MAP={nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",nd_neon:"name-decoration-neon",name_sakura:"name-decoration-sakura",admin_name:"name-decoration-admin"};
 function getNameClass(itemKey){return NAME_DECORATION_MAP[itemKey]||""}
 function updateGroupAdminState(){
-  isGroupAdmin=currentUsername===groupOwnerId||currentGroupRole==="admin";
-  const leaveButton=document.getElementById("leaveGroupButton");
-  if(leaveButton)leaveButton.style.display=(currentUsername&&currentUsername!==groupOwnerId)?"inline-block":"none";
   const isGlobalAdmin=ADMIN_USERNAMES.has(currentUsername);
-  const canManageGroup=currentUsername===groupOwnerId||isGlobalAdmin;
+  isGroupAdmin=isGlobalAdmin||currentUsername===groupOwnerId||currentGroupRole==="admin";
   if(adminNote)adminNote.style.display=isGroupAdmin?"block":"none";
-  if(editGroupButton)editGroupButton.style.display=canManageGroup?"inline-block":"none";
-  if(deleteGroupButton)deleteGroupButton.style.display=canManageGroup?"inline-block":"none";
 }
 function getFrameClass(itemKey,username){if(itemKey==="admin"&&ADMIN_USERNAMES.has(username))return "admin-frame";return {sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",space:"frame-space",neon:"frame-neon",rainbow:"frame-rainbow",flame:"frame-flame",sea:"frame-sea",heart:"frame-heart"}[itemKey]||""}
 function formatMessageTime(createdAt){if(!createdAt)return "";const d=new Date(createdAt);if(Number.isNaN(d.getTime()))return "";const now=new Date();const sameDay=d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()&&d.getDate()===now.getDate();if(sameDay)return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");return String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0")+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
