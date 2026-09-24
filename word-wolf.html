@@ -4,2642 +4,1210 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ワードウルフ</title>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
-*{
-  box-sizing:border-box;
-}
-
-body{
-  margin:0;
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Hiragino Kaku Gothic ProN",
-    "Yu Gothic",
-    sans-serif;
-  background:linear-gradient(135deg,#fff4fb,#eef7ff);
-  color:#333;
-}
-
-.container{
-  width:min(92%,480px);
-  margin:0 auto;
-  padding:22px 0 40px;
-}
-
-.header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom:18px;
-}
-
-.header h1{
-  margin:0;
-  font-size:25px;
-}
-
-.back-button{
-  border:0;
-  background:white;
-  border-radius:14px;
-  padding:10px 14px;
-  font-size:14px;
-  cursor:pointer;
-  box-shadow:0 3px 12px rgba(0,0,0,.08);
-}
-
-.card{
-  background:white;
-  border-radius:24px;
-  padding:22px;
-  margin-bottom:16px;
-  box-shadow:0 8px 25px rgba(0,0,0,.08);
-}
-
-h2{
-  margin:0 0 14px;
-  font-size:20px;
-}
-
-.description{
-  color:#777;
-  line-height:1.6;
-  font-size:14px;
-}
-
-input{
-  width:100%;
-  padding:14px;
-  border:1px solid #ddd;
-  border-radius:14px;
-  font-size:17px;
-  margin-bottom:10px;
-}
-
-button.main{
-  width:100%;
-  border:0;
-  border-radius:14px;
-  padding:14px;
-  font-size:16px;
-  font-weight:bold;
-  background:#ff7eb6;
-  color:white;
-  cursor:pointer;
-  margin-top:8px;
-}
-
-button.main:disabled{
-  opacity:.5;
-  cursor:not-allowed;
-}
-
-.secondary{
-  background:#f3f4f7 !important;
-  color:#333 !important;
-}
-
-.room-code{
-  font-size:38px;
-  font-weight:bold;
-  letter-spacing:7px;
-  text-align:center;
-  margin:14px 0;
-}
-
-.players{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  margin-top:12px;
-}
-
-.player{
-  background:#f8f8fb;
-  border-radius:12px;
-  padding:11px 13px;
-}
-
-.status{
-  text-align:center;
-  padding:12px;
-  border-radius:14px;
-  background:#fff5d9;
-  margin:12px 0;
-  font-weight:bold;
-}
-
-.word-box{
-  background:linear-gradient(135deg,#fff0f7,#eef6ff);
-  border-radius:20px;
-  padding:25px 15px;
-  text-align:center;
-  margin:18px 0;
-}
-
-.word-label{
-  color:#777;
-  font-size:13px;
-}
-
-.word{
-  font-size:34px;
-  font-weight:bold;
-  margin-top:8px;
-}
-
-.notice{
-  background:#f5f5f5;
-  border-radius:14px;
-  padding:13px;
-  font-size:14px;
-  line-height:1.6;
-}
-
-.vote-list{
-  display:flex;
-  flex-direction:column;
-  gap:9px;
-  margin-top:12px;
-}
-
-.vote-button{
-  border:0;
-  background:#f3f5fa;
-  padding:14px;
-  border-radius:14px;
-  font-size:16px;
-  cursor:pointer;
-  text-align:left;
-}
-
-.vote-button.selected{
-  background:#ffd2e6;
-  font-weight:bold;
-}
-
-.vote-button:disabled{
-  opacity:.65;
-  cursor:not-allowed;
-}
-
-.vote-summary{
-  margin-top:14px;
-  background:#f8f8fb;
-  border-radius:14px;
-  padding:12px;
-  font-size:14px;
-  line-height:1.7;
-}
-
-.result-player{
-  padding:12px;
-  border-radius:13px;
-  background:#f7f7f9;
-  margin:7px 0;
-}
-
-.wolf{
-  background:#ffe3e3;
-}
-
-.winner{
-  text-align:center;
-  font-size:22px;
-  font-weight:bold;
-  margin:15px 0;
-}
-
-.small{
-  font-size:13px;
-  color:#888;
-  text-align:center;
-}
-
-.hidden{
-  display:none !important;
-}
-
-.error{
-  color:#d33;
-  background:#fff0f0;
-  padding:12px;
-  border-radius:12px;
-  font-size:14px;
-  margin-top:10px;
-}
-
-/* チャット */
-
-.chat-box{
-  border:1px solid #eee;
-  border-radius:18px;
-  overflow:hidden;
-  background:#fafafa;
-}
-
-.chat-messages{
-  height:280px;
-  overflow-y:auto;
-  padding:12px;
-  display:flex;
-  flex-direction:column;
-  gap:9px;
-}
-
-.chat-empty{
-  text-align:center;
-  color:#999;
-  font-size:14px;
-  padding:35px 10px;
-}
-
-.chat-message{
-  max-width:88%;
-  padding:9px 12px;
-  border-radius:15px;
-  background:white;
-  box-shadow:0 2px 7px rgba(0,0,0,.05);
-  align-self:flex-start;
-}
-
-.chat-message.mine{
-  align-self:flex-end;
-  background:#ffe3ef;
-}
-
-.chat-user{
-  font-size:11px;
-  color:#888;
-  margin-bottom:3px;
-  font-weight:bold;
-}
-
-.chat-text{
-  font-size:14px;
-  line-height:1.5;
-  word-break:break-word;
-}
-
-.chat-time{
-  font-size:10px;
-  color:#aaa;
-  margin-top:3px;
-  text-align:right;
-}
-
-.chat-input-area{
-  display:flex;
-  gap:7px;
-  padding:10px;
-  background:white;
-  border-top:1px solid #eee;
-}
-
-.chat-input{
-  flex:1;
-  min-width:0;
-  margin:0;
-  padding:11px 12px;
-  font-size:14px;
-}
-
-.chat-send{
-  border:0;
-  border-radius:12px;
-  padding:0 15px;
-  background:#ff7eb6;
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.chat-send:disabled{
-  opacity:.5;
-}
-
-.chat-note{
-  font-size:12px;
-  color:#999;
-  margin-top:8px;
-}
-
-/* 部屋主 */
-
-.host-start{
-  background:linear-gradient(135deg,#ff72ae,#ff9ac8) !important;
-}
-
-.host-label{
-  display:inline-block;
-  background:#fff0a8;
-  color:#8a6b00;
-  border-radius:10px;
-  padding:4px 8px;
-  font-size:12px;
-  font-weight:bold;
-  margin-left:5px;
-}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:linear-gradient(135deg,#fff4fb,#eef7ff);color:#333}
+.container{width:min(92%,480px);margin:0 auto;padding:22px 0 40px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.header h1{margin:0;font-size:25px}
+.back-button{border:0;background:white;border-radius:14px;padding:10px 14px;font-size:14px;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.08)}
+.card{background:white;border-radius:24px;padding:22px;margin-bottom:16px;box-shadow:0 8px 25px rgba(0,0,0,.08)}
+h2{margin:0 0 14px;font-size:20px}
+.description{color:#777;line-height:1.6;font-size:14px}
+input{width:100%;padding:14px;border:1px solid #ddd;border-radius:14px;font-size:17px;margin-bottom:10px}
+button.main{width:100%;border:0;border-radius:14px;padding:14px;font-size:16px;font-weight:bold;background:#ff7eb6;color:white;cursor:pointer;margin-top:8px}
+button.main:disabled{opacity:.5;cursor:not-allowed}
+.secondary{background:#f3f4f7!important;color:#333!important}
+.room-code{font-size:38px;font-weight:bold;letter-spacing:7px;text-align:center;margin:14px 0}
+.players{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.player{background:#f8f8fb;border-radius:12px;padding:11px 13px}
+.status{text-align:center;padding:12px;border-radius:14px;background:#fff5d9;margin:12px 0;font-weight:bold}
+.word-box{background:linear-gradient(135deg,#fff0f7,#eef6ff);border-radius:20px;padding:25px 15px;text-align:center;margin:18px 0}
+.word-label{color:#777;font-size:13px}
+.word{font-size:34px;font-weight:bold;margin-top:8px}
+.notice{background:#f5f5f5;border-radius:14px;padding:13px;font-size:14px;line-height:1.6}
+.vote-list{display:flex;flex-direction:column;gap:9px;margin-top:12px}
+.vote-button{border:0;background:#f3f5fa;padding:14px;border-radius:14px;font-size:16px;cursor:pointer;text-align:left}
+.vote-button.selected{background:#ffd2e6;font-weight:bold}
+.vote-button:disabled{opacity:.65;cursor:not-allowed}
+.vote-summary{margin-top:14px;background:#f8f8fb;border-radius:14px;padding:12px;font-size:14px;line-height:1.7}
+.result-player{padding:12px;border-radius:13px;background:#f7f7f9;margin:7px 0}
+.wolf{background:#ffe3e3}
+.winner{text-align:center;font-size:22px;font-weight:bold;margin:15px 0}
+.small{font-size:13px;color:#888;text-align:center}
+.hidden{display:none!important}
+.error{color:#d33;background:#fff0f0;padding:12px;border-radius:12px;font-size:14px;margin-top:10px}
+.chat-box{border:1px solid #eee;border-radius:18px;overflow:hidden;background:#fafafa}
+.chat-messages{height:280px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:9px}
+.chat-empty{text-align:center;color:#999;font-size:14px;padding:35px 10px}
+.chat-message{max-width:88%;padding:9px 12px;border-radius:15px;background:white;box-shadow:0 2px 7px rgba(0,0,0,.05);align-self:flex-start}
+.chat-message.mine{align-self:flex-end;background:#ffe3ef}
+.chat-user{font-size:11px;color:#888;margin-bottom:3px;font-weight:bold}
+.chat-text{font-size:14px;line-height:1.5;word-break:break-word}
+.chat-time{font-size:10px;color:#aaa;margin-top:3px;text-align:right}
+.chat-input-area{display:flex;gap:7px;padding:10px;background:white;border-top:1px solid #eee}
+.chat-input{flex:1;min-width:0;margin:0;padding:11px 12px;font-size:14px}
+.chat-send{border:0;border-radius:12px;padding:0 15px;background:#ff7eb6;color:white;font-weight:bold;cursor:pointer}
+.chat-send:disabled{opacity:.5}
+.chat-note{font-size:12px;color:#999;margin-top:8px}
+.host-start{background:linear-gradient(135deg,#ff72ae,#ff9ac8)!important}
+.host-label{display:inline-block;background:#fff0a8;color:#8a6b00;border-radius:10px;padding:4px 8px;font-size:12px;font-weight:bold;margin-left:5px}
 </style>
 </head>
-
 <body>
-
 <div class="container">
-
-  <div class="header">
-    <h1>🐺 ワードウルフ</h1>
-    <button class="back-button" id="backButton">← 戻る</button>
-  </div>
-
-  <!-- ロビー -->
-  <div id="lobby">
-
-    <div class="card">
-      <h2>🎮 3〜5人で遊ぼう！</h2>
-
-      <div class="description">
-        みんなでお題について話し合って、<br>
-        1人だけ違うお題を持っている「ウルフ」を探そう！
-      </div>
-    </div>
-
-    <div class="card">
-
-      <h2>部屋を作る</h2>
-
-      <button class="main" id="createButton">
-        🏠 部屋を作る
-      </button>
-
-      <hr style="border:0;border-top:1px solid #eee;margin:20px 0;">
-
-      <h2>友達の部屋に入る</h2>
-
-      <input
-        id="roomCodeInput"
-        type="text"
-        inputmode="numeric"
-        maxlength="6"
-        placeholder="6桁の部屋コード"
-      >
-
-      <button class="main secondary" id="joinButton">
-        🚪 部屋に入る
-      </button>
-
-      <div id="lobbyError" class="error hidden"></div>
-
-    </div>
-
-  </div>
-
-  <!-- 待機 -->
-  <div id="waitingArea" class="hidden">
-
-    <div class="card">
-
-      <h2>🔑 部屋コード</h2>
-
-      <div class="room-code" id="roomCodeDisplay">
-        ------
-      </div>
-
-      <div class="small">
-        このコードを友達に教えてね
-      </div>
-
-    </div>
-
-    <div class="card">
-
-      <h2>👥 参加者</h2>
-
-      <div id="playersList" class="players"></div>
-
-      <div id="waitingStatus" class="status">
-        友達を待っています……
-      </div>
-
-      <button
-        class="main host-start hidden"
-        id="startGameButton"
-      >
-        🐺 ゲーム開始
-      </button>
-
-      <div id="hostStartNote" class="small" style="margin-top:10px;"></div>
-
-      <div class="small" style="margin-top:12px;">
-        3〜5人集まったら、部屋主がゲームを開始できます
-      </div>
-
-    </div>
-
-    <button class="main secondary" id="leaveButton">
-      部屋から退出
-    </button>
-
-  </div>
-
-  <!-- ゲーム -->
-  <div id="gameArea" class="hidden">
-
-    <div class="card">
-
-      <div id="gameStatus" class="status">
-        お題を確認してね
-      </div>
-
-      <div class="word-box">
-        <div class="word-label">
-          あなたのお題
-        </div>
-
-        <div class="word" id="myWord">
-          ？？？
-        </div>
-      </div>
-
-      <div class="notice">
-        🤫 自分のお題は他の人に見せないでね。<br>
-        みんなで話し合って、誰がウルフなのか考えよう！
-      </div>
-
-    </div>
-
-    <!-- 話し合い -->
-    <div class="card">
-
-      <h2>💬 話し合い</h2>
-
-      <div class="description">
-        お題について話して、ウルフを探そう！
-      </div>
-
-      <div class="chat-box">
-
-        <div
-          id="chatMessages"
-          class="chat-messages"
-        >
-          <div class="chat-empty">
-            まだメッセージはありません
-          </div>
-        </div>
-
-        <form
-          id="chatForm"
-          class="chat-input-area"
-        >
-
-          <input
-            id="chatInput"
-            class="chat-input"
-            type="text"
-            maxlength="200"
-            autocomplete="off"
-            placeholder="メッセージを入力..."
-          >
-
-          <button
-            id="chatSendButton"
-            class="chat-send"
-            type="submit"
-          >
-            送信
-          </button>
-
-        </form>
-
-      </div>
-
-      <div class="chat-note">
-        ※ 話し合いの内容は参加者全員にリアルタイムで表示されます
-      </div>
-
-    </div>
-
-    <!-- 投票 -->
-    <div class="card">
-
-      <h2>🗳️ 投票</h2>
-
-      <div class="description">
-        話し合いが終わったら、ウルフだと思う人を1人選んでください。
-      </div>
-
-      <div id="voteList" class="vote-list"></div>
-
-      <div id="voteStatus" class="small" style="margin-top:12px;">
-        まだ投票していません
-      </div>
-
-      <div
-        id="voteSummary"
-        class="vote-summary"
-      ></div>
-
-    </div>
-
-  </div>
-
-  <!-- 結果 -->
-  <div id="resultArea" class="hidden">
-
-    <div class="card">
-
-      <h2>🎉 結果発表</h2>
-
-      <div id="winnerText" class="winner"></div>
-
-      <div id="resultWords"></div>
-
-    </div>
-
-    <div class="card">
-
-      <h2>🗳️ 投票結果</h2>
-
-      <div id="voteResults"></div>
-
-    </div>
-
-    <div class="card">
-
-      <h2>🔄 もう一度遊ぶ</h2>
-
-      <div id="rematchStatus" class="status">
-        0人 / 0人がもう一度を選択
-      </div>
-
-      <button class="main" id="rematchButton">
-        🔄 もう一度遊ぶ
-      </button>
-
-      <div class="small" style="margin-top:12px;">
-        全員が押すと、新しいお題で再戦します
-      </div>
-
-    </div>
-
-  </div>
-
-  <div id="globalError" class="error hidden"></div>
-
+<div class="header"><h1>🐺 ワードウルフ</h1><button class="back-button" id="backButton">← 戻る</button></div>
+
+<div id="lobby">
+<div class="card"><h2>🎮 3〜5人で遊ぼう！</h2><div class="description">みんなでお題について話し合って、<br>1人だけ違うお題を持っている「ウルフ」を探そう！</div></div>
+<div class="card">
+<h2>部屋を作る</h2><button class="main" id="createButton">🏠 部屋を作る</button>
+<hr style="border:0;border-top:1px solid #eee;margin:20px 0;">
+<h2>友達の部屋に入る</h2>
+<input id="roomCodeInput" type="text" inputmode="numeric" maxlength="6" placeholder="6桁の部屋コード">
+<button class="main secondary" id="joinButton">🚪 部屋に入る</button>
+<div id="lobbyError" class="error hidden"></div>
+</div>
+</div>
+
+<div id="waitingArea" class="hidden">
+<div class="card"><h2>🔑 部屋コード</h2><div class="room-code" id="roomCodeDisplay">------</div><div class="small">このコードを友達に教えてね</div></div>
+<div class="card">
+<h2>👥 参加者</h2><div id="playersList" class="players"></div>
+<div id="waitingStatus" class="status">友達を待っています……</div>
+<button class="main host-start hidden" id="startGameButton">🐺 ゲーム開始</button>
+<div id="hostStartNote" class="small" style="margin-top:10px;"></div>
+<div class="small" style="margin-top:12px;">3〜5人集まったら、部屋主がゲームを開始できます</div>
+</div>
+<button class="main secondary" id="leaveButton">部屋から退出</button>
+</div>
+
+<div id="gameArea" class="hidden">
+<div class="card">
+<div id="gameStatus" class="status">お題を確認してね</div>
+<div class="word-box"><div class="word-label">あなたのお題</div><div class="word" id="myWord">？？？</div></div>
+<div class="notice">🤫 自分のお題は他の人に見せないでね。<br>みんなで話し合って、誰がウルフなのか考えよう！</div>
+</div>
+
+<div class="card">
+<h2>💬 話し合い</h2><div class="description">お題について話して、ウルフを探そう！</div>
+<div class="chat-box">
+<div id="chatMessages" class="chat-messages"><div class="chat-empty">まだメッセージはありません</div></div>
+<form id="chatForm" class="chat-input-area">
+<input id="chatInput" class="chat-input" type="text" maxlength="200" autocomplete="off" placeholder="メッセージを入力...">
+<button id="chatSendButton" class="chat-send" type="submit">送信</button>
+</form>
+</div>
+<div class="chat-note">※ 話し合いの内容は参加者全員にリアルタイムで表示されます</div>
+</div>
+
+<div class="card">
+<h2>🗳️ 投票</h2><div class="description">話し合いが終わったら、ウルフだと思う人を1人選んでください。</div>
+<div id="voteList" class="vote-list"></div>
+<div id="voteStatus" class="small" style="margin-top:12px;">まだ投票していません</div>
+<div id="voteSummary" class="vote-summary"></div>
+</div>
+</div>
+
+<div id="resultArea" class="hidden">
+<div class="card"><h2>🎉 結果発表</h2><div id="winnerText" class="winner"></div><div id="resultWords"></div></div>
+<div class="card"><h2>🗳️ 投票結果</h2><div id="voteResults"></div></div>
+<div class="card">
+<h2>🔄 もう一度遊ぶ</h2>
+<div id="rematchStatus" class="status">0人 / 0人がもう一度を選択</div>
+<button class="main" id="rematchButton">🔄 もう一度遊ぶ</button>
+<div class="small" style="margin-top:12px;">全員が押すと、新しいお題で再戦します</div>
+</div>
+</div>
+<div id="globalError" class="error hidden"></div>
 </div>
 
 <script>
-const SUPABASE_URL =
-  "https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-const SUPABASE_KEY =
-  "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+let currentUsername="";
+let currentRoomId=null;
+let currentRoom=null;
+let realtimeChannel=null;
+let chatChannel=null;
+let myVote=null;
 
-const supabaseClient =
-  supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-  );
-
-let currentUsername = "";
-let currentRoomId = null;
-let currentRoom = null;
-
-let realtimeChannel = null;
-let chatChannel = null;
-
-let myVote = null;
-
-/* --------------------------------
-   お題
--------------------------------- */
-
-const WORD_PAIRS = [
-  ["犬","猫"],
-  ["夏","冬"],
-  ["海","プール"],
-  ["ラーメン","うどん"],
-  ["カレー","シチュー"],
-  ["学校","塾"],
-  ["先生","店員"],
-  ["ゲーム","YouTube"],
-  ["スマホ","タブレット"],
-  ["映画","ドラマ"],
-  ["漫画","小説"],
-  ["サッカー","野球"],
-  ["公園","遊園地"],
-  ["コンビニ","スーパー"],
-  ["電車","バス"],
-  ["朝","夜"],
-  ["誕生日","クリスマス"],
-  ["ケーキ","アイス"],
-  ["ハンバーガー","ピザ"],
-  ["寿司","焼肉"],
-  ["鉛筆","シャーペン"],
-  ["ノート","教科書"],
-  ["宿題","テスト"],
-  ["夏休み","冬休み"],
-  ["旅行","遠足"],
-  ["海水浴","キャンプ"],
-  ["自転車","キックボード"],
-  ["映画館","カラオケ"],
-  ["写真","動画"],
-  ["LINE","SNS"]
+const WORD_PAIRS=[
+["犬","猫"],["夏","冬"],["海","プール"],["ラーメン","うどん"],["カレー","シチュー"],
+["学校","塾"],["先生","店員"],["ゲーム","YouTube"],["スマホ","タブレット"],["映画","ドラマ"],
+["漫画","小説"],["サッカー","野球"],["公園","遊園地"],["コンビニ","スーパー"],["電車","バス"],
+["朝","夜"],["誕生日","クリスマス"],["ケーキ","アイス"],["ハンバーガー","ピザ"],["寿司","焼肉"],
+["鉛筆","シャーペン"],["ノート","教科書"],["宿題","テスト"],["夏休み","冬休み"],["旅行","遠足"],
+["海水浴","キャンプ"],["自転車","キックボード"],["映画館","カラオケ"],["写真","動画"],["LINE","SNS"]
 ];
 
-/* --------------------------------
-   画面
--------------------------------- */
-
-const lobby =
-  document.getElementById("lobby");
-
-const waitingArea =
-  document.getElementById("waitingArea");
-
-const gameArea =
-  document.getElementById("gameArea");
-
-const resultArea =
-  document.getElementById("resultArea");
-
-const roomCodeDisplay =
-  document.getElementById("roomCodeDisplay");
-
-const playersList =
-  document.getElementById("playersList");
-
-const waitingStatus =
-  document.getElementById("waitingStatus");
-
-const startGameButton =
-  document.getElementById("startGameButton");
-
-const hostStartNote =
-  document.getElementById("hostStartNote");
-
-const myWord =
-  document.getElementById("myWord");
-
-const voteList =
-  document.getElementById("voteList");
-
-const voteStatus =
-  document.getElementById("voteStatus");
-
-const voteSummary =
-  document.getElementById("voteSummary");
-
-const winnerText =
-  document.getElementById("winnerText");
-
-const resultWords =
-  document.getElementById("resultWords");
-
-const voteResults =
-  document.getElementById("voteResults");
-
-const rematchStatus =
-  document.getElementById("rematchStatus");
-
-const rematchButton =
-  document.getElementById("rematchButton");
-
-const chatMessages =
-  document.getElementById("chatMessages");
-
-const chatForm =
-  document.getElementById("chatForm");
-
-const chatInput =
-  document.getElementById("chatInput");
-
-const chatSendButton =
-  document.getElementById("chatSendButton");
-
-/* --------------------------------
-   共通
--------------------------------- */
+const lobby=document.getElementById("lobby");
+const waitingArea=document.getElementById("waitingArea");
+const gameArea=document.getElementById("gameArea");
+const resultArea=document.getElementById("resultArea");
+const roomCodeDisplay=document.getElementById("roomCodeDisplay");
+const playersList=document.getElementById("playersList");
+const waitingStatus=document.getElementById("waitingStatus");
+const startGameButton=document.getElementById("startGameButton");
+const hostStartNote=document.getElementById("hostStartNote");
+const myWord=document.getElementById("myWord");
+const voteList=document.getElementById("voteList");
+const voteStatus=document.getElementById("voteStatus");
+const voteSummary=document.getElementById("voteSummary");
+const winnerText=document.getElementById("winnerText");
+const resultWords=document.getElementById("resultWords");
+const voteResults=document.getElementById("voteResults");
+const rematchStatus=document.getElementById("rematchStatus");
+const rematchButton=document.getElementById("rematchButton");
+const chatMessages=document.getElementById("chatMessages");
+const chatForm=document.getElementById("chatForm");
+const chatInput=document.getElementById("chatInput");
+const chatSendButton=document.getElementById("chatSendButton");
 
 function showError(message){
-
-  const el =
-    document.getElementById("globalError");
-
-  el.textContent = message;
-  el.classList.remove("hidden");
-
-  setTimeout(() => {
-    el.classList.add("hidden");
-  },5000);
+const el=document.getElementById("globalError");
+el.textContent=message;
+el.classList.remove("hidden");
+setTimeout(()=>el.classList.add("hidden"),5000);
 }
-
 function showLobbyError(message){
-
-  const el =
-    document.getElementById("lobbyError");
-
-  el.textContent = message;
-  el.classList.remove("hidden");
+const el=document.getElementById("lobbyError");
+el.textContent=message;
+el.classList.remove("hidden");
 }
-
 function clearLobbyError(){
-
-  document
-    .getElementById("lobbyError")
-    .classList.add("hidden");
+document.getElementById("lobbyError").classList.add("hidden");
 }
-
 function showOnly(area){
-
-  lobby.classList.add("hidden");
-  waitingArea.classList.add("hidden");
-  gameArea.classList.add("hidden");
-  resultArea.classList.add("hidden");
-
-  area.classList.remove("hidden");
+lobby.classList.add("hidden");
+waitingArea.classList.add("hidden");
+gameArea.classList.add("hidden");
+resultArea.classList.add("hidden");
+area.classList.remove("hidden");
 }
-
 function makeRoomCode(){
-
-  return String(
-    Math.floor(
-      100000 + Math.random() * 900000
-    )
-  );
+return String(Math.floor(100000+Math.random()*900000));
 }
-
 function shuffle(array){
-
-  const copy = [...array];
-
-  for(
-    let i = copy.length - 1;
-    i > 0;
-    i--
-  ){
-
-    const j =
-      Math.floor(
-        Math.random() * (i + 1)
-      );
-
-    [copy[i],copy[j]] =
-      [copy[j],copy[i]];
-  }
-
-  return copy;
+const copy=[...array];
+for(let i=copy.length-1;i>0;i--){
+const j=Math.floor(Math.random()*(i+1));
+[copy[i],copy[j]]=[copy[j],copy[i]];
 }
-
-/* --------------------------------
-   ログイン確認
--------------------------------- */
+return copy;
+}
 
 async function getCurrentUser(){
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient.auth.getSession();
-
-  if(error){
-
-    showError(
-      "ログイン情報を取得できませんでした。"
-    );
-
-    return false;
-  }
-
-  const session = data.session;
-
-  if(!session){
-
-    showError(
-      "ログインしてください。"
-    );
-
-    return false;
-  }
-
-  currentUsername =
-    session.user.user_metadata?.username || "";
-
-  if(!currentUsername){
-
-    showError(
-      "ユーザー名を取得できませんでした。"
-    );
-
-    return false;
-  }
-
-  return true;
+const {data,error}=await supabaseClient.auth.getSession();
+if(error){
+showError("ログイン情報を取得できませんでした。");
+return false;
 }
-
-/* --------------------------------
-   部屋作成
--------------------------------- */
+const session=data.session;
+if(!session){
+showError("ログインしてください。");
+return false;
+}
+currentUsername=session.user.user_metadata?.username||"";
+if(!currentUsername){
+showError("ユーザー名を取得できませんでした。");
+return false;
+}
+return true;
+}
 
 async function createRoom(){
+clearLobbyError();
+const roomCode=makeRoomCode();
+const players=[currentUsername];
 
-  clearLobbyError();
+const {data,error}=await supabaseClient
+.from("word_wolf_rooms")
+.insert({
+room_code:roomCode,
+host_id:currentUsername,
+players:players,
+status:"waiting",
+round:1,
+assignments:{},
+votes:{},
+rematch_votes:[],
+result:null
+})
+.select()
+.single();
 
-  const roomCode =
-    makeRoomCode();
-
-  const players = [
-    currentUsername
-  ];
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient
-      .from("word_wolf_rooms")
-      .insert({
-        room_code:roomCode,
-        host_id:currentUsername,
-        players:players,
-        status:"waiting",
-        round:1,
-        assignments:{},
-        votes:{},
-        rematch_votes:[],
-        result:null
-      })
-      .select()
-      .single();
-
-  if(error){
-
-    console.error(error);
-
-    showLobbyError(
-      "部屋を作れませんでした。\n" +
-      error.message
-    );
-
-    return;
-  }
-
-  currentRoomId = data.id;
-  currentRoom = data;
-
-  roomCodeDisplay.textContent =
-    data.room_code;
-
-  showOnly(waitingArea);
-
-  await subscribeRoom();
-  await subscribeChat();
-
-  renderWaiting();
+if(error){
+console.error(error);
+showLobbyError("部屋を作れませんでした。\n"+error.message);
+return;
 }
 
-/* --------------------------------
-   部屋参加
--------------------------------- */
+currentRoomId=data.id;
+currentRoom=data;
+roomCodeDisplay.textContent=data.room_code;
+showOnly(waitingArea);
+await subscribeRoom();
+await subscribeChat();
+renderWaiting();
+}
 
 async function joinRoom(){
+clearLobbyError();
 
-  clearLobbyError();
+const input=document.getElementById("roomCodeInput");
+const code=input.value.trim();
 
-  const input =
-    document.getElementById(
-      "roomCodeInput"
-    );
-
-  const code =
-    input.value.trim();
-
-  if(!/^\d{6}$/.test(code)){
-
-    showLobbyError(
-      "6桁の部屋コードを入力してください。"
-    );
-
-    return;
-  }
-
-  const {
-    data:room,
-    error
-  } =
-    await supabaseClient
-      .from("word_wolf_rooms")
-      .select("*")
-      .eq("room_code",code)
-      .maybeSingle();
-
-  if(error){
-
-    console.error(error);
-
-    showLobbyError(
-      "部屋を検索できませんでした。\n" +
-      error.message
-    );
-
-    return;
-  }
-
-  if(!room){
-
-    showLobbyError(
-      "その部屋は見つかりませんでした。"
-    );
-
-    return;
-  }
-
-  let players =
-    Array.isArray(room.players)
-      ? [...room.players]
-      : [];
-
-  if(players.includes(currentUsername)){
-
-    currentRoomId = room.id;
-    currentRoom = room;
-
-    roomCodeDisplay.textContent =
-      room.room_code;
-
-    await subscribeRoom();
-    await subscribeChat();
-
-    renderRoom();
-
-    return;
-  }
-
-  if(players.length >= 5){
-
-    showLobbyError(
-      "この部屋は5人いっぱいです。"
-    );
-
-    return;
-  }
-
-  if(room.status !== "waiting"){
-
-    showLobbyError(
-      "このゲームはすでに開始されています。"
-    );
-
-    return;
-  }
-
-  players.push(currentUsername);
-
-  const {
-    data:updatedRoom,
-    error:updateError
-  } =
-    await supabaseClient
-      .from("word_wolf_rooms")
-      .update({
-        players:players,
-        updated_at:
-          new Date().toISOString()
-      })
-      .eq("id",room.id)
-      .select()
-      .single();
-
-  if(updateError){
-
-    console.error(updateError);
-
-    showLobbyError(
-      "部屋に参加できませんでした。\n" +
-      updateError.message
-    );
-
-    return;
-  }
-
-  currentRoomId =
-    updatedRoom.id;
-
-  currentRoom =
-    updatedRoom;
-
-  roomCodeDisplay.textContent =
-    updatedRoom.room_code;
-
-  showOnly(waitingArea);
-
-  await subscribeRoom();
-  await subscribeChat();
-
-  renderWaiting();
+if(!/^\d{6}$/.test(code)){
+showLobbyError("6桁の部屋コードを入力してください。");
+return;
 }
 
-/* --------------------------------
-   部屋主か
--------------------------------- */
+const {data:room,error}=await supabaseClient
+.from("word_wolf_rooms")
+.select("*")
+.eq("room_code",code)
+.maybeSingle();
+
+if(error){
+console.error(error);
+showLobbyError("部屋を検索できませんでした。\n"+error.message);
+return;
+}
+
+if(!room){
+showLobbyError("その部屋は見つかりませんでした。");
+return;
+}
+
+let players=Array.isArray(room.players)?[...room.players]:[];
+
+if(players.includes(currentUsername)){
+currentRoomId=room.id;
+currentRoom=room;
+roomCodeDisplay.textContent=room.room_code;
+await subscribeRoom();
+await subscribeChat();
+renderRoom();
+return;
+}
+
+if(players.length>=5){
+showLobbyError("この部屋は5人いっぱいです。");
+return;
+}
+
+if(room.status!=="waiting"){
+showLobbyError("このゲームはすでに開始されています。");
+return;
+}
+
+players.push(currentUsername);
+
+const {data:updatedRoom,error:updateError}=await supabaseClient
+.from("word_wolf_rooms")
+.update({
+players:players,
+updated_at:new Date().toISOString()
+})
+.eq("id",room.id)
+.select()
+.single();
+
+if(updateError){
+console.error(updateError);
+showLobbyError("部屋に参加できませんでした。\n"+updateError.message);
+return;
+}
+
+currentRoomId=updatedRoom.id;
+currentRoom=updatedRoom;
+roomCodeDisplay.textContent=updatedRoom.room_code;
+showOnly(waitingArea);
+await subscribeRoom();
+await subscribeChat();
+renderWaiting();
+}
 
 function isHost(){
-
-  return (
-    currentRoom &&
-    currentRoom.host_id === currentUsername
-  );
+return currentRoom&&currentRoom.host_id===currentUsername;
 }
-
-/* --------------------------------
-   ゲーム開始
--------------------------------- */
 
 async function startGame(){
+if(!currentRoom)return;
 
-  if(!currentRoom){
-    return;
-  }
-
-  if(!isHost()){
-
-    showError(
-      "ゲームを開始できるのは部屋主だけです。"
-    );
-
-    return;
-  }
-
-  if(currentRoom.status !== "waiting"){
-    return;
-  }
-
-  const players =
-    Array.isArray(currentRoom.players)
-      ? currentRoom.players
-      : [];
-
-  if(players.length < 3){
-
-    showError(
-      "3人以上集まってから開始してください。"
-    );
-
-    return;
-  }
-
-  if(players.length > 5){
-
-    showError(
-      "参加できるのは5人までです。"
-    );
-
-    return;
-  }
-
-  startGameButton.disabled = true;
-
-  const pair =
-    WORD_PAIRS[
-      Math.floor(
-        Math.random() *
-        WORD_PAIRS.length
-      )
-    ];
-
-  const shuffledPlayers =
-    shuffle(players);
-
-  const wolf =
-    shuffledPlayers[0];
-
-  const assignments = {};
-
-  players.forEach(player => {
-
-    assignments[player] =
-      player === wolf
-        ? pair[1]
-        : pair[0];
-
-  });
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient
-      .from("word_wolf_rooms")
-      .update({
-        status:"playing",
-        assignments:assignments,
-        votes:{},
-        rematch_votes:[],
-        result:{
-          wolf:wolf,
-          citizenWord:pair[0],
-          wolfWord:pair[1]
-        },
-        updated_at:
-          new Date().toISOString()
-      })
-      .eq("id",currentRoomId)
-      .eq("status","waiting")
-      .eq("host_id",currentUsername)
-      .select()
-      .maybeSingle();
-
-  startGameButton.disabled = false;
-
-  if(error){
-
-    console.error(
-      "ゲーム開始エラー:",
-      error
-    );
-
-    showError(
-      "ゲームを開始できませんでした。\n" +
-      error.message
-    );
-
-    return;
-  }
-
-  if(!data){
-
-    showError(
-      "ゲームはすでに開始された可能性があります。"
-    );
-
-    return;
-  }
-
-  currentRoom = data;
-
-  renderGame();
-  await loadChatMessages();
+if(!isHost()){
+showError("ゲームを開始できるのは部屋主だけです。");
+return;
 }
 
-/* --------------------------------
-   待機画面
--------------------------------- */
+if(currentRoom.status!=="waiting")return;
+
+const players=Array.isArray(currentRoom.players)?currentRoom.players:[];
+
+if(players.length<3){
+showError("3人以上集まってから開始してください。");
+return;
+}
+
+if(players.length>5){
+showError("参加できるのは5人までです。");
+return;
+}
+
+startGameButton.disabled=true;
+
+const pair=WORD_PAIRS[Math.floor(Math.random()*WORD_PAIRS.length)];
+const shuffledPlayers=shuffle(players);
+const wolf=shuffledPlayers[0];
+const assignments={};
+
+players.forEach(player=>{
+assignments[player]=player===wolf?pair[1]:pair[0];
+});
+
+const {data,error}=await supabaseClient
+.from("word_wolf_rooms")
+.update({
+status:"playing",
+assignments:assignments,
+votes:{},
+rematch_votes:[],
+result:{
+wolf:wolf,
+citizenWord:pair[0],
+wolfWord:pair[1]
+},
+updated_at:new Date().toISOString()
+})
+.eq("id",currentRoomId)
+.eq("status","waiting")
+.eq("host_id",currentUsername)
+.select()
+.maybeSingle();
+
+startGameButton.disabled=false;
+
+if(error){
+console.error("ゲーム開始エラー:",error);
+showError("ゲームを開始できませんでした。\n"+error.message);
+return;
+}
+
+if(!data){
+showError("ゲームはすでに開始された可能性があります。");
+return;
+}
+
+currentRoom=data;
+renderGame();
+await loadChatMessages();
+}
 
 function renderWaiting(){
+if(!currentRoom)return;
 
-  if(!currentRoom){
-    return;
-  }
+const players=Array.isArray(currentRoom.players)?currentRoom.players:[];
 
-  const players =
-    Array.isArray(currentRoom.players)
-      ? currentRoom.players
-      : [];
+roomCodeDisplay.textContent=currentRoom.room_code;
+playersList.innerHTML="";
 
-  roomCodeDisplay.textContent =
-    currentRoom.room_code;
+players.forEach((player,index)=>{
+const div=document.createElement("div");
+div.className="player";
+div.innerHTML=escapeHtml(player)+(player===currentRoom.host_id?'<span class="host-label">👑 部屋主</span>':"");
+playersList.appendChild(div);
+});
 
-  playersList.innerHTML = "";
-
-  players.forEach((player,index) => {
-
-    const div =
-      document.createElement("div");
-
-    div.className = "player";
-
-    div.innerHTML =
-      escapeHtml(player) +
-      (
-        player === currentRoom.host_id
-          ? '<span class="host-label">👑 部屋主</span>'
-          : ""
-      );
-
-    playersList.appendChild(div);
-  });
-
-  if(players.length < 3){
-
-    waitingStatus.textContent =
-      `あと ${3 - players.length}人でゲーム開始できます`;
-
-  }else{
-
-    waitingStatus.textContent =
-      `${players.length}人集まりました！`;
-
-  }
-
-  if(isHost()){
-
-    if(players.length >= 3){
-
-      startGameButton.classList.remove("hidden");
-
-      hostStartNote.textContent =
-        "あなたが部屋主です。準備ができたらゲーム開始を押してください。";
-
-    }else{
-
-      startGameButton.classList.add("hidden");
-
-      hostStartNote.textContent =
-        "3人以上集まるとゲーム開始ボタンが表示されます。";
-    }
-
-  }else{
-
-    startGameButton.classList.add("hidden");
-
-    hostStartNote.textContent =
-      "部屋主がゲームを開始するまで待ってください。";
-  }
+if(players.length<3){
+waitingStatus.textContent=`あと ${3-players.length}人でゲーム開始できます`;
+}else{
+waitingStatus.textContent=`${players.length}人集まりました！`;
 }
 
-/* --------------------------------
-   ゲーム画面
--------------------------------- */
+if(isHost()){
+if(players.length>=3){
+startGameButton.classList.remove("hidden");
+hostStartNote.textContent="あなたが部屋主です。準備ができたらゲーム開始を押してください。";
+}else{
+startGameButton.classList.add("hidden");
+hostStartNote.textContent="3人以上集まるとゲーム開始ボタンが表示されます。";
+}
+}else{
+startGameButton.classList.add("hidden");
+hostStartNote.textContent="部屋主がゲームを開始するまで待ってください。";
+}
+}
 
+/* =========================================================
+   修正箇所：お題表示
+   result に保存された同じゲームのお題を全員で参照する。
+   assignments は古い部屋との互換用にだけフォールバック。
+   ========================================================= */
 async function renderGame(){
+if(!currentRoom)return;
 
-  if(!currentRoom){
-    return;
-  }
+showOnly(gameArea);
 
-  showOnly(gameArea);
+const result=currentRoom.result||{};
+const wolf=result.wolf||"";
+const citizenWord=result.citizenWord||"";
+const wolfWord=result.wolfWord||"";
 
-  const assignments =
-    currentRoom.assignments || {};
+let word="";
 
-  const word =
-    assignments[currentUsername];
-
-  myWord.textContent =
-    word || "？？？";
-
-  document.getElementById(
-    "gameStatus"
-  ).textContent =
-    "💬 話し合ってウルフを探そう！";
-
-  /*
-    重要：
-    ここで myVote = null にしない。
-    他の人の投票によるRealtime更新で
-    自分の投票が消えないようにする。
-  */
-
-  const votes =
-    currentRoom.votes || {};
-
-  myVote =
-    votes[currentUsername] || myVote;
-
-  renderVoteList();
-  renderVoteSummary();
-
-  if(myVote){
-
-    voteStatus.textContent =
-      `あなたは「${myVote}」に投票しました`;
-
-  }else{
-
-    voteStatus.textContent =
-      "まだ投票していません";
-  }
-
-  await loadChatMessages();
+if(currentUsername===wolf){
+word=wolfWord;
+}else{
+word=citizenWord;
 }
 
-/* --------------------------------
-   投票リスト
--------------------------------- */
+/* 古い部屋などで result が存在しない場合のみ assignments を使用 */
+if(!word){
+const assignments=currentRoom.assignments||{};
+word=assignments[currentUsername]||"";
+}
+
+myWord.textContent=word||"？？？";
+
+document.getElementById("gameStatus").textContent=
+"💬 話し合ってウルフを探そう！";
+
+/*
+  ここで myVote = null にしない。
+  他の人の投票によるRealtime更新で
+  自分の投票が消えないようにする。
+*/
+const votes=currentRoom.votes||{};
+myVote=votes[currentUsername]||myVote;
+
+renderVoteList();
+renderVoteSummary();
+
+if(myVote){
+voteStatus.textContent=`あなたは「${myVote}」に投票しました`;
+}else{
+voteStatus.textContent="まだ投票していません";
+}
+
+await loadChatMessages();
+}
 
 function renderVoteList(){
+voteList.innerHTML="";
 
-  voteList.innerHTML = "";
+const players=Array.isArray(currentRoom.players)?currentRoom.players:[];
+const votes=currentRoom.votes||{};
+const currentVote=votes[currentUsername]||myVote;
 
-  const players =
-    Array.isArray(currentRoom.players)
-      ? currentRoom.players
-      : [];
+players.forEach(player=>{
+if(player===currentUsername)return;
 
-  const votes =
-    currentRoom.votes || {};
+const button=document.createElement("button");
+button.type="button";
+button.className="vote-button";
 
-  const currentVote =
-    votes[currentUsername] || myVote;
-
-  players.forEach(player => {
-
-    if(player === currentUsername){
-      return;
-    }
-
-    const button =
-      document.createElement("button");
-
-    button.type = "button";
-
-    button.className =
-      "vote-button";
-
-    if(currentVote === player){
-
-      button.classList.add(
-        "selected"
-      );
-    }
-
-    button.textContent =
-      currentVote === player
-        ? "✅ " + player + " に投票中"
-        : "🐺 " + player;
-
-    button.addEventListener(
-      "click",
-      () => voteFor(player)
-    );
-
-    voteList.appendChild(button);
-  });
+if(currentVote===player){
+button.classList.add("selected");
 }
 
-/* --------------------------------
-   投票
--------------------------------- */
+button.textContent=
+currentVote===player
+?"✅ "+player+" に投票中"
+:"🐺 "+player;
+
+button.addEventListener("click",()=>voteFor(player));
+voteList.appendChild(button);
+});
+}
 
 async function voteFor(player){
+if(!currentRoom)return;
+if(currentRoom.status!=="playing")return;
 
-  if(!currentRoom){
-    return;
-  }
+const players=Array.isArray(currentRoom.players)?currentRoom.players:[];
 
-  if(currentRoom.status !== "playing"){
-    return;
-  }
+if(!players.includes(player))return;
+if(player===currentUsername)return;
 
-  const players =
-    Array.isArray(currentRoom.players)
-      ? currentRoom.players
-      : [];
+const votes=
+currentRoom.votes&&typeof currentRoom.votes==="object"
+?{...currentRoom.votes}
+:{};
 
-  if(!players.includes(player)){
-    return;
-  }
+votes[currentUsername]=player;
+myVote=player;
 
-  if(player === currentUsername){
-    return;
-  }
+currentRoom={
+...currentRoom,
+votes:votes
+};
 
-  const votes =
-    currentRoom.votes &&
-    typeof currentRoom.votes === "object"
-      ? {...currentRoom.votes}
-      : {};
+renderVoteList();
+renderVoteSummary();
 
-  votes[currentUsername] =
-    player;
+voteStatus.textContent=
+`あなたは「${player}」に投票しました`;
 
-  /*
-    先に画面へ反映。
-    Realtime更新が来ても消えない。
-  */
+const {data,error}=await supabaseClient
+.from("word_wolf_rooms")
+.update({
+votes:votes,
+updated_at:new Date().toISOString()
+})
+.eq("id",currentRoomId)
+.eq("status","playing")
+.select()
+.maybeSingle();
 
-  myVote = player;
-
-  currentRoom = {
-    ...currentRoom,
-    votes:votes
-  };
-
-  renderVoteList();
-  renderVoteSummary();
-
-  voteStatus.textContent =
-    `あなたは「${player}」に投票しました`;
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient
-      .from("word_wolf_rooms")
-      .update({
-        votes:votes,
-        updated_at:
-          new Date().toISOString()
-      })
-      .eq("id",currentRoomId)
-      .eq("status","playing")
-      .select()
-      .maybeSingle();
-
-  if(error){
-
-    console.error(error);
-
-    showError(
-      "投票できませんでした。\n" +
-      error.message
-    );
-
-    return;
-  }
-
-  if(data){
-
-    currentRoom = data;
-
-    /*
-      DBに保存された自分の投票を保持。
-    */
-
-    myVote =
-      data.votes?.[currentUsername]
-      || myVote;
-
-    renderVoteList();
-    renderVoteSummary();
-
-    checkVotesComplete(data);
-  }
+if(error){
+console.error(error);
+showError("投票できませんでした。\n"+error.message);
+return;
 }
 
-/* --------------------------------
-   投票状況
--------------------------------- */
+if(data){
+currentRoom=data;
+myVote=data.votes?.[currentUsername]||myVote;
+renderVoteList();
+renderVoteSummary();
+checkVotesComplete(data);
+}
+}
 
 function renderVoteSummary(){
-
-  if(!currentRoom){
-
-    voteSummary.innerHTML = "";
-    return;
-  }
-
-  const players =
-    Array.isArray(currentRoom.players)
-      ? currentRoom.players
-      : [];
-
-  const votes =
-    currentRoom.votes || {};
-
-  const count =
-    Object.keys(votes).length;
-
-  let html =
-    `<strong>投票状況：${count} / ${players.length}人</strong>`;
-
-  html += "<br>";
-
-  players.forEach(player => {
-
-    if(votes[player]){
-
-      html +=
-        `✅ ${escapeHtml(player)} → 投票済み<br>`;
-
-    }else{
-
-      html +=
-        `⏳ ${escapeHtml(player)} → まだ投票していません<br>`;
-    }
-  });
-
-  voteSummary.innerHTML =
-    html;
+if(!currentRoom){
+voteSummary.innerHTML="";
+return;
 }
 
-/* --------------------------------
-   全員投票チェック
--------------------------------- */
+const players=Array.isArray(currentRoom.players)?currentRoom.players:[];
+const votes=currentRoom.votes||{};
+const count=Object.keys(votes).length;
+
+let html=
+`<strong>投票状況：${count} / ${players.length}人</strong>`;
+
+html+="<br>";
+
+players.forEach(player=>{
+if(votes[player]){
+html+=`✅ ${escapeHtml(player)} → 投票済み<br>`;
+}else{
+html+=`⏳ ${escapeHtml(player)} → まだ投票していません<br>`;
+}
+});
+
+voteSummary.innerHTML=html;
+}
 
 async function checkVotesComplete(room){
+const players=Array.isArray(room.players)?room.players:[];
+const votes=
+room.votes&&typeof room.votes==="object"
+?room.votes
+:{};
 
-  const players =
-    Array.isArray(room.players)
-      ? room.players
-      : [];
+const voteCount=Object.keys(votes).length;
 
-  const votes =
-    room.votes &&
-    typeof room.votes === "object"
-      ? room.votes
-      : {};
+if(voteCount<players.length)return;
 
-  const voteCount =
-    Object.keys(votes).length;
-
-  if(voteCount < players.length){
-    return;
-  }
-
-  await finishGame(room);
+await finishGame(room);
 }
-
-/* --------------------------------
-   結果計算
--------------------------------- */
 
 async function finishGame(room){
+if(!room||room.status!=="playing")return;
 
-  if(
-    !room ||
-    room.status !== "playing"
-  ){
-    return;
-  }
+const players=Array.isArray(room.players)?room.players:[];
+const result=room.result||{};
+const wolf=result.wolf;
+const votes=room.votes||{};
+const counts={};
 
-  const players =
-    Array.isArray(room.players)
-      ? room.players
-      : [];
+players.forEach(player=>{
+counts[player]=0;
+});
 
-  const result =
-    room.result || {};
+Object.values(votes).forEach(target=>{
+if(counts[target]!==undefined){
+counts[target]++;
+}
+});
 
-  const wolf =
-    result.wolf;
+let maxVotes=-1;
+let targets=[];
 
-  const votes =
-    room.votes || {};
+Object.entries(counts).forEach(([player,count])=>{
+if(count>maxVotes){
+maxVotes=count;
+targets=[player];
+}else if(count===maxVotes){
+targets.push(player);
+}
+});
 
-  const counts = {};
+let wolfFound=false;
 
-  players.forEach(player => {
-    counts[player] = 0;
-  });
-
-  Object.values(votes)
-    .forEach(target => {
-
-      if(
-        counts[target] !== undefined
-      ){
-
-        counts[target]++;
-      }
-    });
-
-  let maxVotes = -1;
-
-  let targets = [];
-
-  Object.entries(counts)
-    .forEach(
-      ([player,count]) => {
-
-        if(count > maxVotes){
-
-          maxVotes = count;
-          targets = [player];
-
-        }else if(
-          count === maxVotes
-        ){
-
-          targets.push(player);
-        }
-      }
-    );
-
-  let wolfFound = false;
-
-  if(
-    targets.length === 1 &&
-    targets[0] === wolf
-  ){
-
-    wolfFound = true;
-  }
-
-  const finalResult = {
-
-    wolf:wolf,
-
-    citizenWord:
-      result.citizenWord,
-
-    wolfWord:
-      result.wolfWord,
-
-    voteCounts:
-      counts,
-
-    mostVoted:
-      targets,
-
-    wolfFound:
-      wolfFound
-  };
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient
-      .from("word_wolf_rooms")
-      .update({
-        status:"finished",
-        result:finalResult,
-        updated_at:
-          new Date().toISOString()
-      })
-      .eq("id",room.id)
-      .eq("status","playing")
-      .select()
-      .maybeSingle();
-
-  if(error){
-
-    console.error(
-      "結果保存エラー:",
-      error
-    );
-
-    return;
-  }
-
-  if(data){
-
-    currentRoom = data;
-
-    renderResult();
-  }
+if(targets.length===1&&targets[0]===wolf){
+wolfFound=true;
 }
 
-/* --------------------------------
-   結果
--------------------------------- */
+const finalResult={
+wolf:wolf,
+citizenWord:result.citizenWord,
+wolfWord:result.wolfWord,
+voteCounts:counts,
+mostVoted:targets,
+wolfFound:wolfFound
+};
+
+const {data,error}=await supabaseClient
+.from("word_wolf_rooms")
+.update({
+status:"finished",
+result:finalResult,
+updated_at:new Date().toISOString()
+})
+.eq("id",room.id)
+.eq("status","playing")
+.select()
+.maybeSingle();
+
+if(error){
+console.error("結果保存エラー:",error);
+return;
+}
+
+if(data){
+currentRoom=data;
+renderResult();
+}
+}
 
 function renderResult(){
+if(!currentRoom)return;
 
-  if(!currentRoom){
-    return;
-  }
+showOnly(resultArea);
 
-  showOnly(resultArea);
+const result=currentRoom.result||{};
+const wolf=result.wolf;
+const wolfFound=result.wolfFound;
 
-  const result =
-    currentRoom.result || {};
-
-  const wolf =
-    result.wolf;
-
-  const wolfFound =
-    result.wolfFound;
-
-  if(wolfFound){
-
-    winnerText.textContent =
-      "🎉 市民チームの勝利！";
-
-  }else{
-
-    winnerText.textContent =
-      "🐺 ウルフの勝利！";
-  }
-
-  resultWords.innerHTML = `
-    <div class="result-player wolf">
-      🐺 ウルフ：
-      <strong>${escapeHtml(wolf)}</strong>
-    </div>
-
-    <div class="result-player">
-      👥 市民のお題：
-      <strong>
-        ${escapeHtml(result.citizenWord || "")}
-      </strong>
-    </div>
-
-    <div class="result-player wolf">
-      🐺 ウルフのお題：
-      <strong>
-        ${escapeHtml(result.wolfWord || "")}
-      </strong>
-    </div>
-  `;
-
-  voteResults.innerHTML = "";
-
-  const counts =
-    result.voteCounts || {};
-
-  Object.entries(counts)
-    .sort(
-      (a,b) => b[1] - a[1]
-    )
-    .forEach(
-      ([player,count]) => {
-
-        const div =
-          document.createElement("div");
-
-        div.className =
-          "result-player";
-
-        div.textContent =
-          `${player}：${count}票`;
-
-        voteResults.appendChild(div);
-      }
-    );
-
-  renderRematch();
+if(wolfFound){
+winnerText.textContent="🎉 市民チームの勝利！";
+}else{
+winnerText.textContent="🐺 ウルフの勝利！";
 }
 
-/* --------------------------------
-   もう一度
--------------------------------- */
+resultWords.innerHTML=`
+<div class="result-player wolf">
+🐺 ウルフ：
+<strong>${escapeHtml(wolf)}</strong>
+</div>
+
+<div class="result-player">
+👥 市民のお題：
+<strong>${escapeHtml(result.citizenWord||"")}</strong>
+</div>
+
+<div class="result-player wolf">
+🐺 ウルフのお題：
+<strong>${escapeHtml(result.wolfWord||"")}</strong>
+</div>
+`;
+
+voteResults.innerHTML="";
+
+const counts=result.voteCounts||{};
+
+Object.entries(counts)
+.sort((a,b)=>b[1]-a[1])
+.forEach(([player,count])=>{
+const div=document.createElement("div");
+div.className="result-player";
+div.textContent=`${player}：${count}票`;
+voteResults.appendChild(div);
+});
+
+renderRematch();
+}
 
 async function rematch(){
+if(!currentRoom)return;
 
-  if(!currentRoom){
-    return;
-  }
+let rematchVotes=
+Array.isArray(currentRoom.rematch_votes)
+?[...currentRoom.rematch_votes]
+:[];
 
-  let rematchVotes =
-    Array.isArray(
-      currentRoom.rematch_votes
-    )
-      ? [
-          ...currentRoom.rematch_votes
-        ]
-      : [];
+if(!rematchVotes.includes(currentUsername)){
+rematchVotes.push(currentUsername);
+}
 
-  if(
-    !rematchVotes.includes(
-      currentUsername
-    )
-  ){
+const players=Array.isArray(currentRoom.players)?currentRoom.players:[];
 
-    rematchVotes.push(
-      currentUsername
-    );
-  }
+if(rematchVotes.length<players.length){
 
-  const players =
-    Array.isArray(currentRoom.players)
-      ? currentRoom.players
-      : [];
+const {data,error}=await supabaseClient
+.from("word_wolf_rooms")
+.update({
+rematch_votes:rematchVotes,
+updated_at:new Date().toISOString()
+})
+.eq("id",currentRoomId)
+.eq("status","finished")
+.select()
+.maybeSingle();
 
-  /*
-    全員ではない場合、
-    投票だけ保存する。
-  */
+if(error){
+console.error(error);
+showError("もう一度の登録に失敗しました。");
+return;
+}
 
-  if(
-    rematchVotes.length <
-    players.length
-  ){
+if(data){
+currentRoom=data;
+renderRematch();
+}
 
-    const {
-      data,
-      error
-    } =
-      await supabaseClient
-        .from("word_wolf_rooms")
-        .update({
-          rematch_votes:
-            rematchVotes,
+return;
+}
 
-          updated_at:
-            new Date().toISOString()
-        })
-        .eq("id",currentRoomId)
-        .eq("status","finished")
-        .select()
-        .maybeSingle();
+/* 全員が押した。新しいゲームを開始 */
+const pair=WORD_PAIRS[Math.floor(Math.random()*WORD_PAIRS.length)];
+const shuffledPlayers=shuffle(players);
+const wolf=shuffledPlayers[0];
+const assignments={};
 
-    if(error){
+players.forEach(player=>{
+assignments[player]=player===wolf?pair[1]:pair[0];
+});
 
-      console.error(error);
+const nextRound=Number(currentRoom.round||1)+1;
 
-      showError(
-        "もう一度の登録に失敗しました。"
-      );
+const {data,error}=await supabaseClient
+.from("word_wolf_rooms")
+.update({
+status:"playing",
+round:nextRound,
+assignments:assignments,
+votes:{},
+rematch_votes:[],
+result:{
+wolf:wolf,
+citizenWord:pair[0],
+wolfWord:pair[1]
+},
+updated_at:new Date().toISOString()
+})
+.eq("id",currentRoomId)
+.eq("status","finished")
+.select()
+.maybeSingle();
 
-      return;
-    }
+if(error){
+console.error(error);
+showError("再戦を開始できませんでした。\n"+error.message);
+return;
+}
 
-    if(data){
+if(data){
+currentRoom=data;
+myVote=null;
+renderGame();
 
-      currentRoom = data;
-
-      renderRematch();
-    }
-
-    return;
-  }
-
-  /*
-    全員が押した。
-    新しいゲームを開始。
-  */
-
-  const pair =
-    WORD_PAIRS[
-      Math.floor(
-        Math.random() *
-        WORD_PAIRS.length
-      )
-    ];
-
-  const shuffledPlayers =
-    shuffle(players);
-
-  const wolf =
-    shuffledPlayers[0];
-
-  const assignments = {};
-
-  players.forEach(player => {
-
-    assignments[player] =
-      player === wolf
-        ? pair[1]
-        : pair[0];
-  });
-
-  const nextRound =
-    Number(
-      currentRoom.round || 1
-    ) + 1;
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient
-      .from("word_wolf_rooms")
-      .update({
-        status:"playing",
-
-        round:nextRound,
-
-        assignments:
-          assignments,
-
-        votes:{},
-
-        rematch_votes:[],
-
-        result:{
-          wolf:wolf,
-          citizenWord:pair[0],
-          wolfWord:pair[1]
-        },
-
-        updated_at:
-          new Date().toISOString()
-      })
-      .eq("id",currentRoomId)
-      .eq("status","finished")
-      .select()
-      .maybeSingle();
-
-  if(error){
-
-    console.error(error);
-
-    showError(
-      "再戦を開始できませんでした。\n" +
-      error.message
-    );
-
-    return;
-  }
-
-  if(data){
-
-    currentRoom = data;
-
-    myVote = null;
-
-    renderGame();
-
-    /*
-      前ラウンドのチャットは消して、
-      新しいラウンドのチャットにする。
-    */
-
-    await clearRoundChat();
-
-    await loadChatMessages();
-  }
+await clearRoundChat();
+await loadChatMessages();
+}
 }
 
 function renderRematch(){
+if(!currentRoom)return;
 
-  if(!currentRoom){
-    return;
-  }
+const players=Array.isArray(currentRoom.players)?currentRoom.players:[];
+const votes=
+Array.isArray(currentRoom.rematch_votes)
+?currentRoom.rematch_votes
+:[];
 
-  const players =
-    Array.isArray(currentRoom.players)
-      ? currentRoom.players
-      : [];
+rematchStatus.textContent=
+`${votes.length}人 / ${players.length}人がもう一度を選択`;
 
-  const votes =
-    Array.isArray(
-      currentRoom.rematch_votes
-    )
-      ? currentRoom.rematch_votes
-      : [];
+const alreadyPressed=votes.includes(currentUsername);
 
-  rematchStatus.textContent =
-    `${votes.length}人 / ${players.length}人がもう一度を選択`;
+rematchButton.disabled=alreadyPressed;
 
-  const alreadyPressed =
-    votes.includes(
-      currentUsername
-    );
-
-  rematchButton.disabled =
-    alreadyPressed;
-
-  rematchButton.textContent =
-    alreadyPressed
-      ? "✅ もう一度を選択済み"
-      : "🔄 もう一度遊ぶ";
+rematchButton.textContent=
+alreadyPressed
+?"✅ もう一度を選択済み"
+:"🔄 もう一度遊ぶ";
 }
-
-/* --------------------------------
-   チャット取得
--------------------------------- */
 
 async function loadChatMessages(){
+if(!currentRoom)return;
+if(!currentRoom.room_code)return;
 
-  if(!currentRoom){
-    return;
-  }
+const {data,error}=await supabaseClient
+.from("word_wolf_chat")
+.select("*")
+.eq("room_code",currentRoom.room_code)
+.order("created_at",{ascending:true})
+.limit(200);
 
-  if(!currentRoom.room_code){
-    return;
-  }
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient
-      .from("word_wolf_chat")
-      .select("*")
-      .eq(
-        "room_code",
-        currentRoom.room_code
-      )
-      .order(
-        "created_at",
-        {
-          ascending:true
-        }
-      )
-      .limit(200);
-
-  if(error){
-
-    console.error(
-      "チャット取得エラー:",
-      error
-    );
-
-    return;
-  }
-
-  renderChatMessages(
-    data || []
-  );
+if(error){
+console.error("チャット取得エラー:",error);
+return;
 }
 
-/* --------------------------------
-   チャット表示
--------------------------------- */
+renderChatMessages(data||[]);
+}
 
 function renderChatMessages(messages){
+chatMessages.innerHTML="";
 
-  chatMessages.innerHTML = "";
-
-  if(!messages.length){
-
-    chatMessages.innerHTML = `
-      <div class="chat-empty">
-        まだメッセージはありません<br>
-        最初のメッセージを送ってみよう！
-      </div>
-    `;
-
-    return;
-  }
-
-  messages.forEach(message => {
-
-    addChatMessageToScreen(
-      message,
-      false
-    );
-  });
-
-  scrollChatToBottom();
+if(!messages.length){
+chatMessages.innerHTML=`
+<div class="chat-empty">
+まだメッセージはありません<br>
+最初のメッセージを送ってみよう！
+</div>
+`;
+return;
 }
 
-function addChatMessageToScreen(
-  message,
-  scroll = true
-){
+messages.forEach(message=>{
+addChatMessageToScreen(message,false);
+});
 
-  /*
-    同じIDを二重表示しない。
-  */
-
-  if(
-    document.querySelector(
-      `[data-chat-id="${message.id}"]`
-    )
-  ){
-
-    return;
-  }
-
-  const empty =
-    chatMessages.querySelector(
-      ".chat-empty"
-    );
-
-  if(empty){
-    empty.remove();
-  }
-
-  const div =
-    document.createElement("div");
-
-  div.className =
-    "chat-message";
-
-  if(
-    message.user_id ===
-    currentUsername
-  ){
-
-    div.classList.add("mine");
-  }
-
-  div.dataset.chatId =
-    String(message.id);
-
-  const user =
-    document.createElement("div");
-
-  user.className =
-    "chat-user";
-
-  user.textContent =
-    message.user_id;
-
-  const text =
-    document.createElement("div");
-
-  text.className =
-    "chat-text";
-
-  text.textContent =
-    message.content;
-
-  const time =
-    document.createElement("div");
-
-  time.className =
-    "chat-time";
-
-  time.textContent =
-    formatChatTime(
-      message.created_at
-    );
-
-  div.appendChild(user);
-  div.appendChild(text);
-  div.appendChild(time);
-
-  chatMessages.appendChild(div);
-
-  if(scroll){
-    scrollChatToBottom();
-  }
+scrollChatToBottom();
 }
 
-/* --------------------------------
-   チャット送信
--------------------------------- */
+function addChatMessageToScreen(message,scroll=true){
+if(document.querySelector(`[data-chat-id="${message.id}"]`)){
+return;
+}
+
+const empty=chatMessages.querySelector(".chat-empty");
+
+if(empty){
+empty.remove();
+}
+
+const div=document.createElement("div");
+div.className="chat-message";
+
+if(message.user_id===currentUsername){
+div.classList.add("mine");
+}
+
+div.dataset.chatId=String(message.id);
+
+const user=document.createElement("div");
+user.className="chat-user";
+user.textContent=message.user_id;
+
+const text=document.createElement("div");
+text.className="chat-text";
+text.textContent=message.content;
+
+const time=document.createElement("div");
+time.className="chat-time";
+time.textContent=formatChatTime(message.created_at);
+
+div.appendChild(user);
+div.appendChild(text);
+div.appendChild(time);
+
+chatMessages.appendChild(div);
+
+if(scroll){
+scrollChatToBottom();
+}
+}
 
 async function sendChatMessage(){
+const content=chatInput.value.trim();
 
-  const content =
-    chatInput.value.trim();
+if(!content)return;
+if(!currentRoom)return;
 
-  if(!content){
-    return;
-  }
-
-  if(!currentRoom){
-    return;
-  }
-
-  if(
-    currentRoom.status !==
-    "playing"
-  ){
-
-    return;
-  }
-
-  chatSendButton.disabled = true;
-  chatInput.disabled = true;
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient
-      .from("word_wolf_chat")
-      .insert({
-        room_code:
-          currentRoom.room_code,
-
-        user_id:
-          currentUsername,
-
-        content:
-          content
-      })
-      .select()
-      .single();
-
-  chatSendButton.disabled = false;
-  chatInput.disabled = false;
-
-  if(error){
-
-    console.error(
-      "チャット送信エラー:",
-      error
-    );
-
-    showError(
-      "メッセージを送信できませんでした。\n" +
-      error.message
-    );
-
-    return;
-  }
-
-  chatInput.value = "";
-
-  /*
-    Realtimeでも表示されるが、
-    すぐ表示できるよう自分でも追加。
-  */
-
-  if(data){
-
-    addChatMessageToScreen(
-      data,
-      true
-    );
-  }
-
-  chatInput.focus();
+if(currentRoom.status!=="playing"){
+return;
 }
 
-/* --------------------------------
-   チャットRealtime
--------------------------------- */
+chatSendButton.disabled=true;
+chatInput.disabled=true;
+
+const {data,error}=await supabaseClient
+.from("word_wolf_chat")
+.insert({
+room_code:currentRoom.room_code,
+user_id:currentUsername,
+content:content
+})
+.select()
+.single();
+
+chatSendButton.disabled=false;
+chatInput.disabled=false;
+
+if(error){
+console.error("チャット送信エラー:",error);
+showError("メッセージを送信できませんでした。\n"+error.message);
+return;
+}
+
+chatInput.value="";
+
+if(data){
+addChatMessageToScreen(data,true);
+}
+
+chatInput.focus();
+}
 
 async function subscribeChat(){
-
-  if(chatChannel){
-
-    await supabaseClient
-      .removeChannel(
-        chatChannel
-      );
-
-    chatChannel = null;
-  }
-
-  if(!currentRoom){
-    return;
-  }
-
-  chatChannel =
-    supabaseClient
-      .channel(
-        "word-wolf-chat-" +
-        currentRoomId +
-        "-" +
-        Date.now()
-      )
-      .on(
-        "postgres_changes",
-        {
-          event:"INSERT",
-          schema:"public",
-          table:"word_wolf_chat",
-          filter:
-            "room_code=eq." +
-            currentRoom.room_code
-        },
-        payload => {
-
-          addChatMessageToScreen(
-            payload.new,
-            true
-          );
-        }
-      )
-      .subscribe();
+if(chatChannel){
+await supabaseClient.removeChannel(chatChannel);
+chatChannel=null;
 }
 
-/* --------------------------------
-   ラウンドチャット削除
--------------------------------- */
+if(!currentRoom)return;
+
+chatChannel=
+supabaseClient
+.channel(
+"word-wolf-chat-"+
+currentRoomId+
+"-"+
+Date.now()
+)
+.on(
+"postgres_changes",
+{
+event:"INSERT",
+schema:"public",
+table:"word_wolf_chat",
+filter:"room_code=eq."+currentRoom.room_code
+},
+payload=>{
+addChatMessageToScreen(payload.new,true);
+}
+)
+.subscribe();
+}
 
 async function clearRoundChat(){
+if(!currentRoom)return;
 
-  if(!currentRoom){
-    return;
-  }
+const {error}=await supabaseClient
+.from("word_wolf_chat")
+.delete()
+.eq("room_code",currentRoom.room_code);
 
-  /*
-    新しいラウンド開始時に
-    前ラウンドの話し合いを消す。
-  */
-
-  const {
-    error
-  } =
-    await supabaseClient
-      .from("word_wolf_chat")
-      .delete()
-      .eq(
-        "room_code",
-        currentRoom.room_code
-      );
-
-  if(error){
-
-    console.error(
-      "チャット削除エラー:",
-      error
-    );
-  }
-
-  chatMessages.innerHTML = `
-    <div class="chat-empty">
-      新しいゲームが始まりました！
-    </div>
-  `;
+if(error){
+console.error("チャット削除エラー:",error);
 }
 
-/* --------------------------------
-   チャットスクロール
--------------------------------- */
+chatMessages.innerHTML=`
+<div class="chat-empty">
+新しいゲームが始まりました！
+</div>
+`;
+}
 
 function scrollChatToBottom(){
-
-  chatMessages.scrollTop =
-    chatMessages.scrollHeight;
+chatMessages.scrollTop=chatMessages.scrollHeight;
 }
-
-/* --------------------------------
-   チャット時刻
--------------------------------- */
 
 function formatChatTime(value){
+if(!value)return "";
 
-  if(!value){
-    return "";
-  }
+const date=new Date(value);
 
-  const date =
-    new Date(value);
-
-  if(Number.isNaN(date.getTime())){
-    return "";
-  }
-
-  return date.toLocaleTimeString(
-    "ja-JP",
-    {
-      hour:"2-digit",
-      minute:"2-digit"
-    }
-  );
+if(Number.isNaN(date.getTime())){
+return "";
 }
 
-/* --------------------------------
-   Realtime
--------------------------------- */
+return date.toLocaleTimeString(
+"ja-JP",
+{
+hour:"2-digit",
+minute:"2-digit"
+}
+);
+}
 
 async function subscribeRoom(){
-
-  if(realtimeChannel){
-
-    await supabaseClient
-      .removeChannel(
-        realtimeChannel
-      );
-
-    realtimeChannel = null;
-  }
-
-  if(!currentRoomId){
-    return;
-  }
-
-  realtimeChannel =
-    supabaseClient
-      .channel(
-        "word-wolf-room-" +
-        currentRoomId +
-        "-" +
-        Date.now()
-      )
-      .on(
-        "postgres_changes",
-        {
-          event:"UPDATE",
-          schema:"public",
-          table:"word_wolf_rooms",
-          filter:
-            "id=eq." +
-            currentRoomId
-        },
-        payload => {
-
-          currentRoom =
-            payload.new;
-
-          renderRoom();
-        }
-      )
-      .subscribe();
+if(realtimeChannel){
+await supabaseClient.removeChannel(realtimeChannel);
+realtimeChannel=null;
 }
 
-/* --------------------------------
-   状態表示
--------------------------------- */
+if(!currentRoomId)return;
+
+realtimeChannel=
+supabaseClient
+.channel(
+"word-wolf-room-"+
+currentRoomId+
+"-"+
+Date.now()
+)
+.on(
+"postgres_changes",
+{
+event:"UPDATE",
+schema:"public",
+table:"word_wolf_rooms",
+filter:"id=eq."+currentRoomId
+},
+payload=>{
+currentRoom=payload.new;
+renderRoom();
+}
+)
+.subscribe();
+}
 
 function renderRoom(){
+if(!currentRoom)return;
 
-  if(!currentRoom){
-    return;
-  }
-
-  if(
-    currentRoom.status ===
-    "waiting"
-  ){
-
-    showOnly(waitingArea);
-
-    renderWaiting();
-
-    return;
-  }
-
-  if(
-    currentRoom.status ===
-    "playing"
-  ){
-
-    renderGame();
-
-    return;
-  }
-
-  if(
-    currentRoom.status ===
-    "finished"
-  ){
-
-    renderResult();
-
-    return;
-  }
+if(currentRoom.status==="waiting"){
+showOnly(waitingArea);
+renderWaiting();
+return;
 }
 
-/* --------------------------------
-   HTML安全化
--------------------------------- */
+if(currentRoom.status==="playing"){
+renderGame();
+return;
+}
+
+if(currentRoom.status==="finished"){
+renderResult();
+return;
+}
+}
 
 function escapeHtml(value){
-
-  return String(
-    value ?? ""
-  )
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
-    );
+return String(value??"")
+.replace(/&/g,"&amp;")
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+.replace(/"/g,"&quot;")
+.replace(/'/g,"&#039;");
 }
-
-/* --------------------------------
-   退出
--------------------------------- */
 
 async function leaveRoom(){
-
-  if(!currentRoom){
-
-    showOnly(lobby);
-
-    return;
-  }
-
-  const players =
-    Array.isArray(
-      currentRoom.players
-    )
-      ? currentRoom.players
-      : [];
-
-  const remaining =
-    players.filter(
-      player =>
-        player !==
-        currentUsername
-    );
-
-  if(
-    remaining.length === 0
-  ){
-
-    await supabaseClient
-      .from("word_wolf_rooms")
-      .delete()
-      .eq(
-        "id",
-        currentRoomId
-      );
-
-  }else{
-
-    await supabaseClient
-      .from("word_wolf_rooms")
-      .update({
-        players:remaining,
-
-        updated_at:
-          new Date().toISOString()
-      })
-      .eq(
-        "id",
-        currentRoomId
-      );
-  }
-
-  if(realtimeChannel){
-
-    await supabaseClient
-      .removeChannel(
-        realtimeChannel
-      );
-
-    realtimeChannel = null;
-  }
-
-  if(chatChannel){
-
-    await supabaseClient
-      .removeChannel(
-        chatChannel
-      );
-
-    chatChannel = null;
-  }
-
-  currentRoomId = null;
-  currentRoom = null;
-  myVote = null;
-
-  showOnly(lobby);
+if(!currentRoom){
+showOnly(lobby);
+return;
 }
 
-/* --------------------------------
-   ボタン
--------------------------------- */
+const players=
+Array.isArray(currentRoom.players)
+?currentRoom.players
+:[];
+
+const remaining=
+players.filter(
+player=>player!==currentUsername
+);
+
+if(remaining.length===0){
+
+await supabaseClient
+.from("word_wolf_rooms")
+.delete()
+.eq("id",currentRoomId);
+
+}else{
+
+await supabaseClient
+.from("word_wolf_rooms")
+.update({
+players:remaining,
+updated_at:new Date().toISOString()
+})
+.eq("id",currentRoomId);
+}
+
+if(realtimeChannel){
+await supabaseClient.removeChannel(realtimeChannel);
+realtimeChannel=null;
+}
+
+if(chatChannel){
+await supabaseClient.removeChannel(chatChannel);
+chatChannel=null;
+}
+
+currentRoomId=null;
+currentRoom=null;
+myVote=null;
+
+showOnly(lobby);
+}
 
 document
-  .getElementById("createButton")
-  .addEventListener(
-    "click",
-    createRoom
-  );
+.getElementById("createButton")
+.addEventListener("click",createRoom);
 
 document
-  .getElementById("joinButton")
-  .addEventListener(
-    "click",
-    joinRoom
-  );
+.getElementById("joinButton")
+.addEventListener("click",joinRoom);
 
 document
-  .getElementById("leaveButton")
-  .addEventListener(
-    "click",
-    leaveRoom
-  );
+.getElementById("leaveButton")
+.addEventListener("click",leaveRoom);
 
 startGameButton
-  .addEventListener(
-    "click",
-    startGame
-  );
+.addEventListener("click",startGame);
 
 rematchButton
-  .addEventListener(
-    "click",
-    rematch
-  );
+.addEventListener("click",rematch);
 
 chatForm
-  .addEventListener(
-    "submit",
-    event => {
-
-      event.preventDefault();
-
-      sendChatMessage();
-    }
-  );
+.addEventListener(
+"submit",
+event=>{
+event.preventDefault();
+sendChatMessage();
+}
+);
 
 document
-  .getElementById("backButton")
-  .addEventListener(
-    "click",
-    async () => {
+.getElementById("backButton")
+.addEventListener(
+"click",
+async()=>{
+if(currentRoomId){
+const leave=window.confirm(
+"ゲームを退出してミニゲーム一覧に戻りますか？"
+);
 
-      if(currentRoomId){
+if(!leave){
+return;
+}
 
-        const leave =
-          window.confirm(
-            "ゲームを退出してミニゲーム一覧に戻りますか？"
-          );
+await leaveRoom();
+}
 
-        if(!leave){
-          return;
-        }
-
-        await leaveRoom();
-      }
-
-      location.href =
-        "minigame.html";
-    }
-  );
-
-/* --------------------------------
-   初期化
--------------------------------- */
+location.href="minigame.html";
+}
+);
 
 (async function(){
+const ok=await getCurrentUser();
 
-  const ok =
-    await getCurrentUser();
-
-  if(!ok){
-    return;
-  }
-
+if(!ok){
+return;
+}
 })();
 </script>
-
 </body>
 </html>
