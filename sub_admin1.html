@@ -149,29 +149,56 @@ async function checkSubAdmin1(){
 }
 
 async function loadAssignedUsers(){
-  const {data,error}=await supabaseClient
-    .from("sub_admin_assignments")
-    .select("user_id")
-    .eq("slot",SLOT);
+  const box=document.getElementById("assignedUsers");
 
-  if(error) throw error;
+  try{
+    const {data,error}=await supabaseClient
+      .from("sub_admin_assignments")
+      .select("user_id")
+      .eq("slot",SLOT)
+      .order("user_id",{ascending:true});
 
-  assignedIds=new Set((data||[]).map(x=>x.user_id));
+    if(error) throw error;
 
-  if(!assignedIds.size){
-    document.getElementById("assignedUsers").innerHTML=
-      '<div class="empty">現在、担当ユーザーはいません。</div>';
-    return;
+    assignedIds=new Set((data||[]).map(x=>x.user_id).filter(Boolean));
+
+    if(!assignedIds.size){
+      box.innerHTML=
+        '<div class="empty">現在、担当ユーザーはいません。</div>';
+      return;
+    }
+
+    /*
+      profiles の全体SELECTがRLSで制限されている環境でも
+      副管理者パネルを表示できるよう、まず担当IDだけで表示します。
+      profiles の取得はできる場合だけ名前を補足します。
+    */
+    let profileMap=new Map();
+
+    const {data:users,error:userError}=await supabaseClient
+      .from("profiles")
+      .select("id,user_id,name")
+      .in("user_id",[...assignedIds]);
+
+    if(!userError){
+      (users||[]).forEach(user=>{
+        if(user.user_id) profileMap.set(user.user_id,user);
+      });
+    }else{
+      console.warn("担当ユーザーのプロフィール取得をスキップ:",userError.message);
+    }
+
+    const usersForRender=[...assignedIds].map(userId=>
+      profileMap.get(userId) || {user_id:userId,name:""}
+    );
+
+    await renderAssignedUsers(usersForRender);
+  }catch(e){
+    console.error("loadAssignedUsers:",e);
+    box.innerHTML=
+      '<div class="empty">❌ 担当ユーザーの読み込みに失敗しました。<br><br>エラー：'+esc(e.message||e)+'</div>';
+    throw e;
   }
-
-  const {data:users,error:userError}=await supabaseClient
-    .from("profiles")
-    .select("id,user_id,name")
-    .in("user_id",[...assignedIds]);
-
-  if(userError) throw userError;
-
-  renderAssignedUsers(users||[]);
 }
 
 async function getActiveBan(userId){
@@ -246,26 +273,19 @@ async function banUser(userId,minutes){
       expires_at:until.toISOString()
     };
 
-    const {data:updated,error:updateError}=await supabaseClient
+    /*
+      副管理者はINSERT権限でBANできるようにしています。
+      UPDATE権限を要求するとRLSで弾かれる環境があるため、
+      既存の更新処理は使わず、新しい期限のBANを追加します。
+    */
+    const {error:insertError}=await supabaseClient
       .from("user_bans")
-      .update(payload)
-      .eq("user_id",userId)
-      .select("user_id")
-      .limit(1);
+      .insert({
+        user_id:userId,
+        ...payload
+      });
 
-    if(updateError) throw updateError;
-
-    if(!updated || !updated.length){
-      const {error:insertError}=await supabaseClient
-        .from("user_bans")
-        .insert({
-          user_id:userId,
-          ...payload
-        });
-      if(insertError) throw insertError;
-    }
-
-    if(error) throw error;
+    if(insertError) throw insertError;
 
     toast(minutes+"分BANしました");
     await loadAssignedUsers();
@@ -471,9 +491,9 @@ async function init(){
     await loadAssignedUsers();
 
   }catch(e){
-    console.error(e);
+    console.error("副管理者パネル読み込みエラー:",e);
     document.getElementById("assignedUsers").innerHTML=
-      '<div class="empty">読み込みに失敗しました。SupabaseのRLSやテーブルを確認してください。</div>';
+      '<div class="empty">❌ 読み込みに失敗しました。<br><br>エラー：' + esc(e.message || e) + '</div>';
   }
 }
 
