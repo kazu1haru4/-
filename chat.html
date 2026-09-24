@@ -53,6 +53,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
 .image-button{width:46px;min-width:46px;border:0;border-radius:18px;background:#f1efff;font-size:21px}.send-button{border:0;border-radius:18px;padding:0 18px;background:#8f7cff;color:#fff;font-weight:bold}
 button:disabled{opacity:.5}#imageInput{display:none}
 
+/* 入力中表示 */
+.typing-indicator{position:absolute;left:16px;right:16px;bottom:calc(100% + 4px);min-height:22px;padding:5px 11px;background:rgba(255,255,255,.96);border:1px solid #e7e2ff;border-radius:12px;color:#777;font-size:12px;font-weight:700;box-shadow:0 3px 10px rgba(0,0,0,.06);opacity:0;transform:translateY(4px);pointer-events:none;transition:.18s;z-index:15}
+.typing-indicator.show{opacity:1;transform:none}
+
 /* フレーム */
 .frame-sakura{background:linear-gradient(135deg,#ff77b7,#ffb7d5,#ffd6e7,#ff77b7)!important;box-shadow:0 3px 9px rgba(255,119,183,.35)!important}
 .frame-star{background:linear-gradient(135deg,#f4bf3f,#ffe58a,#fff3b0,#e7a900)!important;box-shadow:0 3px 9px rgba(244,191,63,.35)!important}
@@ -94,6 +98,7 @@ button:disabled{opacity:.5}#imageInput{display:none}
 <button id="latestButton" class="latest-button" type="button">⬇️ 最新へ</button>
 </div>
 <form class="input-area" id="messageForm">
+<div id="typingIndicator" class="typing-indicator" aria-live="polite"></div>
 <div id="replyBar" class="reply-bar"><span id="replyBarText"></span><button id="replyCancel" class="reply-cancel" type="button">✕</button></div>
 <input id="messageInput" type="text" placeholder="メッセージを入力..." autocomplete="off">
 <button class="image-button" id="imageButton" type="button">🖼️</button>
@@ -107,12 +112,13 @@ const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
 const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=id=>document.getElementById(id);
-const messagesElement=$("messages"),messageInput=$("messageInput"),messageForm=$("messageForm"),sendButton=$("sendButton"),imageButton=$("imageButton"),imageInput=$("imageInput"),chatTitle=$("chatTitle"),headerAvatar=$("headerAvatar"),headerAvatarFrame=$("headerAvatarFrame"),headerAvatarBadge=$("headerAvatarBadge"),latestButton=$("latestButton"),friendStatus=$("friendStatus");
+const messagesElement=$("messages"),messageInput=$("messageInput"),messageForm=$("messageForm"),sendButton=$("sendButton"),imageButton=$("imageButton"),imageInput=$("imageInput"),chatTitle=$("chatTitle"),headerAvatar=$("headerAvatar"),headerAvatarFrame=$("headerAvatarFrame"),headerAvatarBadge=$("headerAvatarBadge"),latestButton=$("latestButton"),friendStatus=$("friendStatus"),typingIndicator=$("typingIndicator");
 const friendId=new URLSearchParams(location.search).get("user")||"";
 const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
 const frameMap={sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",heart:"frame-heart",rainbow:"frame-rainbow",flame:"frame-flame",sea:"frame-sea",space:"frame-space",neon:"frame-neon",admin:"admin-frame"};
 const nameMap={nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",nd_neon:"name-decoration-neon",name_sakura:"name-decoration-sakura",admin_name:"name-decoration-admin"};
 let currentUsername="",myAvatarUrl="",friendAvatarUrl="",myItem=null,friendItem=null,myName="",friendName="",myNameClass="",friendNameClass="",realtimeChannel=null,presenceTimer=null,readMessageIds=new Set(),replyTarget=null;
+let typingTimer=null,typingHideTimer=null;
 const ONLINE_LIMIT=60000;
 
 function frameClass(key){return frameMap[String(key||"")]||""}
@@ -171,6 +177,44 @@ async function sendPushToUser(userId,title,message,url){
   await db.functions.invoke("send-push",{body:{username:userId,title:title,message:message,url:url||"./notifications.html"}});
  }catch(error){console.warn("プッシュ通知送信エラー:",error)}
 }
+
+/* =========================
+   入力中表示
+   ※DBには入力内容を保存しない
+   Supabase Realtime Broadcastだけを使用
+========================= */
+function showTyping(username){
+ if(!username||username===currentUsername)return;
+ typingIndicator.textContent=username+" さんが入力中…";
+ typingIndicator.classList.add("show");
+ clearTimeout(typingHideTimer);
+ typingHideTimer=setTimeout(()=>{
+  typingIndicator.classList.remove("show");
+  typingIndicator.textContent="";
+ },1800);
+}
+function sendTypingState(isTyping){
+ if(!realtimeChannel||!currentUsername||!friendId)return;
+ realtimeChannel.send({
+  type:"broadcast",
+  event:"typing",
+  payload:{
+   username:currentUsername,
+   isTyping:!!isTyping
+  }
+ }).catch(error=>console.warn("入力中通知:",error));
+}
+function handleTyping(){
+ if(messageInput.value.trim()){
+  sendTypingState(true);
+  clearTimeout(typingTimer);
+  typingTimer=setTimeout(()=>sendTypingState(false),1200);
+ }else{
+  clearTimeout(typingTimer);
+  sendTypingState(false);
+ }
+}
+
 function scrollToBottom(smooth=false){messagesElement.scrollTo({top:messagesElement.scrollHeight,behavior:smooth?"smooth":"auto"})}
 function updateLatestButton(){messagesElement.scrollHeight-messagesElement.scrollTop-messagesElement.clientHeight>150?latestButton.classList.add("show"):latestButton.classList.remove("show")}
 messagesElement.addEventListener("scroll",updateLatestButton,{passive:true});latestButton.onclick=()=>scrollToBottom(true);
@@ -412,6 +456,16 @@ async function loadMessages(){
 function startRealtime(){
  if(realtimeChannel)return;
  realtimeChannel=db.channel("chat-"+currentUsername+"-"+friendId)
+ .on("broadcast",{event:"typing"},payload=>{
+  const data=payload?.payload||{};
+  if(!data.username||data.username===currentUsername)return;
+  if(data.isTyping)showTyping(data.username);
+  else{
+   clearTimeout(typingHideTimer);
+   typingIndicator.classList.remove("show");
+   typingIndicator.textContent="";
+  }
+ })
  .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},async p=>{
   const m=p.new,isChat=(m.sender_id===currentUsername&&m.receiver_id===friendId)||(m.sender_id===friendId&&m.receiver_id===currentUsername);if(!isChat||m.sender_id===currentUsername)return;
   await markMessagesAsRead([m]);let u="";if(m.image_url){const {data}=await db.storage.from("chat-images").createSignedUrl(m.image_url,3600);u=data?.signedUrl||""}messagesElement.appendChild(createMessageElement(m,u));scrollToBottom();updateLatestButton();
@@ -434,8 +488,18 @@ function startRealtime(){
  })
  .subscribe();
 }
+
+messageInput.addEventListener("input",handleTyping);
+messageInput.addEventListener("blur",()=>{
+ clearTimeout(typingTimer);
+ sendTypingState(false);
+});
+
 messageForm.onsubmit=async e=>{
- e.preventDefault();const text=messageInput.value.trim();if(!text||!currentUsername||!friendId)return;
+ e.preventDefault();
+ clearTimeout(typingTimer);
+ sendTypingState(false);
+ const text=messageInput.value.trim();if(!text||!currentUsername||!friendId)return;
  if(replyTarget){sendButton.disabled=true;const ok=await sendReply(text);sendButton.disabled=false;if(ok)messageInput.value="";return}
  sendButton.disabled=true;
  const {data,error}=await db.from("messages").insert({sender_id:currentUsername,receiver_id:friendId,content:text,image_url:"",is_deleted:false,is_edited:false}).select().single();
@@ -458,7 +522,12 @@ imageInput.onchange=async()=>{
  finally{imageButton.disabled=false;sendButton.disabled=false;imageInput.value=""}
 };
 $("replyCancel").onclick=e=>{e.preventDefault();clearReplyTarget()};
-window.addEventListener("pagehide",()=>{if(presenceTimer)clearInterval(presenceTimer);if(realtimeChannel)db.removeChannel(realtimeChannel)});
+window.addEventListener("pagehide",()=>{
+ clearTimeout(typingTimer);
+ sendTypingState(false);
+ if(presenceTimer)clearInterval(presenceTimer);
+ if(realtimeChannel)db.removeChannel(realtimeChannel)
+});
 async function start(){
  if(!friendId){chatTitle.textContent="💬 相手が選ばれていません";messageForm.style.display="none";messagesElement.innerHTML='<div class="empty">フレンドから相手を選んでね</div>';return}
  const {data,error}=await db.auth.getSession();if(error||!data.session){alert("ログインしてください。");location.href="index.html";return}
