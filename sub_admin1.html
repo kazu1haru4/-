@@ -58,19 +58,18 @@ select{width:100%;border:1px solid #d8dde6;border-radius:9px;padding:10px;font-s
     <details>
       <summary>管理できるユーザー</summary>
       <div class="setting-box">
-        <p class="small">副管理者1が管理できるユーザーを選択してください。</p>
+        <p class="small">副この副管理者が管理できるユーザーを選択してください。</p>
         <div id="allUsersForAdmin"><div class="empty">読み込み中...</div></div>
         <button id="saveAssignments" class="primary" style="width:100%;margin-top:12px">保存</button>
       </div>
     </details>
 
     <details>
-      <summary>副管理者1を任命・解任</summary>
+      <summary>副管理者を任命・解任</summary>
       <div class="setting-box">
         <div id="currentSubAdmin" class="small">確認中...</div>
         <div class="setting-row">
-          <select id="appointUser">
-            <option value="">ユーザーを選択</option>
+          <select id="appointUser" multiple size="7" style="min-height:170px">
           </select>
           <button id="appointBtn" class="primary">任命</button>
         </div>
@@ -143,11 +142,10 @@ async function checkSubAdmin1(){
   const {data,error}=await supabaseClient
     .from("sub_admins")
     .select("user_id")
-    .eq("slot",SLOT)
-    .maybeSingle();
+    .eq("slot",SLOT);
 
   if(error) throw error;
-  return data?.user_id || null;
+  return (data || []).map(x => x.user_id);
 }
 
 async function loadAssignedUsers(){
@@ -179,10 +177,10 @@ async function loadAssignedUsers(){
 async function getActiveBan(userId){
   const {data,error}=await supabaseClient
     .from("user_bans")
-    .select("banned_until")
+    .select("user_id,reason,banned_at,expires_at,banned_by")
     .eq("user_id",userId)
-    .gt("banned_until",new Date().toISOString())
-    .order("banned_until",{ascending:false})
+    .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+    .order("banned_at",{ascending:false})
     .limit(1)
     .maybeSingle();
 
@@ -218,7 +216,7 @@ async function renderAssignedUsers(users){
         <button data-id="${esc(u.user_id)}" data-min="60">1時間BAN</button>
       </div>
       <div class="small" style="margin-top:9px">
-        ${ban ? "現在BAN中："+new Date(ban.banned_until).toLocaleString("ja-JP") : "現在BANされていません"}
+        ${ban ? "現在BAN中："+new Date(ban.expires_at).toLocaleString("ja-JP") : "現在BANされていません"}
       </div>
     `;
 
@@ -239,18 +237,33 @@ async function banUser(userId,minutes){
   try{
     const until=new Date(Date.now()+minutes*60*1000);
 
-    /*
-      既存のuser_bansの列構成に合わせる部分。
-      現在は user_id / banned_until / created_by / created_at を使用。
-    */
-    const {error}=await supabaseClient
+    // 既存の管理画面と同じ user_bans の列構成を使用します。
+    // 既存BANがあれば更新、なければ新規作成します。
+    const payload={
+      reason:`副管理者BAN（${minutes}分）`,
+      banned_by:currentProfile.user_id,
+      banned_at:new Date().toISOString(),
+      expires_at:until.toISOString()
+    };
+
+    const {data:updated,error:updateError}=await supabaseClient
       .from("user_bans")
-      .upsert({
-        user_id:userId,
-        banned_until:until.toISOString(),
-        created_by:currentProfile.user_id,
-        created_at:new Date().toISOString()
-      },{onConflict:"user_id"});
+      .update(payload)
+      .eq("user_id",userId)
+      .select("user_id")
+      .limit(1);
+
+    if(updateError) throw updateError;
+
+    if(!updated || !updated.length){
+      const {error:insertError}=await supabaseClient
+        .from("user_bans")
+        .insert({
+          user_id:userId,
+          ...payload
+        });
+      if(insertError) throw insertError;
+    }
 
     if(error) throw error;
 
@@ -272,7 +285,7 @@ async function loadAdminUsers(){
 
   allProfiles=data||[];
   renderAdminUsers();
-  renderAppointSelect();
+  await renderAppointSelect();
 }
 
 function renderAdminUsers(){
@@ -300,14 +313,17 @@ function renderAdminUsers(){
   });
 }
 
-function renderAppointSelect(){
+async function renderAppointSelect(){
   const select=document.getElementById("appointUser");
-  select.innerHTML='<option value="">ユーザーを選択</option>';
+  select.innerHTML="";
+
+  const appointedIds=new Set(await checkSubAdmin1());
 
   allProfiles.forEach(u=>{
     const o=document.createElement("option");
     o.value=u.user_id;
     o.textContent=(u.name ? u.name+" ("+u.user_id+")" : u.user_id);
+    o.selected=appointedIds.has(u.user_id);
     select.appendChild(o);
   });
 }
@@ -348,42 +364,51 @@ async function saveAssignments(){
 }
 
 async function loadSubAdmin(){
-  const userId=await checkSubAdmin1();
+  const userIds=await checkSubAdmin1();
   const box=document.getElementById("currentSubAdmin");
 
-  if(!userId){
+  if(!userIds.length){
     box.textContent="現在：未任命";
   }else{
-    box.textContent="現在："+userId;
+    box.innerHTML="現在：<br>" + userIds.map(esc).join("<br>");
   }
+
+  await renderAppointSelect();
 }
 
 async function appointSubAdmin(){
-  const userId=document.getElementById("appointUser").value;
-  if(!userId){
-    toast("ユーザーを選択してください");
-    return;
-  }
+  const select=document.getElementById("appointUser");
+  const userIds=[...select.selectedOptions].map(o=>o.value).filter(Boolean);
 
   try{
-    const {error}=await supabaseClient
+    const {error:delError}=await supabaseClient
       .from("sub_admins")
-      .upsert({
+      .delete()
+      .eq("slot",SLOT);
+
+    if(delError) throw delError;
+
+    if(userIds.length){
+      const rows=userIds.map(userId=>({
         slot:SLOT,
         user_id:userId,
         created_at:new Date().toISOString()
-      },{onConflict:"slot"});
+      }));
 
-    if(error) throw error;
+      const {error:insError}=await supabaseClient
+        .from("sub_admins")
+        .insert(rows);
 
-    toast("副管理者1に任命しました");
+      if(insError) throw insError;
+    }
+
+    toast("副管理者" + SLOT.replace("sub_admin", "") + "を保存しました");
     await loadSubAdmin();
   }catch(e){
     console.error(e);
     toast("任命に失敗しました");
   }
 }
-
 async function dismissSubAdmin(){
   if(!confirm("副管理者1を解任しますか？")) return;
 
@@ -420,8 +445,8 @@ async function init(){
       副管理者1は担当ユーザーを表示。
       それ以外はアクセス拒否。
     */
-    const appointedUserId=await checkSubAdmin1();
-    const isSubAdmin=appointedUserId===currentProfile.user_id;
+    const appointedUserIds=await checkSubAdmin1();
+    const isSubAdmin=appointedUserIds.includes(currentProfile.user_id);
 
     if(!admin && !isSubAdmin){
       document.body.innerHTML=`
