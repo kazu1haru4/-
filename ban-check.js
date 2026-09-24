@@ -20,7 +20,10 @@ async function checkFriendChatBan() {
     } = await friendChatSupabase.auth.getSession();
 
     if (sessionError) {
-      console.error(sessionError);
+      console.error(
+        "セッション確認エラー:",
+        sessionError
+      );
       return false;
     }
 
@@ -31,7 +34,7 @@ async function checkFriendChatBan() {
     }
 
     const username =
-      session.user.user_metadata?.username || "";
+      session.user?.user_metadata?.username || "";
 
     if (!username) {
       return false;
@@ -58,12 +61,85 @@ async function checkFriendChatBan() {
 
     if (banned === true) {
 
-      alert(
-        "🚫 このアカウントはBANされています。"
-      );
+      /*
+       * BANされた場合
+       *
+       * ・ログアウトしない
+       * ・ログイン画面へ移動しない
+       * ・alert()を使わない
+       * ・OKボタンを表示しない
+       * ・画面全体をBAN表示にする
+       */
 
-      // BANされてもログアウトしない
-      // ログイン状態を維持する
+      document.body.innerHTML = `
+        <div
+          id="friendChatBanScreen"
+          style="
+            position:fixed;
+            inset:0;
+            width:100%;
+            height:100%;
+            background:#ffffff;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:24px;
+            box-sizing:border-box;
+            text-align:center;
+            font-family:-apple-system,BlinkMacSystemFont,
+              'Segoe UI',sans-serif;
+            z-index:999999999;
+          "
+        >
+
+          <div
+            style="
+              width:100%;
+              max-width:420px;
+              padding:32px 24px;
+              box-sizing:border-box;
+              border-radius:24px;
+              background:#f8f8fb;
+              box-shadow:0 8px 30px rgba(0,0,0,0.10);
+            "
+          >
+
+            <div
+              style="
+                font-size:64px;
+                line-height:1;
+                margin-bottom:20px;
+              "
+            >
+              🚫
+            </div>
+
+            <h1
+              style="
+                margin:0 0 16px;
+                font-size:24px;
+                color:#222;
+              "
+            >
+              このアカウントはBANされています
+            </h1>
+
+            <p
+              style="
+                margin:0;
+                color:#666;
+                font-size:15px;
+                line-height:1.8;
+              "
+            >
+              現在、このアカウントでは<br>
+              Friend Chatを利用できません。
+            </p>
+
+          </div>
+
+        </div>
+      `;
 
       return true;
     }
