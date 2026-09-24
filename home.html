@@ -145,6 +145,22 @@
       transform: scale(0.96);
     }
 
+    /* お知らせ：2列メニューの上に横幅いっぱいで表示 */
+    .announcement-button {
+      grid-column: 1 / -1;
+      min-height: 105px;
+      background: var(--theme-light);
+    }
+
+    .announcement-button .icon {
+      font-size: 36px;
+      margin-bottom: 7px;
+    }
+
+    .announcement-button .title {
+      color: var(--theme-text);
+    }
+
     .icon {
       font-size: 42px;
       margin-bottom: 10px;
@@ -265,6 +281,22 @@
 
 
     <section class="menu">
+
+      <a
+        href="announcements.html"
+        class="menu-button announcement-button"
+      >
+        <div class="icon">📢</div>
+
+        <div class="title">
+          お知らせ
+        </div>
+
+        <div class="description">
+          Friend Chatからのお知らせ
+        </div>
+      </a>
+
 
       <a
         href="chats.html"
