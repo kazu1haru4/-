@@ -2107,7 +2107,12 @@ async function loadSubAdminManagement(){
     if(adminsError) throw adminsError;
     if(assignmentsError) throw assignmentsError;
 
-    const adminMap = new Map((admins || []).map(row => [row.slot,row.user_id]));
+    const adminMap = new Map();
+    SUB_ADMIN_SLOTS.forEach(slot => adminMap.set(slot, []));
+    (admins || []).forEach(row => {
+      if(!adminMap.has(row.slot)) adminMap.set(row.slot, []);
+      adminMap.get(row.slot).push(row.user_id);
+    });
     const assignmentMap = new Map();
     SUB_ADMIN_SLOTS.forEach(slot => assignmentMap.set(slot,new Set()));
     (assignments || []).forEach(row => {
@@ -2116,9 +2121,12 @@ async function loadSubAdminManagement(){
     });
 
     SUB_ADMIN_SLOTS.forEach(slot => {
-      const appointed = adminMap.get(slot) || "";
+      const appointed = adminMap.get(slot) || [];
       const assigned = assignmentMap.get(slot) || new Set();
       const number = subAdminNumber(slot);
+      const appointedText = appointed.length
+        ? appointed.join("、")
+        : "未任命";
 
       const options = users.map(user => `
         <label class="sub-admin-check">
@@ -2131,7 +2139,7 @@ async function loadSubAdminManagement(){
       card.className = "sub-admin-slot";
       card.innerHTML = `
         <div class="sub-admin-slot-title">🛡️ 副管理者${number}</div>
-        <div class="sub-admin-current">現在の担当者：<b>${escapeHtml(appointed || "未任命")}</b></div>
+        <div class="sub-admin-current">現在の担当者：<b>${escapeHtml(appointedText)}</b></div>
 
         <div class="actions">
           <button type="button" class="small" data-appoint-sub-admin="${escapeAttribute(slot)}">👤 任命</button>
@@ -2185,14 +2193,15 @@ async function appointSubAdminSlot(slot){
       .from("sub_admins")
       .select("user_id")
       .eq("slot",slot)
-      .maybeSingle();
+      .order("user_id", {ascending:true});
     if(currentResult.error) throw currentResult.error;
 
-    const current = currentResult.data?.user_id || "";
+    const currentAdmins = currentResult.data || [];
+    const current = currentAdmins.map(row => row.user_id).join(", ");
     const candidates = users.map(user => user.user_id);
     const input = prompt(
-      `副管理者${subAdminNumber(slot)}に任命するユーザーIDを入力してください。\n\n候補：\n${candidates.join("\n")}`,
-      current
+      `副管理者${subAdminNumber(slot)}に任命するユーザーIDを入力してください。\n\n現在の副管理者：${current || "なし"}\n\n候補：\n${candidates.join("\n")}`,
+      ""
     );
 
     if(input === null) return;
@@ -2203,9 +2212,26 @@ async function appointSubAdminSlot(slot){
       return;
     }
 
+    const {data:existing,error:checkError} = await supabaseClient
+      .from("sub_admins")
+      .select("slot,user_id")
+      .eq("slot",slot)
+      .eq("user_id",username)
+      .maybeSingle();
+
+    if(checkError) throw checkError;
+
+    if(existing){
+      alert(`「${username}」はすでに副管理者${subAdminNumber(slot)}です。`);
+      return;
+    }
+
     const {error} = await supabaseClient
       .from("sub_admins")
-      .upsert({slot,user_id:username},{onConflict:"slot"});
+      .insert({
+        slot: slot,
+        user_id: username
+      });
 
     if(error) throw error;
 
