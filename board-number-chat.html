@@ -51,6 +51,10 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
 .control{width:100%;margin-top:6px;padding:7px;border:1px solid #ddd;border-radius:8px;background:#fff}.danger{color:#c44}.close{width:100%;border:0;border-radius:11px;padding:11px;margin-top:8px;background:#eee;cursor:pointer}
 .gift-target{text-align:center;color:#6253c7;font-weight:bold}.presets{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}.presets button{border:0;border-radius:10px;padding:11px;background:#eeeaff;color:#5f50c4;font-weight:bold}
 .gift-input{width:100%;padding:11px;margin-top:9px;border:1px solid #ddd;border-radius:10px}.gift-send{width:100%;padding:11px;margin-top:9px;border:0;border-radius:10px;background:#8f7cff;color:#fff;font-weight:bold}
+
+/* 入力中表示：DBには保存しない */
+.board-typing-indicator{display:none;position:fixed;left:10px;right:10px;bottom:61px;max-width:700px;margin:auto;padding:5px 11px;color:#7567c9;font-size:12px;font-weight:bold;pointer-events:none;z-index:30;text-align:left}
+.board-typing-indicator.show{display:block}
 @media(max-width:600px){
  .header{min-height:92px;padding:10px 10px 43px 60px}
  .header .title{font-size:18px;white-space:nowrap}
@@ -73,6 +77,7 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
 <div id="roomInfo" class="room">読み込み中...</div>
 </header>
 <main id="main" class="main"><div id="messages" class="messages"></div></main>
+<div id="typingIndicator" class="board-typing-indicator" aria-live="polite"></div>
 <div id="muteBanner" class="banner"></div>
 <div class="inputbar">
 <input id="messageInput" placeholder="メッセージを入力..." autocomplete="off">
@@ -89,6 +94,7 @@ const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const boardId=new URLSearchParams(location.search).get("board");
 const $=id=>document.getElementById(id);
 let username="",room=null,members=[],profiles={},items={},isOwner=false,isBoardAdmin=false,isMuted=false,replyTarget=null,giftTargetUsername="";
+let boardRealtimeChannel=null,boardTypingChannel=null,boardTypingReady=false,typingTimer=null,typingHideTimer=null;
 const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
 const NAME_DECORATION_MAP={nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",nd_neon:"name-decoration-neon",name_sakura:"name-decoration-sakura",admin_name:"name-decoration-admin"};
 function getNameClass(itemKey){return NAME_DECORATION_MAP[itemKey]||""}
@@ -157,7 +163,6 @@ async function renderMembers(){
   const memberNameEl=document.createElement("div");const memberNameClass=getNameClass(profiles[member.user_id]?.equipped_name_decoration_key);memberNameEl.className=memberNameClass||"";memberNameEl.style.fontWeight="bold";memberNameEl.textContent=profiles[member.user_id]?.name||member.user_id;
   if(profiles[member.user_id]?.equipped_name_decoration_key==="admin_name"&&ADMIN_USERNAMES.has(member.user_id)){const crown=document.createElement("span");crown.className="admin-name-badge";crown.textContent="👑";memberNameEl.appendChild(crown)}
   info.appendChild(memberNameEl);const memberIdEl=document.createElement("div");memberIdEl.className="member-id";memberIdEl.textContent="@"+member.user_id;info.appendChild(memberIdEl);
-  const roleEl=document.createElement("span");roleEl.className="role "+roleClass;roleEl.textContent=roleText;info.appendChild(roleEl);
   if(isOwner&&member.user_id!==username){const select=document.createElement("select");select.className="control";select.innerHTML="<option value='member'>通常メンバー</option><option value='admin'>副管理者</option>";select.value=member.role==="admin"?"admin":"member";select.onchange=async()=>{const {error}=await supabaseClient.rpc("board_set_subadmin",{target_board_id:Number(boardId),target_username:member.user_id,make_admin:select.value==="admin"});if(error)alert(error.message);await renderMembers()};info.appendChild(select)}
   const myMember=members.find(m=>m.user_id===username);const canMute=isBoardAdmin&&member.user_id!==username&&member.user_id!==room.created_by&&!(myMember?.role==="admin"&&member.role==="admin");
   if(canMute){const minutes=document.createElement("input");minutes.type="number";minutes.min="1";minutes.placeholder="発言禁止（分）";minutes.className="control";const muteButton=document.createElement("button");muteButton.className="control";muteButton.textContent="🔇 発言禁止";muteButton.onclick=async()=>{const value=Number(minutes.value);if(!Number.isInteger(value)||value<1){alert("1分以上を入力してください");return}const {error}=await supabaseClient.rpc("board_set_mute",{target_board_id:Number(boardId),target_username:member.user_id,mute_minutes:value});if(error)alert(error.message);await renderMembers()};info.append(minutes,muteButton)}
@@ -207,7 +212,9 @@ async function loadMessages(){
 }
 function formatMentions(text){return escapeHtml(text).replace(/@([A-Za-z0-9_-]+)/g,(full,user)=>members.some(m=>m.user_id===user)?"<span class='mention'>"+full+"</span>":full)}
 async function sendMessage(){
- if(isMuted){alert("現在、発言禁止中です");return}const input=$("messageInput"),text=input.value.trim();if(!text)return;$("sendButton").disabled=true;
+ if(isMuted){alert("現在、発言禁止中です");return}const input=$("messageInput"),text=input.value.trim();if(!text)return;
+ sendBoardTypingState(false);clearTimeout(typingTimer);
+ $("sendButton").disabled=true;
  try{const {data,error}=await supabaseClient.from("board_room_messages").insert({board_id:Number(boardId),sender_id:username,content:text}).select().single();if(error)throw error;
   if(replyTarget){const {error:replyError}=await supabaseClient.from("board_room_replies").insert({board_message_id:data.id,sender_id:username,content:replyTarget.content||"画像"});if(replyError)console.error(replyError);replyTarget=null}
   input.value="";input.placeholder="メッセージを入力...";await sendMentionNotifications(text);await loadMessages()
@@ -218,7 +225,8 @@ async function sendMentionNotifications(text){
  await supabaseClient.from("notifications").insert(names.map(user=>({user_id:user,type:"mention",title:"掲示板でメンションされました",message:username+"さんがあなたをメンションしました",link:"board-number-chat.html?board="+encodeURIComponent(boardId),is_read:false})))
 }
 async function sendImage(file){
- if(isMuted){alert("現在、発言禁止中です");return}if(!file.type.startsWith("image/")){alert("画像ファイルを選択してください");return}$("imageButton").disabled=true;
+ if(isMuted){alert("現在、発言禁止中です");return}if(!file.type.startsWith("image/")){alert("画像ファイルを選択してください");return}
+ sendBoardTypingState(false);clearTimeout(typingTimer);$("imageButton").disabled=true;
  try{const ext=(file.name.split(".").pop()||"jpg").toLowerCase();const path=username+"/"+boardId+"/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+ext;const upload=await supabaseClient.storage.from("chat-images").upload(path,file,{upsert:false});if(upload.error)throw upload.error;const {error}=await supabaseClient.from("board_room_messages").insert({board_id:Number(boardId),sender_id:username,content:"",image_url:path});if(error)throw error;await loadMessages()}catch(error){console.error(error);alert("画像の送信に失敗しました")}finally{$("imageButton").disabled=isMuted}
 }
 function openGiftModal(target){giftTargetUsername=target;$("giftTarget").textContent="@"+target+" さんへ送る";$("giftAmount").value="";$("giftModal").style.display="flex"}
@@ -229,17 +237,61 @@ $("sendButton").onclick=sendMessage;
 $("messageInput").onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage()}};
 $("imageButton").onclick=()=>{$("imageInput").click()};
 $("imageInput").onchange=()=>{const file=$("imageInput").files[0];if(file)sendImage(file);$("imageInput").value=""};
+
+/* 掲示板の「入力中…」通知。Broadcastのみで、DBやメッセージデータは変更しません。 */
+function showBoardTyping(user){
+ const el=$("typingIndicator"); if(!el||!user)return;
+ el.textContent=user+"さんが入力中…"; el.classList.add("show");
+ clearTimeout(typingHideTimer);
+ typingHideTimer=setTimeout(()=>{el.classList.remove("show");el.textContent=""},2500);
+}
+function sendBoardTypingState(isTyping){
+ if(!boardTypingChannel||!boardTypingReady||!username||!boardId)return;
+ boardTypingChannel.send({
+  type:"broadcast",
+  event:"typing",
+  payload:{username:username,isTyping:!!isTyping}
+ }).catch(error=>console.warn("掲示板入力中通知:",error));
+}
+function handleBoardTyping(){
+ sendBoardTypingState(true);
+ clearTimeout(typingTimer);
+ typingTimer=setTimeout(()=>sendBoardTypingState(false),1800);
+}
 $("messageInput").oninput=()=>{
  const input=$("messageInput"),before=input.value.slice(0,input.selectionStart),match=before.match(/@([A-Za-z0-9_-]*)$/),list=$("mentionList");
+ handleBoardTyping();
  if(!match){list.classList.remove("show");return}const query=match[1].toLowerCase();const candidates=members.filter(m=>m.user_id.toLowerCase().includes(query)).slice(0,8);list.innerHTML="";
  candidates.forEach(member=>{const button=document.createElement("button");button.className="mention-item";const mentionNameEl=document.createElement("span"),mentionNameClass=getNameClass(profiles[member.user_id]?.equipped_name_decoration_key);if(mentionNameClass)mentionNameEl.className=mentionNameClass;mentionNameEl.textContent=profiles[member.user_id]?.name||member.user_id;
   if(profiles[member.user_id]?.equipped_name_decoration_key==="admin_name"&&ADMIN_USERNAMES.has(member.user_id)){const crown=document.createElement("span");crown.className="admin-name-badge";crown.textContent="👑";mentionNameEl.appendChild(crown)}
   button.appendChild(mentionNameEl);const mentionId=document.createElement("span");mentionId.style.color="#888";mentionId.style.marginLeft="6px";mentionId.textContent="@"+member.user_id;button.appendChild(mentionId);
-  button.onclick=()=>{const current=input.value,pos=input.selectionStart,start=current.slice(0,pos).lastIndexOf("@");input.value=current.slice(0,start)+"@"+member.user_id+" "+current.slice(pos);list.classList.remove("show");input.focus()};list.appendChild(button)
+  button.onclick=()=>{const current=input.value,pos=input.selectionStart,start=current.slice(0,pos).lastIndexOf("@");input.value=current.slice(0,start)+"@"+member.user_id+" "+current.slice(pos);list.classList.remove("show");input.focus();handleBoardTyping()};list.appendChild(button)
  });list.classList.toggle("show",candidates.length>0)
 };
+$("messageInput").addEventListener("blur",()=>{clearTimeout(typingTimer);sendBoardTypingState(false)});
 function setupRealtime(){
- supabaseClient.channel("board-number-chat-"+boardId)
+ const channel=supabaseClient.channel("board-number-chat-"+boardId);
+ boardRealtimeChannel=channel;
+
+ /* 入力中表示専用。既存のDB Realtimeとは分離し、DBには何も保存しません。 */
+ boardTypingReady=false;
+ boardTypingChannel=supabaseClient.channel("board-typing-"+encodeURIComponent(String(boardId)))
+  .on("broadcast",{event:"typing"},payload=>{
+   const data=payload?.payload||{};
+   if(!data.username||data.username===username)return;
+   if(data.isTyping)showBoardTyping(data.username);
+   else{
+    clearTimeout(typingHideTimer);
+    $("typingIndicator").classList.remove("show");
+    $("typingIndicator").textContent="";
+   }
+  })
+  .subscribe(status=>{
+   boardTypingReady=status==="SUBSCRIBED";
+   if(status!=="SUBSCRIBED")console.warn("掲示板入力中Realtime接続状態:",status);
+  });
+
+ channel
  .on("postgres_changes",{event:"*",schema:"public",table:"board_room_messages",filter:"board_id=eq."+boardId},()=>loadMessages())
  .on("postgres_changes",{event:"*",schema:"public",table:"board_room_reactions"},()=>loadMessages())
  .on("postgres_changes",{event:"*",schema:"public",table:"board_room_message_reads"},()=>loadMessages())
@@ -257,6 +309,12 @@ async function start(){
  if(!joined){alert("この掲示板には参加していません。まず参加番号から参加してください。");location.href="board-number.html";return}
  await Promise.all([updatePresence(),refreshMute(),loadMessages()]);setupRealtime();setInterval(updatePresence,30000);setInterval(refreshMute,30000)
 }
+window.addEventListener("pagehide",()=>{
+ clearTimeout(typingTimer);clearTimeout(typingHideTimer);
+ sendBoardTypingState(false);
+ if(boardRealtimeChannel){supabaseClient.removeChannel(boardRealtimeChannel);boardRealtimeChannel=null}
+ if(boardTypingChannel){supabaseClient.removeChannel(boardTypingChannel);boardTypingChannel=null;boardTypingReady=false}
+});
 start();
 </script>
 </body>
