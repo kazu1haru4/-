@@ -58,14 +58,12 @@ async function checkFriendChatBan() {
 
     if (banned === true) {
 
-      await friendChatSupabase.auth.signOut();
-
       alert(
-        "🚫 このアカウントはBANされました。"
+        "🚫 このアカウントはBANされています。"
       );
 
-      window.location.href =
-        "index.html";
+      // BANされてもログアウトしない
+      // ログイン状態を維持する
 
       return true;
     }
