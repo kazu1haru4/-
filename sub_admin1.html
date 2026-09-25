@@ -2,513 +2,549 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>副管理者1 - フレンドチャット</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Friend Chat 通話</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:linear-gradient(135deg,#fff4fb,#eef7ff);color:#333}
-header{height:64px;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 16px;box-shadow:0 2px 10px rgba(0,0,0,.08);position:sticky;top:0;z-index:20}
-.title{font-size:18px;font-weight:700}.badge{font-size:11px;background:#eef3ff;color:#3156c9;padding:5px 8px;border-radius:999px;margin-left:5px}
-.settings-btn{display:none;border:0;background:#222;color:#fff;padding:9px 12px;border-radius:10px;font-weight:700}
-main{max-width:720px;margin:0 auto;padding:16px}
-.card{background:#fff;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 5px 18px rgba(0,0,0,.06)}
-h2{font-size:16px;margin:0 0 12px}
-.notice{background:#fff8df;border:1px solid #f0d36b;border-radius:12px;padding:12px;font-size:13px;line-height:1.6;margin-bottom:14px}
-.user{border:1px solid #e5e8ee;border-radius:13px;padding:13px;margin-top:10px}
-.user-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.user-name{font-weight:700}.user-id{font-size:12px;color:#777;margin-top:3px}
-.ban-buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:12px}
-button{cursor:pointer;border:0;border-radius:9px;padding:9px 6px;font-weight:700}
-.ban-buttons button{background:#ffe8e8;color:#c62828}
-.primary{background:#3156c9;color:#fff}.danger{background:#ffe8e8;color:#c62828}
-.empty{color:#777;font-size:14px;padding:10px 0}
-details{border:1px solid #e5e8ee;border-radius:13px;padding:12px;margin-top:10px}
-summary{cursor:pointer;font-weight:700}
-.setting-box{margin-top:12px}.small{font-size:12px;color:#777}
-.setting-user{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid #eee}
-.setting-user input{width:auto}
-.setting-row{display:flex;gap:8px;margin-top:9px}
-select{width:100%;border:1px solid #d8dde6;border-radius:9px;padding:10px;font-size:14px}
-.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#222;color:#fff;padding:11px 15px;border-radius:999px;font-size:13px;display:none;z-index:100}
-@media(max-width:520px){.ban-buttons{grid-template-columns:repeat(2,1fr)}main{padding:12px}}
+html,body{width:100%;height:100%;margin:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+  background:linear-gradient(135deg,#fff3fb,#eef5ff);
+  color:#333;
+}
+.page{
+  min-height:100dvh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+}
+.card{
+  width:100%;
+  max-width:420px;
+  background:#fff;
+  border-radius:28px;
+  padding:30px 22px;
+  text-align:center;
+  box-shadow:0 12px 40px rgba(0,0,0,.12);
+}
+.avatar{
+  width:96px;height:96px;margin:0 auto 18px;border-radius:50%;
+  overflow:hidden;background:#eee8ff;
+  display:flex;align-items:center;justify-content:center;font-size:40px;
+}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.name{font-size:22px;font-weight:800;margin-bottom:8px}
+.status{min-height:24px;color:#777;font-size:14px}
+.timer{margin-top:8px;color:#8f7cff;font-weight:800}
+.actions{display:flex;justify-content:center;gap:14px;margin-top:28px}
+button{
+  border:0;border-radius:50%;width:64px;height:64px;font-size:25px;
+  box-shadow:0 4px 12px rgba(0,0,0,.12);
+}
+.answer{background:#34c759;color:#fff}
+.reject,.end{background:#ff3b30;color:#fff}
+.mute{background:#555;color:#fff}
+.hidden{display:none!important}
+.note{margin-top:18px;color:#999;font-size:12px;line-height:1.6}
 </style>
 </head>
 <body>
+<div class="page">
+  <main class="card">
+    <div id="avatar" class="avatar">👤</div>
+    <div id="name" class="name">通話</div>
+    <div id="status" class="status">接続しています...</div>
+    <div id="timer" class="timer"></div>
 
-<header>
-  <div class="title">🛡️ 副管理者1 <span class="badge">BAN管理</span></div>
-  <button id="settingsBtn" class="settings-btn">⚙️ 設定</button>
-</header>
+    <div class="actions">
+      <button id="answer" class="answer hidden" type="button" aria-label="応答">📞</button>
+      <button id="mute" class="mute hidden" type="button" aria-label="ミュート">🎙️</button>
+      <button id="end" class="end" type="button" aria-label="終了">📵</button>
+      <button id="reject" class="reject hidden" type="button" aria-label="拒否">📵</button>
+    </div>
 
-<main>
-  <div id="notice" class="notice">
-    副管理者1に割り当てられたユーザーだけを管理できます。
-  </div>
+    <div class="note">Friend Chat 音声通話</div>
+  </main>
+</div>
 
-  <section class="card">
-    <h2>👥 管理できるユーザー</h2>
-    <div id="assignedUsers"><div class="empty">読み込み中...</div></div>
-  </section>
-
-  <!-- 管理者のみ -->
-  <section id="adminSettings" class="card" style="display:none">
-    <h2>⚙️ 管理者設定</h2>
-
-    <details>
-      <summary>管理できるユーザー</summary>
-      <div class="setting-box">
-        <p class="small">副この副管理者が管理できるユーザーを選択してください。</p>
-        <div id="allUsersForAdmin"><div class="empty">読み込み中...</div></div>
-        <button id="saveAssignments" class="primary" style="width:100%;margin-top:12px">保存</button>
-      </div>
-    </details>
-
-    <details>
-      <summary>副管理者を任命・解任</summary>
-      <div class="setting-box">
-        <div id="currentSubAdmin" class="small">確認中...</div>
-        <div class="setting-row">
-          <select id="appointUser" multiple size="7" style="min-height:170px">
-          </select>
-          <button id="appointBtn" class="primary">任命</button>
-        </div>
-        <button id="dismissBtn" class="danger" style="width:100%;margin-top:10px">解任</button>
-      </div>
-    </details>
-  </section>
-</main>
-
-<div id="toast" class="toast"></div>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL = "https://yxonmqdyekwenyzekjwj.supabase.co";
-const SUPABASE_KEY = "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-const supabaseClient = supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+const $=id=>document.getElementById(id);
+const params=new URLSearchParams(location.search);
+const friendId=params.get("user")||"";
+const incoming=params.get("incoming")==="1";
+const incomingCallId=params.get("call")||"";
 
-const SLOT = "sub_admin1";
-const ADMIN_IDS = ["kazu1haru100", "kazu1haru4sub"];
+const avatar=$("avatar");
+const nameEl=$("name");
+const statusEl=$("status");
+const timerEl=$("timer");
+const answerButton=$("answer");
+const muteButton=$("mute");
+const endButton=$("end");
+const rejectButton=$("reject");
 
-let currentProfile = null;
-let allProfiles = [];
-let assignedIds = new Set();
+let currentUsername="";
+let friendName="";
+let friendAvatarUrl="";
+let channel=null;
+let pc=null;
+let localStream=null;
+let remoteStream=null;
+let callId="";
+let inboxChannel=null;
+let ringTimer=null;
+let timer=null;
+let callStartedAt=0;
+let muted=false;
+let ended=false;
 
-function esc(v){
-  return String(v ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+const rtcConfig={
+  iceServers:[
+    {urls:"stun:stun.l.google.com:19302"}
+  ]
+};
+
+function channelName(){
+  return "friend-call-"+[currentUsername,friendId]
+    .sort().map(encodeURIComponent).join("-");
 }
 
-function toast(msg){
-  const e=document.getElementById("toast");
-  e.textContent=msg;
-  e.style.display="block";
-  clearTimeout(toast.t);
-  toast.t=setTimeout(()=>e.style.display="none",2200);
+function renderPerson(){
+  nameEl.textContent=friendName||friendId||"通話";
+  avatar.innerHTML="";
+  if(friendAvatarUrl){
+    const img=document.createElement("img");
+    img.src=friendAvatarUrl;
+    img.alt="プロフィール画像";
+    img.onerror=()=>{avatar.textContent="👤"};
+    avatar.appendChild(img);
+  }else{
+    avatar.textContent="👤";
+  }
 }
 
-async function getMyProfile(){
-  const {data:{user},error:authError}=await supabaseClient.auth.getUser();
-  if(authError) throw authError;
-  if(!user) return null;
-
-  /*
-    profiles.id は bigint のため、Supabase Auth の UUID(user.id)を
-    profiles.id に入れて検索しません。
-    Friend Chat のログイン時に保存している username を
-    profiles.user_id として検索します。
-  */
-  const username = user.user_metadata?.username || "";
-  if(!username) return null;
-
-  const {data,error}=await supabaseClient
-    .from("profiles")
-    .select("id,user_id,name,avatar_url")
-    .eq("user_id",username)
-    .maybeSingle();
-
-  if(error) throw error;
-  return data;
+function sendSignal(payload){
+  if(!channel)return Promise.resolve();
+  return channel.send({
+    type:"broadcast",
+    event:"call",
+    payload:{...payload,from:currentUsername}
+  });
 }
 
-function isSiteAdmin(){
-  return currentProfile &&
-         ADMIN_IDS.includes(currentProfile.user_id);
+function inboxChannelName(){
+  return "friend-call-inbox-"+encodeURIComponent(friendId);
 }
 
-async function checkSubAdmin1(){
-  const {data,error}=await supabaseClient
-    .from("sub_admins")
-    .select("user_id")
-    .eq("slot",SLOT);
-
-  if(error) throw error;
-  return (data || []).map(x => x.user_id);
-}
-
-async function loadAssignedUsers(){
-  const box=document.getElementById("assignedUsers");
+async function createCallNotification(){
+  if(!friendId||!currentUsername||!callId)return;
 
   try{
-    const {data,error}=await supabaseClient
-      .from("sub_admin_assignments")
-      .select("user_id")
-      .eq("slot",SLOT)
-      .order("user_id",{ascending:true});
+    const {error}=await db.from("notifications").insert({
+      user_id:friendId,
+      type:"call",
+      title:"📞 "+currentUsername+"さんから通話着信",
+      message:"音声通話の着信があります。",
+      link:"call.html?user="+encodeURIComponent(currentUsername)+"&incoming=1&call="+encodeURIComponent(callId),
+      is_read:false
+    });
 
-    if(error) throw error;
+    if(error)console.warn("通話サイト内通知エラー:",error);
+  }catch(error){
+    console.warn("通話通知レコード作成エラー:",error);
+  }
+}
 
-    assignedIds=new Set((data||[]).map(x=>x.user_id).filter(Boolean));
+async function sendCallPush(){
+  if(!friendId||!currentUsername||friendId===currentUsername)return;
 
-    if(!assignedIds.size){
-      box.innerHTML=
-        '<div class="empty">現在、担当ユーザーはいません。</div>';
+  try{
+    const {data,error}=await db.functions.invoke("send-push",{
+      body:{
+        username:friendId,
+        title:"📞 "+currentUsername+"さんから通話着信",
+        message:"音声通話の着信があります。",
+        url:"call.html?user="+encodeURIComponent(currentUsername)+"&incoming=1&call="+encodeURIComponent(callId)
+      }
+    });
+
+    if(error)console.warn("通話プッシュ通知エラー:",error);
+    else if(data&&!data.ok)console.warn("通話プッシュ通知失敗:",data);
+  }catch(error){
+    console.warn("通話プッシュ通知呼び出しエラー:",error);
+  }
+}
+
+async function sendIncomingRing(){
+  try{
+    if(!inboxChannel){
+      inboxChannel=db.channel(inboxChannelName());
+      await new Promise(resolve=>{
+        inboxChannel.subscribe(st=>{
+          if(st==="SUBSCRIBED")resolve();
+        });
+      });
+    }
+
+    await inboxChannel.send({
+      type:"broadcast",
+      event:"incoming-call",
+      payload:{
+        type:"ring",
+        callId,
+        from:currentUsername,
+        to:friendId
+      }
+    });
+  }catch(e){
+    console.error("着信通知送信:",e);
+  }
+}
+
+function startRingRetry(){
+  if(ringTimer)clearInterval(ringTimer);
+
+  /* Broadcastは一瞬しか届かないので、相手がchat.htmlを開いている
+     タイミングに合わせて数秒間再送する */
+  let count=0;
+
+  const send=async()=>{
+    if(ended||!callId||count>=15){
+      clearInterval(ringTimer);
+      ringTimer=null;
       return;
     }
 
-    /*
-      profiles の全体SELECTがRLSで制限されている環境でも
-      副管理者パネルを表示できるよう、まず担当IDだけで表示します。
-      profiles の取得はできる場合だけ名前を補足します。
-    */
-    let profileMap=new Map();
+    count++;
+    await sendIncomingRing();
+  };
 
-    const {data:users,error:userError}=await supabaseClient
-      .from("profiles")
-      .select("id,user_id,name")
-      .in("user_id",[...assignedIds]);
-
-    if(!userError){
-      (users||[]).forEach(user=>{
-        if(user.user_id) profileMap.set(user.user_id,user);
-      });
-    }else{
-      console.warn("担当ユーザーのプロフィール取得をスキップ:",userError.message);
-    }
-
-    const usersForRender=[...assignedIds].map(userId=>
-      profileMap.get(userId) || {user_id:userId,name:""}
-    );
-
-    await renderAssignedUsers(usersForRender);
-  }catch(e){
-    console.error("loadAssignedUsers:",e);
-    box.innerHTML=
-      '<div class="empty">❌ 担当ユーザーの読み込みに失敗しました。<br><br>エラー：'+esc(e.message||e)+'</div>';
-    throw e;
-  }
+  send();
+  ringTimer=setInterval(send,1000);
 }
 
-async function getActiveBan(userId){
-  const {data,error}=await supabaseClient
-    .from("user_bans")
-    .select("user_id,reason,banned_at,expires_at,banned_by")
-    .eq("user_id",userId)
-    .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
-    .order("banned_at",{ascending:false})
-    .limit(1)
-    .maybeSingle();
-
-  if(error) return null;
-  return data;
+function startTimer(){
+  clearInterval(timer);
+  callStartedAt=Date.now();
+  timer=setInterval(()=>{
+    const s=Math.floor((Date.now()-callStartedAt)/1000);
+    timerEl.textContent=
+      String(Math.floor(s/60)).padStart(2,"0")+":"+
+      String(s%60).padStart(2,"0");
+  },1000);
 }
 
-async function renderAssignedUsers(users){
-  const box=document.getElementById("assignedUsers");
-  box.innerHTML="";
-
-  if(!users.length){
-    box.innerHTML='<div class="empty">担当ユーザーが見つかりません。</div>';
-    return;
-  }
-
-  for(const u of users){
-    const ban=await getActiveBan(u.user_id);
-    const div=document.createElement("div");
-    div.className="user";
-
-    div.innerHTML=`
-      <div class="user-top">
-        <div>
-          <div class="user-name">${esc(u.name || u.user_id)}</div>
-          <div class="user-id">ID: ${esc(u.user_id)}</div>
-        </div>
-      </div>
-      <div class="ban-buttons">
-        <button data-id="${esc(u.user_id)}" data-min="5">5分BAN</button>
-        <button data-id="${esc(u.user_id)}" data-min="10">10分BAN</button>
-        <button data-id="${esc(u.user_id)}" data-min="30">30分BAN</button>
-        <button data-id="${esc(u.user_id)}" data-min="60">1時間BAN</button>
-      </div>
-      <div class="small" style="margin-top:9px">
-        ${ban ? "現在BAN中："+new Date(ban.expires_at).toLocaleString("ja-JP") : "現在BANされていません"}
-      </div>
-    `;
-
-    box.appendChild(div);
-  }
-
-  box.querySelectorAll(".ban-buttons button").forEach(btn=>{
-    btn.addEventListener("click",()=>banUser(btn.dataset.id,Number(btn.dataset.min)));
-  });
+function stopTimer(){
+  clearInterval(timer);
+  timer=null;
+  timerEl.textContent="";
 }
 
-async function banUser(userId,minutes){
-  if(!assignedIds.has(userId)){
-    toast("このユーザーは管理対象ではありません");
-    return;
-  }
-
+async function getMic(){
+  if(localStream)return true;
   try{
-    const until=new Date(Date.now()+minutes*60*1000);
-
-    // 既存の管理画面と同じ user_bans の列構成を使用します。
-    // 既存BANがあれば更新、なければ新規作成します。
-    const payload={
-      reason:`副管理者BAN（${minutes}分）`,
-      banned_by:currentProfile.user_id,
-      banned_at:new Date().toISOString(),
-      expires_at:until.toISOString()
-    };
-
-    /*
-      副管理者はINSERT権限でBANできるようにしています。
-      UPDATE権限を要求するとRLSで弾かれる環境があるため、
-      既存の更新処理は使わず、新しい期限のBANを追加します。
-    */
-    const {error:insertError}=await supabaseClient
-      .from("user_bans")
-      .insert({
-        user_id:userId,
-        ...payload
-      });
-
-    if(insertError) throw insertError;
-
-    toast(minutes+"分BANしました");
-    await loadAssignedUsers();
+    localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+    return true;
   }catch(e){
     console.error(e);
-    toast("BANに失敗しました");
+    statusEl.textContent="マイクを使用できません";
+    alert("マイクの使用を許可してください。");
+    return false;
   }
 }
 
-async function loadAdminUsers(){
-  const {data,error}=await supabaseClient
-    .from("profiles")
-    .select("id,user_id,name")
-    .order("user_id");
+async function makePeer(){
+  pc=new RTCPeerConnection(rtcConfig);
+  remoteStream=new MediaStream();
 
-  if(error) throw error;
+  pc.ontrack=e=>{
+    e.streams[0]?.getTracks().forEach(t=>remoteStream.addTrack(t));
+    let audio=document.getElementById("remoteAudio");
+    if(!audio){
+      audio=document.createElement("audio");
+      audio.id="remoteAudio";
+      audio.autoplay=true;
+      audio.playsInline=true;
+      document.body.appendChild(audio);
+    }
+    audio.srcObject=remoteStream;
+    audio.play().catch(()=>{});
+  };
 
-  allProfiles=data||[];
-  renderAdminUsers();
-  await renderAppointSelect();
+  pc.onicecandidate=e=>{
+    if(e.candidate){
+      sendSignal({type:"ice",callId,candidate:e.candidate});
+    }
+  };
+
+  pc.onconnectionstatechange=()=>{
+    if(!pc)return;
+    if(pc.connectionState==="connected"){
+      statusEl.textContent="🟢 通話中";
+      muteButton.classList.remove("hidden");
+      startTimer();
+    }else if(pc.connectionState==="failed"){
+      statusEl.textContent="接続に失敗しました";
+      setTimeout(()=>finish(false),900);
+    }
+  };
+
+  localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
 }
 
-function renderAdminUsers(){
-  const box=document.getElementById("allUsersForAdmin");
-  box.innerHTML="";
+async function caller(){
+  const ok=await getMic();
+  if(!ok)return;
 
-  if(!allProfiles.length){
-    box.innerHTML='<div class="empty">ユーザーがいません。</div>';
+  callId=currentUsername+"-"+Date.now()+"-"+Math.random().toString(36).slice(2);
+
+  statusEl.textContent="📞 呼び出しています...";
+
+  /* 相手のchat.htmlに着信を知らせる */
+  /* サイト内通知 + プッシュ通知 */
+  await createCallNotification();
+  await sendCallPush();
+
+  startRingRetry();
+
+  /* 通話ページ同士の接続にもringを送る */
+  await sendSignal({
+    type:"ring",
+    callId
+  });
+
+  /* 相手がcall.htmlを開いて準備できるまで待つ */
+}
+
+async function createAndSendOffer(){
+  if(ended||!callId)return;
+  if(!pc)await makePeer();
+
+  const offer=await pc.createOffer();
+  await pc.setLocalDescription(offer);
+
+  await sendSignal({
+    type:"offer",
+    callId,
+    offer
+  });
+
+  statusEl.textContent="📞 呼び出しています...";
+}
+
+async function answer(){
+  answerButton.classList.add("hidden");
+  rejectButton.classList.add("hidden");
+
+  const ok=await getMic();
+  if(!ok)return;
+
+  if(!pc)await makePeer();
+
+  const ans=await pc.createAnswer();
+  await pc.setLocalDescription(ans);
+
+  await sendSignal({type:"answer",callId,answer:ans});
+  statusEl.textContent="接続中...";
+}
+
+async function handleSignal(data){
+  if(!data||data.from===currentUsername)return;
+
+  if(data.type==="ready" && data.callId===callId && !pc){
+    await createAndSendOffer();
     return;
   }
 
-  allProfiles.forEach(u=>{
-    const label=document.createElement("label");
-    label.className="setting-user";
+  if(data.type==="ring" && incoming){
+    if(callId)return;
 
-    label.innerHTML=`
-      <input type="checkbox" value="${esc(u.user_id)}" ${assignedIds.has(u.user_id)?"checked":""}>
-      <span>
-        <b>${esc(u.name || u.user_id)}</b><br>
-        <small class="small">${esc(u.user_id)}</small>
-      </span>
-    `;
+    callId=data.callId;
+    statusEl.textContent="📲 着信があります";
 
-    box.appendChild(label);
-  });
-}
+    await sendSignal({
+      type:"ready",
+      callId
+    });
 
-async function renderAppointSelect(){
-  const select=document.getElementById("appointUser");
-  select.innerHTML="";
+    return;
+  }
 
-  const appointedIds=new Set(await checkSubAdmin1());
-
-  allProfiles.forEach(u=>{
-    const o=document.createElement("option");
-    o.value=u.user_id;
-    o.textContent=(u.name ? u.name+" ("+u.user_id+")" : u.user_id);
-    o.selected=appointedIds.has(u.user_id);
-    select.appendChild(o);
-  });
-}
-
-async function saveAssignments(){
-  try{
-    const selected=[...document.querySelectorAll(
-      '#allUsersForAdmin input[type="checkbox"]:checked'
-    )].map(x=>x.value);
-
-    const {error:delError}=await supabaseClient
-      .from("sub_admin_assignments")
-      .delete()
-      .eq("slot",SLOT);
-
-    if(delError) throw delError;
-
-    if(selected.length){
-      const rows=selected.map(userId=>({
-        slot:SLOT,
-        user_id:userId,
-        created_at:new Date().toISOString()
-      }));
-
-      const {error:insError}=await supabaseClient
-        .from("sub_admin_assignments")
-        .insert(rows);
-
-      if(insError) throw insError;
+  if(data.type==="offer"){
+    if(pc){
+      await sendSignal({type:"busy",callId:data.callId});
+      return;
     }
 
-    toast("担当ユーザーを保存しました");
-    await loadAssignedUsers();
-  }catch(e){
-    console.error(e);
-    toast("保存に失敗しました");
+    const ok=await getMic();
+    if(!ok)return;
+
+    callId=data.callId;
+    await makePeer();
+    await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+
+    statusEl.textContent="📲 着信があります";
+    answerButton.classList.remove("hidden");
+    rejectButton.classList.remove("hidden");
+    endButton.classList.add("hidden");
+    return;
+  }
+
+  if(data.callId!==callId)return;
+
+  if(data.type==="answer"&&pc){
+    await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+    statusEl.textContent="接続中...";
+    return;
+  }
+
+  if(data.type==="ice"&&pc){
+    try{
+      await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+    }catch(e){console.warn("ICE:",e)}
+    return;
+  }
+
+  if(data.type==="reject"){
+    statusEl.textContent="相手が通話を拒否しました";
+    setTimeout(()=>finish(false),1000);
+    return;
+  }
+
+  if(data.type==="busy"){
+    statusEl.textContent="相手は現在通話中です";
+    setTimeout(()=>finish(false),1000);
+    return;
+  }
+
+  if(data.type==="end"){
+    finish(false);
   }
 }
 
-async function loadSubAdmin(){
-  const userIds=await checkSubAdmin1();
-  const box=document.getElementById("currentSubAdmin");
+async function finish(send=true){
+  if(ended)return;
+  ended=true;
 
-  if(!userIds.length){
-    box.textContent="現在：未任命";
+  if(send&&callId){
+    await sendSignal({type:"end",callId});
+  }
+
+  stopTimer();
+
+  if(pc){
+    pc.close();
+    pc=null;
+  }
+
+  if(localStream){
+    localStream.getTracks().forEach(t=>t.stop());
+    localStream=null;
+  }
+
+  const audio=document.getElementById("remoteAudio");
+  if(audio)audio.remove();
+
+  if(channel){
+    await db.removeChannel(channel);
+    channel=null;
+  }
+  if(inboxChannel){
+    await db.removeChannel(inboxChannel);
+    inboxChannel=null;
+  }
+
+  if(history.length>1){
+    history.back();
   }else{
-    box.innerHTML="現在：<br>" + userIds.map(esc).join("<br>");
-  }
-
-  await renderAppointSelect();
-}
-
-async function appointSubAdmin(){
-  const select=document.getElementById("appointUser");
-  const userIds=[...select.selectedOptions].map(o=>o.value).filter(Boolean);
-
-  try{
-    const {error:delError}=await supabaseClient
-      .from("sub_admins")
-      .delete()
-      .eq("slot",SLOT);
-
-    if(delError) throw delError;
-
-    if(userIds.length){
-      const rows=userIds.map(userId=>({
-        slot:SLOT,
-        user_id:userId,
-        created_at:new Date().toISOString()
-      }));
-
-      const {error:insError}=await supabaseClient
-        .from("sub_admins")
-        .insert(rows);
-
-      if(insError) throw insError;
-    }
-
-    toast("副管理者" + SLOT.replace("sub_admin", "") + "を保存しました");
-    await loadSubAdmin();
-  }catch(e){
-    console.error(e);
-    toast("任命に失敗しました");
+    location.href="home.html";
   }
 }
-async function dismissSubAdmin(){
-  if(!confirm("副管理者1を解任しますか？")) return;
 
-  try{
-    const {error}=await supabaseClient
-      .from("sub_admins")
-      .delete()
-      .eq("slot",SLOT);
-
-    if(error) throw error;
-
-    toast("副管理者1を解任しました");
-    await loadSubAdmin();
-  }catch(e){
-    console.error(e);
-    toast("解任に失敗しました");
-  }
+function toggleMute(){
+  if(!localStream)return;
+  muted=!muted;
+  localStream.getAudioTracks().forEach(t=>t.enabled=!muted);
+  muteButton.textContent=muted?"🔇":"🎙️";
+  statusEl.textContent=muted?"🔇 ミュート中":"🟢 通話中";
 }
 
 async function init(){
-  try{
-    currentProfile=await getMyProfile();
-
-    if(!currentProfile){
-      alert("ログインしてください。");
-      location.href="index.html";
-      return;
-    }
-
-    const admin=isSiteAdmin();
-
-    /*
-      管理者は設定画面を表示。
-      副管理者1は担当ユーザーを表示。
-      それ以外はアクセス拒否。
-    */
-    const appointedUserIds=await checkSubAdmin1();
-    const isSubAdmin=appointedUserIds.includes(currentProfile.user_id);
-
-    if(!admin && !isSubAdmin){
-      document.body.innerHTML=`
-        <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:sans-serif">
-          <div>
-            <div style="font-size:48px">🔒</div>
-            <h2>アクセスできません</h2>
-            <p style="color:#777">このページは副管理者1専用です。</p>
-          </div>
-        </div>
-      `;
-      return;
-    }
-
-    if(admin){
-      document.getElementById("settingsBtn").style.display="block";
-      document.getElementById("adminSettings").style.display="block";
-      await loadAdminUsers();
-      await loadSubAdmin();
-    }
-
-    await loadAssignedUsers();
-
-  }catch(e){
-    console.error("副管理者パネル読み込みエラー:",e);
-    document.getElementById("assignedUsers").innerHTML=
-      '<div class="empty">❌ 読み込みに失敗しました。<br><br>エラー：' + esc(e.message || e) + '</div>';
+  if(!friendId){
+    statusEl.textContent="相手が指定されていません";
+    endButton.textContent="🏠";
+    return;
   }
+
+  const {data,error}=await db.auth.getSession();
+  if(error||!data.session){
+    alert("ログインしてください。");
+    location.href="index.html";
+    return;
+  }
+
+  currentUsername=data.session.user.user_metadata?.username||"";
+  if(!currentUsername){
+    statusEl.textContent="ログイン情報を取得できません";
+    return;
+  }
+
+  const {data:profile,error:profileError}=await db
+    .from("profiles")
+    .select("user_id,name,avatar_url")
+    .eq("user_id",friendId)
+    .maybeSingle();
+
+  if(profileError)console.warn(profileError);
+
+  friendName=profile?.name||friendId;
+  friendAvatarUrl=profile?.avatar_url||"";
+  renderPerson();
+
+  channel=db.channel(channelName())
+    .on("broadcast",{event:"call"},async payload=>{
+      await handleSignal(payload?.payload||{});
+    })
+    .subscribe(async st=>{
+      if(st!=="SUBSCRIBED")return;
+
+      if(incoming){
+        if(!incomingCallId){
+          statusEl.textContent="通話情報が見つかりません";
+          return;
+        }
+
+        callId=incomingCallId;
+        statusEl.textContent="📲 接続しています...";
+
+        await sendSignal({
+          type:"ready",
+          callId
+        });
+      }else{
+        await caller();
+      }
+    });
 }
 
-document.getElementById("settingsBtn").addEventListener("click",()=>{
-  document.getElementById("adminSettings").scrollIntoView({behavior:"smooth"});
-});
+answerButton.addEventListener("click",answer);
+rejectButton.addEventListener("click",()=>finish(true));
+muteButton.addEventListener("click",toggleMute);
+endButton.addEventListener("click",()=>finish(true));
 
-document.getElementById("saveAssignments").addEventListener("click",saveAssignments);
-document.getElementById("appointBtn").addEventListener("click",appointSubAdmin);
-document.getElementById("dismissBtn").addEventListener("click",dismissSubAdmin);
+window.addEventListener("pagehide",()=>{
+  if(pc)pc.close();
+  if(localStream)localStream.getTracks().forEach(t=>t.stop());
+  if(ringTimer)clearInterval(ringTimer);
+  if(channel)db.removeChannel(channel);
+  if(inboxChannel)db.removeChannel(inboxChannel);
+});
 
 init();
 </script>
