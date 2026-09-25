@@ -33,7 +33,7 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
 .name-decoration-neon{color:#00bfae !important;text-shadow:0 0 5px rgba(0,255,220,.5),0 0 10px rgba(0,255,220,.25)}.name-decoration-admin{color:#d39b00 !important}
 .admin-name-badge{margin-left:4px;font-size:12px}.content{white-space:pre-wrap;word-break:break-word;margin-top:3px}
 .mention{color:#6655c9;font-weight:bold;background:#f0edff;border-radius:4px;padding:1px 3px}.edited{font-size:10px;color:#999}.deleted{color:#999;font-style:italic}
-.message-image{display:block;max-width:270px;max-height:330px;border-radius:13px;margin-top:6px}
+.message-image{display:block;max-width:270px;max-height:330px;border-radius:13px;margin-top:6px}.media-box{display:inline-block;max-width:280px;margin-top:6px}.media-video{display:block;max-width:280px;max-height:330px;border-radius:13px}.media-audio{display:block;max-width:280px}.media-duration{font-size:11px;color:#777;text-align:right;margin-top:2px}
 .reply{margin-top:7px;padding:7px 9px;background:#f0edff;border-left:4px solid #8f7cff;border-radius:8px;font-size:12px}
 .reactions{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.reaction{background:#eef1f7;border-radius:18px;padding:4px 8px;font-size:14px}
 .read{text-align:right;color:#6354c8;font-size:11px;margin-top:4px}
@@ -82,9 +82,16 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
 <div id="muteBanner" class="banner"></div>
 <div class="inputbar">
 <input id="messageInput" placeholder="メッセージを入力..." autocomplete="off">
-<button id="imageButton" class="image-btn">🖼️</button><button id="sendButton">送信</button>
+<button id="mediaPlusButton" class="image-btn" type="button">＋</button><button id="sendButton">送信</button>
 </div>
+<div id="mediaMenu" style="display:none;position:fixed;left:10px;right:10px;bottom:62px;max-width:360px;margin:auto;background:#fff;border-radius:16px;box-shadow:0 8px 28px #0003;padding:8px;z-index:150">
+<button id="mediaPhotoButton" type="button" style="display:block;width:100%;border:0;background:#fff;text-align:left;padding:12px;border-radius:10px;font-size:15px">🖼️ 写真を送る</button>
+<button id="mediaVideoButton" type="button" style="display:block;width:100%;border:0;background:#fff;text-align:left;padding:12px;border-radius:10px;font-size:15px">🎥 動画を送る</button>
+<button id="mediaVoiceButton" type="button" style="display:block;width:100%;border:0;background:#fff;text-align:left;padding:12px;border-radius:10px;font-size:15px">🎙️ ボイスメッセージ</button>
+</div>
+<div id="mediaStatus" style="display:none;position:fixed;left:10px;right:10px;bottom:118px;max-width:360px;margin:auto;background:#fff;border-radius:12px;padding:10px;box-shadow:0 5px 20px #0003;z-index:151;text-align:center;font-size:13px"></div>
 <input id="imageInput" type="file" accept="image/*" hidden>
+<input id="videoInput" type="file" accept="video/*" hidden>
 <div id="mentionList" class="mention-list"></div>
 <div id="memberModal" class="modal"><div class="box"><h2>👥 メンバー</h2><div id="memberList"></div><button class="close" onclick="closeMemberModal()">閉じる</button></div></div>
 <div id="giftModal" class="modal"><div class="box"><h2>🎁 コインを送る</h2><div id="giftTarget" class="gift-target"></div><div class="presets"><button data-amount="10">10コイン</button><button data-amount="50">50コイン</button><button data-amount="100">100コイン</button></div><input id="giftAmount" class="gift-input" type="number" min="1" placeholder="送るコイン数"><button id="giftSend" class="gift-send">🎁 送る</button><button class="close" onclick="closeGiftModal()">キャンセル</button></div></div>
@@ -96,6 +103,64 @@ const boardId=new URLSearchParams(location.search).get("board");
 const $=id=>document.getElementById(id);
 let username="",room=null,members=[],profiles={},items={},isOwner=false,isBoardAdmin=false,isMuted=false,replyTarget=null,giftTargetUsername="";
 let boardRealtimeChannel=null,boardTypingChannel=null,boardTypingReady=false,typingTimer=null,typingHideTimer=null;
+const mediaPlusButton=$("mediaPlusButton"),mediaMenu=$("mediaMenu"),mediaPhotoButton=$("mediaPhotoButton"),mediaVideoButton=$("mediaVideoButton"),mediaVoiceButton=$("mediaVoiceButton"),videoInput=$("videoInput"),mediaStatus=$("mediaStatus");
+let voiceRecorder=null,voiceStream=null,voiceChunks=[];
+function formatMediaDuration(seconds){if(!Number.isFinite(seconds)||seconds<0)return "";const s=Math.round(seconds),m=Math.floor(s/60),r=s%60;return "⏱️ "+m+":"+String(r).padStart(2,"0")}
+function addMediaDuration(media,label){const set=()=>{const t=formatMediaDuration(media.duration);if(t)label.textContent=t};if(Number.isFinite(media.duration)&&media.duration>0)set();else media.addEventListener("loadedmetadata",set,{once:true})}
+function makeBoardMedia(url,kind){
+  const box=document.createElement("div");box.className="media-box";
+  const media=document.createElement(kind==="video"?"video":"audio");
+  media.className=kind==="video"?"media-video":"media-audio";
+  media.controls=true;media.preload="metadata";if(kind==="video")media.playsInline=true;
+  media.src=url;box.appendChild(media);
+  const label=document.createElement("div");label.className="media-duration";addMediaDuration(media,label);box.appendChild(label);
+  return box;
+}
+function closeMediaMenu(){mediaMenu.style.display="none"}
+function showMediaStatus(text){mediaStatus.textContent=text||"";mediaStatus.style.display=text?"block":"none"}
+async function sendBoardMedia(file,kind){
+  if(isMuted){alert("現在、発言禁止中です");return}
+  if(!file)return;
+  const ok=kind==="video"?file.type.startsWith("video/"):file.type.startsWith("audio/");
+  if(!ok){alert("対応していないファイルです");return}
+  sendBoardTypingState(false);clearTimeout(typingTimer);
+  showMediaStatus(kind==="video"?"🎥 動画を送信中…":"🎙️ ボイスメッセージを送信中…");
+  try{
+    const ext=(file.name.split(".").pop()||(kind==="video"?"mp4":"webm")).toLowerCase();
+    const path=username+"/"+boardId+"/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+ext;
+    const upload=await supabaseClient.storage.from("chat-images").upload(path,file,{upsert:false});
+    if(upload.error)throw upload.error;
+    const mediaPath=(kind==="video"?"video:":"audio:")+path;
+    const {error}=await supabaseClient.from("board_room_messages").insert({board_id:Number(boardId),sender_id:username,content:"",image_url:mediaPath});
+    if(error)throw error;
+    await loadMessages();
+  }catch(error){console.error("メディア送信エラー:",error);alert("メディアの送信に失敗しました\n\n"+(error?.message||"原因不明のエラー"))}
+  finally{showMediaStatus("")}
+}
+async function toggleBoardVoiceRecording(){
+  if(voiceRecorder&&voiceRecorder.state==="recording"){voiceRecorder.stop();return}
+  if(isMuted){alert("現在、発言禁止中です");return}
+  try{
+    voiceStream=await navigator.mediaDevices.getUserMedia({audio:true});
+    const types=["audio/mp4","audio/mp4;codecs=mp4a.40.2","audio/webm;codecs=opus","audio/webm"];
+    const mime=types.find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported(t))||"";
+    voiceRecorder=new MediaRecorder(voiceStream,mime?{mimeType:mime}:undefined);
+    voiceChunks=[];
+    voiceRecorder.ondataavailable=e=>{if(e.data?.size)voiceChunks.push(e.data)};
+    voiceRecorder.onstop=async()=>{
+      const blob=new Blob(voiceChunks,{type:voiceRecorder.mimeType||"audio/webm"});
+      voiceRecorder=null;voiceChunks=[];voiceStream?.getTracks().forEach(t=>t.stop());voiceStream=null;
+      mediaVoiceButton.textContent="🎙️ ボイスメッセージ";
+      const ext=(blob.type||"audio/webm").includes("mp4")?"m4a":"webm";
+      await sendBoardMedia(new File([blob],"voice."+ext,{type:blob.type||"audio/webm"}),"audio");
+    };
+    voiceRecorder.window.addEventListener("pagehide",()=>{try{if(voiceRecorder&&voiceRecorder.state==="recording")voiceRecorder.stop()}catch(e){}voiceStream?.getTracks().forEach(t=>t.stop())});
+start();
+    mediaVoiceButton.textContent="⏹️ 録音を停止";
+    mediaMenu.style.display="block";
+  }catch(error){console.error(error);voiceStream?.getTracks().forEach(t=>t.stop());voiceStream=null;alert("マイクを使用できませんでした\n\n"+(error?.message||error))}
+}
+
 const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
 const NAME_DECORATION_MAP={nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",nd_neon:"name-decoration-neon",name_sakura:"name-decoration-sakura",admin_name:"name-decoration-admin"};
 function getNameClass(itemKey){return NAME_DECORATION_MAP[itemKey]||""}
@@ -161,7 +226,7 @@ async function loadMembers(){
 async function refreshMute(){
  const {data,error}=await supabaseClient.from("board_room_mutes").select("muted_until").eq("board_id",boardId).eq("user_id",username).maybeSingle();
  if(error){console.error(error);return} isMuted=!!(data?.muted_until&&new Date(data.muted_until).getTime()>Date.now());
- $("muteBanner").classList.toggle("show",isMuted);$("muteBanner").textContent=isMuted?"🔇 現在、発言禁止中です":"";$("messageInput").disabled=isMuted;$("sendButton").disabled=isMuted;$("imageButton").disabled=isMuted;
+ $("muteBanner").classList.toggle("show",isMuted);$("muteBanner").textContent=isMuted?"🔇 現在、発言禁止中です":"";$("messageInput").disabled=isMuted;$("sendButton").disabled=isMuted;$("mediaPlusButton").disabled=isMuted;
 }
 async function renderMembers(){
  await loadMembers();const {data:presence}=await supabaseClient.from("user_presence").select("user_id,last_seen").in("user_id",members.map(m=>m.user_id));const lastSeen={};(presence||[]).forEach(p=>lastSeen[p.user_id]=p.last_seen);
@@ -193,14 +258,19 @@ async function loadMessages(){
   supabaseClient.from("board_room_message_reads").select("board_message_id,user_id").in("board_message_id",ids)
  ]);replies=r1.data||[];reactions=r2.data||[];reads=r3.data||[]}
  await loadProfiles([...messages.map(m=>m.sender_id),...replies.map(r=>r.sender_id)]);
- const signed={};await Promise.all(messages.filter(m=>m.image_url&&!m.is_deleted).map(async m=>{const {data}=await supabaseClient.storage.from("chat-images").createSignedUrl(m.image_url,3600);if(data?.signedUrl)signed[m.id]=data.signedUrl}));
+ const signed={};await Promise.all(messages.filter(m=>m.image_url&&!m.is_deleted).map(async m=>{const raw=String(m.image_url);const path=(raw.startsWith("video:")||raw.startsWith("audio:"))?raw.slice(6):raw;const {data}=await supabaseClient.storage.from("chat-images").createSignedUrl(path,3600);if(data?.signedUrl)signed[m.id]=data.signedUrl}));
  const fragment=document.createDocumentFragment();
  messages.forEach(message=>{
   const row=document.createElement("div");row.className="row";row.appendChild(makeAvatar(message.sender_id));const bubble=document.createElement("div");bubble.className="bubble";
   const senderNameEl=document.createElement("div");const senderNameClass=getNameClass(profiles[message.sender_id]?.equipped_name_decoration_key);senderNameEl.className="name"+(senderNameClass?" "+senderNameClass:"");senderNameEl.textContent=profiles[message.sender_id]?.name||message.sender_id;
   if(profiles[message.sender_id]?.equipped_name_decoration_key==="admin_name"&&ADMIN_USERNAMES.has(message.sender_id)){const crown=document.createElement("span");crown.className="admin-name-badge";crown.textContent="👑";senderNameEl.appendChild(crown)}
   if(message.edited_at){const edited=document.createElement("span");edited.className="edited";edited.textContent=" 編集済み";senderNameEl.appendChild(edited)}bubble.appendChild(senderNameEl);
-  if(message.is_deleted)bubble.innerHTML+="<div class='deleted'>このメッセージは削除されました</div>";else{if(message.content)bubble.innerHTML+="<div class='content'>"+formatMentions(message.content)+"</div>";if(signed[message.id]){const img=document.createElement("img");img.className="message-image";img.src=signed[message.id];img.alt="送信画像";bubble.appendChild(img)}}
+  if(message.is_deleted)bubble.innerHTML+="<div class='deleted'>このメッセージは削除されました</div>";else{if(message.content)bubble.innerHTML+="<div class='content'>"+formatMentions(message.content)+"</div>";if(signed[message.id]){
+const raw=String(message.image_url||"");
+if(raw.startsWith("video:"))bubble.appendChild(makeBoardMedia(signed[message.id],"video"));
+else if(raw.startsWith("audio:"))bubble.appendChild(makeBoardMedia(signed[message.id],"audio"));
+else{const img=document.createElement("img");img.className="message-image";img.src=signed[message.id];img.alt="送信画像";bubble.appendChild(img)}
+}}
   replies.filter(r=>r.board_message_id===message.id).forEach(reply=>{const div=document.createElement("div");div.className="reply";const replyNameEl=document.createElement("b");const replyNameClass=getNameClass(profiles[reply.sender_id]?.equipped_name_decoration_key);if(replyNameClass)replyNameEl.className=replyNameClass;replyNameEl.textContent=profiles[reply.sender_id]?.name||reply.sender_id;if(profiles[reply.sender_id]?.equipped_name_decoration_key==="admin_name"&&ADMIN_USERNAMES.has(reply.sender_id)){const crown=document.createElement("span");crown.className="admin-name-badge";crown.textContent="👑";replyNameEl.appendChild(crown)}div.appendChild(replyNameEl);div.appendChild(document.createTextNode("："+reply.content));bubble.appendChild(div)});
   const ownReactions=reactions.filter(r=>r.board_message_id===message.id);if(ownReactions.length){const div=document.createElement("div");div.className="reactions";const counts={};ownReactions.forEach(r=>{counts[r.reaction]=(counts[r.reaction]||0)+1});Object.entries(counts).forEach(([reaction,count])=>{const span=document.createElement("span");span.className="reaction";span.textContent=reaction+" "+count;div.appendChild(span)});bubble.appendChild(div)}
   if(message.sender_id===username){const read=document.createElement("div");read.className="read";const count=reads.filter(r=>r.board_message_id===message.id).length;read.textContent=count?"既読 "+count+"人":"";bubble.appendChild(read)}
@@ -239,7 +309,7 @@ async function sendMentionNotifications(text){
 async function sendImage(file){
  if(isMuted){alert("現在、発言禁止中です");return}if(!file.type.startsWith("image/")){alert("画像ファイルを選択してください");return}
  sendBoardTypingState(false);clearTimeout(typingTimer);$("imageButton").disabled=true;
- try{const ext=(file.name.split(".").pop()||"jpg").toLowerCase();const path=username+"/"+boardId+"/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+ext;const upload=await supabaseClient.storage.from("chat-images").upload(path,file,{upsert:false});if(upload.error)throw upload.error;const {error}=await supabaseClient.from("board_room_messages").insert({board_id:Number(boardId),sender_id:username,content:"",image_url:path});if(error)throw error;await loadMessages()}catch(error){console.error(error);alert("画像の送信に失敗しました")}finally{$("imageButton").disabled=isMuted}
+ try{const ext=(file.name.split(".").pop()||"jpg").toLowerCase();const path=username+"/"+boardId+"/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+ext;const upload=await supabaseClient.storage.from("chat-images").upload(path,file,{upsert:false});if(upload.error)throw upload.error;const {error}=await supabaseClient.from("board_room_messages").insert({board_id:Number(boardId),sender_id:username,content:"",image_url:path});if(error)throw error;await loadMessages()}catch(error){console.error(error);alert("画像の送信に失敗しました")}finally{mediaPlusButton.disabled=isMuted}
 }
 function openGiftModal(target){giftTargetUsername=target;$("giftTarget").textContent="@"+target+" さんへ送る";$("giftAmount").value="";$("giftModal").style.display="flex"}
 function closeGiftModal(){$("giftModal").style.display="none"}
@@ -247,8 +317,13 @@ $("giftSend").onclick=async()=>{const amount=Number($("giftAmount").value);if(!N
 document.querySelectorAll(".presets button").forEach(button=>{button.onclick=()=>{$("giftAmount").value=button.dataset.amount}});
 $("sendButton").onclick=sendMessage;
 $("messageInput").onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage()}};
-$("imageButton").onclick=()=>{$("imageInput").click()};
+mediaPlusButton.onclick=e=>{e.stopPropagation();mediaMenu.style.display=mediaMenu.style.display==="block"?"none":"block"};
+document.addEventListener("click",e=>{if(!mediaMenu.contains(e.target)&&e.target!==mediaPlusButton)closeMediaMenu()});
+mediaPhotoButton.onclick=()=>{closeMediaMenu();if(!isMuted)$("imageInput").click()};
+mediaVideoButton.onclick=()=>{closeMediaMenu();if(!isMuted)videoInput.click()};
+mediaVoiceButton.onclick=e=>{e.stopPropagation();toggleBoardVoiceRecording()};
 $("imageInput").onchange=()=>{const file=$("imageInput").files[0];if(file)sendImage(file);$("imageInput").value=""};
+videoInput.onchange=()=>{const file=videoInput.files[0];if(file)sendBoardMedia(file,"video");videoInput.value=""};
 
 /* 掲示板の「入力中…」通知。Broadcastのみで、DBやメッセージデータは変更しません。 */
 function showBoardTyping(user){
