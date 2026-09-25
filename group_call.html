@@ -68,9 +68,15 @@ async function setMe(){
 async function getGroupToken(){
  const {data,error}=await db.functions.invoke("skyway-group-token",{body:{groupId}});
  if(error){
-   let detail="";
-   try{ detail=JSON.stringify(error); }catch(e){ detail=String(error); }
-   throw new Error("Edge Function: "+detail);
+   let detail=error?.message||String(error);
+   const response=error?.context;
+   if(response){
+     try{
+       const body=await response.clone().text();
+       if(body) detail += "\nHTTP "+(response.status||"")+"\n"+body;
+     }catch(e){}
+   }
+   throw new Error(detail);
  }
  if(!data?.ok||!data.token)throw new Error(data?.error||"グループ通話トークンを取得できませんでした");
  return data.token;
