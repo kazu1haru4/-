@@ -45,6 +45,24 @@ textarea{min-height:100px;resize:vertical}.form-row{margin-bottom:12px}.form-row
 .user-item-meta{font-size:12px;color:#777;margin-top:3px;word-break:break-word}
 .user-item-equipped{color:#2e7d32;font-weight:800;font-size:12px;margin-top:3px}
 
+
+.user-item-category{background:#f7f8fc;border-radius:16px;margin:10px 0;overflow:hidden}
+.user-item-category>summary{list-style:none;cursor:pointer;padding:13px 14px;font-weight:800;display:flex;align-items:center;justify-content:space-between}
+.user-item-category>summary::-webkit-details-marker{display:none}
+.user-item-category>summary::after{content:"＋";font-size:22px;color:#8f7cff}
+.user-item-category[open]>summary::after{content:"−"}
+.user-item-category>summary:active{background:#efedff}
+.user-item-count{font-size:12px;color:#777;font-weight:700;margin-left:auto;margin-right:8px}
+.user-item-checklist{padding:0 10px 10px}
+.user-item-check{display:flex;align-items:center;gap:10px;padding:11px 8px;border-top:1px solid #e5e5eb;cursor:pointer}
+.user-item-check input{width:20px;height:20px;flex:0 0 auto;accent-color:#8f7cff}
+.user-item-check-icon{width:34px;text-align:center;font-size:22px;flex:0 0 auto}
+.user-item-check-main{min-width:0;flex:1}
+.user-item-check-name{font-weight:800;word-break:break-word}
+.user-item-check-meta{font-size:11px;color:#888;margin-top:2px;word-break:break-word}
+.user-item-check.equipped{background:#eef9f0}
+.user-item-check-saving{font-size:11px;color:#8f7cff;white-space:nowrap}
+
 .sub-admin-slot{padding:14px;border-radius:16px;background:#f7f8fc;margin-bottom:12px}
 .sub-admin-slot-title{font-size:17px;font-weight:800;margin-bottom:10px}
 .sub-admin-current{font-size:13px;color:#666;margin-bottom:10px}
@@ -147,7 +165,24 @@ textarea{min-height:100px;resize:vertical}.form-row{margin-bottom:12px}.form-row
 <details class="panel collapsible-panel"><summary>📋 イベント管理</summary><div id="eventsLoading" class="loading">イベントを読み込んでいます...</div><div id="eventsList"></div></details>
 </div>
 
-<div id="userDetailModal" class="modal hidden"><div class="modal-box"><h3>👤 ユーザー詳細</h3><div id="userDetailContent">読み込み中...</div><div id="userItemManagement" style="margin-top:16px;padding-top:16px;border-top:1px solid #eee"><h4 style="margin:0 0 10px">🎁 所持アイテム管理</h4><div id="userItemsLoading" class="loading">読み込み中...</div><div id="userItemsList"></div><div class="form-row" style="margin-top:12px"><label>アイテムを付与</label><select id="userItemAddSelect"><option value="">アイテムを選択</option></select></div><button id="userItemAddButton" type="button">➕ アイテムを付与</button></div><div class="actions"><button id="closeUserDetail" class="gray" type="button">閉じる</button></div></div></div>
+<div id="userDetailModal" class="modal hidden"><div class="modal-box"><h3>👤 ユーザー詳細</h3><div id="userDetailContent">読み込み中...</div><div id="userItemManagement" style="margin-top:16px;padding-top:16px;border-top:1px solid #eee">
+<h4 style="margin:0 0 10px">🎁 所持アイテム管理</h4>
+<div id="userItemsLoading" class="loading">読み込み中...</div>
+<div id="userItemChecklist">
+  <details class="user-item-category" open>
+    <summary>🖼️ フレーム一覧 <span id="userItemCountFrame" class="user-item-count">0 / 0</span></summary>
+    <div id="userItemsFrameList" class="user-item-checklist"></div>
+  </details>
+  <details class="user-item-category">
+    <summary>✨ 名前装飾一覧 <span id="userItemCountName" class="user-item-count">0 / 0</span></summary>
+    <div id="userItemsNameList" class="user-item-checklist"></div>
+  </details>
+  <details class="user-item-category">
+    <summary>🎨 背景一覧 <span id="userItemCountBackground" class="user-item-count">0 / 0</span></summary>
+    <div id="userItemsBackgroundList" class="user-item-checklist"></div>
+  </details>
+</div>
+</div><div class="actions"><button id="closeUserDetail" class="gray" type="button">閉じる</button></div></div></div>
 <div id="coinModal" class="modal hidden"><div class="modal-box"><h3>🪙 コインを変更</h3><p id="coinTarget"></p><div id="coinCurrent" class="frame-status">🔄 現在の残高を読み込んでいます...</div><div class="form-row" style="margin-top:12px"><label>新しいコイン残高</label><input id="coinNewBalance" type="number" min="0" step="1" value="0"><div class="hint">0以上の整数を入力してください。</div></div><div class="actions"><button id="confirmCoinButton" type="button">🪙 変更する</button><button id="cancelCoinButton" class="gray" type="button">キャンセル</button></div></div></div>
 <div id="banModal" class="modal hidden"><div class="modal-box"><h3>🚫 ユーザーをBAN</h3><p id="banTarget"></p><div class="form-row"><label>理由</label><textarea id="banReason" placeholder="BAN理由を入力"></textarea></div><div class="actions"><button id="confirmBanButton" class="danger" type="button">🚫 BANする</button><button id="cancelBanButton" class="gray" type="button">キャンセル</button></div></div></div>
 <div id="editModal" class="modal hidden"><div class="modal-box"><h3>✏️ 掲示板メッセージを編集</h3><div class="form-row"><textarea id="editContent" placeholder="メッセージ"></textarea></div><div class="actions"><button id="saveEditButton" type="button">💾 保存</button><button id="cancelEditButton" class="gray" type="button">キャンセル</button></div></div></div>
@@ -256,123 +291,181 @@ async function deleteUserAccount(username){
 
 let userItemTargetUsername = "";
 
-async function loadAdminUserItems(targetUserId){
- const loading=document.getElementById("userItemsLoading");
- const list=document.getElementById("userItemsList");
- const select=document.getElementById("userItemAddSelect");
- if(!loading||!list||!select)return;
+let userItemTargetUsername = "";
 
- userItemTargetUsername=String(targetUserId||"");
- loading.classList.remove("hidden");
- loading.textContent="🔄 所持アイテムを読み込んでいます...";
- list.innerHTML="";
- select.innerHTML='<option value="">アイテムを選択</option>';
+const ADMIN_ONLY_ITEM_KEYS = new Set(["admin","admin_name","admin_bg"]);
 
- const {data:owned,error}=await supabaseClient.rpc("admin_get_user_items",{target_user_id:userItemTargetUsername});
- if(error){
-   loading.textContent="❌ 所持アイテム取得エラー：\n"+error.message;
-   return;
- }
-
- const {data:allItems,error:allError}=await supabaseClient
-   .from("coin_items")
-   .select("item_key,name,icon,item_type,frame_color")
-   .order("item_type",{ascending:true})
-   .order("name",{ascending:true});
-
- if(allError){
-   loading.textContent="❌ アイテム一覧取得エラー：\n"+allError.message;
-   return;
- }
-
- const ownedKeys=new Set((owned||[]).map(x=>x.item_key));
-
- (allItems||[]).forEach(item=>{
-   if(ownedKeys.has(item.item_key))return;
-   const option=document.createElement("option");
-   option.value=item.item_key;
-   option.textContent=`${item.icon||"🎁"} ${item.name||item.item_key}`;
-   select.appendChild(option);
- });
-
- if(!owned?.length){
-   list.innerHTML='<div class="empty">このユーザーはアイテムを所持していません。</div>';
- }else{
-   owned.forEach(item=>{
-     const typeLabel=
-       item.item_type==="name_decoration"?"✨ 名前装飾":
-       item.item_type==="background"?"🎨 背景":"🖼️ フレーム";
-     const card=document.createElement("div");
-     card.className="user-item-card";
-     card.innerHTML=`
-       <div class="user-item-head">
-         <div class="user-item-icon">${escapeHtml(item.icon||"🎁")}</div>
-         <div class="user-item-main">
-           <div class="user-item-name">${escapeHtml(item.name||item.item_key)}</div>
-           <div class="user-item-meta">${typeLabel} / ID：${escapeHtml(item.item_key)}</div>
-           ${item.is_equipped?'<div class="user-item-equipped">✅ 現在装備中</div>':""}
-         </div>
-       </div>
-       <div class="actions">
-         <button class="danger small" type="button" data-remove-user-item="${escapeAttribute(item.item_key)}">🗑️ 所持から削除</button>
-       </div>`;
-     list.appendChild(card);
-   });
- }
-
- loading.classList.add("hidden");
-
- list.querySelectorAll("[data-remove-user-item]").forEach(button=>{
-   button.addEventListener("click",async()=>{
-     const itemKey=button.dataset.removeUserItem;
-     if(!confirm(`「${itemKey}」をこのユーザーの所持から削除しますか？`))return;
-     button.disabled=true;
-     const {data,error}=await supabaseClient.rpc("admin_remove_user_item",{
-       target_user_id:userItemTargetUsername,
-       target_item_key:itemKey
-     });
-     button.disabled=false;
-     if(error){
-       alert("❌ 削除に失敗しました。\n\n"+error.message);
-       return;
-     }
-     alert(data?.message||"アイテムを削除しました。");
-     await loadAdminUserItems(userItemTargetUsername);
-     await logOperation(`ユーザー「${userItemTargetUsername}」からアイテム「${itemKey}」を削除しました。`);
-   });
- });
+function isAdminOnlyItem(item){
+  return ADMIN_ONLY_ITEM_KEYS.has(String(item?.item_key || ""));
 }
 
-async function addAdminUserItem(){
- if(!userItemTargetUsername){
-   alert("先にユーザー詳細を開いてください。");
-   return;
- }
- const select=document.getElementById("userItemAddSelect");
- const itemKey=select?.value||"";
- if(!itemKey){
-   alert("付与するアイテムを選択してください。");
-   return;
- }
- const button=document.getElementById("userItemAddButton");
- if(button)button.disabled=true;
+function normalizeItemType(item){
+  return item?.item_type === "name_decoration" ? "name_decoration"
+    : item?.item_type === "background" ? "background"
+    : "frame";
+}
 
- const {data,error}=await supabaseClient.rpc("admin_add_user_item",{
-   target_user_id:userItemTargetUsername,
-   target_item_key:itemKey
- });
+function itemTypeLabel(type){
+  return type === "name_decoration" ? "✨ 名前装飾"
+    : type === "background" ? "🎨 背景"
+    : "🖼️ フレーム";
+}
 
- if(button)button.disabled=false;
+function itemListElements(type){
+  if(type === "name_decoration") return {
+    list:document.getElementById("userItemsNameList"),
+    count:document.getElementById("userItemCountName")
+  };
+  if(type === "background") return {
+    list:document.getElementById("userItemsBackgroundList"),
+    count:document.getElementById("userItemCountBackground")
+  };
+  return {
+    list:document.getElementById("userItemsFrameList"),
+    count:document.getElementById("userItemCountFrame")
+  };
+}
 
- if(error){
-   alert("❌ アイテム付与に失敗しました。\n\n"+error.message);
-   return;
- }
+async function loadAdminUserItems(targetUserId){
+  const loading=document.getElementById("userItemsLoading");
+  const lists=[
+    document.getElementById("userItemsFrameList"),
+    document.getElementById("userItemsNameList"),
+    document.getElementById("userItemsBackgroundList")
+  ];
+  if(!loading||lists.some(x=>!x))return;
 
- alert(data?.message||"アイテムを付与しました。");
- select.value="";
- await loadAdminUserItems(userItemTargetUsername);
- await logOperation(`ユーザー「${userItemTargetUsername}」にアイテム「${itemKey}」を付与しました。`);
+  userItemTargetUsername=String(targetUserId||"");
+  loading.classList.remove("hidden");
+  loading.textContent="🔄 アイテム所持状況を読み込んでいます...";
+  lists.forEach(list=>list.innerHTML='<div class="loading">読み込み中...</div>');
+
+  const {data:owned,error}=await supabaseClient.rpc("admin_get_user_items",{
+    target_user_id:userItemTargetUsername
+  });
+  if(error){
+    loading.textContent="❌ 所持アイテム取得エラー：\n"+error.message;
+    lists.forEach(list=>list.innerHTML='<div class="empty">読み込みに失敗しました。</div>');
+    return;
+  }
+
+  const {data:allItems,error:allError}=await supabaseClient
+    .from("coin_items")
+    .select("item_key,name,icon,item_type,frame_color")
+    .order("item_type",{ascending:true})
+    .order("name",{ascending:true});
+
+  if(allError){
+    loading.textContent="❌ アイテム一覧取得エラー：\n"+allError.message;
+    lists.forEach(list=>list.innerHTML='<div class="empty">読み込みに失敗しました。</div>');
+    return;
+  }
+
+  // 管理者限定アイテムは、他ユーザーへの付与・所持管理の対象から除外。
+  const visibleItems=(allItems||[]).filter(item=>!isAdminOnlyItem(item));
+  const ownedKeys=new Set((owned||[]).map(item=>String(item.item_key)));
+
+  const grouped={
+    frame:[],
+    name_decoration:[],
+    background:[]
+  };
+
+  visibleItems.forEach(item=>{
+    const type=normalizeItemType(item);
+    grouped[type].push(item);
+  });
+
+  ["frame","name_decoration","background"].forEach(type=>{
+    const {list,count}=itemListElements(type);
+    const items=grouped[type];
+    const ownedCount=items.filter(item=>ownedKeys.has(String(item.item_key))).length;
+    count.textContent=`${ownedCount} / ${items.length}`;
+
+    if(!items.length){
+      list.innerHTML='<div class="empty">アイテムがありません。</div>';
+      return;
+    }
+
+    list.innerHTML="";
+    items.forEach(item=>{
+      const itemKey=String(item.item_key);
+      const checked=ownedKeys.has(itemKey);
+      const ownedItem=(owned||[]).find(x=>String(x.item_key)===itemKey);
+      const row=document.createElement("label");
+      row.className="user-item-check"+(ownedItem?.is_equipped?" equipped":"");
+      row.innerHTML=`
+        <input type="checkbox"
+          data-user-item-toggle="${escapeAttribute(itemKey)}"
+          data-item-type="${escapeAttribute(type)}"
+          ${checked?"checked":""}>
+        <div class="user-item-check-icon">${escapeHtml(item.icon||"🎁")}</div>
+        <div class="user-item-check-main">
+          <div class="user-item-check-name">${escapeHtml(item.name||itemKey)}</div>
+          <div class="user-item-check-meta">${itemTypeLabel(type)} / ID：${escapeHtml(itemKey)}${ownedItem?.is_equipped?" / 現在装備中":""}</div>
+        </div>
+        <span class="user-item-check-saving"></span>`;
+      list.appendChild(row);
+    });
+  });
+
+  loading.classList.add("hidden");
+
+  document.querySelectorAll("[data-user-item-toggle]").forEach(input=>{
+    input.addEventListener("change",()=>toggleAdminUserItem(input));
+  });
+}
+
+async function toggleAdminUserItem(input){
+  const itemKey=String(input.dataset.userItemToggle||"");
+  if(!itemKey||!userItemTargetUsername)return;
+
+  // 管理者限定3アイテムは絶対に変更させない。
+  if(ADMIN_ONLY_ITEM_KEYS.has(itemKey)){
+    input.checked=false;
+    alert("管理者限定アイテムは他のユーザーに渡せません。");
+    return;
+  }
+
+  const row=input.closest(".user-item-check");
+  const saving=row?.querySelector(".user-item-check-saving");
+  const shouldOwn=input.checked;
+  input.disabled=true;
+  if(saving)saving.textContent="保存中…";
+
+  try{
+    if(shouldOwn){
+      const {data,error}=await supabaseClient.rpc("admin_add_user_item",{
+        target_user_id:userItemTargetUsername,
+        target_item_key:itemKey
+      });
+      if(error)throw error;
+      if(data?.ok===false)throw new Error(data.message||"アイテムを付与できませんでした。");
+    }else{
+      const {data,error}=await supabaseClient.rpc("admin_remove_user_item",{
+        target_user_id:userItemTargetUsername,
+        target_item_key:itemKey
+      });
+      if(error)throw error;
+      if(data?.ok===false)throw new Error(data.message||"アイテムを削除できませんでした。");
+    }
+
+    if(saving)saving.textContent="保存しました";
+    await logOperation(
+      shouldOwn
+        ? `ユーザー「${userItemTargetUsername}」にアイテム「${itemKey}」を付与しました。`
+        : `ユーザー「${userItemTargetUsername}」からアイテム「${itemKey}」を削除しました。`
+    );
+
+    // 現在装備中表示や所持数を正確に更新。
+    await loadAdminUserItems(userItemTargetUsername);
+  }catch(error){
+    input.checked=!shouldOwn;
+    if(saving)saving.textContent="";
+    alert((shouldOwn?"❌ アイテム付与に失敗しました。":"❌ アイテム削除に失敗しました。")+
+      "\n\n"+(error.message||error));
+    input.disabled=false;
+  }
 }
 
 async function openUserDetail(username){
