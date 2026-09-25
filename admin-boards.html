@@ -33,7 +33,7 @@ async function load(){
  const list=document.getElementById("list");list.innerHTML="";
  rows.forEach(b=>{
   const a=document.createElement("a");a.className="card";
-  a.href="board-number-chat_global-admin.html?board="+encodeURIComponent(b.id);
+  a.href="board-number-chat. html?board="+encodeURIComponent(b.id);
   a.innerHTML='<div class="name">🔢 '+escapeHtml(b.name||"名前なし")+'</div><div class="info">🛡️ 管理者閲覧・メンバー登録なし</div>';
   list.appendChild(a);
  });
