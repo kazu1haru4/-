@@ -98,6 +98,7 @@ let localStream=null;
 let remoteStream=null;
 let callId="";
 let inboxChannel=null;
+let ringTimer=null;
 let timer=null;
 let callStartedAt=0;
 let muted=false;
@@ -165,6 +166,28 @@ async function sendIncomingRing(){
   }catch(e){
     console.error("着信通知送信:",e);
   }
+}
+
+function startRingRetry(){
+  if(ringTimer)clearInterval(ringTimer);
+
+  /* Broadcastは一瞬しか届かないので、相手がchat.htmlを開いている
+     タイミングに合わせて数秒間再送する */
+  let count=0;
+
+  const send=async()=>{
+    if(ended||!callId||count>=15){
+      clearInterval(ringTimer);
+      ringTimer=null;
+      return;
+    }
+
+    count++;
+    await sendIncomingRing();
+  };
+
+  send();
+  ringTimer=setInterval(send,1000);
 }
 
 function startTimer(){
@@ -245,7 +268,7 @@ async function caller(){
   statusEl.textContent="📞 呼び出しています...";
 
   /* 相手のchat.htmlに着信を知らせる */
-  await sendIncomingRing();
+  startRingRetry();
 
   /* 通話ページ同士の接続にもringを送る */
   await sendSignal({
@@ -475,6 +498,7 @@ endButton.addEventListener("click",()=>finish(true));
 window.addEventListener("pagehide",()=>{
   if(pc)pc.close();
   if(localStream)localStream.getTracks().forEach(t=>t.stop());
+  if(ringTimer)clearInterval(ringTimer);
   if(channel)db.removeChannel(channel);
   if(inboxChannel)db.removeChannel(inboxChannel);
 });
