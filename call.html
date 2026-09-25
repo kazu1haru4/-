@@ -80,7 +80,7 @@ async function getSkywayToken(){
 }
 
 async function ensureSkyway(){
- if(skyConnected)return true;
+ if(skyJoined)return skyConnected;
  if(!window.skyway_room)throw new Error("SkyWay SDKを読み込めませんでした");
  if(!callId)throw new Error("通話IDがありません");
  if(!(await getMic()))return false;
@@ -90,6 +90,7 @@ async function ensureSkyway(){
  skyContext=await SkyWayContext.Create(token);
  skyRoom=await SkyWayRoom.FindOrCreate(skyContext,{name:"friend-chat-call-"+callId});
  skyMember=await skyRoom.join({name:currentUsername});
+ skyJoined=true;
  const audioStream=await SkyWayStreamFactory.createMicrophoneAudioStream();
  skyAudioPublication=await skyMember.publish(audioStream,{type:"p2p"});
 
@@ -107,8 +108,7 @@ async function ensureSkyway(){
  skyRoom.publications.forEach(p=>subscribeAudio(p));
  skyRoom.onStreamPublished.add(e=>subscribeAudio(e.publication));
  skyRoom.onStreamUnpublished.add(()=>{document.getElementById("skywayRemoteAudio")?.remove()});
- skyConnected=true;
- statusEl.textContent=incoming?"🔄 相手の音声を待っています...":"📞 呼び出しています...";
+ if(!skyConnected)statusEl.textContent=incoming?"🔄 相手の音声を待っています...":"📞 呼び出しています...";
  return true;
 }
 
@@ -121,7 +121,7 @@ async function caller(){
 }
 async function answer(){
  answerButton.classList.add("hidden");rejectButton.classList.add("hidden");
- try{const ok=await ensureSkyway();if(!ok)throw new Error("マイクを取得できません");statusEl.textContent="🔄 接続中..."}
+ try{const ok=await ensureSkyway();if(!ok)throw new Error("マイクを取得できません");if(!skyConnected)statusEl.textContent="🔄 接続中..."}
  catch(e){console.error(e);statusEl.textContent="⚠️ 通話に接続できませんでした";answerButton.classList.remove("hidden");rejectButton.classList.remove("hidden")}
 }
 async function handleSignal(data){
@@ -136,7 +136,7 @@ async function finish(send=true){
  if(send&&callId){try{await sendSignal({type:"end",callId})}catch(e){}}
  try{if(skyMember)await skyMember.leave()}catch(e){}
  try{if(skyRoom)await skyRoom.dispose()}catch(e){}
- skyMember=null;skyRoom=null;skyContext=null;skyAudioPublication=null;skyConnected=false;
+ skyMember=null;skyRoom=null;skyContext=null;skyAudioPublication=null;skyJoined=false;skyConnected=false;
  if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null}
  document.getElementById("skywayRemoteAudio")?.remove();
  if(channel){try{await db.removeChannel(channel)}catch(e){}channel=null}
