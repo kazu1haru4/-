@@ -91,7 +91,7 @@ async function ensureSkyway(){
  skyRoom=await SkyWayRoom.FindOrCreate(skyContext,{name:"friend-chat-call-"+callId});
  skyMember=await skyRoom.join({name:currentUsername});
  skyJoined=true;
- const audioStream=await SkyWayStreamFactory.createMicrophoneAudioStream();
+ const {audio: audioStream}=await SkyWayStreamFactory.createMicrophoneAudioAndCameraStream({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
  skyAudioPublication=await skyMember.publish(audioStream,{type:"p2p"});
 
  const subscribeAudio=async publication=>{
