@@ -199,6 +199,12 @@ body{display:flex;flex-direction:column}
 .mute-banner{display:none;background:#fff0f0;color:#c94b4b;border-top:1px solid #ffd1d1;border-bottom:1px solid #ffd1d1;padding:8px 12px;text-align:center;font-size:12px;font-weight:bold;z-index:66}.mute-banner.show{display:block}.member-mute-status{margin-top:5px;padding:4px 7px;border-radius:8px;background:#fff0f0;color:#c94b4b;font-size:11px;font-weight:bold;display:inline-block}.mute-control{margin-top:7px;width:100%;padding:7px 8px;border:1px solid #ddd;border-radius:9px;background:white;font-size:12px;color:#555;outline:none}.mute-control:focus{border-color:var(--theme)}.mute-clear-button{margin-top:6px;width:100%;padding:7px 8px;border:none;border-radius:9px;background:#ffe8e8;color:#c94b4b;font-size:12px;font-weight:bold;cursor:pointer}
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);align-items:center;justify-content:center;padding:20px;z-index:200}.modal-box{width:100%;max-width:380px;background:white;border-radius:20px;padding:22px;box-shadow:0 8px 30px rgba(0,0,0,.18);max-height:85vh;overflow-y:auto}.modal-title{font-size:20px;font-weight:bold;color:#444;text-align:center;margin-bottom:15px}.admin-note{background:var(--theme-light);color:var(--theme-text);border-radius:10px;padding:9px 10px;font-size:12px;margin-bottom:12px;text-align:center}.member-list{margin-bottom:15px}.member-item{display:flex;align-items:flex-start;gap:10px;background:var(--theme-light);border-radius:12px;padding:10px;margin-bottom:8px}.member-icon-frame{width:44px;height:44px;border-radius:50%;padding:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;background:#eee8ff}.member-icon-frame .member-icon{width:38px;height:38px}.member-icon{border-radius:50%;background:var(--theme-light);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden}.member-icon img{width:100%;height:100%;object-fit:cover;filter:none!important;mix-blend-mode:normal!important;opacity:1!important;border-radius:50%;display:block}.member-icon-badge{display:none;position:absolute;right:-3px;top:-3px;width:19px;height:19px;border-radius:50%;background:white;align-items:center;justify-content:center;font-size:11px;box-shadow:0 2px 5px rgba(0,0,0,.15);z-index:3}.member-icon-badge.show{display:flex}.member-info{min-width:0;flex:1}.member-name{font-size:14px;font-weight:bold;color:#444;word-break:break-word}.member-id{font-size:12px;color:#888;word-break:break-word}.member-status{font-size:12px;font-weight:bold;margin-top:3px}.member-status.online{color:#22a447}.member-status.offline{color:#999}.last-online{font-size:11px;color:#999;margin-top:2px;word-break:break-word}.role-badge{display:inline-block;margin-top:5px;padding:3px 7px;border-radius:8px;font-size:11px;font-weight:bold}.role-owner{background:#fff0c2;color:#a87800}.role-admin{background:#e8e1ff;color:#5e50c9}.role-member{background:#eee;color:#777}.role-control{margin-top:7px;width:100%;padding:7px 8px;border:1px solid #ddd;border-radius:9px;background:white;font-size:12px;color:#555;outline:none}.role-control:focus{border-color:var(--theme)}.member-loading,.member-empty{text-align:center;color:#888;padding:15px 5px;font-size:14px}#memberInput{width:100%;padding:12px;border:1px solid #ddd;border-radius:12px;font-size:16px;margin-bottom:10px}#memberInput:focus{outline:none;border-color:var(--theme)}.modal-buttons{display:flex;gap:8px}.modal-buttons button{flex:1;border:none;border-radius:12px;padding:12px;font-weight:bold;cursor:pointer}#addMemberButton{background:var(--theme);color:white}#closeModalButton{background:#eee;color:#555}.add-section-title{font-size:14px;font-weight:bold;color:#555;margin-bottom:8px}
 .name-decoration-sakura{color:#ff4f9b!important}.name-decoration-star{color:#d79a00!important}.name-decoration-diamond{color:#159ed6!important}.name-decoration-heart{color:#ff3d7e!important}.name-decoration-rainbow{background:linear-gradient(90deg,#ff3b3b,#ff9f1c,#ffe600,#43d17a,#35bfff,#7467ff,#c64cff);-webkit-background-clip:text;background-clip:text;color:transparent!important}.name-decoration-flame{color:#ff6500!important}.name-decoration-sea{color:#0077ff!important}.name-decoration-space{color:#6d28d9!important}.name-decoration-neon{color:#00bfae!important;text-shadow:0 0 5px rgba(0,255,220,.5),0 0 10px rgba(0,255,220,.25)}.name-decoration-admin{color:#d39b00!important}.admin-name-badge{margin-left:4px;font-size:12px}
+
+
+/* ===== 入力中表示 ===== */
+.group-typing-indicator{position:absolute;left:12px;right:12px;bottom:calc(100% + 5px);min-height:22px;padding:5px 10px;background:rgba(255,255,255,.96);border:1px solid #e7e2ff;border-radius:12px;color:#777;font-size:12px;font-weight:bold;box-shadow:0 3px 10px rgba(0,0,0,.06);opacity:0;transform:translateY(4px);pointer-events:none;transition:.18s;z-index:75}
+
+.group-typing-indicator.show{opacity:1;transform:none}
 </style>
 </head>
 <body>
@@ -218,6 +224,7 @@ body{display:flex;flex-direction:column}
 <div class="messages-wrapper"><div id="messages" class="messages"></div><button id="latestButton" type="button">⬇️ 最新へ</button></div>
 <div id="muteBanner" class="mute-banner"></div>
 <div id="replyArea" class="reply-area"><div class="reply-info"><div id="replyText" class="reply-text"></div><button id="cancelReplyButton" type="button">✕</button></div></div>
+<div id="typingIndicator" class="typing-indicator"></div>
 <div class="input-area"><input id="messageInput" type="text" placeholder="メッセージを入力..." autocomplete="off"><button id="imageButton" type="button">🖼️</button><button id="sendButton" type="button">送信</button></div>
 <div id="mentionList" class="mention-list"></div><input id="imageInput" type="file" accept="image/*">
 <div id="memberModal" class="modal"><div class="modal-box"><div class="modal-title">👥 グループメンバー</div><div id="adminNote" class="admin-note" style="display:none">👑 管理者です。メンバーの副管理者設定と発言禁止設定ができます。</div><div id="memberList" class="member-list"><div class="member-loading">読み込み中...</div></div><div class="add-section"><div class="add-section-title">➕ メンバーを追加</div><input id="memberInput" type="text" placeholder="追加するユーザーID" autocomplete="off"><div class="modal-buttons"><button id="closeModalButton" type="button">閉じる</button><button id="addMemberButton" type="button">追加</button></div></div></div></div>
@@ -295,9 +302,9 @@ applyTheme(localStorage.getItem("friendChatTheme")||"purple");
 const params=new URLSearchParams(window.location.search),groupId=params.get("id"),groupName=document.getElementById("groupName"),messages=document.getElementById("messages"),latestButton=document.getElementById("latestButton"),messageInput=document.getElementById("messageInput"),sendButton=document.getElementById("sendButton"),imageButton=document.getElementById("imageButton"),imageInput=document.getElementById("imageInput"),memberButton=document.getElementById("memberButton"),memberModal=document.getElementById("memberModal"),memberList=document.getElementById("memberList"),memberInput=document.getElementById("memberInput"),addMemberButton=document.getElementById("addMemberButton"),closeModalButton=document.getElementById("closeModalButton"),replyArea=document.getElementById("replyArea"),replyText=document.getElementById("replyText"),cancelReplyButton=document.getElementById("cancelReplyButton"),mentionList=document.getElementById("mentionList"),adminNote=document.getElementById("adminNote"),muteBanner=document.getElementById("muteBanner");
 const editGroupButton=document.getElementById("editGroupButton");
 const deleteGroupButton=document.getElementById("deleteGroupButton");
-const leaveGroupButton=document.getElementById("leaveGroupButton");
 
 let currentUsername="",replyingToMessage=null,editingMessage=null,groupMembersCache=[],presenceTimer=null,groupOwnerId="",currentGroupRole="member",isGroupAdmin=false,groupMutesCache=[],currentMute=null,muteTimer=null;const profileCache={},itemCache={},groupReadCounts={};let loadingMessages=false,realtimeQueue=Promise.resolve(),readUpdateTimer=null;
+const pendingLocalMessageIds=new Set();
 const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
 const NAME_DECORATION_MAP={nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",nd_neon:"name-decoration-neon",name_sakura:"name-decoration-sakura",admin_name:"name-decoration-admin"};
 function getNameClass(itemKey){return NAME_DECORATION_MAP[itemKey]||""}
@@ -305,6 +312,17 @@ function updateGroupAdminState(){
   const isGlobalAdmin=ADMIN_USERNAMES.has(currentUsername);
   isGroupAdmin=isGlobalAdmin||currentUsername===groupOwnerId||currentGroupRole==="admin";
   if(adminNote)adminNote.style.display=isGroupAdmin?"block":"none";
+
+  // グループ操作ボタンの表示
+  // 名前変更・削除はグループ制作者または全体管理者のみ
+  const canManageGroup=isGlobalAdmin||currentUsername===groupOwnerId;
+  if(editGroupButton)editGroupButton.style.display=canManageGroup?"block":"none";
+  if(deleteGroupButton)deleteGroupButton.style.display=canManageGroup?"block":"none";
+
+  // グループを抜けるボタンは制作者以外に表示
+  if(leaveGroupButton){
+    leaveGroupButton.style.display=currentUsername===groupOwnerId?"none":"block";
+  }
 }
 function getFrameClass(itemKey,username){if(itemKey==="admin"&&ADMIN_USERNAMES.has(username))return "admin-frame";return {sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",space:"frame-space",neon:"frame-neon",rainbow:"frame-rainbow",flame:"frame-flame",sea:"frame-sea",heart:"frame-heart"}[itemKey]||""}
 function formatMessageTime(createdAt){if(!createdAt)return "";const d=new Date(createdAt);if(Number.isNaN(d.getTime()))return "";const now=new Date();const sameDay=d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()&&d.getDate()===now.getDate();if(sameDay)return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");return String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0")+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
@@ -316,7 +334,7 @@ async function getProfile(username){if(!username)return null;if(Object.prototype
 async function getItems(itemKeys){const unique=[...new Set((itemKeys||[]).filter(Boolean))];if(!unique.length)return;const missing=unique.filter(key=>!Object.prototype.hasOwnProperty.call(itemCache,key));if(!missing.length)return;const {data,error}=await supabaseClient.from("coin_items").select("item_key,icon,frame_color,item_type").in("item_key",missing);if(error){console.error("装備アイテム一括取得エラー:",error);return}(data||[]).forEach(item=>{itemCache[item.item_key]=item});missing.forEach(key=>{if(!Object.prototype.hasOwnProperty.call(itemCache,key))itemCache[key]=null})}
 async function getEquippedItem(itemKey){if(!itemKey)return null;if(Object.prototype.hasOwnProperty.call(itemCache,itemKey))return itemCache[itemKey];await getItems([itemKey]);return itemCache[itemKey]||null}
 function createAvatarSync(profile){const username=profile?.user_id||"",item=profile?.equipped_item_key?itemCache[profile.equipped_item_key]:null,frame=document.createElement("div");frame.className="message-avatar-frame";const frameClass=getFrameClass(profile?.equipped_item_key,username);if(frameClass)frame.classList.add(frameClass);else frame.style.background=item?.frame_color||"#eee8ff";const avatar=document.createElement("div");avatar.className="message-avatar";if(profile?.avatar_url){const img=document.createElement("img");img.src=profile.avatar_url;img.alt="プロフィール画像";avatar.appendChild(img)}else avatar.textContent="👤";frame.appendChild(avatar);if(item?.icon){const badge=document.createElement("div");badge.className="message-avatar-badge show";badge.textContent=item.icon;badge.style.border="2px solid "+(item.frame_color||"#eee8ff");frame.appendChild(badge)}return frame}
-async function loadGroup(){if(!groupId){groupName.textContent="グループIDがありません";return}const {data,error}=await supabaseClient.from("groups").select("id,name,owner_id").eq("id",groupId).maybeSingle();if(error){console.error("グループ取得エラー:",error);groupName.textContent="グループを読み込めませんでした";return}if(!data){groupName.textContent="グループが見つかりません";return}groupName.textContent=data.name||"グループ";groupOwnerId=data.owner_id||"";updateGroupAdminState();if(leaveGroupButton){leaveGroupButton.style.display=currentUsername!==groupOwnerId?"block":"none"}}
+async function loadGroup(){if(!groupId){groupName.textContent="グループIDがありません";return}const {data,error}=await supabaseClient.from("groups").select("id,name,owner_id").eq("id",groupId).maybeSingle();if(error){console.error("グループ取得エラー:",error);groupName.textContent="グループを読み込めませんでした";return}if(!data){groupName.textContent="グループが見つかりません";return}groupName.textContent=data.name||"グループ";groupOwnerId=data.owner_id||"";updateGroupAdminState()}
 async function renameGroup(){
   const isGlobalAdmin=ADMIN_USERNAMES.has(currentUsername);
   const canManage=currentUsername===groupOwnerId||isGlobalAdmin;
@@ -391,8 +409,70 @@ async function deleteGroup(){
 async function loadGroupMembers(){const {data,error}=await supabaseClient.from("group_members").select("id,group_id,user_id,role,created_at").eq("group_id",groupId).order("created_at",{ascending:true});if(error){console.error("グループメンバー取得エラー:",error);return}groupMembersCache=data||[];await getProfiles(groupMembersCache.map(member=>member.user_id));await getItems(Object.values(profileCache).filter(Boolean).map(profile=>profile.equipped_item_key));const me=groupMembersCache.find(member=>member.user_id===currentUsername);currentGroupRole=me?.role||"member";updateGroupAdminState()}
 async function loadGroupMutes(){const {data,error}=await supabaseClient.from("group_mutes").select("id,group_id,user_id,muted_until,created_by,created_at").eq("group_id",groupId);if(error){console.error("発言禁止情報取得エラー:",error);return}groupMutesCache=data||[];updateCurrentMute()}
 function updateCurrentMute(){currentMute=groupMutesCache.find(mute=>mute.user_id===currentUsername&&new Date(mute.muted_until).getTime()>Date.now())||null;if(muteTimer){clearTimeout(muteTimer);muteTimer=null}if(currentMute){const until=new Date(currentMute.muted_until);muteBanner.textContent="🔇 発言禁止中です。解除予定："+until.toLocaleString("ja-JP");muteBanner.classList.add("show");messageInput.disabled=true;sendButton.disabled=true;imageButton.disabled=true;const remaining=until.getTime()-Date.now();if(remaining>0)muteTimer=setTimeout(async()=>{await loadGroupMutes()},Math.min(remaining+500,2147483647))}else{muteBanner.textContent="";muteBanner.classList.remove("show");messageInput.disabled=false;sendButton.disabled=false;imageButton.disabled=false}}
-async function setMute(username,minutes){if(!isGroupAdmin){alert("管理者だけが設定できます");return}if(!username||username===groupOwnerId){alert("このユーザーには設定できません");return}const value=Number(minutes);if(!Number.isFinite(value)||value<=0){alert("正しい時間を入力してください");return}const until=new Date(Date.now()+value*60*1000).toISOString();const {error}=await supabaseClient.from("group_mutes").upsert({group_id:groupId,user_id:username,muted_until:until,created_by:currentUsername},{onConflict:"group_id,user_id"});if(error){console.error(error);alert("発言禁止の設定に失敗しました");return}await Promise.all([loadGroupMutes(),loadMembers()])}
-async function clearMute(username){if(!isGroupAdmin)return;const {error}=await supabaseClient.from("group_mutes").delete().eq("group_id",groupId).eq("user_id",username);if(error){console.error(error);alert("発言禁止の解除に失敗しました");return}await Promise.all([loadGroupMutes(),loadMembers()])}
+async function setMute(username,minutes){
+  if(!isGroupAdmin){alert("管理者だけが設定できます");return}
+  if(!username||username===groupOwnerId){alert("このユーザーには設定できません");return}
+  const value=Number(minutes);
+  if(!Number.isFinite(value)||value<=0){alert("正しい時間を入力してください");return}
+
+  const isGlobalAdmin=ADMIN_USERNAMES.has(currentUsername);
+  let error=null;
+
+  if(isGlobalAdmin){
+    const result=await supabaseClient.rpc("admin_group_set_mute",{
+      target_group_id:Number(groupId),
+      target_username:username,
+      mute_minutes:value
+    });
+    error=result.error;
+  }else{
+    const until=new Date(Date.now()+value*60*1000).toISOString();
+    const result=await supabaseClient.from("group_mutes").upsert({
+      group_id:groupId,
+      user_id:username,
+      muted_until:until,
+      created_by:currentUsername
+    },{onConflict:"group_id,user_id"});
+    error=result.error;
+  }
+
+  if(error){
+    console.error("発言禁止設定エラー:",error);
+    alert("発言禁止の設定に失敗しました\n\n"+error.message);
+    return;
+  }
+
+  await Promise.all([loadGroupMutes(),loadMembers()]);
+}
+
+async function clearMute(username){
+  if(!isGroupAdmin)return;
+
+  const isGlobalAdmin=ADMIN_USERNAMES.has(currentUsername);
+  let error=null;
+
+  if(isGlobalAdmin){
+    const result=await supabaseClient.rpc("admin_group_clear_mute",{
+      target_group_id:Number(groupId),
+      target_username:username
+    });
+    error=result.error;
+  }else{
+    const result=await supabaseClient.from("group_mutes").delete()
+      .eq("group_id",groupId)
+      .eq("user_id",username);
+    error=result.error;
+  }
+
+  if(error){
+    console.error("発言禁止解除エラー:",error);
+    alert("発言禁止の解除に失敗しました\n\n"+error.message);
+    return;
+  }
+
+  await Promise.all([loadGroupMutes(),loadMembers()]);
+}
+
 async function setDeputyAdmin(username,makeAdmin){if(currentUsername!==groupOwnerId){alert("副管理者を変更できるのはグループオーナーだけです");return}if(username===groupOwnerId)return;const {error}=await supabaseClient.from("group_members").update({role:makeAdmin?"admin":"member"}).eq("group_id",groupId).eq("user_id",username);if(error){console.error(error);alert("副管理者設定に失敗しました");return}await loadGroupMembers();await loadMembers()}
 async function loadGroupReadCounts(){const ids=Array.from(messages.querySelectorAll("[data-message-id]")).map(el=>Number(el.dataset.messageId)).filter(Boolean);if(!ids.length)return;const {data,error}=await supabaseClient.from("group_message_reads").select("group_message_id,user_id").in("group_message_id",ids);if(error){console.error("既読取得エラー:",error);return}Object.keys(groupReadCounts).forEach(key=>delete groupReadCounts[key]);(data||[]).forEach(row=>{const id=String(row.group_message_id);if(!groupReadCounts[id])groupReadCounts[id]=0;groupReadCounts[id]++});updateReadDisplays()}
 function updateReadDisplays(){messages.querySelectorAll("[data-read-message-id]").forEach(el=>{const id=el.dataset.readMessageId,count=groupReadCounts[id]||0;el.textContent=count>0?"既読 "+count+"人":"";el.style.display=count>0?"block":"none"})}
@@ -415,6 +495,47 @@ function updateMentionList(){const value=messageInput.value,cursor=messageInput.
 messageInput.addEventListener("input",updateMentionList);messageInput.addEventListener("click",updateMentionList);messageInput.addEventListener("keyup",updateMentionList);
 imageButton.addEventListener("click",()=>{if(!currentMute)imageInput.click()});imageInput.addEventListener("change",async()=>{const file=imageInput.files?.[0];if(!file)return;await sendImage(file);imageInput.value=""});
 
+/* ===== グループ入力中表示：Realtime Broadcast ===== */
+const typingIndicator=document.getElementById("typingIndicator");
+let typingTimer=null,typingHideTimer=null,groupTypingChannel=null,groupTypingReady=false;
+
+function showGroupTyping(username){
+  if(!username||username===currentUsername)return;
+  typingIndicator.textContent=username+" さんが入力中…";
+  typingIndicator.classList.add("show");
+  clearTimeout(typingHideTimer);
+  typingHideTimer=setTimeout(()=>{
+    typingIndicator.classList.remove("show");
+    typingIndicator.textContent="";
+  },1800);
+}
+
+function sendGroupTypingState(isTyping){
+  if(!groupTypingChannel||!groupTypingReady||!currentUsername||!groupId)return;
+  groupTypingChannel.send({
+    type:"broadcast",
+    event:"typing",
+    payload:{username:currentUsername,isTyping:!!isTyping}
+  }).catch(error=>console.warn("グループ入力中通知:",error));
+}
+
+function handleGroupTyping(){
+  if(messageInput.value.trim()){
+    sendGroupTypingState(true);
+    clearTimeout(typingTimer);
+    typingTimer=setTimeout(()=>sendGroupTypingState(false),1200);
+  }else{
+    clearTimeout(typingTimer);
+    sendGroupTypingState(false);
+  }
+}
+
+messageInput.addEventListener("input",handleGroupTyping);
+messageInput.addEventListener("blur",()=>{
+  clearTimeout(typingTimer);
+  sendGroupTypingState(false);
+});
+
 async function sendMessage(){
 const wasBanned=await checkFriendChatBan();
 if(wasBanned)return;
@@ -425,7 +546,8 @@ sendButton.disabled=true;
 try{
 const replyTarget=replyingToMessage;
 const {data,error}=await supabaseClient.from("group_messages").insert({group_id:Number(groupId),sender_id:currentUsername,content:value}).select("id,group_id,sender_id,content,image_url,created_at,is_deleted,edited_at").single();
-if(error){console.error(error);alert("メッセージ送信に失敗しました");return}
+if(error){console.error(error);alert("メッセージ送信に失敗しました\n\n"+error.message);return}
+pendingLocalMessageIds.add(String(data.id));
 messageInput.value="";
 mentionList.classList.remove("show");
 replyingToMessage=null;
@@ -438,6 +560,9 @@ void sendMentionNotifications(value,data.id);
 
 /* グループ全員へPush通知 */
 void createGroupMessageNotifications(value,data.id);
+
+/* Realtimeとの二重表示防止 */
+pendingLocalMessageIds.add(String(data.id));
 
 if(!messages.querySelector(`[data-message-id="${data.id}"]`)){
 const extras=await fetchMessageExtras([data]);
@@ -489,7 +614,7 @@ const {error}=await supabaseClient.from("notifications").insert(rows);
 if(error)console.error("メンション通知エラー:",error)
 }
 
-async function loadMembers(){memberList.innerHTML='<div class="member-loading">読み込み中...</div>';const {data:members,error}=await supabaseClient.from("group_members").select("id,group_id,user_id,role,created_at").eq("group_id",groupId).order("created_at",{ascending:true});if(error){console.error(error);memberList.innerHTML='<div class="member-empty">メンバーを読み込めませんでした</div>';return}if(!members?.length){memberList.innerHTML='<div class="member-empty">メンバーがいません</div>';return}const usernames=members.map(member=>member.user_id),{data:presenceData}=await supabaseClient.from("user_presence").select("user_id,last_seen").in("user_id",usernames),presenceMap={};(presenceData||[]).forEach(item=>{presenceMap[item.user_id]=item.last_seen});await getProfiles(usernames);await getItems(usernames.map(username=>profileCache[username]?.equipped_item_key));const fragment=document.createDocumentFragment();members.forEach(member=>{const profile=profileCache[member.user_id]||null,item=profile?.equipped_item_key?itemCache[profile.equipped_item_key]:null,itemElement=document.createElement("div");itemElement.className="member-item";const iconFrame=document.createElement("div");iconFrame.className="member-icon-frame";const frameClass=getFrameClass(profile?.equipped_item_key,member.user_id);if(frameClass)iconFrame.classList.add(frameClass);else iconFrame.style.background=item?.frame_color||"#eee8ff";const icon=document.createElement("div");icon.className="member-icon";if(profile?.avatar_url){const img=document.createElement("img");img.src=profile.avatar_url;img.alt="プロフィール画像";icon.appendChild(img)}else icon.textContent="👤";iconFrame.appendChild(icon);if(item?.icon){const badge=document.createElement("div");badge.className="member-icon-badge show";badge.textContent=item.icon;badge.style.border="2px solid "+(item.frame_color||"#eee8ff");iconFrame.appendChild(badge)}itemElement.appendChild(iconFrame);const info=document.createElement("div");info.className="member-info";const name=document.createElement("div");name.className="member-name";applyDecoratedName(name,profile,member.user_id);info.appendChild(name);const id=document.createElement("div");id.className="member-id";id.textContent="@"+member.user_id;info.appendChild(id);const lastSeen=presenceMap[member.user_id],online=isOnline(lastSeen),status=document.createElement("div");status.className="member-status "+(online?"online":"offline");status.textContent=online?"● オンライン":"● オフライン";info.appendChild(status);if(!online){const last=document.createElement("div");last.className="last-online";last.textContent=formatLastOnline(lastSeen);info.appendChild(last)}const roleBadge=document.createElement("div");roleBadge.className="role-badge";if(member.user_id===groupOwnerId){roleBadge.classList.add("role-owner");roleBadge.textContent="👑 オーナー"}else if(member.role==="admin"){roleBadge.classList.add("role-admin");roleBadge.textContent="🛡️ 副管理者"}else{roleBadge.classList.add("role-member");roleBadge.textContent="メンバー"}info.appendChild(roleBadge);const mute=groupMutesCache.find(m=>m.user_id===member.user_id&&new Date(m.muted_until).getTime()>Date.now());if(mute){const muteStatus=document.createElement("div");muteStatus.className="member-mute-status";muteStatus.textContent="🔇 発言禁止中";info.appendChild(muteStatus)}if(currentUsername===groupOwnerId&&member.user_id!==groupOwnerId){const roleControl=document.createElement("select");roleControl.className="role-control";const memberOption=document.createElement("option");memberOption.value="member";memberOption.textContent="通常メンバー";const adminOption=document.createElement("option");adminOption.value="admin";adminOption.textContent="副管理者";roleControl.appendChild(memberOption);roleControl.appendChild(adminOption);roleControl.value=member.role==="admin"?"admin":"member";roleControl.addEventListener("change",async()=>{await setDeputyAdmin(member.user_id,roleControl.value==="admin")});info.appendChild(roleControl)}if(isGroupAdmin&&member.user_id!==currentUsername&&member.user_id!==groupOwnerId){const muteControl=document.createElement("input");muteControl.type="number";muteControl.min="1";muteControl.placeholder="発言禁止（分）";muteControl.className="mute-control";info.appendChild(muteControl);const muteButton=document.createElement("button");muteButton.type="button";muteButton.className="mute-control";muteButton.textContent="🔇 発言禁止";muteButton.addEventListener("click",async()=>{await setMute(member.user_id,muteControl.value)});info.appendChild(muteButton);if(mute){const clearButton=document.createElement("button");clearButton.type="button";clearButton.className="mute-clear-button";clearButton.textContent="🔊 発言禁止を解除";clearButton.addEventListener("click",async()=>{await clearMute(member.user_id)});info.appendChild(clearButton)}}
+async function loadMembers(){memberList.innerHTML='<div class="member-loading">読み込み中...</div>';const {data:members,error}=await supabaseClient.from("group_members").select("id,group_id,user_id,role,created_at").eq("group_id",groupId).order("created_at",{ascending:true});if(error){console.error(error);memberList.innerHTML='<div class="member-empty">メンバーを読み込めませんでした</div>';return}if(!members?.length){memberList.innerHTML='<div class="member-empty">メンバーがいません</div>';return}const usernames=members.map(member=>member.user_id),{data:presenceData}=await supabaseClient.from("user_presence").select("user_id,last_seen").in("user_id",usernames),presenceMap={};(presenceData||[]).forEach(item=>{presenceMap[item.user_id]=item.last_seen});await getProfiles(usernames);await getItems(usernames.map(username=>profileCache[username]?.equipped_item_key));const fragment=document.createDocumentFragment();members.forEach(member=>{const profile=profileCache[member.user_id]||null,item=profile?.equipped_item_key?itemCache[profile.equipped_item_key]:null,itemElement=document.createElement("div");itemElement.className="member-item";const iconFrame=document.createElement("div");iconFrame.className="member-icon-frame";const frameClass=getFrameClass(profile?.equipped_item_key,member.user_id);if(frameClass)iconFrame.classList.add(frameClass);else iconFrame.style.background=item?.frame_color||"#eee8ff";const icon=document.createElement("div");icon.className="member-icon";if(profile?.avatar_url){const img=document.createElement("img");img.src=profile.avatar_url;img.alt="プロフィール画像";icon.appendChild(img)}else icon.textContent="👤";iconFrame.appendChild(icon);if(item?.icon){const badge=document.createElement("div");badge.className="member-icon-badge show";badge.textContent=item.icon;badge.style.border="2px solid "+(item.frame_color||"#eee8ff");iconFrame.appendChild(badge)}itemElement.appendChild(iconFrame);const info=document.createElement("div");info.className="member-info";const name=document.createElement("div");name.className="member-name";applyDecoratedName(name,profile,member.user_id);info.appendChild(name);const id=document.createElement("div");id.className="member-id";id.textContent="@"+member.user_id;info.appendChild(id);const lastSeen=presenceMap[member.user_id],online=isOnline(lastSeen),status=document.createElement("div");status.className="member-status "+(online?"online":"offline");status.textContent=online?"● オンライン":"● オフライン";info.appendChild(status);if(!online){const last=document.createElement("div");last.className="last-online";last.textContent=formatLastOnline(lastSeen);info.appendChild(last)}const roleBadge=document.createElement("div");roleBadge.className="role-badge";if(member.user_id===groupOwnerId){roleBadge.classList.add("role-owner");roleBadge.textContent="👑 オーナー"}else if(member.role==="admin"){roleBadge.classList.add("role-admin");roleBadge.textContent="🛡️ 副管理者"}else{roleBadge.classList.add("role-member");roleBadge.textContent="メンバー"}info.appendChild(roleBadge);const mute=groupMutesCache.find(m=>m.user_id===member.user_id&&new Date(m.muted_until).getTime()>Date.now());if(mute){const muteStatus=document.createElement("div");muteStatus.className="member-mute-status";muteStatus.textContent="🔇 発言禁止中";info.appendChild(muteStatus)}if(currentUsername===groupOwnerId&&member.user_id!==groupOwnerId){const roleControl=document.createElement("select");roleControl.className="role-control";const memberOption=document.createElement("option");memberOption.value="member";memberOption.textContent="通常メンバー";const adminOption=document.createElement("option");adminOption.value="admin";adminOption.textContent="副管理者";roleControl.appendChild(memberOption);roleControl.appendChild(adminOption);roleControl.value=member.role==="admin"?"admin":"member";roleControl.addEventListener("change",async()=>{await setDeputyAdmin(member.user_id,roleControl.value==="admin")});info.appendChild(roleControl)}if((isGroupAdmin||ADMIN_USERNAMES.has(currentUsername))&&member.user_id!==currentUsername&&member.user_id!==groupOwnerId){const muteControl=document.createElement("input");muteControl.type="number";muteControl.min="1";muteControl.placeholder="発言禁止（分）";muteControl.className="mute-control";info.appendChild(muteControl);const muteButton=document.createElement("button");muteButton.type="button";muteButton.className="mute-control";muteButton.textContent="🔇 発言禁止";muteButton.addEventListener("click",async()=>{await setMute(member.user_id,muteControl.value)});info.appendChild(muteButton);if(mute){const clearButton=document.createElement("button");clearButton.type="button";clearButton.className="mute-clear-button";clearButton.textContent="🔊 発言禁止を解除";clearButton.addEventListener("click",async()=>{await clearMute(member.user_id)});info.appendChild(clearButton)}}
 const canKick=isGroupAdmin&&member.user_id!==currentUsername&&member.user_id!==groupOwnerId&&(currentGroupRole!=="admin"||member.role!=="admin");
 if(canKick){const kickButton=document.createElement("button");kickButton.type="button";kickButton.className="mute-clear-button";kickButton.style.background="#fff0f0";kickButton.style.color="#d9534f";kickButton.textContent="🚪 グループから蹴る";kickButton.addEventListener("click",async()=>{await kickGroupMember(member.user_id)});info.appendChild(kickButton)}itemElement.appendChild(info);fragment.appendChild(itemElement)});memberList.innerHTML="";memberList.appendChild(fragment)}
 async function leaveGroup(){
@@ -509,8 +634,11 @@ async function leaveGroup(){
     groupRealtimeChannel=null;
   }
   if(groupTypingChannel){
+    clearTimeout(typingTimer);
+    clearTimeout(typingHideTimer);
     await supabaseClient.removeChannel(groupTypingChannel);
     groupTypingChannel=null;
+    groupTypingReady=false;
   }
   alert("グループから退出しました。");
   location.href="groups.html";
@@ -541,13 +669,96 @@ async function kickGroupMember(username){
 
 async function addMember(){const username=memberInput.value.trim();if(!username){alert("ユーザーIDを入力してください");return}if(groupMembersCache.some(member=>member.user_id===username)){alert("すでにメンバーです");return}const {data:profile,error:profileError}=await supabaseClient.from("profiles").select("user_id").eq("user_id",username).maybeSingle();if(profileError){console.error(profileError);alert("ユーザー確認に失敗しました");return}if(!profile){alert("そのユーザーIDは見つかりません");return}const {error}=await supabaseClient.from("group_members").insert({group_id:Number(groupId),user_id:username,role:"member"});if(error){console.error(error);alert("メンバー追加に失敗しました");return}memberInput.value="";await loadGroupMembers();await loadMembers()}
 addMemberButton.addEventListener("click",addMember);memberButton.addEventListener("click",async()=>{memberModal.style.display="flex";await loadMembers()});
+const leaveGroupButton=document.getElementById("leaveGroupButton");
 if(leaveGroupButton)leaveGroupButton.addEventListener("click",leaveGroup);
 if(editGroupButton)editGroupButton.addEventListener("click",renameGroup);
 if(deleteGroupButton)deleteGroupButton.addEventListener("click",deleteGroup);
 closeModalButton.addEventListener("click",()=>{memberModal.style.display="none"});memberModal.addEventListener("click",event=>{if(event.target===memberModal)memberModal.style.display="none"});
-function setupRealtime(){const channel=supabaseClient.channel("group-chat-"+groupId);channel.on("postgres_changes",{event:"INSERT",schema:"public",table:"group_messages",filter:"group_id=eq."+groupId},payload=>{realtimeQueue=realtimeQueue.then(async()=>{const message=payload.new;if(messages.querySelector(`[data-message-id="${message.id}"]`))return;const wasBottom=isNearBottom(),extras=await fetchMessageExtras([message]);messages.appendChild(buildMessageElement(message,extras));if(wasBottom)scrollToBottom();void markMessagesRead(message.sender_id!==currentUsername?[message.id]:[])}).catch(error=>console.error("Realtime INSERT処理エラー:",error))});channel.on("postgres_changes",{event:"UPDATE",schema:"public",table:"group_messages",filter:"group_id=eq."+groupId},payload=>{realtimeQueue=realtimeQueue.then(async()=>{const message=payload.new,old=messages.querySelector(`[data-message-id="${message.id}"]`);if(!old){await loadMessages();return}const extras=await fetchMessageExtras([message]);old.replaceWith(buildMessageElement(message,extras));await loadGroupReadCounts()}).catch(error=>console.error("Realtime UPDATE処理エラー:",error))});channel.on("postgres_changes",{event:"INSERT",schema:"public",table:"group_message_reads"},()=>{scheduleReadRefresh()});channel.on("postgres_changes",{event:"UPDATE",schema:"public",table:"group_message_reads"},()=>{scheduleReadRefresh()});channel.on("postgres_changes",{event:"INSERT",schema:"public",table:"group_mutes",filter:"group_id=eq."+groupId},async()=>{await loadGroupMutes()});channel.on("postgres_changes",{event:"UPDATE",schema:"public",table:"group_mutes",filter:"group_id=eq."+groupId},async()=>{await loadGroupMutes()});channel.on("postgres_changes",{event:"DELETE",schema:"public",table:"group_mutes",filter:"group_id=eq."+groupId},async()=>{await loadGroupMutes()});channel.subscribe()}
+function setupRealtime(){
+  const channel=supabaseClient.channel("group-chat-"+groupId);
+  groupRealtimeChannel=channel;
+
+  groupTypingReady=false;
+  groupTypingChannel=supabaseClient
+    .channel("group-typing-"+encodeURIComponent(String(groupId)))
+    .on("broadcast",{event:"typing"},payload=>{
+      const data=payload?.payload||{};
+      if(!data.username||data.username===currentUsername)return;
+      if(data.isTyping){
+        showGroupTyping(data.username);
+      }else{
+        clearTimeout(typingHideTimer);
+        typingIndicator.classList.remove("show");
+        typingIndicator.textContent="";
+      }
+    })
+    .subscribe(status=>{
+      groupTypingReady=status==="SUBSCRIBED";
+      if(status!=="SUBSCRIBED")console.warn("グループ入力中Realtime接続状態:",status);
+    });
+
+  channel.on("postgres_changes",{
+    event:"INSERT",schema:"public",table:"group_messages",
+    filter:"group_id=eq."+groupId
+  },payload=>{
+    realtimeQueue=realtimeQueue.then(async()=>{
+      const message=payload.new;
+      const messageId=String(message.id);
+
+      if(pendingLocalMessageIds.has(messageId)){
+        pendingLocalMessageIds.delete(messageId);
+        return;
+      }
+      if(messages.querySelector(`[data-message-id="${message.id}"]`))return;
+
+      const wasBottom=isNearBottom();
+      const extras=await fetchMessageExtras([message]);
+      if(messages.querySelector(`[data-message-id="${message.id}"]`))return;
+
+      messages.appendChild(buildMessageElement(message,extras));
+      if(wasBottom)scrollToBottom();
+      if(message.sender_id!==currentUsername)void markMessagesRead([message.id]);
+    }).catch(error=>console.error("Realtime INSERT処理エラー:",error));
+  });
+
+  channel.on("postgres_changes",{
+    event:"UPDATE",schema:"public",table:"group_messages",
+    filter:"group_id=eq."+groupId
+  },payload=>{
+    realtimeQueue=realtimeQueue.then(async()=>{
+      const message=payload.new;
+      const old=messages.querySelector(`[data-message-id="${message.id}"]`);
+      if(!old){await loadMessages();return}
+      const extras=await fetchMessageExtras([message]);
+      old.replaceWith(buildMessageElement(message,extras));
+      await loadGroupReadCounts();
+    }).catch(error=>console.error("Realtime UPDATE処理エラー:",error));
+  });
+
+  channel.on("postgres_changes",{event:"INSERT",schema:"public",table:"group_message_reads"},()=>scheduleReadRefresh());
+  channel.on("postgres_changes",{event:"UPDATE",schema:"public",table:"group_message_reads"},()=>scheduleReadRefresh());
+
+  channel.on("postgres_changes",{
+    event:"INSERT",schema:"public",table:"group_mutes",
+    filter:"group_id=eq."+groupId
+  },async()=>{await loadGroupMutes()});
+
+  channel.on("postgres_changes",{
+    event:"UPDATE",schema:"public",table:"group_mutes",
+    filter:"group_id=eq."+groupId
+  },async()=>{await loadGroupMutes()});
+
+  channel.on("postgres_changes",{
+    event:"DELETE",schema:"public",table:"group_mutes",
+    filter:"group_id=eq."+groupId
+  },async()=>{await loadGroupMutes()});
+
+  channel.subscribe(status=>{
+    if(status!=="SUBSCRIBED")console.warn("グループRealtime接続状態:",status);
+  });
+}
 async function start(){const wasBanned=await checkFriendChatBan();if(wasBanned)return;if(!groupId){groupName.textContent="グループIDがありません";return}const {data:{session}}=await supabaseClient.auth.getSession();if(!session){location.href="index.html";return}currentUsername=session.user.user_metadata?.username||"";if(!currentUsername){alert("ログイン情報が取得できませんでした");location.href="index.html";return}await Promise.all([updateMyPresence(),loadGroup()]);await loadGroupMembers();await loadGroupMutes();await loadMessages();setupRealtime();if(presenceTimer)clearInterval(presenceTimer);presenceTimer=setInterval(updateMyPresence,30000)}
-start();
+start().catch(error=>{console.error("グループチャット起動エラー:",error);if(groupName)groupName.textContent="読み込みに失敗しました";if(messages)messages.innerHTML="<div class=\"error\">読み込みに失敗しました。ページを再読み込みしてください。<br><small>"+String(error?.message||error)+"</small></div>"});
 
 async function reportGroupMessage(message){
  if(!message?.sender_id||message.sender_id===currentUsername)return;
