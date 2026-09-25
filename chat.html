@@ -12,6 +12,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
 .header{position:relative;flex-shrink:0;background:#fff;padding:12px 18px;padding-top:max(12px,env(safe-area-inset-top));text-align:center;box-shadow:0 3px 10px rgba(0,0,0,.06);z-index:5}
 .header h1{margin:0;font-size:18px}
 .home-button{position:absolute;top:max(12px,env(safe-area-inset-top));left:12px;padding:9px 12px;background:#f5f5f5;color:#555;text-decoration:none;border-radius:12px;font-size:13px;font-weight:bold}
+.call-button{position:absolute;top:max(12px,env(safe-area-inset-top));right:12px;padding:9px 12px;background:#8f7cff;color:#fff;border:0;border-radius:12px;font-size:13px;font-weight:bold;box-shadow:0 3px 9px rgba(143,124,255,.25)}
+.call-button:disabled{opacity:.5}
 .profile-header{margin-top:8px;display:flex;justify-content:center;align-items:center;gap:9px}
 .header-avatar-frame,.message-avatar-frame{position:relative;border-radius:50%;padding:3px;flex-shrink:0;transition:.2s}
 .header-avatar-frame{width:48px;height:48px;background:#eee8ff}
@@ -88,6 +90,7 @@ button:disabled{opacity:.5}#imageInput{display:none}
 <main class="container">
 <header class="header">
 <a href="home.html" class="home-button">🏠 ホーム</a>
+<button id="callButton" class="call-button" type="button">📞 通話</button>
 <div class="profile-header">
 <div id="headerAvatarFrame" class="header-avatar-frame"><div id="headerAvatar" class="header-avatar">👤</div><div id="headerAvatarBadge" class="avatar-badge"></div></div>
 <div><h1 id="chatTitle">💬 チャット</h1><div id="friendStatus" class="friend-status offline">⚪ オフライン</div></div>
@@ -112,7 +115,7 @@ const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
 const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=id=>document.getElementById(id);
-const messagesElement=$("messages"),messageInput=$("messageInput"),messageForm=$("messageForm"),sendButton=$("sendButton"),imageButton=$("imageButton"),imageInput=$("imageInput"),chatTitle=$("chatTitle"),headerAvatar=$("headerAvatar"),headerAvatarFrame=$("headerAvatarFrame"),headerAvatarBadge=$("headerAvatarBadge"),latestButton=$("latestButton"),friendStatus=$("friendStatus"),typingIndicator=$("typingIndicator");
+const messagesElement=$("messages"),messageInput=$("messageInput"),messageForm=$("messageForm"),sendButton=$("sendButton"),imageButton=$("imageButton"),imageInput=$("imageInput"),chatTitle=$("chatTitle"),headerAvatar=$("headerAvatar"),headerAvatarFrame=$("headerAvatarFrame"),headerAvatarBadge=$("headerAvatarBadge"),latestButton=$("latestButton"),friendStatus=$("friendStatus"),typingIndicator=$("typingIndicator"),callButton=$("callButton");
 const friendId=new URLSearchParams(location.search).get("user")||"";
 const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
 const frameMap={sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",heart:"frame-heart",rainbow:"frame-rainbow",flame:"frame-flame",sea:"frame-sea",space:"frame-space",neon:"frame-neon",admin:"admin-frame"};
@@ -529,6 +532,16 @@ imageInput.onchange=async()=>{
  finally{imageButton.disabled=false;sendButton.disabled=false;imageInput.value=""}
 };
 $("replyCancel").onclick=e=>{e.preventDefault();clearReplyTarget()};
+
+/* ===== 通話：別ページ call.html を開くだけ ===== */
+callButton.onclick=()=>{
+ if(!currentUsername||!friendId){
+  alert("通話相手の情報を取得できません。");
+  return;
+ }
+ location.href="call.html?user="+encodeURIComponent(friendId);
+};
+
 window.addEventListener("pagehide",()=>{
  clearTimeout(typingTimer);
  sendTypingState(false);
@@ -536,7 +549,7 @@ window.addEventListener("pagehide",()=>{
  if(realtimeChannel)db.removeChannel(realtimeChannel)
 });
 async function start(){
- if(!friendId){chatTitle.textContent="💬 相手が選ばれていません";messageForm.style.display="none";messagesElement.innerHTML='<div class="empty">フレンドから相手を選んでね</div>';return}
+ if(!friendId){chatTitle.textContent="💬 相手が選ばれていません";messageForm.style.display="none";callButton.style.display="none";messagesElement.innerHTML='<div class="empty">フレンドから相手を選んでね</div>';return}
  const {data,error}=await db.auth.getSession();if(error||!data.session){alert("ログインしてください。");location.href="index.html";return}
  currentUsername=data.session.user.user_metadata?.username||"";if(!currentUsername){alert("ログイン中のユーザーIDを取得できませんでした。");return}
  const [{data:fp,error:fe},{data:mp,error:me}]=await Promise.all([
