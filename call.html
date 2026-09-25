@@ -150,13 +150,36 @@ async function finish(send=true){
  try{if(skyMember)await skyMember.leave()}catch(e){}
  try{if(skyRoom)await skyRoom.dispose()}catch(e){}
  skyMember=null;skyRoom=null;skyContext=null;skyAudioPublication=null;skyJoined=false;skyConnected=false;
- if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null}
+ if(localStream){
+  try{
+   if(localStream.track)localStream.track.stop();
+   else if(typeof localStream.getTracks==="function")localStream.getTracks().forEach(t=>t.stop());
+  }catch(e){}
+  localStream=null;
+ }
  document.getElementById("skywayRemoteAudio")?.remove();
  if(channel){try{await db.removeChannel(channel)}catch(e){}channel=null}
  if(inboxChannel){try{await db.removeChannel(inboxChannel)}catch(e){}inboxChannel=null}
- if(history.length>1)history.back();else location.href="home.html";
+ const returnUrl="chat.html?user="+encodeURIComponent(friendId);
+ setTimeout(()=>{location.replace(returnUrl)},80);
 }
-function toggleMute(){if(!localStream)return;muted=!muted;localStream.getAudioTracks().forEach(t=>t.enabled=!muted);muteButton.textContent=muted?"🔇":"🎙️";statusEl.textContent=muted?"🔇 ミュート中":"🟢 通話中"}
+function toggleMute(){
+ if(!localStream)return;
+ muted=!muted;
+ try{
+  if(localStream.track){
+   localStream.track.enabled=!muted;
+  }else if(typeof localStream.getAudioTracks==="function"){
+   localStream.getAudioTracks().forEach(t=>t.enabled=!muted);
+  }
+ }catch(e){
+  console.error("ミュート切替エラー:",e);
+  muted=!muted;
+  return;
+ }
+ muteButton.textContent=muted?"🔇":"🎙️";
+ statusEl.textContent=muted?"🔇 ミュート中":"🟢 通話中";
+}
 
 async function init(){
  if(!friendId){statusEl.textContent="相手が指定されていません";endButton.classList.remove("hidden");endButton.textContent="🏠";return}
@@ -184,7 +207,12 @@ endButton.addEventListener("click",()=>finish(true));
 
 window.addEventListener("pagehide",()=>{
  stopRingRetry();
- if(localStream)localStream.getTracks().forEach(t=>t.stop());
+ if(localStream){
+  try{
+   if(localStream.track) localStream.track.stop();
+   else if(typeof localStream.getTracks==="function") localStream.getTracks().forEach(t=>t.stop());
+  }catch(e){}
+ }
  if(skyMember)skyMember.leave().catch(()=>{});
  if(skyRoom)skyRoom.dispose().catch(()=>{});
  if(channel)db.removeChannel(channel);
