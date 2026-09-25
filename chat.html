@@ -108,6 +108,37 @@ button:disabled{opacity:.5}#imageInput{display:none}
 <button class="send-button" id="sendButton" type="submit">送信</button>
 </form>
 <input id="imageInput" type="file" accept="image/*">
+
+<!-- ===== 通話着信通知：既存チャット機能とは独立 ===== -->
+<div id="incomingCallOverlay" style="
+ position:fixed;inset:0;z-index:99999;display:none;
+ align-items:center;justify-content:center;padding:20px;
+ background:rgba(20,20,30,.55);
+">
+  <div style="
+   width:100%;max-width:360px;background:#fff;border-radius:26px;
+   padding:28px 22px;text-align:center;
+   box-shadow:0 15px 50px rgba(0,0,0,.25);
+  ">
+    <div id="incomingCallAvatar" style="
+      width:82px;height:82px;margin:0 auto 15px;border-radius:50%;
+      overflow:hidden;background:#eee8ff;display:flex;
+      align-items:center;justify-content:center;font-size:34px;
+    ">👤</div>
+    <div id="incomingCallTitle" style="font-size:20px;font-weight:800">📞 着信</div>
+    <div style="color:#777;font-size:14px;margin-top:7px">音声通話がかかってきています</div>
+    <div style="display:flex;justify-content:center;gap:14px;margin-top:24px">
+      <button id="incomingCallAccept" type="button" style="
+        width:62px;height:62px;border:0;border-radius:50%;
+        background:#34c759;color:#fff;font-size:25px;
+      ">📞</button>
+      <button id="incomingCallReject" type="button" style="
+        width:62px;height:62px;border:0;border-radius:50%;
+        background:#ff3b30;color:#fff;font-size:25px;
+      ">📵</button>
+    </div>
+  </div>
+</div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -117,6 +148,14 @@ const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=id=>document.getElementById(id);
 const messagesElement=$("messages"),messageInput=$("messageInput"),messageForm=$("messageForm"),sendButton=$("sendButton"),imageButton=$("imageButton"),imageInput=$("imageInput"),chatTitle=$("chatTitle"),headerAvatar=$("headerAvatar"),headerAvatarFrame=$("headerAvatarFrame"),headerAvatarBadge=$("headerAvatarBadge"),latestButton=$("latestButton"),friendStatus=$("friendStatus"),typingIndicator=$("typingIndicator"),callButton=$("callButton");
 const friendId=new URLSearchParams(location.search).get("user")||"";
+const incomingCallOverlay=$("incomingCallOverlay");
+const incomingCallAvatar=$("incomingCallAvatar");
+const incomingCallTitle=$("incomingCallTitle");
+const incomingCallAccept=$("incomingCallAccept");
+const incomingCallReject=$("incomingCallReject");
+let incomingCallChannel=null;
+let incomingCallId="";
+
 const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
 const frameMap={sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",heart:"frame-heart",rainbow:"frame-rainbow",flame:"frame-flame",sea:"frame-sea",space:"frame-space",neon:"frame-neon",admin:"admin-frame"};
 const nameMap={nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",nd_neon:"name-decoration-neon",name_sakura:"name-decoration-sakura",admin_name:"name-decoration-admin"};
@@ -456,6 +495,91 @@ async function loadMessages(){
  if(!messages.length){messagesElement.innerHTML='<div class="empty">まだメッセージがありません</div>';updateLatestButton();return}
  const f=document.createDocumentFragment();messages.forEach(m=>f.appendChild(createMessageElement(m,urls.get(m.id)||"",extras)));messagesElement.appendChild(f);scrollToBottom();updateLatestButton();
 }
+function startIncomingCallListener(){
+ if(!currentUsername)return;
+
+ const pair=[currentUsername,friendId].sort().map(encodeURIComponent).join("-");
+ incomingCallChannel=db.channel("friend-call-"+pair);
+
+ incomingCallChannel
+  .on("broadcast",{event:"call"},async payload=>{
+    const data=payload?.payload||{};
+
+    if(!data.from||data.from===currentUsername)return;
+    if(data.type!=="ring")return;
+
+    /* 自分が開いている個別チャットの相手からの着信だけ表示 */
+    if(data.from!==friendId)return;
+
+    incomingCallId=data.callId||"";
+    incomingCallTitle.textContent="📞 "+(friendName||friendId)+"さんから着信";
+
+    incomingCallAvatar.innerHTML="";
+    if(friendAvatarUrl){
+      const img=document.createElement("img");
+      img.src=friendAvatarUrl;
+      img.alt="プロフィール画像";
+      img.style.width="100%";
+      img.style.height="100%";
+      img.style.objectFit="cover";
+      img.onerror=()=>{incomingCallAvatar.textContent="👤"};
+      incomingCallAvatar.appendChild(img);
+    }else{
+      incomingCallAvatar.textContent="👤";
+    }
+
+    incomingCallOverlay.style.display="flex";
+  })
+  .subscribe();
+}
+
+async function closeIncomingCallChannel(){
+ if(incomingCallChannel){
+   await db.removeChannel(incomingCallChannel);
+   incomingCallChannel=null;
+ }
+}
+
+incomingCallAccept.onclick=async()=>{
+ if(!incomingCallId)return;
+
+ const caller=friendId;
+ const callParam=encodeURIComponent(incomingCallId);
+
+ incomingCallOverlay.style.display="none";
+ await closeIncomingCallChannel();
+
+ location.href=
+   "call.html?user="+encodeURIComponent(caller)+
+   "&incoming=1&call="+callParam;
+};
+
+incomingCallReject.onclick=async()=>{
+ if(!incomingCallId){
+   incomingCallOverlay.style.display="none";
+   return;
+ }
+
+ if(incomingCallChannel){
+   try{
+     await incomingCallChannel.send({
+       type:"broadcast",
+       event:"call",
+       payload:{
+         type:"reject",
+         callId:incomingCallId,
+         from:currentUsername
+       }
+     });
+   }catch(error){
+     console.warn("着信拒否通知:",error);
+   }
+ }
+
+ incomingCallOverlay.style.display="none";
+ incomingCallId="";
+};
+
 function startRealtime(){
  if(realtimeChannel)return;
  realtimeChannel=db.channel("chat-"+currentUsername+"-"+friendId)
@@ -546,7 +670,8 @@ window.addEventListener("pagehide",()=>{
  clearTimeout(typingTimer);
  sendTypingState(false);
  if(presenceTimer)clearInterval(presenceTimer);
- if(realtimeChannel)db.removeChannel(realtimeChannel)
+ if(realtimeChannel)db.removeChannel(realtimeChannel);
+ if(incomingCallChannel)db.removeChannel(incomingCallChannel);
 });
 async function start(){
  if(!friendId){chatTitle.textContent="💬 相手が選ばれていません";messageForm.style.display="none";callButton.style.display="none";messagesElement.innerHTML='<div class="empty">フレンドから相手を選んでね</div>';return}
@@ -562,7 +687,7 @@ async function start(){
  if(ADMIN_USERNAMES.has(friendId)&&friendNameKey==="")friendNameKey="";if(ADMIN_USERNAMES.has(currentUsername)&&myNameKey==="")myNameKey="";
  friendNameClass=nameClass(friendNameKey);myNameClass=nameClass(myNameKey);
  const [fi,mi]=await Promise.all([loadItem(fp?.equipped_item_key),loadItem(mp?.equipped_item_key)]);friendItem=fi;myItem=mi;
- renderHeader();await loadMessages();startRealtime();updateMyPresence();updateFriendStatus();presenceTimer=setInterval(()=>{updateMyPresence();updateFriendStatus()},30000);
+ renderHeader();await loadMessages();startRealtime();startIncomingCallListener();updateMyPresence();updateFriendStatus();presenceTimer=setInterval(()=>{updateMyPresence();updateFriendStatus()},30000);
 }
 start();
 </script>
