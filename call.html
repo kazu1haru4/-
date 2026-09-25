@@ -78,6 +78,7 @@ const $=id=>document.getElementById(id);
 const params=new URLSearchParams(location.search);
 const friendId=params.get("user")||"";
 const incoming=params.get("incoming")==="1";
+const incomingCallId=params.get("call")||"";
 
 const avatar=$("avatar");
 const nameEl=$("name");
@@ -448,7 +449,18 @@ async function init(){
       if(st!=="SUBSCRIBED")return;
 
       if(incoming){
-        statusEl.textContent="📲 着信を待っています...";
+        if(!incomingCallId){
+          statusEl.textContent="通話情報が見つかりません";
+          return;
+        }
+
+        callId=incomingCallId;
+        statusEl.textContent="📲 接続しています...";
+
+        await sendSignal({
+          type:"ready",
+          callId
+        });
       }else{
         await caller();
       }
