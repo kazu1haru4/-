@@ -344,24 +344,14 @@ async function answer(){
   rejectButton.classList.add("hidden");
 
   const ok=await getMic();
-  if(!ok){
-    answerButton.classList.remove("hidden");
-    rejectButton.classList.remove("hidden");
-    return;
-  }
+  if(!ok)return;
 
   if(!pc)await makePeer();
-
-  if(window.pendingOffer){
-    await pc.setRemoteDescription(new RTCSessionDescription(window.pendingOffer));
-    window.pendingOffer=null;
-  }
 
   const ans=await pc.createAnswer();
   await pc.setLocalDescription(ans);
 
   await sendSignal({type:"answer",callId,answer:ans});
-  endButton.classList.remove("hidden");
   statusEl.textContent="接続中...";
 }
 
@@ -393,8 +383,12 @@ async function handleSignal(data){
       return;
     }
 
+    const ok=await getMic();
+    if(!ok)return;
+
     callId=data.callId;
-    window.pendingOffer=data.offer;
+    await makePeer();
+    await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
 
     statusEl.textContent="📲 着信があります";
     answerButton.classList.remove("hidden");
