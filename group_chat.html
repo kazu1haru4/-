@@ -205,6 +205,14 @@ body{display:flex;flex-direction:column}
 .group-typing-indicator{position:absolute;left:12px;right:12px;bottom:calc(100% + 5px);min-height:22px;padding:5px 10px;background:rgba(255,255,255,.96);border:1px solid #e7e2ff;border-radius:12px;color:#777;font-size:12px;font-weight:bold;box-shadow:0 3px 10px rgba(0,0,0,.06);opacity:0;transform:translateY(4px);pointer-events:none;transition:.18s;z-index:75}
 
 .group-typing-indicator.show{opacity:1;transform:none}
+
+/* ===== グループメニュー ===== */
+.group-menu-button{border:none;background:white;color:#555;width:40px;height:40px;border-radius:12px;font-size:28px;line-height:1;font-weight:bold;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.08);padding:0}
+.group-menu{position:absolute;top:48px;right:0;width:190px;background:white;border:1px solid #eee;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:6px;z-index:100}
+.group-menu button{display:block;width:100%;border:none;background:white;color:#444;text-align:left;padding:11px 12px;border-radius:10px;font-size:13px;font-weight:bold;cursor:pointer}
+.group-menu button:hover{background:var(--theme-light)}
+.group-menu .group-menu-delete{color:#d9534f}
+@media(max-width:520px){.group-menu-button{width:38px;height:38px;font-size:26px}.group-menu{top:45px;right:0;width:180px}.group-menu button{font-size:12px;padding:10px 11px}}
 </style>
 </head>
 <body>
@@ -216,9 +224,14 @@ body{display:flex;flex-direction:column}
 <div id="groupName" class="group-name">読み込み中...</div>
 </div>
 <div class="group-actions">
-  <button id="memberButton" class="member-button" type="button">👥 メンバー</button>
-  <button id="editGroupButton" class="group-action-button edit-group-button" type="button" style="display:none">✏️ 名前変更</button>
-  <button id="deleteGroupButton" class="group-action-button delete-group-button" type="button" style="display:none">🗑️ 削除</button>
+  <button id="groupMenuButton" class="group-menu-button" type="button" aria-label="グループメニュー">⋮</button>
+  <div id="groupMenu" class="group-menu" style="display:none">
+    <button id="groupMenuMemberButton" type="button">👥 メンバー</button>
+    <button id="groupCallMenuButton" type="button">📞 グループ通話</button>
+    <button id="groupMenuEditButton" type="button" style="display:none">✏️ 名前変更</button>
+    <button id="groupMenuDeleteButton" type="button" style="display:none">🗑️ グループ削除</button>
+    <button id="groupMenuLeaveButton" type="button" style="display:none">🚪 グループを抜ける</button>
+  </div>
 </div>
 </div>
 <div class="messages-wrapper"><div id="messages" class="messages"></div><button id="latestButton" type="button">⬇️ 最新へ</button></div>
@@ -299,9 +312,9 @@ async function createGroupMessageNotifications(messageText,messageId){
 const themes={pink:{main:"#ff82b2",light:"#fff0f7",text:"#e34f85"},purple:{main:"#8f7cff",light:"#f0edff",text:"#5e50c9"},blue:{main:"#5c9eff",light:"#eef5ff",text:"#397bd8"},green:{main:"#48c78e",light:"#eef9f3",text:"#279b68"},orange:{main:"#ff9b52",light:"#fff4e8",text:"#df7628"},cyan:{main:"#36c9d8",light:"#eafcff",text:"#1599a8"}};
 function applyTheme(themeName){const theme=themes[themeName]||themes.purple;document.documentElement.style.setProperty("--theme",theme.main);document.documentElement.style.setProperty("--theme-light",theme.light);document.documentElement.style.setProperty("--theme-text",theme.text)}
 applyTheme(localStorage.getItem("friendChatTheme")||"purple");
-const params=new URLSearchParams(window.location.search),groupId=params.get("id"),groupName=document.getElementById("groupName"),messages=document.getElementById("messages"),latestButton=document.getElementById("latestButton"),messageInput=document.getElementById("messageInput"),sendButton=document.getElementById("sendButton"),imageButton=document.getElementById("imageButton"),imageInput=document.getElementById("imageInput"),memberButton=document.getElementById("memberButton"),memberModal=document.getElementById("memberModal"),memberList=document.getElementById("memberList"),memberInput=document.getElementById("memberInput"),addMemberButton=document.getElementById("addMemberButton"),closeModalButton=document.getElementById("closeModalButton"),replyArea=document.getElementById("replyArea"),replyText=document.getElementById("replyText"),cancelReplyButton=document.getElementById("cancelReplyButton"),mentionList=document.getElementById("mentionList"),adminNote=document.getElementById("adminNote"),muteBanner=document.getElementById("muteBanner");
-const editGroupButton=document.getElementById("editGroupButton");
-const deleteGroupButton=document.getElementById("deleteGroupButton");
+const params=new URLSearchParams(window.location.search),groupId=params.get("id"),groupName=document.getElementById("groupName"),messages=document.getElementById("messages"),latestButton=document.getElementById("latestButton"),messageInput=document.getElementById("messageInput"),sendButton=document.getElementById("sendButton"),imageButton=document.getElementById("imageButton"),imageInput=document.getElementById("imageInput"),memberButton=document.getElementById("groupMenuMemberButton"),memberModal=document.getElementById("memberModal"),memberList=document.getElementById("memberList"),memberInput=document.getElementById("memberInput"),addMemberButton=document.getElementById("addMemberButton"),closeModalButton=document.getElementById("closeModalButton"),replyArea=document.getElementById("replyArea"),replyText=document.getElementById("replyText"),cancelReplyButton=document.getElementById("cancelReplyButton"),mentionList=document.getElementById("mentionList"),adminNote=document.getElementById("adminNote"),muteBanner=document.getElementById("muteBanner"),groupMenuButton=document.getElementById("groupMenuButton"),groupMenu=document.getElementById("groupMenu"),groupCallMenuButton=document.getElementById("groupCallMenuButton"),groupMenuEditButton=document.getElementById("groupMenuEditButton"),groupMenuDeleteButton=document.getElementById("groupMenuDeleteButton"),groupMenuLeaveButton=document.getElementById("groupMenuLeaveButton");
+const editGroupButton=groupMenuEditButton;
+const deleteGroupButton=groupMenuDeleteButton;
 
 let currentUsername="",replyingToMessage=null,editingMessage=null,groupMembersCache=[],presenceTimer=null,groupOwnerId="",currentGroupRole="member",isGroupAdmin=false,groupMutesCache=[],currentMute=null,muteTimer=null;const profileCache={},itemCache={},groupReadCounts={};let loadingMessages=false,realtimeQueue=Promise.resolve(),readUpdateTimer=null;
 const pendingLocalMessageIds=new Set();
@@ -312,17 +325,9 @@ function updateGroupAdminState(){
   const isGlobalAdmin=ADMIN_USERNAMES.has(currentUsername);
   isGroupAdmin=isGlobalAdmin||currentUsername===groupOwnerId||currentGroupRole==="admin";
   if(adminNote)adminNote.style.display=isGroupAdmin?"block":"none";
-
-  // グループ操作ボタンの表示
-  // 名前変更・削除はグループ制作者または全体管理者のみ
-  const canManageGroup=isGlobalAdmin||currentUsername===groupOwnerId;
-  if(editGroupButton)editGroupButton.style.display=canManageGroup?"block":"none";
-  if(deleteGroupButton)deleteGroupButton.style.display=canManageGroup?"block":"none";
-
-  // グループを抜けるボタンは制作者以外に表示
-  if(leaveGroupButton){
-    leaveGroupButton.style.display=currentUsername===groupOwnerId?"none":"block";
-  }
+  if(groupMenuEditButton)groupMenuEditButton.style.display=isGroupAdmin?"block":"none";
+  if(groupMenuDeleteButton)groupMenuDeleteButton.style.display=isGroupAdmin?"block":"none";
+  if(groupMenuLeaveButton)groupMenuLeaveButton.style.display=(currentUsername&&currentUsername!==groupOwnerId)?"block":"none";
 }
 function getFrameClass(itemKey,username){if(itemKey==="admin"&&ADMIN_USERNAMES.has(username))return "admin-frame";return {sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",space:"frame-space",neon:"frame-neon",rainbow:"frame-rainbow",flame:"frame-flame",sea:"frame-sea",heart:"frame-heart"}[itemKey]||""}
 function formatMessageTime(createdAt){if(!createdAt)return "";const d=new Date(createdAt);if(Number.isNaN(d.getTime()))return "";const now=new Date();const sameDay=d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()&&d.getDate()===now.getDate();if(sameDay)return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");return String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0")+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
@@ -668,7 +673,14 @@ async function kickGroupMember(username){
 }
 
 async function addMember(){const username=memberInput.value.trim();if(!username){alert("ユーザーIDを入力してください");return}if(groupMembersCache.some(member=>member.user_id===username)){alert("すでにメンバーです");return}const {data:profile,error:profileError}=await supabaseClient.from("profiles").select("user_id").eq("user_id",username).maybeSingle();if(profileError){console.error(profileError);alert("ユーザー確認に失敗しました");return}if(!profile){alert("そのユーザーIDは見つかりません");return}const {error}=await supabaseClient.from("group_members").insert({group_id:Number(groupId),user_id:username,role:"member"});if(error){console.error(error);alert("メンバー追加に失敗しました");return}memberInput.value="";await loadGroupMembers();await loadMembers()}
-addMemberButton.addEventListener("click",addMember);memberButton.addEventListener("click",async()=>{memberModal.style.display="flex";await loadMembers()});
+groupMenuButton.addEventListener("click",(event)=>{event.stopPropagation();groupMenu.style.display=groupMenu.style.display==="none"?"block":"none"});
+document.addEventListener("click",(event)=>{if(!groupMenu.contains(event.target)&&event.target!==groupMenuButton)groupMenu.style.display="none"});
+groupMenuMemberButton.addEventListener("click",async()=>{groupMenu.style.display="none";memberModal.style.display="flex";await loadMembers()});
+groupCallMenuButton.addEventListener("click",()=>{if(groupId)location.href="group_call.html?id="+encodeURIComponent(groupId)});
+groupMenuEditButton.addEventListener("click",()=>{groupMenu.style.display="none";renameGroup()});
+groupMenuDeleteButton.addEventListener("click",()=>{groupMenu.style.display="none";deleteGroup()});
+groupMenuLeaveButton.addEventListener("click",()=>{groupMenu.style.display="none";leaveGroup()});
+addMemberButton.addEventListener("click",addMember);
 const leaveGroupButton=document.getElementById("leaveGroupButton");
 if(leaveGroupButton)leaveGroupButton.addEventListener("click",leaveGroup);
 if(editGroupButton)editGroupButton.addEventListener("click",renameGroup);
