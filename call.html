@@ -209,14 +209,32 @@ async function caller(){
   if(!ok)return;
 
   callId=currentUsername+"-"+Date.now()+"-"+Math.random().toString(36).slice(2);
-  await makePeer();
 
   statusEl.textContent="📞 呼び出しています...";
+
+  /* 相手のchat.htmlに着信を知らせる */
+  await sendSignal({
+    type:"ring",
+    callId
+  });
+
+  /* 相手がcall.htmlを開いて準備できるまで待つ */
+}
+
+async function createAndSendOffer(){
+  if(ended||!callId)return;
+  if(!pc)await makePeer();
 
   const offer=await pc.createOffer();
   await pc.setLocalDescription(offer);
 
-  await sendSignal({type:"offer",callId,offer});
+  await sendSignal({
+    type:"offer",
+    callId,
+    offer
+  });
+
+  statusEl.textContent="📞 呼び出しています...";
 }
 
 async function answer(){
@@ -237,6 +255,25 @@ async function answer(){
 
 async function handleSignal(data){
   if(!data||data.from===currentUsername)return;
+
+  if(data.type==="ready" && data.callId===callId && !pc){
+    await createAndSendOffer();
+    return;
+  }
+
+  if(data.type==="ring" && incoming){
+    if(callId)return;
+
+    callId=data.callId;
+    statusEl.textContent="📲 着信があります";
+
+    await sendSignal({
+      type:"ready",
+      callId
+    });
+
+    return;
+  }
 
   if(data.type==="offer"){
     if(pc){
@@ -373,7 +410,7 @@ async function init(){
       if(st!=="SUBSCRIBED")return;
 
       if(incoming){
-        statusEl.textContent="着信を待っています...";
+        statusEl.textContent="📲 着信を待っています...";
       }else{
         await caller();
       }
