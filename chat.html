@@ -530,8 +530,9 @@ async function toggleVoiceRecording(){
  if(voiceRecording){mediaRecorder?.stop();return}
  if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){alert("この端末・ブラウザではボイスメッセージを録音できません。");return}
  try{
-  closeMediaMenu();voiceStream=await navigator.mediaDevices.getUserMedia({audio:true});
-  const mime=["audio/webm;codecs=opus","audio/webm","audio/mp4"].find(x=>MediaRecorder.isTypeSupported(x))||"";
+  mediaMenu.classList.add("show");
+  voiceStream=await navigator.mediaDevices.getUserMedia({audio:true});
+  const mime=["audio/mp4","audio/mp4;codecs=mp4a.40.2","audio/webm;codecs=opus","audio/webm"].find(x=>MediaRecorder.isTypeSupported(x))||"";
   mediaRecorder=new MediaRecorder(voiceStream,mime?{mimeType:mime}:undefined);mediaChunks=[];voiceRecording=true;
   menuVoiceButton.textContent="⏹️ 録音を停止";showMediaStatus("🔴 録音中…もう一度押すと送信します");
   mediaRecorder.ondataavailable=e=>{if(e.data?.size)mediaChunks.push(e.data)};
@@ -737,7 +738,7 @@ messageForm.onsubmit=async e=>{
 plusButton.onclick=e=>{e.preventDefault();e.stopPropagation();mediaMenu.classList.toggle("show")};
 menuImageButton.onclick=()=>imageInput.click();
 menuVideoButton.onclick=()=>videoInput.click();
-menuVoiceButton.onclick=toggleVoiceRecording;
+menuVoiceButton.onclick=e=>{e.preventDefault();e.stopPropagation();toggleVoiceRecording();};
 imageInput.onchange=async()=>{const file=imageInput.files?.[0];if(file)await uploadMediaFile(file,"image")};
 videoInput.onchange=async()=>{const file=videoInput.files?.[0];if(file)await uploadMediaFile(file,"video")};
 document.addEventListener("click",e=>{if(!e.target.closest(".plus-wrap"))closeMediaMenu()});
