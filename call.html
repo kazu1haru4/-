@@ -68,13 +68,10 @@ function debugRender(){
 }
 function debugSet(key,value,detail){
  debugState[key]=value;
- if(detail!==undefined)debugDetail.textContent=String(detail);
+ if(detail!==undefined)debugDetail.textContent=String(detail?.stack||detail?.message||detail);
  debugRender();
 }
-function debugError(detail){
- debugDetail.textContent=String(detail?.stack||detail?.message||detail||"不明なエラー");
- debugRender();
-}
+function debugError(detail){debugDetail.textContent=String(detail?.stack||detail?.message||detail||"不明なエラー");debugRender()}
 debugRender();
 
 function channelName(){return "friend-call-"+[currentUsername,friendId].sort().map(encodeURIComponent).join("-")}
@@ -92,7 +89,14 @@ async function sendCallPush(){
 }
 async function sendIncomingRing(){
  try{
-  if(!inboxChannel){inboxChannel=db.channel(inboxChannelName());await new Promise(resolve=>{let done=false;inboxChannel.subscribe(st=>{if(st==="SUBSCRIBED"&&!done){done=true;resolve()}})})}
+  if(!inboxChannel){
+   inboxChannel=db.channel(inboxChannelName());
+   await new Promise((resolve,reject)=>{
+    let done=false;
+    const timeout=setTimeout(()=>{if(!done){done=true;reject(new Error("着信チャンネル接続がタイムアウトしました"))}},10000);
+    inboxChannel.subscribe(st=>{if(st==="SUBSCRIBED"&&!done){done=true;clearTimeout(timeout);resolve()}});
+   });
+  }
   await inboxChannel.send({type:"broadcast",event:"incoming-call",payload:{type:"ring",callId,from:currentUsername,to:friendId}});
  }catch(e){console.error(e)}
 }
@@ -100,22 +104,6 @@ function startRingRetry(){if(ringTimer)clearInterval(ringTimer);let count=0;cons
 function stopRingRetry(){if(ringTimer){clearInterval(ringTimer);ringTimer=null}}
 function startTimer(){clearInterval(timer);callStartedAt=Date.now();timer=setInterval(()=>{const s=Math.floor((Date.now()-callStartedAt)/1000);timerEl.textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")},1000)}
 function stopTimer(){clearInterval(timer);timer=null;timerEl.textContent=""}
-
-async function getMic(){
- debugSet("⑥ マイク","🔄");
- try{
-  if(!navigator.mediaDevices?.getUserMedia){
-   throw new Error("このブラウザではマイク取得APIが利用できません");
-  }
-  const test=await navigator.mediaDevices.getUserMedia({audio:true});
-  test.getTracks().forEach(t=>t.stop());
-  debugSet("⑥ マイク","✅");
-  return true;
- }catch(e){
-  debugSet("⑥ マイク","❌",e);
-  return false;
- }
-}
 
 async function getSkywayToken(){
  debugSet("② Token取得","🔄");
@@ -125,10 +113,16 @@ async function getSkywayToken(){
   if(!data?.ok||!data.token)throw new Error(data?.error||"トークンがありません");
   debugSet("② Token取得","✅");
   return data.token;
- }catch(e){
-  debugSet("② Token取得","❌",e);
-  throw e;
- }
+ }catch(e){debugSet("② Token取得","❌",e);throw e}
+}
+
+async function withTimeout(promise,ms,label){
+ let timerId;
+ const timeout=new Promise((_,reject)=>{
+  timerId=setTimeout(()=>reject(new Error(label+" がタイムアウトしました（"+ms/1000+"秒）")),ms);
+ });
+ try{return await Promise.race([promise,timeout])}
+ finally{clearTimeout(timerId)}
 }
 
 async function ensureSkyway(){
@@ -140,32 +134,52 @@ async function ensureSkyway(){
   }
   debugSet("① SkyWay SDK","✅");
   if(!callId)throw new Error("通話IDがありません");
+
   statusEl.textContent="🔄 通話サーバーに接続中...";
   const {SkyWayContext,SkyWayRoom,SkyWayStreamFactory}=window.skyway_room;
+
   const token=await getSkywayToken();
 
   debugSet("③ RTC接続","🔄");
-  skyContext=await SkyWayContext.Create(token);
+  skyContext=await withTimeout(
+    SkyWayContext.Create(token),
+    20000,
+    "SkyWay RTC接続"
+  );
   debugSet("③ RTC接続","✅");
 
   debugSet("④ Room","🔄");
-  skyRoom=await SkyWayRoom.FindOrCreate(skyContext,{type:"p2p",name:"friend-chat-call-"+callId});
+  skyRoom=await withTimeout(
+    SkyWayRoom.FindOrCreate(skyContext,{type:"p2p",name:"friend-chat-call-"+callId}),
+    20000,
+    "SkyWay Room作成"
+  );
   debugSet("④ Room","✅");
 
   debugSet("⑤ 参加","🔄");
-  skyMember=await skyRoom.join({name:currentUsername});
+  skyMember=await withTimeout(
+    skyRoom.join({name:currentUsername}),
+    20000,
+    "SkyWay Room参加"
+  );
   debugSet("⑤ 参加","✅");
 
   debugSet("⑥ マイク","🔄");
   const audioStream=await SkyWayStreamFactory.createMicrophoneAudioStream({
-   echoCancellation:true,noiseSuppression:true,autoGainControl:true
+   echoCancellation:true,
+   noiseSuppression:true,
+   autoGainControl:true
   });
   if(!audioStream)throw new Error("SkyWayのマイクストリームを作成できませんでした");
   localStream=audioStream;
   debugSet("⑥ マイク","✅");
 
   debugSet("⑦ 音声送信","🔄");
-  skyAudioPublication=await skyMember.publish(audioStream,{type:"p2p"});
+  skyAudioPublication=await withTimeout(
+    skyMember.publish(audioStream,{type:"p2p"}),
+    20000,
+    "音声送信"
+  );
   debugSet("⑦ 音声送信","✅");
   skyJoined=true;
 
@@ -175,13 +189,27 @@ async function ensureSkyway(){
     const {stream}=await skyMember.subscribe(publication.id);
     let audio=document.getElementById("skywayRemoteAudio");
     if(!audio){audio=document.createElement("audio");audio.id="skywayRemoteAudio";audio.autoplay=true;audio.playsInline=true;document.body.appendChild(audio)}
-    stream.attach(audio);audio.autoplay=true;audio.playsInline=true;await audio.play().catch(()=>{});
-    if(!skyConnected){skyConnected=true;statusEl.textContent="🟢 通話中";muteButton.classList.remove("hidden");endButton.classList.remove("hidden");answerButton.classList.add("hidden");rejectButton.classList.add("hidden");stopRingRetry();startTimer()}
+    stream.attach(audio);
+    audio.autoplay=true;
+    audio.playsInline=true;
+    await audio.play().catch(()=>{});
+    if(!skyConnected){
+     skyConnected=true;
+     statusEl.textContent="🟢 通話中";
+     muteButton.classList.remove("hidden");
+     endButton.classList.remove("hidden");
+     answerButton.classList.add("hidden");
+     rejectButton.classList.add("hidden");
+     stopRingRetry();
+     startTimer();
+    }
    }catch(e){console.error(e);debugError(e);statusEl.textContent="⚠️ 相手の音声接続に失敗しました"}
   };
+
   skyRoom.publications.forEach(p=>subscribeAudio(p));
   skyRoom.onStreamPublished.add(e=>subscribeAudio(e.publication));
   skyRoom.onStreamUnpublished.add(()=>{document.getElementById("skywayRemoteAudio")?.remove()});
+
   if(!skyConnected)statusEl.textContent=incoming?"🔄 相手の音声を待っています...":"📞 呼び出しています...";
   return true;
  }catch(e){
@@ -194,9 +222,8 @@ async function caller(){
  callId=currentUsername+"-"+Date.now()+"-"+Math.random().toString(36).slice(2);
  statusEl.textContent="📞 呼び出しています...";
  await createCallNotification();await sendCallPush();startRingRetry();
- try{
-  await ensureSkyway();
- }catch(e){
+ try{await ensureSkyway()}
+ catch(e){
   console.error("SkyWay発信エラー",e);
   statusEl.textContent="⚠️ 接続失敗: "+(e?.message||String(e));
   stopRingRetry();
@@ -207,11 +234,22 @@ async function caller(){
  }
  await sendSignal({type:"ring",callId});
 }
+
 async function answer(){
- answerButton.classList.add("hidden");rejectButton.classList.add("hidden");
- try{const ok=await ensureSkyway();if(!ok)throw new Error("マイクを取得できません");if(!skyConnected)statusEl.textContent="🔄 接続中..."}
- catch(e){console.error("SkyWay応答エラー",e);statusEl.textContent="⚠️ 接続失敗: "+(e?.message||String(e));answerButton.classList.remove("hidden");rejectButton.classList.remove("hidden")}
+ answerButton.classList.add("hidden");
+ rejectButton.classList.add("hidden");
+ try{
+  const ok=await ensureSkyway();
+  if(!ok)throw new Error("通話接続を開始できませんでした");
+  if(!skyConnected)statusEl.textContent="🔄 接続中...";
+ }catch(e){
+  console.error("SkyWay応答エラー",e);
+  statusEl.textContent="⚠️ 接続失敗: "+(e?.message||String(e));
+  answerButton.classList.remove("hidden");
+  rejectButton.classList.remove("hidden");
+ }
 }
+
 async function handleSignal(data){
  if(!data||data.from===currentUsername)return;
  if(data.type==="end"&&data.callId===callId){await finish(false);return}
@@ -220,7 +258,8 @@ async function handleSignal(data){
 }
 
 async function finish(send=true){
- if(ended)return;ended=true;stopRingRetry();stopTimer();
+ if(ended)return;
+ ended=true;stopRingRetry();stopTimer();
  if(send&&callId){try{await sendSignal({type:"end",callId})}catch(e){}}
  try{if(skyMember)await skyMember.leave()}catch(e){}
  try{if(skyRoom)await skyRoom.dispose()}catch(e){}
@@ -238,47 +277,75 @@ async function finish(send=true){
  const returnUrl="chat.html?user="+encodeURIComponent(friendId);
  setTimeout(()=>{location.replace(returnUrl)},80);
 }
+
 function toggleMute(){
  if(!localStream)return;
  muted=!muted;
  try{
-  if(localStream.track) localStream.track.enabled=!muted;
+  if(localStream.track)localStream.track.enabled=!muted;
   else if(typeof localStream.getAudioTracks==="function")localStream.getAudioTracks().forEach(t=>t.enabled=!muted);
  }catch(e){console.error("ミュート切替エラー:",e);muted=!muted;return}
- muteButton.textContent=muted?"🔇":"🎙️";statusEl.textContent=muted?"🔇 ミュート中":"🟢 通話中";
+ muteButton.textContent=muted?"🔇":"🎙️";
+ statusEl.textContent=muted?"🔇 ミュート中":"🟢 通話中";
 }
 
 async function init(){
  debugRender();
  if(!friendId){statusEl.textContent="相手が指定されていません";endButton.classList.remove("hidden");endButton.textContent="🏠";return}
+
  const {data,error}=await db.auth.getSession();
  if(error||!data.session){alert("ログインしてください。");location.href="index.html";return}
+
  currentUsername=data.session.user.user_metadata?.username||"";
  if(!currentUsername){statusEl.textContent="ログイン情報を取得できません";return}
+
  const {data:profile,error:profileError}=await db.from("profiles").select("user_id,name,avatar_url").eq("user_id",friendId).maybeSingle();
  if(profileError)console.warn(profileError);
- friendName=profile?.name||friendId;friendAvatarUrl=profile?.avatar_url||"";renderPerson();
+ friendName=profile?.name||friendId;
+ friendAvatarUrl=profile?.avatar_url||"";
+ renderPerson();
 
- channel=db.channel(channelName()).on("broadcast",{event:"call"},async payload=>{await handleSignal(payload?.payload||{})}).subscribe(async st=>{
-  if(st!=="SUBSCRIBED")return;
-  if(incoming){
-   if(!incomingCallId){statusEl.textContent="通話情報が見つかりません";endButton.classList.remove("hidden");return}
-   callId=incomingCallId;statusEl.textContent="📲 着信があります";answerButton.classList.remove("hidden");rejectButton.classList.remove("hidden");endButton.classList.add("hidden");
-  }else await caller();
- });
+ channel=db.channel(channelName())
+  .on("broadcast",{event:"call"},async payload=>{await handleSignal(payload?.payload||{})})
+  .subscribe(async st=>{
+   if(st!=="SUBSCRIBED")return;
+
+   if(incoming){
+    if(!incomingCallId){
+     statusEl.textContent="通話情報が見つかりません";
+     endButton.classList.remove("hidden");
+     return;
+    }
+    callId=incomingCallId;
+    statusEl.textContent="📲 着信があります";
+    answerButton.classList.remove("hidden");
+    rejectButton.classList.remove("hidden");
+    endButton.classList.add("hidden");
+   }else{
+    await caller();
+   }
+  });
 }
+
 answerButton.addEventListener("click",answer);
 rejectButton.addEventListener("click",async()=>{if(callId)await sendSignal({type:"reject",callId});await finish(false)});
 muteButton.addEventListener("click",toggleMute);
 endButton.addEventListener("click",()=>finish(true));
+
 window.addEventListener("pagehide",()=>{
  stopRingRetry();
- if(localStream){try{if(localStream.track)localStream.track.stop();else if(typeof localStream.getTracks==="function")localStream.getTracks().forEach(t=>t.stop())}catch(e){}}
+ if(localStream){
+  try{
+   if(localStream.track)localStream.track.stop();
+   else if(typeof localStream.getTracks==="function")localStream.getTracks().forEach(t=>t.stop());
+  }catch(e){}
+ }
  if(skyMember)skyMember.leave().catch(()=>{});
  if(skyRoom)skyRoom.dispose().catch(()=>{});
  if(channel)db.removeChannel(channel);
  if(inboxChannel)db.removeChannel(inboxChannel);
 });
+
 init();
 </script>
 </body>
