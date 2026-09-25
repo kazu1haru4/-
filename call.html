@@ -12,36 +12,15 @@ body{
   background:linear-gradient(135deg,#fff3fb,#eef5ff);
   color:#333;
 }
-.page{
-  min-height:100dvh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:24px;
-}
-.card{
-  width:100%;
-  max-width:420px;
-  background:#fff;
-  border-radius:28px;
-  padding:30px 22px;
-  text-align:center;
-  box-shadow:0 12px 40px rgba(0,0,0,.12);
-}
-.avatar{
-  width:96px;height:96px;margin:0 auto 18px;border-radius:50%;
-  overflow:hidden;background:#eee8ff;
-  display:flex;align-items:center;justify-content:center;font-size:40px;
-}
+.page{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{width:100%;max-width:420px;background:#fff;border-radius:28px;padding:30px 22px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.12)}
+.avatar{width:96px;height:96px;margin:0 auto 18px;border-radius:50%;overflow:hidden;background:#eee8ff;display:flex;align-items:center;justify-content:center;font-size:40px}
 .avatar img{width:100%;height:100%;object-fit:cover}
 .name{font-size:22px;font-weight:800;margin-bottom:8px}
 .status{min-height:24px;color:#777;font-size:14px}
 .timer{margin-top:8px;color:#8f7cff;font-weight:800}
 .actions{display:flex;justify-content:center;gap:14px;margin-top:28px}
-button{
-  border:0;border-radius:50%;width:64px;height:64px;font-size:25px;
-  box-shadow:0 4px 12px rgba(0,0,0,.12);
-}
+button{border:0;border-radius:50%;width:64px;height:64px;font-size:25px;box-shadow:0 4px 12px rgba(0,0,0,.12)}
 .answer{background:#34c759;color:#fff}
 .reject,.end{background:#ff3b30;color:#fff}
 .mute{background:#555;color:#fff}
@@ -56,496 +35,54 @@ button{
     <div id="name" class="name">通話</div>
     <div id="status" class="status">接続しています...</div>
     <div id="timer" class="timer"></div>
-
     <div class="actions">
       <button id="answer" class="answer hidden" type="button" aria-label="応答">📞</button>
       <button id="mute" class="mute hidden" type="button" aria-label="ミュート">🎙️</button>
-      <button id="end" class="end" type="button" aria-label="終了">📵</button>
+      <button id="end" class="end hidden" type="button" aria-label="終了">📵</button>
       <button id="reject" class="reject hidden" type="button" aria-label="拒否">📵</button>
     </div>
-
     <div class="note">Friend Chat 音声通話</div>
   </main>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
 const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-
 const $=id=>document.getElementById(id);
 const params=new URLSearchParams(location.search);
 const friendId=params.get("user")||"";
 const incoming=params.get("incoming")==="1";
 const incomingCallId=params.get("call")||"";
-
-const avatar=$("avatar");
-const nameEl=$("name");
-const statusEl=$("status");
-const timerEl=$("timer");
-const answerButton=$("answer");
-const muteButton=$("mute");
-const endButton=$("end");
-const rejectButton=$("reject");
-
-let currentUsername="";
-let friendName="";
-let friendAvatarUrl="";
-let channel=null;
-let pc=null;
-let localStream=null;
-let remoteStream=null;
-let callId="";
-let inboxChannel=null;
-let ringTimer=null;
-let timer=null;
-let callStartedAt=0;
-let muted=false;
-let ended=false;
-
-const rtcConfig={
-  iceServers:[
-    {urls:"stun:stun.l.google.com:19302"}
-  ]
-};
-
-function channelName(){
-  return "friend-call-"+[currentUsername,friendId]
-    .sort().map(encodeURIComponent).join("-");
-}
-
-function renderPerson(){
-  nameEl.textContent=friendName||friendId||"通話";
-  avatar.innerHTML="";
-  if(friendAvatarUrl){
-    const img=document.createElement("img");
-    img.src=friendAvatarUrl;
-    img.alt="プロフィール画像";
-    img.onerror=()=>{avatar.textContent="👤"};
-    avatar.appendChild(img);
-  }else{
-    avatar.textContent="👤";
-  }
-}
-
-function sendSignal(payload){
-  if(!channel)return Promise.resolve();
-  return channel.send({
-    type:"broadcast",
-    event:"call",
-    payload:{...payload,from:currentUsername}
-  });
-}
-
-function inboxChannelName(){
-  return "friend-call-inbox-"+encodeURIComponent(friendId);
-}
-
-async function createCallNotification(){
-  if(!friendId||!currentUsername||!callId)return;
-
-  try{
-    const {error}=await db.from("notifications").insert({
-      user_id:friendId,
-      type:"call",
-      title:"📞 "+currentUsername+"さんから通話着信",
-      message:"音声通話の着信があります。",
-      link:"call.html?user="+encodeURIComponent(currentUsername)+"&incoming=1&call="+encodeURIComponent(callId),
-      is_read:false
-    });
-
-    if(error)console.warn("通話サイト内通知エラー:",error);
-  }catch(error){
-    console.warn("通話通知レコード作成エラー:",error);
-  }
-}
-
-async function sendCallPush(){
-  if(!friendId||!currentUsername||friendId===currentUsername)return;
-
-  try{
-    const {data,error}=await db.functions.invoke("send-push",{
-      body:{
-        username:friendId,
-        title:"📞 "+currentUsername+"さんから通話着信",
-        message:"音声通話の着信があります。",
-        url:"call.html?user="+encodeURIComponent(currentUsername)+"&incoming=1&call="+encodeURIComponent(callId)
-      }
-    });
-
-    if(error)console.warn("通話プッシュ通知エラー:",error);
-    else if(data&&!data.ok)console.warn("通話プッシュ通知失敗:",data);
-  }catch(error){
-    console.warn("通話プッシュ通知呼び出しエラー:",error);
-  }
-}
-
-async function sendIncomingRing(){
-  try{
-    if(!inboxChannel){
-      inboxChannel=db.channel(inboxChannelName());
-      await new Promise(resolve=>{
-        inboxChannel.subscribe(st=>{
-          if(st==="SUBSCRIBED")resolve();
-        });
-      });
-    }
-
-    await inboxChannel.send({
-      type:"broadcast",
-      event:"incoming-call",
-      payload:{
-        type:"ring",
-        callId,
-        from:currentUsername,
-        to:friendId
-      }
-    });
-  }catch(e){
-    console.error("着信通知送信:",e);
-  }
-}
-
-function startRingRetry(){
-  if(ringTimer)clearInterval(ringTimer);
-
-  /* Broadcastは一瞬しか届かないので、相手がchat.htmlを開いている
-     タイミングに合わせて数秒間再送する */
-  let count=0;
-
-  const send=async()=>{
-    if(ended||!callId||count>=15){
-      clearInterval(ringTimer);
-      ringTimer=null;
-      return;
-    }
-
-    count++;
-    await sendIncomingRing();
-  };
-
-  send();
-  ringTimer=setInterval(send,1000);
-}
-
-function startTimer(){
-  clearInterval(timer);
-  callStartedAt=Date.now();
-  timer=setInterval(()=>{
-    const s=Math.floor((Date.now()-callStartedAt)/1000);
-    timerEl.textContent=
-      String(Math.floor(s/60)).padStart(2,"0")+":"+
-      String(s%60).padStart(2,"0");
-  },1000);
-}
-
-function stopTimer(){
-  clearInterval(timer);
-  timer=null;
-  timerEl.textContent="";
-}
-
-async function getMic(){
-  if(localStream)return true;
-  try{
-    localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
-    return true;
-  }catch(e){
-    console.error(e);
-    statusEl.textContent="マイクを使用できません";
-    alert("マイクの使用を許可してください。");
-    return false;
-  }
-}
-
-async function makePeer(){
-  pc=new RTCPeerConnection(rtcConfig);
-  remoteStream=new MediaStream();
-
-  pc.ontrack=e=>{
-    e.streams[0]?.getTracks().forEach(t=>remoteStream.addTrack(t));
-    let audio=document.getElementById("remoteAudio");
-    if(!audio){
-      audio=document.createElement("audio");
-      audio.id="remoteAudio";
-      audio.autoplay=true;
-      audio.playsInline=true;
-      document.body.appendChild(audio);
-    }
-    audio.srcObject=remoteStream;
-    audio.play().catch(()=>{});
-  };
-
-  pc.onicecandidate=e=>{
-    if(e.candidate){
-      sendSignal({type:"ice",callId,candidate:e.candidate});
-    }
-  };
-
-  pc.onconnectionstatechange=()=>{
-    if(!pc)return;
-    if(pc.connectionState==="connected"){
-      statusEl.textContent="🟢 通話中";
-      muteButton.classList.remove("hidden");
-      startTimer();
-    }else if(pc.connectionState==="failed"){
-      statusEl.textContent="接続に失敗しました";
-      setTimeout(()=>finish(false),900);
-    }
-  };
-
-  localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
-}
-
-async function caller(){
-  const ok=await getMic();
-  if(!ok)return;
-
-  callId=currentUsername+"-"+Date.now()+"-"+Math.random().toString(36).slice(2);
-
-  statusEl.textContent="📞 呼び出しています...";
-
-  /* 相手のchat.htmlに着信を知らせる */
-  /* サイト内通知 + プッシュ通知 */
-  await createCallNotification();
-  await sendCallPush();
-
-  startRingRetry();
-
-  /* 通話ページ同士の接続にもringを送る */
-  await sendSignal({
-    type:"ring",
-    callId
-  });
-
-  /* 相手がcall.htmlを開いて準備できるまで待つ */
-}
-
-async function createAndSendOffer(){
-  if(ended||!callId)return;
-  if(!pc)await makePeer();
-
-  const offer=await pc.createOffer();
-  await pc.setLocalDescription(offer);
-
-  await sendSignal({
-    type:"offer",
-    callId,
-    offer
-  });
-
-  statusEl.textContent="📞 呼び出しています...";
-}
-
-async function answer(){
-  answerButton.classList.add("hidden");
-  rejectButton.classList.add("hidden");
-
-  const ok=await getMic();
-  if(!ok)return;
-
-  if(!pc)await makePeer();
-
-  const ans=await pc.createAnswer();
-  await pc.setLocalDescription(ans);
-
-  await sendSignal({type:"answer",callId,answer:ans});
-  statusEl.textContent="接続中...";
-}
-
-async function handleSignal(data){
-  if(!data||data.from===currentUsername)return;
-
-  if(data.type==="ready" && data.callId===callId && !pc){
-    await createAndSendOffer();
-    return;
-  }
-
-  if(data.type==="ring" && incoming){
-    if(callId)return;
-
-    callId=data.callId;
-    statusEl.textContent="📲 着信があります";
-
-    await sendSignal({
-      type:"ready",
-      callId
-    });
-
-    return;
-  }
-
-  if(data.type==="offer"){
-    if(pc){
-      await sendSignal({type:"busy",callId:data.callId});
-      return;
-    }
-
-    const ok=await getMic();
-    if(!ok)return;
-
-    callId=data.callId;
-    await makePeer();
-    await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-
-    statusEl.textContent="📲 着信があります";
-    answerButton.classList.remove("hidden");
-    rejectButton.classList.remove("hidden");
-    endButton.classList.add("hidden");
-    return;
-  }
-
-  if(data.callId!==callId)return;
-
-  if(data.type==="answer"&&pc){
-    await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-    statusEl.textContent="接続中...";
-    return;
-  }
-
-  if(data.type==="ice"&&pc){
-    try{
-      await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-    }catch(e){console.warn("ICE:",e)}
-    return;
-  }
-
-  if(data.type==="reject"){
-    statusEl.textContent="相手が通話を拒否しました";
-    setTimeout(()=>finish(false),1000);
-    return;
-  }
-
-  if(data.type==="busy"){
-    statusEl.textContent="相手は現在通話中です";
-    setTimeout(()=>finish(false),1000);
-    return;
-  }
-
-  if(data.type==="end"){
-    finish(false);
-  }
-}
-
-async function finish(send=true){
-  if(ended)return;
-  ended=true;
-
-  if(send&&callId){
-    await sendSignal({type:"end",callId});
-  }
-
-  stopTimer();
-
-  if(pc){
-    pc.close();
-    pc=null;
-  }
-
-  if(localStream){
-    localStream.getTracks().forEach(t=>t.stop());
-    localStream=null;
-  }
-
-  const audio=document.getElementById("remoteAudio");
-  if(audio)audio.remove();
-
-  if(channel){
-    await db.removeChannel(channel);
-    channel=null;
-  }
-  if(inboxChannel){
-    await db.removeChannel(inboxChannel);
-    inboxChannel=null;
-  }
-
-  if(history.length>1){
-    history.back();
-  }else{
-    location.href="home.html";
-  }
-}
-
-function toggleMute(){
-  if(!localStream)return;
-  muted=!muted;
-  localStream.getAudioTracks().forEach(t=>t.enabled=!muted);
-  muteButton.textContent=muted?"🔇":"🎙️";
-  statusEl.textContent=muted?"🔇 ミュート中":"🟢 通話中";
-}
-
-async function init(){
-  if(!friendId){
-    statusEl.textContent="相手が指定されていません";
-    endButton.textContent="🏠";
-    return;
-  }
-
-  const {data,error}=await db.auth.getSession();
-  if(error||!data.session){
-    alert("ログインしてください。");
-    location.href="index.html";
-    return;
-  }
-
-  currentUsername=data.session.user.user_metadata?.username||"";
-  if(!currentUsername){
-    statusEl.textContent="ログイン情報を取得できません";
-    return;
-  }
-
-  const {data:profile,error:profileError}=await db
-    .from("profiles")
-    .select("user_id,name,avatar_url")
-    .eq("user_id",friendId)
-    .maybeSingle();
-
-  if(profileError)console.warn(profileError);
-
-  friendName=profile?.name||friendId;
-  friendAvatarUrl=profile?.avatar_url||"";
-  renderPerson();
-
-  channel=db.channel(channelName())
-    .on("broadcast",{event:"call"},async payload=>{
-      await handleSignal(payload?.payload||{});
-    })
-    .subscribe(async st=>{
-      if(st!=="SUBSCRIBED")return;
-
-      if(incoming){
-        if(!incomingCallId){
-          statusEl.textContent="通話情報が見つかりません";
-          return;
-        }
-
-        callId=incomingCallId;
-        statusEl.textContent="📲 接続しています...";
-
-        await sendSignal({
-          type:"ready",
-          callId
-        });
-      }else{
-        await caller();
-      }
-    });
-}
-
+const avatar=$("avatar"),nameEl=$("name"),statusEl=$("status"),timerEl=$("timer");
+const answerButton=$("answer"),muteButton=$("mute"),endButton=$("end"),rejectButton=$("reject");
+let currentUsername="",friendName="",friendAvatarUrl="",channel=null,pc=null,localStream=null,remoteStream=null;
+let callId="",inboxChannel=null,ringTimer=null,timer=null,callStartedAt=0,muted=false,ended=false;
+const rtcConfig={iceServers:[{urls:"stun:stun.l.google.com:19302"}]};
+function channelName(){return "friend-call-"+[currentUsername,friendId].sort().map(encodeURIComponent).join("-")}
+function renderPerson(){nameEl.textContent=friendName||friendId||"通話";avatar.innerHTML="";if(friendAvatarUrl){const img=document.createElement("img");img.src=friendAvatarUrl;img.alt="プロフィール画像";img.onerror=()=>{avatar.textContent="👤"};avatar.appendChild(img)}else avatar.textContent="👤"}
+function sendSignal(payload){if(!channel)return Promise.resolve();return channel.send({type:"broadcast",event:"call",payload:{...payload,from:currentUsername}})}
+function inboxChannelName(){return "friend-call-inbox-"+encodeURIComponent(friendId)}
+async function createCallNotification(){if(!friendId||!currentUsername||!callId)return;try{const {error}=await db.from("notifications").insert({user_id:friendId,type:"call",title:"📞 "+currentUsername+"さんから通話着信",message:"音声通話の着信があります。",link:"call.html?user="+encodeURIComponent(currentUsername)+"&incoming=1&call="+encodeURIComponent(callId),is_read:false});if(error)console.warn("通話サイト内通知エラー:",error)}catch(error){console.warn("通話通知レコード作成エラー:",error)}}
+async function sendCallPush(){if(!friendId||!currentUsername||friendId===currentUsername)return;try{const {data,error}=await db.functions.invoke("send-push",{body:{username:friendId,title:"📞 "+currentUsername+"さんから通話着信",message:"音声通話の着信があります。",url:"call.html?user="+encodeURIComponent(currentUsername)+"&incoming=1&call="+encodeURIComponent(callId)}});if(error)console.warn("通話プッシュ通知エラー:",error);else if(data&&!data.ok)console.warn("通話プッシュ通知失敗:",data)}catch(error){console.warn("通話プッシュ通知呼び出しエラー:",error)}}
+async function sendIncomingRing(){try{if(!inboxChannel){inboxChannel=db.channel(inboxChannelName());await new Promise(resolve=>{inboxChannel.subscribe(st=>{if(st==="SUBSCRIBED")resolve()})})}await inboxChannel.send({type:"broadcast",event:"incoming-call",payload:{type:"ring",callId,from:currentUsername,to:friendId}})}catch(e){console.error("着信通知送信:",e)}}
+function startRingRetry(){if(ringTimer)clearInterval(ringTimer);let count=0;const send=async()=>{if(ended||!callId||count>=15){clearInterval(ringTimer);ringTimer=null;return}count++;await sendIncomingRing()};send();ringTimer=setInterval(send,1000)}
+function startTimer(){clearInterval(timer);callStartedAt=Date.now();timer=setInterval(()=>{const sec=Math.floor((Date.now()-callStartedAt)/1000);timerEl.textContent=String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0")},1000)}
+function stopTimer(){clearInterval(timer);timer=null;timerEl.textContent=""}
+async function getMic(){if(localStream)return true;try{localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});return true}catch(e){console.error(e);statusEl.textContent="マイクを使用できません";alert("マイクの使用を許可してください。");return false}}
+async function makePeer(){pc=new RTCPeerConnection(rtcConfig);remoteStream=new MediaStream();pc.ontrack=e=>{e.streams[0]?.getTracks().forEach(t=>remoteStream.addTrack(t));let audio=document.getElementById("remoteAudio");if(!audio){audio=document.createElement("audio");audio.id="remoteAudio";audio.autoplay=true;audio.playsInline=true;document.body.appendChild(audio)}audio.srcObject=remoteStream;audio.play().catch(()=>{})};pc.onicecandidate=e=>{if(e.candidate)sendSignal({type:"ice",callId,candidate:e.candidate})};pc.onconnectionstatechange=()=>{if(!pc)return;if(pc.connectionState==="connected"){statusEl.textContent="🟢 通話中";muteButton.classList.remove("hidden");endButton.classList.remove("hidden");startTimer()}else if(pc.connectionState==="failed"){statusEl.textContent="接続に失敗しました";setTimeout(()=>finish(false),900)}};localStream.getTracks().forEach(t=>pc.addTrack(t,localStream))}
+async function caller(){const ok=await getMic();if(!ok)return;callId=currentUsername+"-"+Date.now()+"-"+Math.random().toString(36).slice(2);statusEl.textContent="📞 呼び出しています...";await createCallNotification();await sendCallPush();startRingRetry();await sendSignal({type:"ring",callId})}
+async function createAndSendOffer(){if(ended||!callId)return;if(!pc)await makePeer();const offer=await pc.createOffer();await pc.setLocalDescription(offer);await sendSignal({type:"offer",callId,offer});statusEl.textContent="📞 呼び出しています..."}
+async function answer(){answerButton.classList.add("hidden");rejectButton.classList.add("hidden");const ok=await getMic();if(!ok)return;if(!pc)await makePeer();const ans=await pc.createAnswer();await pc.setLocalDescription(ans);await sendSignal({type:"answer",callId,answer:ans});statusEl.textContent="接続中..."}
+async function handleSignal(data){if(!data||data.from===currentUsername)return;if(data.type==="ready"&&data.callId===callId&&!pc){await createAndSendOffer();return}if(data.type==="ring"&&incoming){if(callId)return;callId=data.callId;statusEl.textContent="📲 着信があります";await sendSignal({type:"ready",callId});return}if(data.type==="offer"){if(pc){await sendSignal({type:"busy",callId:data.callId});return}const ok=await getMic();if(!ok)return;callId=data.callId;await makePeer();await pc.setRemoteDescription(new RTCSessionDescription(data.offer));statusEl.textContent="📲 着信があります";answerButton.classList.remove("hidden");rejectButton.classList.remove("hidden");endButton.classList.add("hidden");return}if(data.callId!==callId)return;if(data.type==="answer"&&pc){await pc.setRemoteDescription(new RTCSessionDescription(data.answer));statusEl.textContent="接続中...";return}if(data.type==="ice"&&pc){try{await pc.addIceCandidate(new RTCIceCandidate(data.candidate))}catch(e){console.warn("ICE:",e)}return}if(data.type==="reject"){statusEl.textContent="相手が通話を拒否しました";setTimeout(()=>finish(false),1000);return}if(data.type==="busy"){statusEl.textContent="相手は現在通話中です";setTimeout(()=>finish(false),1000);return}if(data.type==="end"){finish(false)}}
+async function finish(send=true){if(ended)return;ended=true;if(send&&callId){await sendSignal({type:"end",callId})}stopTimer();if(pc){pc.close();pc=null}if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null}const audio=document.getElementById("remoteAudio");if(audio)audio.remove();if(channel){await db.removeChannel(channel);channel=null}if(inboxChannel){await db.removeChannel(inboxChannel);inboxChannel=null}if(history.length>1){history.back()}else{location.href="home.html"}}
+function toggleMute(){if(!localStream)return;muted=!muted;localStream.getAudioTracks().forEach(t=>t.enabled=!muted);muteButton.textContent=muted?"🔇":"🎙️";statusEl.textContent=muted?"🔇 ミュート中":"🟢 通話中"}
+async function init(){if(!friendId){statusEl.textContent="相手が指定されていません";endButton.textContent="🏠";return}const {data,error}=await db.auth.getSession();if(error||!data.session){alert("ログインしてください。");location.href="index.html";return}currentUsername=data.session.user.user_metadata?.username||"";if(!currentUsername){statusEl.textContent="ログイン情報を取得できません";return}const {data:profile,error:profileError}=await db.from("profiles").select("user_id,name,avatar_url").eq("user_id",friendId).maybeSingle();if(profileError)console.warn(profileError);friendName=profile?.name||friendId;friendAvatarUrl=profile?.avatar_url||"";renderPerson();channel=db.channel(channelName()).on("broadcast",{event:"call"},async payload=>{await handleSignal(payload?.payload||{})}).subscribe(async st=>{if(st!=="SUBSCRIBED")return;if(incoming){if(!incomingCallId){statusEl.textContent="通話情報が見つかりません";return}callId=incomingCallId;statusEl.textContent="📲 接続しています...";await sendSignal({type:"ready",callId})}else{await caller()}})}
 answerButton.addEventListener("click",answer);
 rejectButton.addEventListener("click",()=>finish(true));
 muteButton.addEventListener("click",toggleMute);
 endButton.addEventListener("click",()=>finish(true));
-
-window.addEventListener("pagehide",()=>{
-  if(pc)pc.close();
-  if(localStream)localStream.getTracks().forEach(t=>t.stop());
-  if(ringTimer)clearInterval(ringTimer);
-  if(channel)db.removeChannel(channel);
-  if(inboxChannel)db.removeChannel(inboxChannel);
-});
-
+window.addEventListener("pagehide",()=>{if(pc)pc.close();if(localStream)localStream.getTracks().forEach(t=>t.stop());if(ringTimer)clearInterval(ringTimer);if(channel)db.removeChannel(channel);if(inboxChannel)db.removeChannel(inboxChannel)});
 init();
 </script>
 </body>
