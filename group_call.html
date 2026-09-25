@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Friend Chat グループ通話</title>
+<style>
+*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:linear-gradient(135deg,#fff3fb,#eef5ff);color:#333}
+.page{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{width:100%;max-width:520px;background:#fff;border-radius:28px;padding:26px 20px 24px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.12)}
+.title{font-size:22px;font-weight:800}.status{min-height:24px;color:#777;font-size:14px;margin-top:6px}.timer{margin-top:6px;color:#8f7cff;font-weight:800}
+.participants-title{margin-top:22px;font-size:13px;font-weight:800;color:#777}.participants{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin-top:12px;min-height:86px}
+.person{width:70px;position:relative}.avatar{width:58px;height:58px;margin:0 auto 5px;border-radius:50%;overflow:hidden;background:#eee8ff;display:flex;align-items:center;justify-content:center;font-size:25px;border:3px solid #8f7cff}.avatar img{width:100%;height:100%;object-fit:cover}.person-name{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mute-badge{position:absolute;right:4px;top:42px;width:20px;height:20px;border-radius:50%;background:#555;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;border:2px solid #fff}
+.actions{display:flex;justify-content:center;gap:16px;margin-top:24px}button{border:0;border-radius:50%;width:64px;height:64px;font-size:25px;box-shadow:0 4px 12px rgba(0,0,0,.12);cursor:pointer}.mute{background:#555;color:#fff}.end{background:#ff3b30;color:#fff}.hidden{display:none!important}.note{margin-top:15px;color:#999;font-size:12px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="page"><main class="card">
+<div id="title" class="title">📞 グループ通話</div>
+<div id="status" class="status">接続しています...</div>
+<div id="timer" class="timer"></div>
+<div class="participants-title">通話中のメンバー <span id="count">0</span>人</div>
+<div id="participants" class="participants"></div>
+<div class="actions">
+<button id="mute" class="mute hidden" type="button">🎙️</button>
+<button id="end" class="end hidden" type="button">📵</button>
+</div>
+<div class="note">Friend Chat グループ音声通話</div>
+</main></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@skyway-sdk/room/dist/skyway_room-latest.js"></script>
+<script>
+const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+const params=new URLSearchParams(location.search);
+const groupId=params.get("id")||params.get("group")||"";
+let currentUsername="",groupName="";
+let groupChannel=null,groupChannelReady=false,heartbeatTimer=null,pruneTimer=null,timer=null,callStartedAt=0,ended=false,muted=false;
+let skyContext=null,skyRoom=null,skyMember=null,localStream=null,skyJoined=false;
+const participants=new Map();
+const remoteAudios=new Map();
+let profiles={};
+
+function render(){
+ const list=[...participants.values()].sort((a,b)=>a.username===currentUsername?-1:b.username===currentUsername?1:(a.name||a.username).localeCompare(b.name||b.username,"ja"));
+ $("count").textContent=String(list.length);$("participants").innerHTML="";
+ for(const p of list){
+  const item=document.createElement("div");item.className="person";
+  const av=document.createElement("div");av.className="avatar";
+  if(p.avatar_url){const img=document.createElement("img");img.src=p.avatar_url;img.alt="プロフィール画像";img.onerror=()=>av.textContent="👤";av.appendChild(img)}else av.textContent="👤";
+  item.appendChild(av);
+  if(p.muted){const b=document.createElement("div");b.className="mute-badge";b.textContent="🔇";item.appendChild(b)}
+  const n=document.createElement("div");n.className="person-name";n.textContent=p.name||p.username;item.appendChild(n);$("participants").appendChild(item);
+ }
+}
+function profileOf(username){return profiles[username]||{user_id:username,name:username,avatar_url:""}}
+function upsert(data){if(!data?.username)return;const p=profileOf(data.username);participants.set(data.username,{username:data.username,name:data.name||p.name||data.username,avatar_url:data.avatar_url||p.avatar_url||"",muted:!!data.muted,lastSeen:Date.now()});render()}
+function remove(username){participants.delete(username);render()}
+async function sendState(type,extra={}){if(!groupChannel||!groupChannelReady)return;const p=profileOf(currentUsername);try{await groupChannel.send({type:"broadcast",event:"call-state",payload:{type,username:currentUsername,name:p.name||currentUsername,avatar_url:p.avatar_url||"",muted,...extra}})}catch(e){console.warn(e)}}
+function setupState(){
+ groupChannel=db.channel("group-call-state-"+encodeURIComponent(String(groupId)))
+ .on("broadcast",{event:"call-state"},async payload=>{const d=payload?.payload||{};if(!d.username||d.username===currentUsername)return;if(d.type==="leave"){remove(d.username);return}upsert(d);if(d.type==="join")await sendState("state")})
+ .subscribe(async st=>{groupChannelReady=st==="SUBSCRIBED";if(groupChannelReady)await sendState("join")});
+ heartbeatTimer=setInterval(()=>sendState("heartbeat"),5000);
+ pruneTimer=setInterval(()=>{const now=Date.now();for(const [u,p] of participants)if(now-p.lastSeen>15000)participants.delete(u);render()},3000);
+}
+async function getToken(){const {data,error}=await db.functions.invoke("skyway-token",{body:{username:currentUsername}});if(error||!data?.ok||!data.token)throw new Error(data?.error||"SkyWayトークンを取得できませんでした");return data.token}
+async function subscribeAudio(publication){if(!publication||publication.publisher.id===skyMember?.id||publication.contentType!=="audio")return;try{const {stream}=await skyMember.subscribe(publication.id);let audio=remoteAudios.get(publication.id);if(!audio){audio=document.createElement("audio");audio.autoplay=true;audio.playsInline=true;document.body.appendChild(audio);remoteAudios.set(publication.id,audio)}stream.attach(audio);await audio.play().catch(()=>{})}catch(e){console.error("音声購読エラー",e)}}
+async function joinSkyway(){if(skyJoined)return;const {SkyWayContext,SkyWayRoom,SkyWayStreamFactory}=window.skyway_room;if(!window.skyway_room)throw new Error("SkyWay SDKを読み込めませんでした");const token=await getToken();skyContext=await SkyWayContext.Create(token);skyRoom=await SkyWayRoom.FindOrCreate(skyContext,{type:"p2p",name:"friend-chat-group-call-"+groupId});skyMember=await skyRoom.join({name:currentUsername});const audioStream=await SkyWayStreamFactory.createMicrophoneAudioStream({echoCancellation:true,noiseSuppression:true,autoGainControl:true});if(!audioStream)throw new Error("マイクを開始できませんでした");localStream=audioStream;await skyMember.publish(audioStream,{type:"p2p"});skyJoined=true;$("mute").classList.remove("hidden");$("end").classList.remove("hidden");$("status").textContent="🟢 通話中";callStartedAt=Date.now();clearInterval(timer);timer=setInterval(()=>{const s=Math.floor((Date.now()-callStartedAt)/1000);$("timer").textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")},1000);skyRoom.publications.forEach(subscribeAudio);skyRoom.onStreamPublished.add(e=>subscribeAudio(e.publication));skyRoom.onStreamUnpublished.add(e=>{const a=remoteAudios.get(e.publication?.id);if(a){a.remove();remoteAudios.delete(e.publication.id)}})}
+async function finish(){if(ended)return;ended=true;clearInterval(timer);clearInterval(heartbeatTimer);clearInterval(pruneTimer);await sendState("leave");try{if(skyMember)await skyMember.leave()}catch(e){}try{if(skyRoom)await skyRoom.dispose()}catch(e){}try{if(localStream?.track)localStream.track.stop()}catch(e){}for(const a of remoteAudios.values())a.remove();remoteAudios.clear();if(groupChannel)try{await db.removeChannel(groupChannel)}catch(e){}location.replace("group_chat.html?id="+encodeURIComponent(groupId))}
+function toggleMute(){if(!localStream)return;muted=!muted;try{if(localStream.track)localStream.track.enabled=!muted;else localStream.getAudioTracks?.().forEach(t=>t.enabled=!muted)}catch(e){muted=!muted;return}$("mute").textContent=muted?"🔇":"🎙️";sendState("mute")}
+async function init(){
+ if(!groupId){$("status").textContent="グループIDがありません";return}
+ const {data:{session}}=await db.auth.getSession();if(!session){location.href="index.html";return}currentUsername=session.user.user_metadata?.username||"";if(!currentUsername){$("status").textContent="ログイン情報を取得できません";return}
+ const {data:member}=await db.from("group_members").select("user_id").eq("group_id",Number(groupId)).eq("user_id",currentUsername).maybeSingle();if(!member){alert("このグループのメンバーではありません");location.replace("groups.html");return}
+ const [{data:group},{data:members}]=await Promise.all([db.from("groups").select("id,name").eq("id",Number(groupId)).maybeSingle(),db.from("group_members").select("user_id").eq("group_id",Number(groupId))]);groupName=group?.name||"グループ";$("title").textContent="📞 "+groupName+" 通話";
+ const ids=(members||[]).map(x=>x.user_id);if(ids.length){const {data:ps}=await db.from("profiles").select("user_id,name,avatar_url").in("user_id",ids);(ps||[]).forEach(p=>profiles[p.user_id]=p)}
+ upsert({username:currentUsername,...profileOf(currentUsername),muted:false});setupState();$("status").textContent="🔄 通話に接続中...";
+ try{await joinSkyway()}catch(e){console.error(e);$("status").textContent="⚠️ 接続失敗: "+(e?.message||String(e));return}
+}
+$("mute").addEventListener("click",toggleMute);$("end").addEventListener("click",finish);window.addEventListener("pagehide",()=>{clearInterval(timer);clearInterval(heartbeatTimer);clearInterval(pruneTimer);if(localStream?.track)try{localStream.track.stop()}catch(e){}if(skyMember)skyMember.leave().catch(()=>{});if(skyRoom)skyRoom.dispose().catch(()=>{});if(groupChannel)db.removeChannel(groupChannel)});init();
+</script>
+</body>
+</html>
