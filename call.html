@@ -96,6 +96,7 @@ let pc=null;
 let localStream=null;
 let remoteStream=null;
 let callId="";
+let inboxChannel=null;
 let timer=null;
 let callStartedAt=0;
 let muted=false;
@@ -133,6 +134,36 @@ function sendSignal(payload){
     event:"call",
     payload:{...payload,from:currentUsername}
   });
+}
+
+function inboxChannelName(){
+  return "friend-call-inbox-"+encodeURIComponent(friendId);
+}
+
+async function sendIncomingRing(){
+  try{
+    if(!inboxChannel){
+      inboxChannel=db.channel(inboxChannelName());
+      await new Promise(resolve=>{
+        inboxChannel.subscribe(st=>{
+          if(st==="SUBSCRIBED")resolve();
+        });
+      });
+    }
+
+    await inboxChannel.send({
+      type:"broadcast",
+      event:"incoming-call",
+      payload:{
+        type:"ring",
+        callId,
+        from:currentUsername,
+        to:friendId
+      }
+    });
+  }catch(e){
+    console.error("着信通知送信:",e);
+  }
 }
 
 function startTimer(){
@@ -213,6 +244,9 @@ async function caller(){
   statusEl.textContent="📞 呼び出しています...";
 
   /* 相手のchat.htmlに着信を知らせる */
+  await sendIncomingRing();
+
+  /* 通話ページ同士の接続にもringを送る */
   await sendSignal({
     type:"ring",
     callId
@@ -354,6 +388,10 @@ async function finish(send=true){
     await db.removeChannel(channel);
     channel=null;
   }
+  if(inboxChannel){
+    await db.removeChannel(inboxChannel);
+    inboxChannel=null;
+  }
 
   if(history.length>1){
     history.back();
@@ -426,6 +464,7 @@ window.addEventListener("pagehide",()=>{
   if(pc)pc.close();
   if(localStream)localStream.getTracks().forEach(t=>t.stop());
   if(channel)db.removeChannel(channel);
+  if(inboxChannel)db.removeChannel(inboxChannel);
 });
 
 init();
