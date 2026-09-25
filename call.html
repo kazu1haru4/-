@@ -13,6 +13,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
 .name{font-size:22px;font-weight:800;margin-bottom:8px}.status{min-height:24px;color:#777;font-size:14px}.timer{margin-top:8px;color:#8f7cff;font-weight:800}
 .actions{display:flex;justify-content:center;gap:14px;margin-top:28px}button{border:0;border-radius:50%;width:64px;height:64px;font-size:25px;box-shadow:0 4px 12px rgba(0,0,0,.12)}
 .answer{background:#34c759;color:#fff}.reject,.end{background:#ff3b30;color:#fff}.mute{background:#555;color:#fff}.hidden{display:none!important}.note{margin-top:18px;color:#999;font-size:12px;line-height:1.6}
+#debug{display:none;margin-top:18px;text-align:left;background:#f7f7fb;border:1px solid #ddd;border-radius:16px;padding:12px;font-size:12px;line-height:1.5}
+#debug.show{display:block}.debug-title{font-weight:800;margin-bottom:7px}.debug-row{padding:3px 0}.debug-detail{margin-top:8px;padding:8px;background:#fff;border-radius:10px;color:#555;white-space:pre-wrap;word-break:break-word}
 </style>
 </head>
 <body>
@@ -24,7 +26,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
 <button id="mute" class="mute hidden" type="button">🎙️</button>
 <button id="end" class="end hidden" type="button">📵</button>
 <button id="reject" class="reject hidden" type="button">📵</button>
-</div><div class="note">Friend Chat 音声通話</div>
+</div>
+<div id="debug">
+  <div class="debug-title">🔧 通話接続チェック</div>
+  <div id="debugRows"></div>
+  <div id="debugDetail" class="debug-detail">詳細なし</div>
+</div>
+<div class="note">Friend Chat 音声通話</div>
 </main></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -38,8 +46,36 @@ const params=new URLSearchParams(location.search);
 const friendId=params.get("user")||"",incoming=params.get("incoming")==="1",incomingCallId=params.get("call")||"";
 const avatar=$("avatar"),nameEl=$("name"),statusEl=$("status"),timerEl=$("timer");
 const answerButton=$("answer"),muteButton=$("mute"),endButton=$("end"),rejectButton=$("reject");
+const debugBox=$("debug"),debugRows=$("debugRows"),debugDetail=$("debugDetail");
 let currentUsername="",friendName="",friendAvatarUrl="",channel=null,inboxChannel=null,ringTimer=null,timer=null,callStartedAt=0,callId="",muted=false,ended=false;
 let localStream=null,skyContext=null,skyRoom=null,skyMember=null,skyAudioPublication=null,skyConnected=false,skyJoined=false;
+
+const debugState={
+ "① SkyWay SDK":"⏳",
+ "② Token取得":"⏳",
+ "③ RTC接続":"⏳",
+ "④ Room":"⏳",
+ "⑤ 参加":"⏳",
+ "⑥ マイク":"⏳",
+ "⑦ 音声送信":"⏳"
+};
+function debugRender(){
+ debugBox.classList.add("show");
+ debugRows.innerHTML="";
+ Object.entries(debugState).forEach(([k,v])=>{
+  const d=document.createElement("div");d.className="debug-row";d.textContent=k+"　"+v;debugRows.appendChild(d);
+ });
+}
+function debugSet(key,value,detail){
+ debugState[key]=value;
+ if(detail!==undefined)debugDetail.textContent=String(detail);
+ debugRender();
+}
+function debugError(detail){
+ debugDetail.textContent=String(detail?.stack||detail?.message||detail||"不明なエラー");
+ debugRender();
+}
+debugRender();
 
 function channelName(){return "friend-call-"+[currentUsername,friendId].sort().map(encodeURIComponent).join("-")}
 function inboxChannelName(){return "friend-call-inbox-"+encodeURIComponent(friendId)}
@@ -66,53 +102,92 @@ function startTimer(){clearInterval(timer);callStartedAt=Date.now();timer=setInt
 function stopTimer(){clearInterval(timer);timer=null;timerEl.textContent=""}
 
 async function getMic(){
- return true;
+ debugSet("⑥ マイク","🔄");
+ try{
+  if(!navigator.mediaDevices?.getUserMedia){
+   throw new Error("このブラウザではマイク取得APIが利用できません");
+  }
+  const test=await navigator.mediaDevices.getUserMedia({audio:true});
+  test.getTracks().forEach(t=>t.stop());
+  debugSet("⑥ マイク","✅");
+  return true;
+ }catch(e){
+  debugSet("⑥ マイク","❌",e);
+  return false;
+ }
 }
 
 async function getSkywayToken(){
- const {data,error}=await db.functions.invoke("skyway-token",{body:{username:currentUsername}});
- if(error){console.error(error);throw new Error("SkyWayトークンを取得できませんでした")}
- if(!data?.ok||!data.token){console.error(data);throw new Error(data?.error||"SkyWayトークンを取得できませんでした")}
- return data.token;
+ debugSet("② Token取得","🔄");
+ try{
+  const {data,error}=await db.functions.invoke("skyway-token",{body:{username:currentUsername}});
+  if(error)throw error;
+  if(!data?.ok||!data.token)throw new Error(data?.error||"トークンがありません");
+  debugSet("② Token取得","✅");
+  return data.token;
+ }catch(e){
+  debugSet("② Token取得","❌",e);
+  throw e;
+ }
 }
 
 async function ensureSkyway(){
  if(skyJoined)return skyConnected;
- if(!window.skyway_room)throw new Error("SkyWay SDKを読み込めませんでした");
- if(!callId)throw new Error("通話IDがありません");
- if(!(await getMic()))return false;
- statusEl.textContent="🔄 通話サーバーに接続中...";
- const {SkyWayContext,SkyWayRoom,SkyWayStreamFactory}=window.skyway_room;
- const token=await getSkywayToken();
- skyContext=await SkyWayContext.Create(token);
- skyRoom=await SkyWayRoom.FindOrCreate(skyContext,{type:"p2p",name:"friend-chat-call-"+callId});
- skyMember=await skyRoom.join({name:currentUsername});
- const audioStream = await SkyWayStreamFactory.createMicrophoneAudioStream({
-  echoCancellation: true,
-  noiseSuppression: true,
-  autoGainControl: true
- });
- if(!audioStream) throw new Error("SkyWayのマイクストリームを作成できませんでした");
- skyAudioPublication=await skyMember.publish(audioStream,{type:"p2p"});
- localStream = audioStream;
- skyJoined=true;
+ try{
+  if(!window.skyway_room){
+   debugSet("① SkyWay SDK","❌","window.skyway_room がありません");
+   throw new Error("SkyWay SDKを読み込めませんでした");
+  }
+  debugSet("① SkyWay SDK","✅");
+  if(!callId)throw new Error("通話IDがありません");
+  statusEl.textContent="🔄 通話サーバーに接続中...";
+  const {SkyWayContext,SkyWayRoom,SkyWayStreamFactory}=window.skyway_room;
+  const token=await getSkywayToken();
 
- const subscribeAudio=async publication=>{
-  if(!publication||publication.publisher.id===skyMember.id||publication.contentType!=="audio")return;
-  try{
-   const {stream}=await skyMember.subscribe(publication.id);
-   let audio=document.getElementById("skywayRemoteAudio");
-   if(!audio){audio=document.createElement("audio");audio.id="skywayRemoteAudio";audio.autoplay=true;audio.playsInline=true;document.body.appendChild(audio)}
-   stream.attach(audio);audio.autoplay=true;audio.playsInline=true;await audio.play().catch(()=>{});
-   if(!skyConnected){skyConnected=true;statusEl.textContent="🟢 通話中";muteButton.classList.remove("hidden");endButton.classList.remove("hidden");answerButton.classList.add("hidden");rejectButton.classList.add("hidden");stopRingRetry();startTimer()}
-  }catch(e){console.error(e);statusEl.textContent="⚠️ 相手の音声接続に失敗しました"}
- };
+  debugSet("③ RTC接続","🔄");
+  skyContext=await SkyWayContext.Create(token);
+  debugSet("③ RTC接続","✅");
 
- skyRoom.publications.forEach(p=>subscribeAudio(p));
- skyRoom.onStreamPublished.add(e=>subscribeAudio(e.publication));
- skyRoom.onStreamUnpublished.add(()=>{document.getElementById("skywayRemoteAudio")?.remove()});
- if(!skyConnected)statusEl.textContent=incoming?"🔄 相手の音声を待っています...":"📞 呼び出しています...";
- return true;
+  debugSet("④ Room","🔄");
+  skyRoom=await SkyWayRoom.FindOrCreate(skyContext,{type:"p2p",name:"friend-chat-call-"+callId});
+  debugSet("④ Room","✅");
+
+  debugSet("⑤ 参加","🔄");
+  skyMember=await skyRoom.join({name:currentUsername});
+  debugSet("⑤ 参加","✅");
+
+  debugSet("⑥ マイク","🔄");
+  const audioStream=await SkyWayStreamFactory.createMicrophoneAudioStream({
+   echoCancellation:true,noiseSuppression:true,autoGainControl:true
+  });
+  if(!audioStream)throw new Error("SkyWayのマイクストリームを作成できませんでした");
+  localStream=audioStream;
+  debugSet("⑥ マイク","✅");
+
+  debugSet("⑦ 音声送信","🔄");
+  skyAudioPublication=await skyMember.publish(audioStream,{type:"p2p"});
+  debugSet("⑦ 音声送信","✅");
+  skyJoined=true;
+
+  const subscribeAudio=async publication=>{
+   if(!publication||publication.publisher.id===skyMember.id||publication.contentType!=="audio")return;
+   try{
+    const {stream}=await skyMember.subscribe(publication.id);
+    let audio=document.getElementById("skywayRemoteAudio");
+    if(!audio){audio=document.createElement("audio");audio.id="skywayRemoteAudio";audio.autoplay=true;audio.playsInline=true;document.body.appendChild(audio)}
+    stream.attach(audio);audio.autoplay=true;audio.playsInline=true;await audio.play().catch(()=>{});
+    if(!skyConnected){skyConnected=true;statusEl.textContent="🟢 通話中";muteButton.classList.remove("hidden");endButton.classList.remove("hidden");answerButton.classList.add("hidden");rejectButton.classList.add("hidden");stopRingRetry();startTimer()}
+   }catch(e){console.error(e);debugError(e);statusEl.textContent="⚠️ 相手の音声接続に失敗しました"}
+  };
+  skyRoom.publications.forEach(p=>subscribeAudio(p));
+  skyRoom.onStreamPublished.add(e=>subscribeAudio(e.publication));
+  skyRoom.onStreamUnpublished.add(()=>{document.getElementById("skywayRemoteAudio")?.remove()});
+  if(!skyConnected)statusEl.textContent=incoming?"🔄 相手の音声を待っています...":"📞 呼び出しています...";
+  return true;
+ }catch(e){
+  debugError(e);
+  throw e;
+ }
 }
 
 async function caller(){
@@ -167,21 +242,14 @@ function toggleMute(){
  if(!localStream)return;
  muted=!muted;
  try{
-  if(localStream.track){
-   localStream.track.enabled=!muted;
-  }else if(typeof localStream.getAudioTracks==="function"){
-   localStream.getAudioTracks().forEach(t=>t.enabled=!muted);
-  }
- }catch(e){
-  console.error("ミュート切替エラー:",e);
-  muted=!muted;
-  return;
- }
- muteButton.textContent=muted?"🔇":"🎙️";
- statusEl.textContent=muted?"🔇 ミュート中":"🟢 通話中";
+  if(localStream.track) localStream.track.enabled=!muted;
+  else if(typeof localStream.getAudioTracks==="function")localStream.getAudioTracks().forEach(t=>t.enabled=!muted);
+ }catch(e){console.error("ミュート切替エラー:",e);muted=!muted;return}
+ muteButton.textContent=muted?"🔇":"🎙️";statusEl.textContent=muted?"🔇 ミュート中":"🟢 通話中";
 }
 
 async function init(){
+ debugRender();
  if(!friendId){statusEl.textContent="相手が指定されていません";endButton.classList.remove("hidden");endButton.textContent="🏠";return}
  const {data,error}=await db.auth.getSession();
  if(error||!data.session){alert("ログインしてください。");location.href="index.html";return}
@@ -199,20 +267,13 @@ async function init(){
   }else await caller();
  });
 }
-
 answerButton.addEventListener("click",answer);
 rejectButton.addEventListener("click",async()=>{if(callId)await sendSignal({type:"reject",callId});await finish(false)});
 muteButton.addEventListener("click",toggleMute);
 endButton.addEventListener("click",()=>finish(true));
-
 window.addEventListener("pagehide",()=>{
  stopRingRetry();
- if(localStream){
-  try{
-   if(localStream.track) localStream.track.stop();
-   else if(typeof localStream.getTracks==="function") localStream.getTracks().forEach(t=>t.stop());
-  }catch(e){}
- }
+ if(localStream){try{if(localStream.track)localStream.track.stop();else if(typeof localStream.getTracks==="function")localStream.getTracks().forEach(t=>t.stop())}catch(e){}}
  if(skyMember)skyMember.leave().catch(()=>{});
  if(skyRoom)skyRoom.dispose().catch(()=>{});
  if(channel)db.removeChannel(channel);
