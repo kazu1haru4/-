@@ -85,20 +85,17 @@ async function ensureSkyway(){
  const {SkyWayContext,SkyWayRoom,SkyWayStreamFactory}=window.skyway_room;
  const token=await getSkywayToken();
  skyContext=await SkyWayContext.Create(token);
- skyRoom=await SkyWayRoom.FindOrCreate(skyContext,{name:"friend-chat-call-"+callId});
+ skyRoom=await SkyWayRoom.FindOrCreate(skyContext,{type:"p2p",name:"friend-chat-call-"+callId});
  skyMember=await skyRoom.join({name:currentUsername});
- skyJoined=true;
- const media = await SkyWayStreamFactory.createMicrophoneAudioAndCameraStream({
-  audio:{
-   echoCancellation:true,
-   noiseSuppression:true,
-   autoGainControl:true
-  }
+ const audioStream = await SkyWayStreamFactory.createMicrophoneAudioStream({
+  echoCancellation: true,
+  noiseSuppression: true,
+  autoGainControl: true
  });
- const audioStream = media.audio;
  if(!audioStream) throw new Error("SkyWayのマイクストリームを作成できませんでした");
  skyAudioPublication=await skyMember.publish(audioStream,{type:"p2p"});
  localStream = audioStream;
+ skyJoined=true;
 
  const subscribeAudio=async publication=>{
   if(!publication||publication.publisher.id===skyMember.id||publication.contentType!=="audio")return;
@@ -122,7 +119,17 @@ async function caller(){
  callId=currentUsername+"-"+Date.now()+"-"+Math.random().toString(36).slice(2);
  statusEl.textContent="📞 呼び出しています...";
  await createCallNotification();await sendCallPush();startRingRetry();
- try{await ensureSkyway()}catch(e){console.error("SkyWay発信エラー",e);statusEl.textContent="⚠️ 接続失敗: "+(e?.message||String(e));stopRingRetry()}
+ try{
+  await ensureSkyway();
+ }catch(e){
+  console.error("SkyWay発信エラー",e);
+  statusEl.textContent="⚠️ 接続失敗: "+(e?.message||String(e));
+  stopRingRetry();
+  try{if(skyMember)await skyMember.leave()}catch(_){}
+  try{if(skyRoom)await skyRoom.dispose()}catch(_){}
+  skyMember=null;skyRoom=null;skyContext=null;skyAudioPublication=null;skyJoined=false;skyConnected=false;
+  return;
+ }
  await sendSignal({type:"ring",callId});
 }
 async function answer(){
