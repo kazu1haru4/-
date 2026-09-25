@@ -39,7 +39,7 @@ const friendId=params.get("user")||"",incoming=params.get("incoming")==="1",inco
 const avatar=$("avatar"),nameEl=$("name"),statusEl=$("status"),timerEl=$("timer");
 const answerButton=$("answer"),muteButton=$("mute"),endButton=$("end"),rejectButton=$("reject");
 let currentUsername="",friendName="",friendAvatarUrl="",channel=null,inboxChannel=null,ringTimer=null,timer=null,callStartedAt=0,callId="",muted=false,ended=false;
-let localStream=null,skyContext=null,skyRoom=null,skyMember=null,skyAudioPublication=null,skyConnected=false;
+let localStream=null,skyContext=null,skyRoom=null,skyMember=null,skyAudioPublication=null,skyConnected=false,skyJoined=false;
 
 function channelName(){return "friend-call-"+[currentUsername,friendId].sort().map(encodeURIComponent).join("-")}
 function inboxChannelName(){return "friend-call-inbox-"+encodeURIComponent(friendId)}
