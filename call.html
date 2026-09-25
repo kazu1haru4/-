@@ -66,10 +66,7 @@ function startTimer(){clearInterval(timer);callStartedAt=Date.now();timer=setInt
 function stopTimer(){clearInterval(timer);timer=null;timerEl.textContent=""}
 
 async function getMic(){
- if(localStream)return true;
- if(!navigator.mediaDevices?.getUserMedia){statusEl.textContent="⚠️ このブラウザではマイクを使用できません";return false}
- try{localStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});return true}
- catch(e){console.error(e);statusEl.textContent="マイクを使用できません";alert("マイクの使用を許可してください。");return false}
+ return true;
 }
 
 async function getSkywayToken(){
@@ -91,8 +88,17 @@ async function ensureSkyway(){
  skyRoom=await SkyWayRoom.FindOrCreate(skyContext,{name:"friend-chat-call-"+callId});
  skyMember=await skyRoom.join({name:currentUsername});
  skyJoined=true;
- const {audio: audioStream}=await SkyWayStreamFactory.createMicrophoneAudioAndCameraStream({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+ const media = await SkyWayStreamFactory.createMicrophoneAudioAndCameraStream({
+  audio:{
+   echoCancellation:true,
+   noiseSuppression:true,
+   autoGainControl:true
+  }
+ });
+ const audioStream = media.audio;
+ if(!audioStream) throw new Error("SkyWayのマイクストリームを作成できませんでした");
  skyAudioPublication=await skyMember.publish(audioStream,{type:"p2p"});
+ localStream = audioStream;
 
  const subscribeAudio=async publication=>{
   if(!publication||publication.publisher.id===skyMember.id||publication.contentType!=="audio")return;
@@ -116,13 +122,13 @@ async function caller(){
  callId=currentUsername+"-"+Date.now()+"-"+Math.random().toString(36).slice(2);
  statusEl.textContent="📞 呼び出しています...";
  await createCallNotification();await sendCallPush();startRingRetry();
- try{await ensureSkyway()}catch(e){console.error(e);statusEl.textContent="⚠️ 通話サーバーへの接続に失敗しました";stopRingRetry()}
+ try{await ensureSkyway()}catch(e){console.error("SkyWay発信エラー",e);statusEl.textContent="⚠️ 接続失敗: "+(e?.message||String(e));stopRingRetry()}
  await sendSignal({type:"ring",callId});
 }
 async function answer(){
  answerButton.classList.add("hidden");rejectButton.classList.add("hidden");
  try{const ok=await ensureSkyway();if(!ok)throw new Error("マイクを取得できません");if(!skyConnected)statusEl.textContent="🔄 接続中..."}
- catch(e){console.error(e);statusEl.textContent="⚠️ 通話に接続できませんでした";answerButton.classList.remove("hidden");rejectButton.classList.remove("hidden")}
+ catch(e){console.error("SkyWay応答エラー",e);statusEl.textContent="⚠️ 接続失敗: "+(e?.message||String(e));answerButton.classList.remove("hidden");rejectButton.classList.remove("hidden")}
 }
 async function handleSignal(data){
  if(!data||data.from===currentUsername)return;
