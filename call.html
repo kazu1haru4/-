@@ -141,11 +141,26 @@ async function ensureSkyway(){
   const token=await getSkywayToken();
 
   debugSet("③ RTC接続","🔄");
-  skyContext=await withTimeout(
-    SkyWayContext.Create(token),
-    20000,
-    "SkyWay RTC接続"
-  );
+  let rtcLastError=null;
+  for(let attempt=1;attempt<=3;attempt++){
+    try{
+      if(attempt>1){
+        debugSet("③ RTC接続","🔄","RTC接続を再試行しています… "+attempt+"/3");
+        await new Promise(resolve=>setTimeout(resolve,1200));
+      }
+      skyContext=await withTimeout(
+        SkyWayContext.Create(token),
+        20000,
+        "SkyWay RTC接続"
+      );
+      rtcLastError=null;
+      break;
+    }catch(err){
+      rtcLastError=err;
+      console.warn("SkyWay RTC接続試行 "+attempt+"/3",err);
+    }
+  }
+  if(rtcLastError)throw rtcLastError;
   debugSet("③ RTC接続","✅");
 
   debugSet("④ Room","🔄");
