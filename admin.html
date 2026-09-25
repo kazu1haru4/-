@@ -37,6 +37,13 @@ textarea{min-height:100px;resize:vertical}.form-row{margin-bottom:12px}.form-row
 .log-row,.report-row{padding:12px;border-radius:14px;background:#f7f8fc;margin-bottom:8px}.tag{display:inline-block;padding:3px 8px;border-radius:999px;background:#eee;font-size:12px;font-weight:700}.tag.open{background:#fff3cd;color:#856404}.tag.done{background:#e8f5e9;color:#2e7d32}.danger-text{color:#c62828;font-weight:700}
 .switch-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border-radius:14px;background:#f7f8fc}.switch-row button{min-width:110px}.muted{color:#777;font-size:13px}
 .user-card .actions{display:flex;gap:6px;flex-wrap:wrap}.user-card .actions button{margin:0}
+.user-item-card{padding:12px;border-radius:14px;background:#f7f8fc;margin-bottom:8px}
+.user-item-head{display:flex;align-items:center;gap:10px}
+.user-item-icon{font-size:25px;width:40px;text-align:center}
+.user-item-main{flex:1;min-width:0}
+.user-item-name{font-weight:800;word-break:break-word}
+.user-item-meta{font-size:12px;color:#777;margin-top:3px;word-break:break-word}
+.user-item-equipped{color:#2e7d32;font-weight:800;font-size:12px;margin-top:3px}
 
 .sub-admin-slot{padding:14px;border-radius:16px;background:#f7f8fc;margin-bottom:12px}
 .sub-admin-slot-title{font-size:17px;font-weight:800;margin-bottom:10px}
@@ -73,6 +80,18 @@ textarea{min-height:100px;resize:vertical}.form-row{margin-bottom:12px}.form-row
 
 <details class="panel collapsible-panel"><summary>📊 サイト統計</summary><div id="statsLoading" class="loading">統計を読み込んでいます...</div><div id="statsGrid" class="stat-grid"></div></details>
 <details class="panel collapsible-panel"><summary>🖼️ フレーム一覧</summary><div id="framesLoading" class="loading">フレームを読み込んでいます...</div><div id="framesList"></div></details>
+
+<details class="panel collapsible-panel">
+<summary>✨ 名前装飾一覧</summary>
+<div id="nameDecorationsLoading" class="loading">名前装飾を読み込んでいます...</div>
+<div id="nameDecorationsList"></div>
+</details>
+
+<details class="panel collapsible-panel">
+<summary>🎨 背景一覧</summary>
+<div id="backgroundsLoading" class="loading">背景を読み込んでいます...</div>
+<div id="backgroundsList"></div>
+</details>
 
 <details class="panel collapsible-panel">
 <summary>👤 ユーザー管理</summary>
@@ -128,7 +147,7 @@ textarea{min-height:100px;resize:vertical}.form-row{margin-bottom:12px}.form-row
 <details class="panel collapsible-panel"><summary>📋 イベント管理</summary><div id="eventsLoading" class="loading">イベントを読み込んでいます...</div><div id="eventsList"></div></details>
 </div>
 
-<div id="userDetailModal" class="modal hidden"><div class="modal-box"><h3>👤 ユーザー詳細</h3><div id="userDetailContent">読み込み中...</div><div class="actions"><button id="closeUserDetail" class="gray" type="button">閉じる</button></div></div></div>
+<div id="userDetailModal" class="modal hidden"><div class="modal-box"><h3>👤 ユーザー詳細</h3><div id="userDetailContent">読み込み中...</div><div id="userItemManagement" style="margin-top:16px;padding-top:16px;border-top:1px solid #eee"><h4 style="margin:0 0 10px">🎁 所持アイテム管理</h4><div id="userItemsLoading" class="loading">読み込み中...</div><div id="userItemsList"></div><div class="form-row" style="margin-top:12px"><label>アイテムを付与</label><select id="userItemAddSelect"><option value="">アイテムを選択</option></select></div><button id="userItemAddButton" type="button">➕ アイテムを付与</button></div><div class="actions"><button id="closeUserDetail" class="gray" type="button">閉じる</button></div></div></div>
 <div id="coinModal" class="modal hidden"><div class="modal-box"><h3>🪙 コインを変更</h3><p id="coinTarget"></p><div id="coinCurrent" class="frame-status">🔄 現在の残高を読み込んでいます...</div><div class="form-row" style="margin-top:12px"><label>新しいコイン残高</label><input id="coinNewBalance" type="number" min="0" step="1" value="0"><div class="hint">0以上の整数を入力してください。</div></div><div class="actions"><button id="confirmCoinButton" type="button">🪙 変更する</button><button id="cancelCoinButton" class="gray" type="button">キャンセル</button></div></div></div>
 <div id="banModal" class="modal hidden"><div class="modal-box"><h3>🚫 ユーザーをBAN</h3><p id="banTarget"></p><div class="form-row"><label>理由</label><textarea id="banReason" placeholder="BAN理由を入力"></textarea></div><div class="actions"><button id="confirmBanButton" class="danger" type="button">🚫 BANする</button><button id="cancelBanButton" class="gray" type="button">キャンセル</button></div></div></div>
 <div id="editModal" class="modal hidden"><div class="modal-box"><h3>✏️ 掲示板メッセージを編集</h3><div class="form-row"><textarea id="editContent" placeholder="メッセージ"></textarea></div><div class="actions"><button id="saveEditButton" type="button">💾 保存</button><button id="cancelEditButton" class="gray" type="button">キャンセル</button></div></div></div>
@@ -220,7 +239,130 @@ async function deleteUserAccount(username){
  }
 }
 
+
+let userItemTargetUsername = "";
+
+async function loadAdminUserItems(targetUserId){
+ const loading=document.getElementById("userItemsLoading");
+ const list=document.getElementById("userItemsList");
+ const select=document.getElementById("userItemAddSelect");
+ if(!loading||!list||!select)return;
+
+ userItemTargetUsername=String(targetUserId||"");
+ loading.classList.remove("hidden");
+ loading.textContent="🔄 所持アイテムを読み込んでいます...";
+ list.innerHTML="";
+ select.innerHTML='<option value="">アイテムを選択</option>';
+
+ const {data:owned,error}=await supabaseClient.rpc("admin_get_user_items",{target_user_id:userItemTargetUsername});
+ if(error){
+   loading.textContent="❌ 所持アイテム取得エラー：\n"+error.message;
+   return;
+ }
+
+ const {data:allItems,error:allError}=await supabaseClient
+   .from("coin_items")
+   .select("item_key,name,icon,item_type,frame_color")
+   .order("item_type",{ascending:true})
+   .order("name",{ascending:true});
+
+ if(allError){
+   loading.textContent="❌ アイテム一覧取得エラー：\n"+allError.message;
+   return;
+ }
+
+ const ownedKeys=new Set((owned||[]).map(x=>x.item_key));
+
+ (allItems||[]).forEach(item=>{
+   if(ownedKeys.has(item.item_key))return;
+   const option=document.createElement("option");
+   option.value=item.item_key;
+   option.textContent=`${item.icon||"🎁"} ${item.name||item.item_key}`;
+   select.appendChild(option);
+ });
+
+ if(!owned?.length){
+   list.innerHTML='<div class="empty">このユーザーはアイテムを所持していません。</div>';
+ }else{
+   owned.forEach(item=>{
+     const typeLabel=
+       item.item_type==="name_decoration"?"✨ 名前装飾":
+       item.item_type==="background"?"🎨 背景":"🖼️ フレーム";
+     const card=document.createElement("div");
+     card.className="user-item-card";
+     card.innerHTML=`
+       <div class="user-item-head">
+         <div class="user-item-icon">${escapeHtml(item.icon||"🎁")}</div>
+         <div class="user-item-main">
+           <div class="user-item-name">${escapeHtml(item.name||item.item_key)}</div>
+           <div class="user-item-meta">${typeLabel} / ID：${escapeHtml(item.item_key)}</div>
+           ${item.is_equipped?'<div class="user-item-equipped">✅ 現在装備中</div>':""}
+         </div>
+       </div>
+       <div class="actions">
+         <button class="danger small" type="button" data-remove-user-item="${escapeAttribute(item.item_key)}">🗑️ 所持から削除</button>
+       </div>`;
+     list.appendChild(card);
+   });
+ }
+
+ loading.classList.add("hidden");
+
+ list.querySelectorAll("[data-remove-user-item]").forEach(button=>{
+   button.addEventListener("click",async()=>{
+     const itemKey=button.dataset.removeUserItem;
+     if(!confirm(`「${itemKey}」をこのユーザーの所持から削除しますか？`))return;
+     button.disabled=true;
+     const {data,error}=await supabaseClient.rpc("admin_remove_user_item",{
+       target_user_id:userItemTargetUsername,
+       target_item_key:itemKey
+     });
+     button.disabled=false;
+     if(error){
+       alert("❌ 削除に失敗しました。\n\n"+error.message);
+       return;
+     }
+     alert(data?.message||"アイテムを削除しました。");
+     await loadAdminUserItems(userItemTargetUsername);
+     await logOperation(`ユーザー「${userItemTargetUsername}」からアイテム「${itemKey}」を削除しました。`);
+   });
+ });
+}
+
+async function addAdminUserItem(){
+ if(!userItemTargetUsername){
+   alert("先にユーザー詳細を開いてください。");
+   return;
+ }
+ const select=document.getElementById("userItemAddSelect");
+ const itemKey=select?.value||"";
+ if(!itemKey){
+   alert("付与するアイテムを選択してください。");
+   return;
+ }
+ const button=document.getElementById("userItemAddButton");
+ if(button)button.disabled=true;
+
+ const {data,error}=await supabaseClient.rpc("admin_add_user_item",{
+   target_user_id:userItemTargetUsername,
+   target_item_key:itemKey
+ });
+
+ if(button)button.disabled=false;
+
+ if(error){
+   alert("❌ アイテム付与に失敗しました。\n\n"+error.message);
+   return;
+ }
+
+ alert(data?.message||"アイテムを付与しました。");
+ select.value="";
+ await loadAdminUserItems(userItemTargetUsername);
+ await logOperation(`ユーザー「${userItemTargetUsername}」にアイテム「${itemKey}」を付与しました。`);
+}
+
 async function openUserDetail(username){
+ await loadAdminUserItems(username);
  const modal=document.getElementById("userDetailModal"),box=document.getElementById("userDetailContent");modal.classList.remove("hidden");box.textContent="読み込み中...";
  const {data,error}=await supabaseClient.rpc("admin_get_user_detail",{target_username:username});
  if(error){box.innerHTML='<div class="danger-text">❌ '+escapeHtml(error.message)+'</div>';return}
@@ -533,6 +675,10 @@ function setupButtons(){
  document.getElementById("confirmBanButton").addEventListener("click",banUser);document.getElementById("cancelBanButton").addEventListener("click",closeBanModal);document.getElementById("saveEditButton").addEventListener("click",saveBoardEdit);document.getElementById("cancelEditButton").addEventListener("click",closeEditModal);document.getElementById("createRewardCodeButton").addEventListener("click",createRewardCode);document.getElementById("createEventButton").addEventListener("click",createEvent);
  document.getElementById("banModal").addEventListener("click",e=>{if(e.target.id==="banModal")closeBanModal()});document.getElementById("editModal").addEventListener("click",e=>{if(e.target.id==="editModal")closeEditModal()});
 }
+function setupUserItemManagement(){
+ document.getElementById("userItemAddButton")?.addEventListener("click",addAdminUserItem);
+}
+
 function setupNewFeatures(){
  document.getElementById("userSearch")?.addEventListener("input",renderUsers);document.getElementById("userFilter")?.addEventListener("change",renderUsers);document.getElementById("userSort")?.addEventListener("change",renderUsers);
  document.getElementById("coinHistorySearch")?.addEventListener("input",loadCoinHistory);document.getElementById("refreshCoinHistory")?.addEventListener("click",loadCoinHistory);document.getElementById("refreshReports")?.addEventListener("click",loadReports);document.getElementById("reportStatusFilter")?.addEventListener("change",loadReports);document.getElementById("toggleMaintenance")?.addEventListener("click",toggleMaintenance);document.getElementById("refreshOperationLogs")?.addEventListener("click",loadOperationLogs);document.getElementById("operationLogSearch")?.addEventListener("input",loadOperationLogs);document.getElementById("closeUserDetail")?.addEventListener("click",()=>document.getElementById("userDetailModal").classList.add("hidden"));document.getElementById("userDetailModal")?.addEventListener("click",e=>{if(e.target.id==="userDetailModal")document.getElementById("userDetailModal").classList.add("hidden")})
@@ -546,7 +692,7 @@ async function init(){
   setStatus("✅ 管理者パネルの読み込みが完了しました！","success");
  }catch(error){console.error("管理者パネルエラー:",error);setStatus("❌ エラーが発生しました\n\n"+(error.message||error),"error")}
 }
-try{setupButtons();setupNewFeatures();init()}catch(error){console.error(error);setStatus("❌ ページ起動エラー\n\n"+(error.message||error),"error")}
+try{setupButtons();setupUserItemManagement();setupNewFeatures();init()}catch(error){console.error(error);setStatus("❌ ページ起動エラー\n\n"+(error.message||error),"error")}
 </script>
 </body>
 </html>
