@@ -52,7 +52,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
 .latest-button{position:absolute;right:16px;bottom:16px;border:0;background:#8f7cff;color:#fff;padding:11px 16px;border-radius:999px;font-size:13px;font-weight:bold;box-shadow:0 4px 14px rgba(0,0,0,.18);opacity:0;transform:translateY(10px);pointer-events:none;transition:.2s;z-index:10}.latest-button.show{opacity:1;transform:none;pointer-events:auto}
 .input-area{position:relative;flex-shrink:0;background:#fff;padding:12px;padding-bottom:max(12px,env(safe-area-inset-bottom));display:flex;gap:8px;border-top:1px solid #eee;z-index:5}
 .input-area input{flex:1;min-width:0;padding:12px;border:1px solid #ddd;border-radius:18px;font-size:16px;outline:0}.input-area input:focus{border-color:#8f7cff}
-.image-button{width:46px;min-width:46px;border:0;border-radius:18px;background:#f1efff;font-size:21px}.send-button{border:0;border-radius:18px;padding:0 18px;background:#8f7cff;color:#fff;font-weight:bold}
+.image-button{width:46px;min-width:46px;border:0;border-radius:18px;background:#f1efff;font-size:21px}.send-button{border:0;border-radius:18px;padding:0 18px;background:#8f7cff;color:#fff;font-weight:bold}.plus-wrap{position:relative;flex-shrink:0}.plus-button{width:46px;min-width:46px;height:46px;border:0;border-radius:18px;background:#f1efff;color:#6f61d9;font-size:26px;font-weight:700}.media-menu{position:absolute;left:0;bottom:54px;display:none;min-width:190px;padding:8px;background:#fff;border:1px solid #eee;border-radius:16px;box-shadow:0 8px 25px rgba(0,0,0,.16);z-index:100}.media-menu.show{display:block}.media-menu button{display:block;width:100%;border:0;background:#fff;text-align:left;padding:11px 12px;border-radius:11px;font-size:14px;font-weight:700;color:#444}.media-menu button:active,.media-menu button:hover{background:#f5f3ff}.media-status{position:absolute;left:12px;right:12px;bottom:calc(100% + 5px);display:none;background:#fff3f3;border:1px solid #ffd0d0;color:#d44;border-radius:12px;padding:7px 10px;font-size:12px;font-weight:700;z-index:25}.media-status.show{display:block}.chat-video{display:block;width:min(260px,100%);max-height:300px;border-radius:14px;margin-bottom:5px;background:#111}.chat-audio{display:block;width:min(260px,100%);margin:4px 0}
 button:disabled{opacity:.5}#imageInput{display:none}
 
 /* 入力中表示 */
@@ -104,10 +104,19 @@ button:disabled{opacity:.5}#imageInput{display:none}
 <div id="typingIndicator" class="typing-indicator" aria-live="polite"></div>
 <div id="replyBar" class="reply-bar"><span id="replyBarText"></span><button id="replyCancel" class="reply-cancel" type="button">✕</button></div>
 <input id="messageInput" type="text" placeholder="メッセージを入力..." autocomplete="off">
-<button class="image-button" id="imageButton" type="button">🖼️</button>
+<div class="plus-wrap">
+<button class="plus-button" id="plusButton" type="button" aria-label="送信メニュー">＋</button>
+<div class="media-menu" id="mediaMenu">
+<button id="menuImageButton" type="button">🖼️ 写真を送る</button>
+<button id="menuVideoButton" type="button">🎥 動画を送る</button>
+<button id="menuVoiceButton" type="button">🎙️ ボイスメッセージ</button>
+</div>
+</div>
 <button class="send-button" id="sendButton" type="submit">送信</button>
+<div class="media-status" id="mediaStatus"></div>
 </form>
 <input id="imageInput" type="file" accept="image/*">
+<input id="videoInput" type="file" accept="video/*" style="display:none">
 
 <!-- ===== 通話着信通知：既存チャット機能とは独立 ===== -->
 <div id="incomingCallOverlay" style="
@@ -146,7 +155,7 @@ const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
 const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=id=>document.getElementById(id);
-const messagesElement=$("messages"),messageInput=$("messageInput"),messageForm=$("messageForm"),sendButton=$("sendButton"),imageButton=$("imageButton"),imageInput=$("imageInput"),chatTitle=$("chatTitle"),headerAvatar=$("headerAvatar"),headerAvatarFrame=$("headerAvatarFrame"),headerAvatarBadge=$("headerAvatarBadge"),latestButton=$("latestButton"),friendStatus=$("friendStatus"),typingIndicator=$("typingIndicator"),callButton=$("callButton");
+const messagesElement=$("messages"),messageInput=$("messageInput"),messageForm=$("messageForm"),sendButton=$("sendButton"),plusButton=$("plusButton"),mediaMenu=$("mediaMenu"),menuImageButton=$("menuImageButton"),menuVideoButton=$("menuVideoButton"),menuVoiceButton=$("menuVoiceButton"),imageInput=$("imageInput"),videoInput=$("videoInput"),mediaStatus=$("mediaStatus"),chatTitle=$("chatTitle"),headerAvatar=$("headerAvatar"),headerAvatarFrame=$("headerAvatarFrame"),headerAvatarBadge=$("headerAvatarBadge"),latestButton=$("latestButton"),friendStatus=$("friendStatus"),typingIndicator=$("typingIndicator"),callButton=$("callButton");
 const friendId=new URLSearchParams(location.search).get("user")||"";
 const incomingCallOverlay=$("incomingCallOverlay");
 const incomingCallAvatar=$("incomingCallAvatar");
@@ -274,7 +283,7 @@ async function loadReadStatuses(messages){
 }
 async function prepareImageUrls(messages){
  const list=messages.filter(m=>!m.is_deleted&&m.image_url);if(!list.length)return new Map();
- const out=await Promise.all(list.map(async m=>{const {data,error}=await db.storage.from("chat-images").createSignedUrl(m.image_url,3600);return[m.id,error?"":data?.signedUrl||""]}));return new Map(out);
+ const out=await Promise.all(list.map(async m=>{const {data,error}=await db.storage.from("chat-images").createSignedUrl(mediaPath(m.image_url),3600);return[m.id,error?"":data?.signedUrl||""]}));return new Map(out);
 }
 async function editMessage(id,currentContent){
  if(!currentContent){alert("画像メッセージは編集できません。");return}
@@ -369,7 +378,7 @@ function createMessageElement(message,imageUrl,extras={replies:[],reactions:[]})
  const bubble=document.createElement("div");bubble.className="bubble";
  if(message.is_deleted){bubble.classList.add("deleted-message");bubble.textContent="このメッセージは取り消されました"}
  else{
-  if(imageUrl){const img=document.createElement("img");img.className="chat-image";img.src=imageUrl;img.alt="送信された画像";bubble.appendChild(img)}
+  if(imageUrl){bubble.appendChild(makeMediaMessage(message,imageUrl,mediaKind(message.image_url)))}
   if(message.content){const t=document.createElement("div");t.textContent=message.content;bubble.appendChild(t)}
  }
  const replyRows=extras.replies.filter(r=>String(r.message_id)===String(message.id));
@@ -481,6 +490,59 @@ document.addEventListener("click",e=>{
  document.querySelectorAll(".message-actions.show").forEach(menu=>menu.classList.remove("show"));
  document.querySelectorAll(".reaction-picker").forEach(picker=>picker.style.display="none");
 });
+
+
+function mediaKind(path){
+ const v=String(path||"");
+ if(v.startsWith("video:"))return "video";
+ if(v.startsWith("audio:"))return "audio";
+ return "image";
+}
+function mediaPath(path){return String(path||"").replace(/^video:/,"").replace(/^audio:/,"");}
+function showMediaStatus(text){if(!mediaStatus)return;mediaStatus.textContent=text||"";mediaStatus.classList.toggle("show",!!text)}
+function closeMediaMenu(){mediaMenu?.classList.remove("show")}
+function makeMediaMessage(message,url,kind){
+ if(kind==="video"){const video=document.createElement("video");video.className="chat-video";video.controls=true;video.playsInline=true;video.preload="metadata";video.src=url;return video}
+ if(kind==="audio"){const audio=document.createElement("audio");audio.className="chat-audio";audio.controls=true;audio.preload="metadata";audio.src=url;return audio}
+ const img=document.createElement("img");img.className="chat-image";img.src=url;img.alt="送信された画像";return img
+}
+async function uploadMediaFile(file,kind){
+ if(!file||!currentUsername||!friendId)return;
+ const allowed=kind==="image"?file.type.startsWith("image/"):kind==="video"?file.type.startsWith("video/"):file.type.startsWith("audio/");
+ if(!allowed){alert(kind==="image"?"画像ファイルを選んでください。":kind==="video"?"動画ファイルを選んでください。":"音声ファイルを選んでください。");return}
+ closeMediaMenu();imageInput.value="";videoInput.value="";plusButton.disabled=true;sendButton.disabled=true;
+ showMediaStatus(kind==="image"?"🖼️ 画像を送信中…":kind==="video"?"🎥 動画を送信中…":"🎙️ 音声を送信中…");
+ try{
+  const ext=(file.name.split(".").pop()||({image:"jpg",video:"mp4",audio:"webm"}[kind]||"bin")).replace(/[^a-zA-Z0-9]/g,"");
+  const path=currentUsername+"/"+Date.now()+"_"+Math.random().toString(36).slice(2)+"."+ext;
+  const up=await db.storage.from("chat-images").upload(path,file,{contentType:file.type||"application/octet-stream",upsert:false});if(up.error)throw up.error;
+  const storedPath=(kind==="video"?"video:":kind==="audio"?"audio:":"")+path;
+  const {data,error}=await db.from("messages").insert({sender_id:currentUsername,receiver_id:friendId,content:"",image_url:storedPath,is_deleted:false,is_edited:false}).select().single();if(error)throw error;
+  const {data:signed}=await db.storage.from("chat-images").createSignedUrl(path,3600);
+  messagesElement.appendChild(createMessageElement(data,signed?.signedUrl||""));scrollToBottom();updateLatestButton();
+  const label=kind==="image"?"🖼️ 画像を送信しました":kind==="video"?"🎥 動画を送信しました":"🎙️ ボイスメッセージを送信しました";
+  await createNotification(label);await sendPushToUser(friendId,"💬 "+currentUsername+"さんからメッセージ",label,"./chat.html?user="+encodeURIComponent(currentUsername));
+ }catch(e){console.error(e);alert("送信に失敗しました。\n\n"+(e?.message||e))}
+ finally{plusButton.disabled=false;sendButton.disabled=false;showMediaStatus("")}
+}
+let mediaRecorder=null,mediaChunks=[],voiceStream=null,voiceRecording=false;
+async function toggleVoiceRecording(){
+ if(voiceRecording){mediaRecorder?.stop();return}
+ if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){alert("この端末・ブラウザではボイスメッセージを録音できません。");return}
+ try{
+  closeMediaMenu();voiceStream=await navigator.mediaDevices.getUserMedia({audio:true});
+  const mime=["audio/webm;codecs=opus","audio/webm","audio/mp4"].find(x=>MediaRecorder.isTypeSupported(x))||"";
+  mediaRecorder=new MediaRecorder(voiceStream,mime?{mimeType:mime}:undefined);mediaChunks=[];voiceRecording=true;
+  menuVoiceButton.textContent="⏹️ 録音を停止";showMediaStatus("🔴 録音中…もう一度押すと送信します");
+  mediaRecorder.ondataavailable=e=>{if(e.data?.size)mediaChunks.push(e.data)};
+  mediaRecorder.onstop=async()=>{
+   voiceRecording=false;menuVoiceButton.textContent="🎙️ ボイスメッセージ";voiceStream?.getTracks().forEach(t=>t.stop());voiceStream=null;
+   const type=mediaRecorder?.mimeType||"audio/webm",ext=type.includes("mp4")?"m4a":"webm",blob=new Blob(mediaChunks,{type});mediaRecorder=null;mediaChunks=[];
+   if(blob.size)await uploadMediaFile(new File([blob],"voice."+ext,{type}),"audio");
+  };
+  mediaRecorder.start();
+ }catch(e){console.error(e);voiceRecording=false;voiceStream?.getTracks().forEach(t=>t.stop());voiceStream=null;alert("マイクを使用できませんでした。\n\n"+(e?.message||e))}
+}
 
 async function loadMessages(){
  if(!currentUsername||!friendId){messagesElement.innerHTML='<div class="empty">ユーザー情報を取得できませんでした</div>';return}
@@ -616,7 +678,7 @@ function startRealtime(){
  realtimeChannel=db.channel("chat-"+currentUsername+"-"+friendId)
  .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},async p=>{
   const m=p.new,isChat=(m.sender_id===currentUsername&&m.receiver_id===friendId)||(m.sender_id===friendId&&m.receiver_id===currentUsername);if(!isChat||m.sender_id===currentUsername)return;
-  await markMessagesAsRead([m]);let u="";if(m.image_url){const {data}=await db.storage.from("chat-images").createSignedUrl(m.image_url,3600);u=data?.signedUrl||""}messagesElement.appendChild(createMessageElement(m,u));scrollToBottom();updateLatestButton();
+  await markMessagesAsRead([m]);let u="";if(m.image_url){const {data}=await db.storage.from("chat-images").createSignedUrl(mediaPath(m.image_url),3600);u=data?.signedUrl||""}messagesElement.appendChild(createMessageElement(m,u));scrollToBottom();updateLatestButton();
  }).on("postgres_changes",{event:"UPDATE",schema:"public",table:"messages"},async p=>{const m=p.new;if((m.sender_id===currentUsername&&m.receiver_id===friendId)||(m.sender_id===friendId&&m.receiver_id===currentUsername))await loadMessages()})
  .on("postgres_changes",{event:"INSERT",schema:"public",table:"chat_reactions"},async p=>{
   const r=p.new;
@@ -672,20 +734,13 @@ messageForm.onsubmit=async e=>{
  if(error){alert("メッセージを送信できませんでした。\n\n"+error.message);return}
  messageInput.value="";messagesElement.appendChild(createMessageElement(data,""));scrollToBottom();updateLatestButton();await createNotification(text);await sendPushToUser(friendId,"💬 "+currentUsername+"さんからメッセージ",currentUsername+"さん: "+text,"./chat.html?user="+encodeURIComponent(currentUsername));
 };
-imageButton.onclick=()=>imageInput.click();
-imageInput.onchange=async()=>{
- const file=imageInput.files?.[0];if(!file)return;
- if(!currentUsername||!friendId){alert("ログイン情報または相手の情報を取得できません。");imageInput.value="";return}
- if(!file.type.startsWith("image/")){alert("画像ファイルを選んでください。");imageInput.value="";return}
- imageButton.disabled=true;sendButton.disabled=true;
- try{
-  const ext=file.name.split(".").pop()||"jpg",path=currentUsername+"/"+Date.now()+"_"+Math.random().toString(36).slice(2)+"."+ext;
-  const up=await db.storage.from("chat-images").upload(path,file,{contentType:file.type,upsert:false});if(up.error)throw up.error;
-  const {data,error}=await db.from("messages").insert({sender_id:currentUsername,receiver_id:friendId,content:"",image_url:path,is_deleted:false,is_edited:false}).select().single();if(error)throw error;
-  const {data:signed}=await db.storage.from("chat-images").createSignedUrl(path,3600);messagesElement.appendChild(createMessageElement(data,signed?.signedUrl||""));scrollToBottom();updateLatestButton();await createNotification("🖼️ 画像を送信しました");await sendPushToUser(friendId,"💬 "+currentUsername+"さんからメッセージ","🖼️ "+currentUsername+"さんが画像を送信しました","./chat.html?user="+encodeURIComponent(currentUsername));
- }catch(e){console.error(e);alert("画像を送信できませんでした。\n\n"+e.message)}
- finally{imageButton.disabled=false;sendButton.disabled=false;imageInput.value=""}
-};
+plusButton.onclick=e=>{e.preventDefault();e.stopPropagation();mediaMenu.classList.toggle("show")};
+menuImageButton.onclick=()=>imageInput.click();
+menuVideoButton.onclick=()=>videoInput.click();
+menuVoiceButton.onclick=toggleVoiceRecording;
+imageInput.onchange=async()=>{const file=imageInput.files?.[0];if(file)await uploadMediaFile(file,"image")};
+videoInput.onchange=async()=>{const file=videoInput.files?.[0];if(file)await uploadMediaFile(file,"video")};
+document.addEventListener("click",e=>{if(!e.target.closest(".plus-wrap"))closeMediaMenu()});
 $("replyCancel").onclick=e=>{e.preventDefault();clearReplyTarget()};
 
 /* ===== 通話：別ページ call.html を開くだけ ===== */
@@ -703,6 +758,8 @@ window.addEventListener("pagehide",()=>{
  if(presenceTimer)clearInterval(presenceTimer);
  if(realtimeChannel)db.removeChannel(realtimeChannel);
  if(incomingCallChannel)db.removeChannel(incomingCallChannel);
+  if(mediaRecorder&&voiceRecording){try{mediaRecorder.stop()}catch(e){}}
+  if(voiceStream)voiceStream.getTracks().forEach(t=>t.stop());
 });
 async function start(){
  if(!friendId){chatTitle.textContent="💬 相手が選ばれていません";messageForm.style.display="none";callButton.style.display="none";messagesElement.innerHTML='<div class="empty">フレンドから相手を選んでね</div>';return}
