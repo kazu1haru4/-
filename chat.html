@@ -498,39 +498,59 @@ async function loadMessages(){
 function startIncomingCallListener(){
  if(!currentUsername)return;
 
- const pair=[currentUsername,friendId].sort().map(encodeURIComponent).join("-");
- incomingCallChannel=db.channel("friend-call-"+pair);
+ const inboxName="friend-call-inbox-"+encodeURIComponent(currentUsername);
+ incomingCallChannel=db.channel(inboxName);
 
  incomingCallChannel
-  .on("broadcast",{event:"call"},async payload=>{
+  .on("broadcast",{event:"incoming-call"},async payload=>{
     const data=payload?.payload||{};
 
     if(!data.from||data.from===currentUsername)return;
     if(data.type!=="ring")return;
+    if(data.to&&data.to!==currentUsername)return;
+    if(!data.callId)return;
 
-    /* 自分が開いている個別チャットの相手からの着信だけ表示 */
-    if(data.from!==friendId)return;
+    incomingCallId=data.callId;
+    incomingCallTitle.textContent="📞 "+data.from+"さんから着信";
 
-    incomingCallId=data.callId||"";
-    incomingCallTitle.textContent="📞 "+(friendName||friendId)+"さんから着信";
+    /* 相手のプロフィールを取得して表示 */
+    try{
+      const {data:callerProfile}=await db
+        .from("profiles")
+        .select("user_id,name,avatar_url")
+        .eq("user_id",data.from)
+        .maybeSingle();
 
-    incomingCallAvatar.innerHTML="";
-    if(friendAvatarUrl){
-      const img=document.createElement("img");
-      img.src=friendAvatarUrl;
-      img.alt="プロフィール画像";
-      img.style.width="100%";
-      img.style.height="100%";
-      img.style.objectFit="cover";
-      img.onerror=()=>{incomingCallAvatar.textContent="👤"};
-      incomingCallAvatar.appendChild(img);
-    }else{
+      const callerName=callerProfile?.name||data.from;
+      incomingCallTitle.textContent="📞 "+callerName+"さんから着信";
+
+      incomingCallAvatar.innerHTML="";
+      if(callerProfile?.avatar_url){
+        const img=document.createElement("img");
+        img.src=callerProfile.avatar_url;
+        img.alt="プロフィール画像";
+        img.style.width="100%";
+        img.style.height="100%";
+        img.style.objectFit="cover";
+        img.onerror=()=>{incomingCallAvatar.textContent="👤"};
+        incomingCallAvatar.appendChild(img);
+      }else{
+        incomingCallAvatar.textContent="👤";
+      }
+    }catch(e){
+      console.warn("発信者プロフィール取得:",e);
       incomingCallAvatar.textContent="👤";
     }
 
+    /* 発信者IDを保持 */
+    incomingCallOverlay.dataset.caller=data.from;
     incomingCallOverlay.style.display="flex";
   })
-  .subscribe();
+  .subscribe(st=>{
+    if(st!=="SUBSCRIBED"){
+      console.warn("通話着信チャンネル:",st);
+    }
+  });
 }
 
 async function closeIncomingCallChannel(){
@@ -543,7 +563,8 @@ async function closeIncomingCallChannel(){
 incomingCallAccept.onclick=async()=>{
  if(!incomingCallId)return;
 
- const caller=friendId;
+ const caller=incomingCallOverlay.dataset.caller||"";
+ if(!caller)return;
  const callParam=encodeURIComponent(incomingCallId);
 
  incomingCallOverlay.style.display="none";
@@ -560,9 +581,17 @@ incomingCallReject.onclick=async()=>{
    return;
  }
 
- if(incomingCallChannel){
+ const caller=incomingCallOverlay.dataset.caller||"";
+ if(caller){
    try{
-     await incomingCallChannel.send({
+     const pair=[currentUsername,caller].sort().map(encodeURIComponent).join("-");
+     const rejectChannel=db.channel("friend-call-"+pair);
+     await new Promise(resolve=>{
+       rejectChannel.subscribe(st=>{
+         if(st==="SUBSCRIBED")resolve();
+       });
+     });
+     await rejectChannel.send({
        type:"broadcast",
        event:"call",
        payload:{
@@ -571,6 +600,7 @@ incomingCallReject.onclick=async()=>{
          from:currentUsername
        }
      });
+     await db.removeChannel(rejectChannel);
    }catch(error){
      console.warn("着信拒否通知:",error);
    }
@@ -578,6 +608,7 @@ incomingCallReject.onclick=async()=>{
 
  incomingCallOverlay.style.display="none";
  incomingCallId="";
+delete incomingCallOverlay.dataset.caller;
 };
 
 function startRealtime(){
