@@ -189,19 +189,6 @@ textarea{min-height:100px;resize:vertical}.form-row{margin-bottom:12px}.form-row
 
 
 <script>
-/* 管理者限定アイテムは他ユーザーへ付与禁止 */
-const ADMIN_ONLY_ITEM_KEYS = new Set(["admin", "admin_name", "admin_bg"]);
-
-function isAdminOnlyItem(item) {
-  return ADMIN_ONLY_ITEM_KEYS.has(String(item?.item_key || ""));
-}
-
-function canGrantItemToUser(item) {
-  return !isAdminOnlyItem(item);
-}
-</script>
-
-<script>
 const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
 const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 let supabaseClient=null,currentUsername="",banTargetUsername="",editTargetMessageId=null;
@@ -288,8 +275,6 @@ async function deleteUserAccount(username){
  }
 }
 
-
-let userItemTargetUsername = "";
 
 let userItemTargetUsername = "";
 
@@ -581,8 +566,7 @@ async function loadItems() {
     return "frame";
   };
 
-  items.forEach(item =>
-      if (isAdminOnlyItem(item)) return; {
+  items.forEach(item => {
     const type = getType(item);
     const icon = item.icon || (type === "name_decoration" ? "✨" : type === "background" ? "🎨" : "🖼️");
 
