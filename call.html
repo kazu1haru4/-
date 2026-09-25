@@ -142,6 +142,45 @@ function inboxChannelName(){
   return "friend-call-inbox-"+encodeURIComponent(friendId);
 }
 
+async function createCallNotification(){
+  if(!friendId||!currentUsername||!callId)return;
+
+  try{
+    const {error}=await db.from("notifications").insert({
+      user_id:friendId,
+      type:"call",
+      title:"📞 "+currentUsername+"さんから通話着信",
+      message:"音声通話の着信があります。",
+      link:"call.html?user="+encodeURIComponent(currentUsername)+"&incoming=1&call="+encodeURIComponent(callId),
+      is_read:false
+    });
+
+    if(error)console.warn("通話サイト内通知エラー:",error);
+  }catch(error){
+    console.warn("通話通知レコード作成エラー:",error);
+  }
+}
+
+async function sendCallPush(){
+  if(!friendId||!currentUsername||friendId===currentUsername)return;
+
+  try{
+    const {data,error}=await db.functions.invoke("send-push",{
+      body:{
+        username:friendId,
+        title:"📞 "+currentUsername+"さんから通話着信",
+        message:"音声通話の着信があります。",
+        url:"call.html?user="+encodeURIComponent(currentUsername)+"&incoming=1&call="+encodeURIComponent(callId)
+      }
+    });
+
+    if(error)console.warn("通話プッシュ通知エラー:",error);
+    else if(data&&!data.ok)console.warn("通話プッシュ通知失敗:",data);
+  }catch(error){
+    console.warn("通話プッシュ通知呼び出しエラー:",error);
+  }
+}
+
 async function sendIncomingRing(){
   try{
     if(!inboxChannel){
@@ -268,6 +307,10 @@ async function caller(){
   statusEl.textContent="📞 呼び出しています...";
 
   /* 相手のchat.htmlに着信を知らせる */
+  /* サイト内通知 + プッシュ通知 */
+  await createCallNotification();
+  await sendCallPush();
+
   startRingRetry();
 
   /* 通話ページ同士の接続にもringを送る */
