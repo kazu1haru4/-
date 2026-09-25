@@ -152,6 +152,20 @@ textarea{min-height:100px;resize:vertical}.form-row{margin-bottom:12px}.form-row
 <div id="banModal" class="modal hidden"><div class="modal-box"><h3>🚫 ユーザーをBAN</h3><p id="banTarget"></p><div class="form-row"><label>理由</label><textarea id="banReason" placeholder="BAN理由を入力"></textarea></div><div class="actions"><button id="confirmBanButton" class="danger" type="button">🚫 BANする</button><button id="cancelBanButton" class="gray" type="button">キャンセル</button></div></div></div>
 <div id="editModal" class="modal hidden"><div class="modal-box"><h3>✏️ 掲示板メッセージを編集</h3><div class="form-row"><textarea id="editContent" placeholder="メッセージ"></textarea></div><div class="actions"><button id="saveEditButton" type="button">💾 保存</button><button id="cancelEditButton" class="gray" type="button">キャンセル</button></div></div></div>
 
+
+<script>
+/* 管理者限定アイテムは他ユーザーへ付与禁止 */
+const ADMIN_ONLY_ITEM_KEYS = new Set(["admin", "admin_name", "admin_bg"]);
+
+function isAdminOnlyItem(item) {
+  return ADMIN_ONLY_ITEM_KEYS.has(String(item?.item_key || ""));
+}
+
+function canGrantItemToUser(item) {
+  return !isAdminOnlyItem(item);
+}
+</script>
+
 <script>
 const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
 const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
@@ -474,7 +488,8 @@ async function loadItems() {
     return "frame";
   };
 
-  items.forEach(item => {
+  items.forEach(item =>
+      if (isAdminOnlyItem(item)) return; {
     const type = getType(item);
     const icon = item.icon || (type === "name_decoration" ? "✨" : type === "background" ? "🎨" : "🖼️");
 
