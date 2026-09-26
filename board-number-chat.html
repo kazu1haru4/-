@@ -86,9 +86,9 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
 <div id="boardHeaderMenu" class="board-header-menu">
   <button id="boardMenuMembers" type="button">👥 メンバー一覧</button>
   <button id="boardMenuSearch" type="button">🔍 チャット検索</button>
-  <button id="boardMenuRename" type="button">✏️ 掲示板名変更</button>
-  <button id="boardMenuDelete" type="button" style="color:#d9534f">🗑️ 掲示板を削除</button>
-  <button id="boardMenuLeave" type="button" style="color:#c87522">🚪 掲示板から抜ける</button>
+  <button id="boardMenuRename" type="button">✏️ グループ名変更</button>
+  <button id="boardMenuDelete" type="button" style="color:#d9534f">🗑️ グループを削除</button>
+  <button id="boardMenuLeave" type="button" style="color:#c87522">🚪 グループから抜ける</button>
 </div>
 </div>
 <div class="title">🔢 掲示板チャット</div>
@@ -117,8 +117,8 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
 const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
 const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const params=new URLSearchParams(location.search);
-const boardId=params.get("board") || params.get("id");
+const boardParams=new URLSearchParams(location.search);
+const boardId=boardParams.get("board")||boardParams.get("id");
 const $=id=>document.getElementById(id);
 let username="",room=null,members=[],profiles={},items={},isOwner=false,isBoardAdmin=false,isMuted=false,replyTarget=null,giftTargetUsername="";
 let boardRealtimeChannel=null,boardTypingChannel=null,boardTypingReady=false,typingTimer=null,typingHideTimer=null;
@@ -205,6 +205,7 @@ async function loadRoom(){
  const {data,error}=await supabaseClient.from("board_rooms").select("id,name,join_code,created_by").eq("id",boardId).maybeSingle();
  if(error||!data){alert("掲示板が見つかりません");location.href="board-number.html";return false}
  room=data; $("roomInfo").textContent=data.name+"　🔢 "+data.join_code; isOwner=data.created_by===username;
+ if(ADMIN_USERNAMES.has(username)) $("roomInfo").textContent += "　🛡️ 管理者閲覧";
  const canManage=isOwner||ADMIN_USERNAMES.has(username);
  $("editBoardButton").style.display=canManage?"inline-block":"none";
  $("deleteBoardButton").style.display=canManage?"inline-block":"none";
@@ -241,9 +242,18 @@ async function leaveBoard(){
 
 async function loadMembers(){
  const {data,error}=await supabaseClient.from("board_room_members").select("user_id,role,joined_at").eq("board_id",boardId).order("joined_at",{ascending:true});
- if(error){console.error(error);return} members=data||[];await loadProfiles(members.map(m=>m.user_id));const me=members.find(m=>m.user_id===username);isBoardAdmin=isOwner||me?.role==="admin";
+ if(error){console.error(error);return} members=data||[];await loadProfiles(members.map(m=>m.user_id));const me=members.find(m=>m.user_id===username);isBoardAdmin=isOwner||ADMIN_USERNAMES.has(username)||me?.role==="admin";
 }
 async function refreshMute(){
+ if(ADMIN_USERNAMES.has(username)){
+  isMuted=false;
+  $("muteBanner").classList.remove("show");
+  $("muteBanner").textContent="";
+  $("messageInput").disabled=false;
+  $("sendButton").disabled=false;
+  $("mediaPlusButton").disabled=false;
+  return;
+ }
  const {data,error}=await supabaseClient.from("board_room_mutes").select("muted_until").eq("board_id",boardId).eq("user_id",username).maybeSingle();
  if(error){console.error(error);return} isMuted=!!(data?.muted_until&&new Date(data.muted_until).getTime()>Date.now());
  $("muteBanner").classList.toggle("show",isMuted);$("muteBanner").textContent=isMuted?"🔇 現在、発言禁止中です":"";$("messageInput").disabled=isMuted;$("sendButton").disabled=isMuted;$("mediaPlusButton").disabled=isMuted;
@@ -434,7 +444,7 @@ async function start(){
  if(typeof checkFriendChatBan==="function"){if(await checkFriendChatBan())return}
  if(!(await loadRoom()))return;await loadMembers();
  const isGlobalAdmin=ADMIN_USERNAMES.has(username);
-  const joined=isGlobalAdmin||isOwner||members.some(m=>String(m.user_id).toLowerCase()===String(username).toLowerCase());
+ const joined=isGlobalAdmin||isOwner||members.some(m=>String(m.user_id).toLowerCase()===String(username).toLowerCase());
  if(!joined){alert("この掲示板には参加していません。まず参加番号から参加してください。");location.href="board-number.html";return}
  await Promise.all([updatePresence(),refreshMute(),loadMessages()]);setupRealtime();setInterval(updatePresence,30000);setInterval(refreshMute,30000)
 }
