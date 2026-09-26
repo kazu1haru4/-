@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>全個別チャット</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#fff3fb,#eef5ff);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Yu Gothic",sans-serif;color:#333}.header{position:sticky;top:0;background:#fff;padding:15px 16px;box-shadow:0 3px 10px rgba(0,0,0,.08);z-index:5}.title{font-size:21px;font-weight:bold}.sub{font-size:12px;color:#888;margin-top:4px}.list{padding:14px 16px 80px;max-width:760px;margin:auto}.card{display:block;background:#fff;border-radius:16px;padding:15px;margin-bottom:10px;box-shadow:0 4px 12px rgba(0,0,0,.06);cursor:pointer}.users{font-weight:bold;font-size:16px}.last{margin-top:7px;color:#777;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meta{margin-top:6px;color:#aaa;font-size:11px}.empty{text-align:center;color:#999;padding:45px 10px}.back{position:fixed;bottom:12px;left:12px;background:#fff;color:#555;text-decoration:none;border-radius:12px;padding:10px 14px;font-weight:bold;box-shadow:0 3px 10px rgba(0,0,0,.08)}
+#viewer{display:none;position:fixed;inset:0;background:#f5f5fa;z-index:20}.vhead{height:62px;background:#fff;display:flex;align-items:center;gap:10px;padding:10px 12px;box-shadow:0 2px 8px rgba(0,0,0,.08)}.vtitle{font-weight:bold;flex:1}.close{border:0;background:#eee;border-radius:10px;padding:9px 12px;font-weight:bold}.msgs{height:calc(100vh - 62px);overflow:auto;padding:15px 12px}.msg{max-width:82%;margin:7px 0;padding:10px 12px;border-radius:14px;background:#fff;box-shadow:0 2px 7px rgba(0,0,0,.05)}.sender{font-size:11px;color:#777;font-weight:bold;margin-bottom:3px}.time{font-size:10px;color:#aaa;margin-top:4px}.img{max-width:240px;max-height:240px;border-radius:10px;margin-top:5px}.deleted{color:#aaa;font-style:italic}
+</style>
+</head>
+<body>
+<header class="header"><div class="title">🛡️ 全個別チャット</div><div class="sub">管理者専用・すべての個別チャットを閲覧</div></header>
+<main id="list" class="list"><div class="empty">読み込み中...</div></main>
+<a class="back" href="admin-management.html">← 管理者管理</a>
+<section id="viewer"><div class="vhead"><div id="vtitle" class="vtitle"></div><button id="close" class="close">閉じる</button></div><div id="msgs" class="msgs"></div></section>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const ADMINS=new Set(["kazu1haru100","kazu1haru4sub"]);
+const $=id=>document.getElementById(id);
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}
+function fmt(v){try{return new Date(v).toLocaleString("ja-JP")}catch{return ""}}
+async function auth(){const {data,error}=await db.auth.getSession();const u=data?.session?.user?.user_metadata?.username||"";if(error||!data.session||!ADMINS.has(u)){alert("管理者のみ利用できます。");location.href="home.html";return false}return true}
+async function load(){const {data,error}=await db.rpc("admin_list_all_direct_chats");if(error){$("list").innerHTML='<div class="empty">個別チャットを読み込めませんでした<br><br>'+esc(error.message)+'</div>';return}const rows=data||[];if(!rows.length){$("list").innerHTML='<div class="empty">個別チャットはありません。</div>';return}$("list").innerHTML="";rows.forEach(r=>{const el=document.createElement("div");el.className="card";el.innerHTML='<div class="users">💬 '+esc(r.user1)+' ↔ '+esc(r.user2)+'</div><div class="last">'+esc(r.last_content||"（画像・メディア）")+'</div><div class="meta">'+Number(r.message_count||0)+'件 ・ '+esc(fmt(r.last_created_at))+'</div>';el.onclick=()=>openChat(r.user1,r.user2);$("list").appendChild(el)})}
+async function openChat(a,b){$("viewer").style.display="block";$("vtitle").textContent=a+" ↔ "+b;$("msgs").innerHTML='<div class="empty">読み込み中...</div>';const {data,error}=await db.rpc("admin_get_direct_messages",{target_user1:a,target_user2:b});if(error){$("msgs").innerHTML='<div class="empty">読み込みに失敗しました<br><br>'+esc(error.message)+'</div>';return}const rows=data||[];if(!rows.length){$("msgs").innerHTML='<div class="empty">メッセージはありません。</div>';return}$("msgs").innerHTML="";rows.forEach(m=>{const el=document.createElement("div");el.className="msg";const content=m.is_deleted?'<div class="deleted">（削除されたメッセージ）</div>':(m.content?'<div>'+esc(m.content)+'</div>':'<div>（画像・メディア）</div>');el.innerHTML='<div class="sender">'+esc(m.sender_id)+'</div>'+content+'<div class="time">'+esc(fmt(m.created_at))+(m.is_edited?' ・ 編集済み':'')+'</div>';$("msgs").appendChild(el)});$("msgs").scrollTop=$("msgs").scrollHeight}
+$("close").onclick=()=>$("viewer").style.display="none";
+(async()=>{if(await auth())await load()})();
+</script>
+</body>
+</html>
