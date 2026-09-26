@@ -84,13 +84,141 @@ button:disabled{opacity:.5}#imageInput{display:none}
 .name-decoration-admin{color:#d49b00!important;font-weight:900;text-shadow:0 0 5px #ffd700}
 .chat-name{font-size:12px;font-weight:800;margin-bottom:3px;align-self:flex-start}
 .mine .chat-name{align-self:flex-end}
+
+.menu-button{
+  border:0;
+  background:transparent;
+  color:#fff;
+  font-size:30px;
+  line-height:1;
+  width:42px;
+  height:42px;
+  border-radius:12px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+}
+.menu-button:active{background:rgba(255,255,255,.16)}
+.header-menu{
+  position:absolute;
+  right:10px;
+  top:58px;
+  width:190px;
+  background:#fff;
+  border:1px solid #ddd;
+  border-radius:14px;
+  box-shadow:0 8px 25px rgba(0,0,0,.18);
+  padding:6px;
+  z-index:1500;
+  display:none;
+}
+.header-menu.show{display:block}
+.header-menu button{
+  width:100%;
+  border:0;
+  background:transparent;
+  color:#222;
+  text-align:left;
+  padding:12px 13px;
+  border-radius:10px;
+  font-size:15px;
+  cursor:pointer;
+}
+.header-menu button:active{background:#f0f0f0}
+
+.chat-search-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+  z-index:3000;
+  display:none;
+  align-items:flex-start;
+  justify-content:center;
+  padding:70px 12px 20px;
+}
+.chat-search-overlay.show{display:flex}
+.chat-search-modal{
+  width:min(100%,460px);
+  max-height:80vh;
+  background:#fff;
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 12px 40px rgba(0,0,0,.25);
+  display:flex;
+  flex-direction:column;
+}
+.chat-search-head{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:12px;
+  border-bottom:1px solid #eee;
+}
+.chat-search-input{
+  flex:1;
+  min-width:0;
+  border:1px solid #ddd;
+  border-radius:10px;
+  padding:11px 12px;
+  font-size:16px;
+  outline:none;
+}
+.chat-search-input:focus{border-color:#777}
+.chat-search-close{
+  border:0;
+  background:#f1f1f1;
+  border-radius:10px;
+  width:42px;
+  height:42px;
+  font-size:19px;
+  cursor:pointer;
+}
+.chat-search-results{overflow:auto;padding:8px}
+.chat-search-empty{
+  padding:28px 14px;
+  text-align:center;
+  color:#777;
+  font-size:14px;
+}
+.chat-search-result{
+  border:0;
+  background:#f7f7f8;
+  width:100%;
+  text-align:left;
+  border-radius:12px;
+  padding:11px 12px;
+  margin-bottom:7px;
+  cursor:pointer;
+}
+.chat-search-result:active{background:#ececf0}
+.chat-search-result-name{font-weight:700;font-size:13px;margin-bottom:4px}
+.chat-search-result-text{
+  font-size:14px;
+  line-height:1.45;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.chat-search-result-time{font-size:11px;color:#888;margin-top:4px}
+.search-highlight{animation:searchHighlight 1.5s ease}
+@keyframes searchHighlight{
+  0%,100%{filter:none}
+  35%{filter:drop-shadow(0 0 8px rgba(255,200,0,.95))}
+}
+
 </style>
 </head>
 <body>
 <main class="container">
 <header class="header">
 <a href="home.html" class="home-button">🏠 ホーム</a>
-<button id="callButton" class="call-button" type="button">📞 通話</button>
+<button id="menuButton" class="menu-button" aria-label="メニュー">⋯</button>
+<div id="headerMenu" class="header-menu">
+  <button id="menuCallButton" type="button">📞 通話</button>
+  <button id="menuSearchButton" type="button">🔍 チャット検索</button>
+</div>
 <div class="profile-header">
 <div id="headerAvatarFrame" class="header-avatar-frame"><div id="headerAvatar" class="header-avatar">👤</div><div id="headerAvatarBadge" class="avatar-badge"></div></div>
 <div><h1 id="chatTitle">💬 チャット</h1><div id="friendStatus" class="friend-status offline">⚪ オフライン</div></div>
@@ -805,6 +933,212 @@ async function start(){
  renderHeader();await loadMessages();startRealtime();startIncomingCallListener();updateMyPresence();updateFriendStatus();presenceTimer=setInterval(()=>{updateMyPresence();updateFriendStatus()},30000);
 }
 start();
+
+
+// ===== 右上「⋯」メニュー =====
+const menuButton = document.getElementById("menuButton");
+const headerMenu = document.getElementById("headerMenu");
+const menuCallButton = document.getElementById("menuCallButton");
+const menuSearchButton = document.getElementById("menuSearchButton");
+
+menuButton.addEventListener("click", (e) => {
+  e.stopPropagation();
+  headerMenu.classList.toggle("show");
+});
+
+document.addEventListener("click", (e) => {
+  if (!headerMenu.contains(e.target) && e.target !== menuButton) {
+    headerMenu.classList.remove("show");
+  }
+});
+
+menuCallButton.addEventListener("click", () => {
+  headerMenu.classList.remove("show");
+  if (!currentUsername || !friendId) {
+    alert("通話相手の情報を取得できません。");
+    return;
+  }
+  location.href = "call.html?user=" + encodeURIComponent(friendId);
+});
+
+// ===== チャット検索 =====
+const chatSearchOverlay = document.getElementById("chatSearchOverlay");
+const chatSearchInput = document.getElementById("chatSearchInput");
+const chatSearchClose = document.getElementById("chatSearchClose");
+const chatSearchResults = document.getElementById("chatSearchResults");
+
+function escapeSearchHtml(value){
+  return String(value)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+function closeChatSearch(){
+  chatSearchOverlay.classList.remove("show");
+  chatSearchOverlay.setAttribute("aria-hidden","true");
+}
+
+function openChatSearch(){
+  headerMenu.classList.remove("show");
+  chatSearchOverlay.classList.add("show");
+  chatSearchOverlay.setAttribute("aria-hidden","false");
+  chatSearchInput.value="";
+  chatSearchResults.innerHTML =
+    '<div class="chat-search-empty">検索したい言葉を入力してください</div>';
+  setTimeout(() => chatSearchInput.focus(), 50);
+}
+
+menuSearchButton.addEventListener("click", openChatSearch);
+chatSearchClose.addEventListener("click", closeChatSearch);
+
+chatSearchOverlay.addEventListener("click", (e) => {
+  if(e.target === chatSearchOverlay) closeChatSearch();
+});
+
+document.addEventListener("keydown", (e) => {
+  if(e.key === "Escape" && chatSearchOverlay.classList.contains("show")){
+    closeChatSearch();
+  }
+});
+
+function formatSearchTime(value){
+  const d = new Date(value);
+  if(Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString("ja-JP",{
+    year:"numeric", month:"2-digit", day:"2-digit",
+    hour:"2-digit", minute:"2-digit"
+  });
+}
+
+let searchTimer = null;
+
+async function searchCurrentChat(){
+  const keyword = chatSearchInput.value.trim();
+
+  if(!keyword){
+    chatSearchResults.innerHTML =
+      '<div class="chat-search-empty">検索したい言葉を入力してください</div>';
+    return;
+  }
+
+  chatSearchResults.innerHTML =
+    '<div class="chat-search-empty">検索中…</div>';
+
+  try{
+    const [sent, received] = await Promise.all([
+      supabaseClient
+        .from("messages")
+        .select("id,sender_id,receiver_id,content,created_at,is_deleted")
+        .eq("sender_id", currentUsername)
+        .eq("receiver_id", friendId)
+        .order("created_at",{ascending:false}),
+
+      supabaseClient
+        .from("messages")
+        .select("id,sender_id,receiver_id,content,created_at,is_deleted")
+        .eq("sender_id", friendId)
+        .eq("receiver_id", currentUsername)
+        .order("created_at",{ascending:false})
+    ]);
+
+    if(sent.error) throw sent.error;
+    if(received.error) throw received.error;
+
+    const results = [...(sent.data || []), ...(received.data || [])]
+      .filter(m =>
+        !m.is_deleted &&
+        typeof m.content === "string" &&
+        m.content.toLocaleLowerCase().includes(keyword.toLocaleLowerCase())
+      )
+      .sort((a,b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+    if(!results.length){
+      chatSearchResults.innerHTML =
+        '<div class="chat-search-empty">「' +
+        escapeSearchHtml(keyword) +
+        '」に一致するメッセージはありません</div>';
+      return;
+    }
+
+    chatSearchResults.innerHTML = "";
+
+    results.forEach(m => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "chat-search-result";
+
+      const name = m.sender_id === currentUsername
+        ? "自分"
+        : (typeof friendName !== "undefined" && friendName ? friendName : friendId);
+
+      button.innerHTML =
+        '<div class="chat-search-result-name">' +
+          escapeSearchHtml(name) +
+        '</div>' +
+        '<div class="chat-search-result-text">' +
+          escapeSearchHtml(m.content) +
+        '</div>' +
+        '<div class="chat-search-result-time">' +
+          escapeSearchHtml(formatSearchTime(m.created_at)) +
+        '</div>';
+
+      button.addEventListener("click", async () => {
+        closeChatSearch();
+
+        let target = document.querySelector(
+          '[data-message-id="' + CSS.escape(String(m.id)) + '"]'
+        );
+
+        if(!target){
+          await loadMessages();
+          target = document.querySelector(
+            '[data-message-id="' + CSS.escape(String(m.id)) + '"]'
+          );
+        }
+
+        if(target){
+          target.scrollIntoView({behavior:"smooth",block:"center"});
+          target.classList.remove("search-highlight");
+          void target.offsetWidth;
+          target.classList.add("search-highlight");
+          setTimeout(() => target.classList.remove("search-highlight"),1600);
+        }
+      });
+
+      chatSearchResults.appendChild(button);
+    });
+
+  }catch(error){
+    console.error("chat search error:", error);
+    chatSearchResults.innerHTML =
+      '<div class="chat-search-empty">検索に失敗しました</div>';
+  }
+}
+
+chatSearchInput.addEventListener("input", () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(searchCurrentChat, 180);
+});
+
 </script>
+
+<div id="chatSearchOverlay" class="chat-search-overlay" aria-hidden="true">
+  <div class="chat-search-modal" role="dialog" aria-modal="true" aria-label="チャット検索">
+    <div class="chat-search-head">
+      <input id="chatSearchInput" class="chat-search-input" type="search"
+             placeholder="メッセージを検索…" autocomplete="off">
+      <button id="chatSearchClose" class="chat-search-close" type="button" aria-label="閉じる">✕</button>
+    </div>
+    <div id="chatSearchResults" class="chat-search-results">
+      <div class="chat-search-empty">検索したい言葉を入力してください</div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
