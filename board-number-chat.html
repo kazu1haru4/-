@@ -79,6 +79,9 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
 <header class="header">
 <a href="board-number.html">🔢 一覧</a>
 <div class="header-actions">
+<button id="editBoardButton" class="board-action edit-board" style="display:none!important">✏️ 名前変更</button>
+<button id="deleteBoardButton" class="board-action delete-board" style="display:none!important">🗑️ 削除</button>
+<button id="memberButton" class="member-button" style="display:none!important">👥 メンバー</button><button id="leaveBoardButton" class="board-action leave-board" style="display:none!important">🚪 抜ける</button>
 <button id="boardMenuButton" class="header-menu-button" type="button" aria-label="メニュー">⋯</button>
 <div id="boardHeaderMenu" class="board-header-menu">
   <button id="boardMenuMembers" type="button">👥 メンバー一覧</button>
@@ -204,6 +207,10 @@ async function loadRoom(){
  room=data; $("roomInfo").textContent=data.name+"　🔢 "+data.join_code; isOwner=data.created_by===username;
  if(ADMIN_USERNAMES.has(username)) $("roomInfo").textContent += "　🛡️ 管理者閲覧";
  const canManage=isOwner||ADMIN_USERNAMES.has(username);
+ // 旧ボタンはJS互換のためDOMに残すが、操作はすべて「⋯」メニューから行う。
+ $("editBoardButton").style.display="none";
+ $("deleteBoardButton").style.display="none";
+ $("leaveBoardButton").style.display="none";
  return true;
 }
 async function renameBoard(){
@@ -293,6 +300,7 @@ $("boardMenuLeave").onclick=async()=>{closeBoardHeaderMenu();await leaveBoard()}
 $("boardSearchInput").addEventListener("input",e=>renderBoardSearch(e.target.value));
 $("boardSearchModal").addEventListener("click",e=>{if(e.target===$("boardSearchModal"))closeBoardSearchModal()});
 document.addEventListener("click",e=>{if(!e.target.closest("#boardHeaderMenu,#boardMenuButton"))closeBoardHeaderMenu()});
+$("leaveBoardButton").onclick=leaveBoard;
 async function loadMessages(){
  const {data,error}=await supabaseClient.from("board_room_messages").select("id,board_id,sender_id,content,image_url,created_at,is_deleted,edited_at").eq("board_id",boardId).order("created_at",{ascending:true});
  if(error){console.error(error);return} const messages=data||[]; boardSearchMessages=messages.slice(); const ids=messages.map(m=>m.id);let replies=[],reactions=[],reads=[];
