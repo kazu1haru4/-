@@ -599,11 +599,11 @@ async function loadMessages(){
  if(!currentUsername||!friendId){messagesElement.innerHTML='<div class="empty">ユーザー情報を取得できませんでした</div>';return}
  messagesElement.innerHTML='<div class="empty">メッセージを読み込み中...</div>';
  const [a,b]=await Promise.all([
-  db.from("messages").select("id,sender_id,receiver_id,content,image_url,created_at,is_deleted,is_edited").eq("sender_id",currentUsername).eq("receiver_id",friendId),
-  db.from("messages").select("id,sender_id,receiver_id,content,image_url,created_at,is_deleted,is_edited").eq("sender_id",friendId).eq("receiver_id",currentUsername)
+  db.from("messages").select("id,sender_id,receiver_id,content,image_url,created_at,is_deleted,is_edited").eq("sender_id",currentUsername).eq("receiver_id",friendId).order("created_at",{ascending:false}).limit(50),
+  db.from("messages").select("id,sender_id,receiver_id,content,image_url,created_at,is_deleted,is_edited").eq("sender_id",friendId).eq("receiver_id",currentUsername).order("created_at",{ascending:false}).limit(50)
  ]);
  if(a.error||b.error){console.error(a.error||b.error);messagesElement.innerHTML='<div class="empty">メッセージを読み込めませんでした</div>';return}
- const messages=[...(a.data||[]),...(b.data||[])].sort((x,y)=>new Date(x.created_at)-new Date(y.created_at));
+ const messages=[...(a.data||[]),...(b.data||[])].sort((x,y)=>new Date(x.created_at)-new Date(y.created_at)).slice(-50);
  await loadReadStatuses(messages);const urls=await prepareImageUrls(messages);const extras=await loadChatExtras(messages);await markMessagesAsRead(messages);messagesElement.innerHTML="";
  if(!messages.length){messagesElement.innerHTML='<div class="empty">まだメッセージがありません</div>';updateLatestButton();return}
  const f=document.createDocumentFragment();messages.forEach(m=>f.appendChild(createMessageElement(m,urls.get(m.id)||"",extras)));messagesElement.appendChild(f);scrollToBottom();updateLatestButton();
