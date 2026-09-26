@@ -302,8 +302,8 @@ $("boardSearchModal").addEventListener("click",e=>{if(e.target===$("boardSearchM
 document.addEventListener("click",e=>{if(!e.target.closest("#boardHeaderMenu,#boardMenuButton"))closeBoardHeaderMenu()});
 $("leaveBoardButton").onclick=leaveBoard;
 async function loadMessages(){
- const {data,error}=await supabaseClient.from("board_room_messages").select("id,board_id,sender_id,content,image_url,created_at,is_deleted,edited_at").eq("board_id",boardId).order("created_at",{ascending:true});
- if(error){console.error(error);return} const messages=data||[]; boardSearchMessages=messages.slice(); const ids=messages.map(m=>m.id);let replies=[],reactions=[],reads=[];
+ const {data,error}=await supabaseClient.from("board_room_messages").select("id,board_id,sender_id,content,image_url,created_at,is_deleted,edited_at").eq("board_id",boardId).order("created_at",{ascending:false}).limit(50);
+ if(error){console.error(error);return} const messages=(data||[]).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)); boardSearchMessages=messages.slice(); const ids=messages.map(m=>m.id);let replies=[],reactions=[],reads=[];
  if(ids.length){const [r1,r2,r3]=await Promise.all([
   supabaseClient.from("board_room_replies").select("board_message_id,sender_id,content,created_at").in("board_message_id",ids).order("created_at",{ascending:true}),
   supabaseClient.from("board_room_reactions").select("board_message_id,user_id,reaction").in("board_message_id",ids),
