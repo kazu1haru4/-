@@ -280,7 +280,7 @@ async function renderMembers(){
 function closeMemberModal(){$("memberModal").style.display="none"}
 $("memberButton").onclick=async()=>{$("memberModal").style.display="flex";await renderMembers()};
 function closeBoardHeaderMenu(){$("boardHeaderMenu").classList.remove("show")}
-function openBoardMenu(){closeBoardHeaderMenu();$("boardHeaderMenu").classList.toggle("show")}
+function openBoardMenu(){const menu=$("boardHeaderMenu");if(!menu)return;const isOpen=menu.classList.contains("show");closeBoardHeaderMenu();if(!isOpen)menu.classList.add("show")}
 async function openBoardMembers(){closeBoardHeaderMenu();$("memberModal").style.display="flex";await renderMembers()}
 function openBoardSearch(){closeBoardHeaderMenu();$("boardSearchModal").style.display="flex";$("boardSearchInput").value="";renderBoardSearch("");setTimeout(()=>$("boardSearchInput").focus(),50)}
 function closeBoardSearchModal(){$("boardSearchModal").style.display="none"}
