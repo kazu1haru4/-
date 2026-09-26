@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>コイン管理</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:linear-gradient(135deg,#f5f5f5,#eef7ff);color:#333}
+.container{width:min(92%,460px);margin:0 auto;padding:24px 0 40px}
+.header{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.back{border:none;background:white;width:42px;height:42px;border-radius:14px;font-size:26px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.header h1{margin:0;font-size:23px;flex:1}
+.refresh{border:none;background:#777;color:white;border-radius:14px;padding:10px 12px;font-weight:bold}
+.card{background:rgba(255,255,255,.95);border-radius:22px;padding:18px;margin-bottom:16px;box-shadow:0 6px 18px rgba(0,0,0,.07)}
+.description{margin:0 0 14px;color:#777;font-size:13px;line-height:1.6}
+.search{width:100%;border:1px solid #ddd;border-radius:14px;padding:13px;font-size:15px;font-family:inherit;margin-bottom:12px}
+.user-list{display:grid;gap:10px}
+.user-card{width:100%;border:2px solid #eee;background:#fafafa;border-radius:16px;padding:14px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:12px}
+.user-card:hover{border-color:#aaa}
+.avatar{width:42px;height:42px;border-radius:50%;background:#e8e8e8;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.user-info{min-width:0;flex:1}.user-name{font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.user-id{font-size:12px;color:#777;margin-top:3px}
+.user-coins{font-weight:bold;white-space:nowrap}
+.arrow{font-size:18px;color:#888}
+.empty,.loading{text-align:center;color:#777;padding:24px 8px}
+.history-title{font-size:18px;font-weight:bold;margin-bottom:12px}
+.back-users{border:none;background:#eee;border-radius:12px;padding:10px 12px;font-weight:bold;margin-bottom:12px}
+.history-list{display:grid;gap:10px}
+.history-item{border:2px solid #eee;border-radius:16px;padding:13px;background:#fff}
+.history-top{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.amount{font-size:18px;font-weight:bold}.amount.plus{color:#159447}
+.reason{font-weight:bold;margin-top:7px;line-height:1.4}
+.meta{font-size:12px;color:#777;margin-top:6px;line-height:1.5}
+.notice{background:#fff8df;border-radius:14px;padding:12px;font-size:12px;color:#735f19;line-height:1.6}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <button class="back" onclick="history.back()">‹</button>
+    <h1>🛡️ コイン管理</h1>
+    <button class="refresh" id="refreshButton">↻</button>
+  </div>
+
+  <div id="userView">
+    <div class="card">
+      <p class="description">ユーザーを選ぶと、そのユーザーがいつ・どの方法でコインを獲得したか確認できます。</p>
+      <input id="userSearch" class="search" type="search" placeholder="ユーザーID・名前で検索">
+      <div id="userList" class="user-list"><div class="loading">読み込み中……</div></div>
+    </div>
+  </div>
+
+  <div id="historyView" class="hidden">
+    <div class="card">
+      <button class="back-users" id="backUsers">← ユーザー一覧へ</button>
+      <div class="history-title" id="historyTitle">🪙 コイン獲得履歴</div>
+      <div id="historyList" class="history-list"><div class="loading">読み込み中……</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="notice">このページは管理者専用です。コインを獲得した履歴のみ表示します。</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
+
+let currentUsername="";
+let allUsers=[];
+
+function escapeHtml(value){
+ return String(value??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+}
+
+async function getCurrentUser(){
+ const {data,error}=await supabaseClient.auth.getUser();
+ if(error||!data.user)return false;
+ currentUsername=data.user.user_metadata?.username||"";
+ return !!currentUsername;
+}
+
+async function checkAdmin(){
+ if(!await getCurrentUser()){
+   location.href="home.html";
+   return false;
+ }
+ if(!ADMIN_USERNAMES.has(currentUsername)){
+   alert("管理者専用ページです。");
+   location.href="coin.html";
+   return false;
+ }
+ return true;
+}
+
+async function loadUsers(){
+ const list=document.getElementById("userList");
+ list.innerHTML='<div class="loading">読み込み中……</div>';
+
+ const {data,error}=await supabaseClient.rpc("admin_list_coin_users");
+ if(error){
+   console.error(error);
+   list.innerHTML='<div class="empty">❌ ユーザー一覧を取得できませんでした<br><small>'+escapeHtml(error.message)+'</small></div>';
+   return;
+ }
+
+ allUsers=(data||[]).map(x=>({
+   user_id:x.user_id,
+   name:x.name||x.user_id,
+   coins:Number(x.coins||0)
+ }));
+ renderUsers();
+}
+
+function renderUsers(){
+ const keyword=document.getElementById("userSearch").value.trim().toLowerCase();
+ const users=allUsers.filter(u=>
+   String(u.user_id).toLowerCase().includes(keyword) ||
+   String(u.name).toLowerCase().includes(keyword)
+ );
+ const list=document.getElementById("userList");
+
+ if(!users.length){
+   list.innerHTML='<div class="empty">ユーザーが見つかりません。</div>';
+   return;
+ }
+
+ list.innerHTML=users.map((u,i)=>`
+   <button class="user-card" data-index="${i}" data-user-id="${escapeHtml(u.user_id)}">
+     <div class="avatar">👤</div>
+     <div class="user-info">
+       <div class="user-name">${escapeHtml(u.name)}</div>
+       <div class="user-id">@${escapeHtml(u.user_id)}</div>
+     </div>
+     <div class="user-coins">🪙 ${u.coins.toLocaleString()}</div>
+     <div class="arrow">›</div>
+   </button>
+ `).join("");
+
+ list.querySelectorAll(".user-card").forEach(button=>{
+   button.addEventListener("click",()=>openHistory(button.dataset.userId));
+ });
+}
+
+async function openHistory(userId){
+ document.getElementById("userView").classList.add("hidden");
+ document.getElementById("historyView").classList.remove("hidden");
+ document.getElementById("historyList").innerHTML='<div class="loading">読み込み中……</div>';
+
+ const user=allUsers.find(x=>x.user_id===userId);
+ document.getElementById("historyTitle").textContent="🪙 "+(user?.name||userId)+" のコイン獲得履歴";
+
+ const {data,error}=await supabaseClient.rpc("admin_get_user_coin_history",{target_user_id:userId});
+ if(error){
+   console.error(error);
+   document.getElementById("historyList").innerHTML='<div class="empty">❌ 履歴を取得できませんでした<br><small>'+escapeHtml(error.message)+'</small></div>';
+   return;
+ }
+
+ if(!data?.length){
+   document.getElementById("historyList").innerHTML='<div class="empty">コイン獲得履歴はありません。</div>';
+   return;
+ }
+
+ document.getElementById("historyList").innerHTML=data.map(h=>{
+   const amount=Number(h.change_amount||0);
+   const date=h.created_at?new Date(h.created_at).toLocaleString("ja-JP"):"日時不明";
+   return `<div class="history-item">
+     <div class="history-top">
+       <div class="amount plus">+${amount.toLocaleString()} COIN</div>
+       <div class="meta">${escapeHtml(date)}</div>
+     </div>
+     <div class="reason">${escapeHtml(h.reason||"コイン獲得")}</div>
+     <div class="meta">獲得後残高：${Number(h.balance_after||0).toLocaleString()} COIN<br>記録元：${escapeHtml(h.actor_id||"system")}</div>
+   </div>`;
+ }).join("");
+}
+
+document.getElementById("userSearch").addEventListener("input",renderUsers);
+document.getElementById("refreshButton").addEventListener("click",loadUsers);
+document.getElementById("backUsers").addEventListener("click",()=>{
+ document.getElementById("historyView").classList.add("hidden");
+ document.getElementById("userView").classList.remove("hidden");
+});
+
+(async()=>{
+ if(await checkAdmin()) await loadUsers();
+})();
+</script>
+</body>
+</html>
