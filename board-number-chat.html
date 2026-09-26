@@ -79,16 +79,13 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
 <header class="header">
 <a href="board-number.html">🔢 一覧</a>
 <div class="header-actions">
-<button id="editBoardButton" class="board-action edit-board" style="display:none!important">✏️ 名前変更</button>
-<button id="deleteBoardButton" class="board-action delete-board" style="display:none!important">🗑️ 削除</button>
-<button id="memberButton" class="member-button" style="display:none!important">👥 メンバー</button><button id="leaveBoardButton" class="board-action leave-board" style="display:none!important">🚪 抜ける</button>
 <button id="boardMenuButton" class="header-menu-button" type="button" aria-label="メニュー">⋯</button>
 <div id="boardHeaderMenu" class="board-header-menu">
   <button id="boardMenuMembers" type="button">👥 メンバー一覧</button>
   <button id="boardMenuSearch" type="button">🔍 チャット検索</button>
-  <button id="boardMenuRename" type="button">✏️ グループ名変更</button>
-  <button id="boardMenuDelete" type="button" style="color:#d9534f">🗑️ グループを削除</button>
-  <button id="boardMenuLeave" type="button" style="color:#c87522">🚪 グループから抜ける</button>
+  <button id="boardMenuRename" type="button">✏️ 掲示板名を変更</button>
+  <button id="boardMenuDelete" type="button" style="color:#d9534f">🗑️ 掲示板を削除</button>
+  <button id="boardMenuLeave" type="button" style="color:#c87522">🚪 掲示板から抜ける</button>
 </div>
 </div>
 <div class="title">🔢 掲示板チャット</div>
@@ -207,9 +204,6 @@ async function loadRoom(){
  room=data; $("roomInfo").textContent=data.name+"　🔢 "+data.join_code; isOwner=data.created_by===username;
  if(ADMIN_USERNAMES.has(username)) $("roomInfo").textContent += "　🛡️ 管理者閲覧";
  const canManage=isOwner||ADMIN_USERNAMES.has(username);
- $("editBoardButton").style.display=canManage?"inline-block":"none";
- $("deleteBoardButton").style.display=canManage?"inline-block":"none";
- $("leaveBoardButton").style.display=isOwner?"none":"inline-block";
  return true;
 }
 async function renameBoard(){
@@ -291,15 +285,14 @@ function renderBoardSearch(query){
  rows.slice().reverse().forEach(m=>{const el=document.createElement("div");el.className="search-result";const name=document.createElement("div");name.className="sr-name";name.textContent=profiles[m.sender_id]?.name||m.sender_id;const text=document.createElement("div");text.className="sr-text";text.textContent=m.content||"（画像・メディア）";el.append(name,text);el.onclick=()=>{closeBoardSearchModal();const target=document.querySelector('[data-board-message-id="'+CSS.escape(String(m.id))+'"]');if(target){target.scrollIntoView({behavior:"smooth",block:"center"});target.style.outline="3px solid #8f7cff";setTimeout(()=>target.style.outline="",1200)}};list.appendChild(el)})
 }
 $("boardMenuButton").onclick=e=>{e.stopPropagation();openBoardMenu()};
-$("boardMenuMembers").onclick=openBoardMembers;
-$("boardMenuSearch").onclick=openBoardSearch;
+$("boardMenuMembers").onclick=async()=>{closeBoardHeaderMenu();await openBoardMembers()};
+$("boardMenuSearch").onclick=async()=>{closeBoardHeaderMenu();openBoardSearch()};
 $("boardMenuRename").onclick=async()=>{closeBoardHeaderMenu();await renameBoard()};
 $("boardMenuDelete").onclick=async()=>{closeBoardHeaderMenu();await deleteBoard()};
 $("boardMenuLeave").onclick=async()=>{closeBoardHeaderMenu();await leaveBoard()};
 $("boardSearchInput").addEventListener("input",e=>renderBoardSearch(e.target.value));
 $("boardSearchModal").addEventListener("click",e=>{if(e.target===$("boardSearchModal"))closeBoardSearchModal()});
 document.addEventListener("click",e=>{if(!e.target.closest("#boardHeaderMenu,#boardMenuButton"))closeBoardHeaderMenu()});
-$("leaveBoardButton").onclick=leaveBoard;
 async function loadMessages(){
  const {data,error}=await supabaseClient.from("board_room_messages").select("id,board_id,sender_id,content,image_url,created_at,is_deleted,edited_at").eq("board_id",boardId).order("created_at",{ascending:true});
  if(error){console.error(error);return} const messages=data||[]; boardSearchMessages=messages.slice(); const ids=messages.map(m=>m.id);let replies=[],reactions=[],reads=[];
