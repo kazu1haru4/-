@@ -8,7 +8,7 @@
 *{box-sizing:border-box}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:linear-gradient(135deg,#fff4fb,#eef7ff);color:#333}
 .container{width:min(92%,460px);margin:0 auto;padding:24px 0 40px}
-.header{display:flex;align-items:center;gap:12px;margin-bottom:20px}.back{border:none;background:white;width:42px;height:42px;border-radius:14px;font-size:26px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.08)}.header h1{margin:0;font-size:24px}
+.header{display:flex;align-items:center;gap:12px;margin-bottom:20px}.back{border:none;background:white;width:42px;height:42px;border-radius:14px;font-size:26px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.08)}.header h1{margin:0;font-size:24px;flex:1}.coin-admin-button{margin-left:auto;border:none;background:#777;color:white;border-radius:14px;padding:10px 12px;font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.08)}.coin-admin-button{margin-left:auto;border:none;border-radius:14px;padding:10px 12px;background:#555;color:#fff;font-weight:bold;cursor:pointer}.coin-admin-modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:1000}.coin-admin-modal.show{display:flex}.coin-admin-panel{width:min(100%,520px);max-height:88vh;overflow:auto;background:#fff;border-radius:24px 24px 0 0;padding:20px}.coin-admin-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}.coin-admin-head h2{margin:0;font-size:20px}.coin-admin-close{border:none;background:#f1f1f1;border-radius:12px;width:40px;height:40px;font-size:22px}.coin-user{width:100%;border:none;background:#f8f7ff;border:1px solid #e5e1ff;border-radius:16px;padding:14px;margin-bottom:10px;text-align:left;display:flex;justify-content:space-between;align-items:center;cursor:pointer}.coin-user strong{display:block}.coin-user small{color:#777}.coin-history-row{background:#fafafa;border:1px solid #eee;border-radius:15px;padding:13px;margin-bottom:9px}.coin-history-top{display:flex;justify-content:space-between;gap:10px}.coin-history-amount{font-weight:bold}.coin-history-amount.plus{color:#159447}.coin-history-meta{color:#777;font-size:12px;margin-top:6px;line-height:1.5}.coin-admin-back{border:none;background:#f1f1f1;border-radius:12px;padding:9px 12px;margin-bottom:12px;font-weight:bold}
 .balance-card{background:linear-gradient(135deg,#8f7cff,#b49cff);color:white;border-radius:24px;padding:26px;box-shadow:0 10px 25px rgba(143,124,255,.25);margin-bottom:18px}.balance-label{font-size:14px;opacity:.9}.balance{font-size:42px;font-weight:bold;margin-top:5px}.coin{font-size:18px;margin-left:4px}
 .card{background:rgba(255,255,255,.94);border-radius:22px;padding:20px;margin-bottom:16px;box-shadow:0 6px 18px rgba(0,0,0,.07)}.card h2{margin:0 0 8px;font-size:20px}.description{margin:0 0 16px;color:#777;font-size:14px;line-height:1.6}
 .reward-code-box{display:flex;gap:8px}.reward-code-box input{min-width:0;flex:1;border:1px solid #ddd;border-radius:14px;padding:13px;font-size:16px;font-family:inherit;text-transform:uppercase}.reward-code-box button{border:none;border-radius:14px;padding:12px 15px;background:#8f7cff;color:white;font-weight:bold;white-space:nowrap}.reward-message{margin-top:10px;min-height:22px;text-align:center;font-weight:bold}
@@ -24,7 +24,11 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic
 </head>
 <body>
 <div class="container">
-<div class="header"><button class="back" onclick="history.back()">‹</button><h1>🪙 フレンドコイン</h1></div>
+<div class="header">
+<button class="back" onclick="history.back()">‹</button>
+<h1>🪙 フレンドコイン</h1>
+<button id="coinAdminButton" class="coin-admin-button" type="button" style="display:none">🛡️ 管理</button>
+</div>
 
 <div class="balance-card"><div class="balance-label">現在のコイン</div><div class="balance"><span id="balance">---</span><span class="coin">COIN</span></div></div>
 
@@ -81,6 +85,8 @@ const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 const ADMIN_ITEM_KEYS=new Set(["admin","admin_name","admin_bg"]);
+const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
+const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
 
 let currentUsername="",balance=0,shopItems=[],ownedItems=new Set();
 
@@ -89,10 +95,18 @@ function updateBalance(){document.getElementById("balance").textContent=balance}
 function showMessage(text){document.getElementById("message").textContent=text}
 function showRewardMessage(text){document.getElementById("rewardCodeMessage").textContent=text}
 
+async function recordCoinHistory(changeAmount,balanceAfter,reason){
+ try{
+  const {error}=await supabaseClient.rpc("record_coin_history",{p_change_amount:changeAmount,p_balance_after:balanceAfter,p_reason:reason,p_actor_id:"system"});
+  if(error)console.warn("コイン履歴保存失敗:",error);
+ }catch(e){console.warn("コイン履歴保存失敗:",e)}
+}
+
 async function getCurrentUser(){
  const {data,error}=await supabaseClient.auth.getUser();
  if(error||!data.user)return false;
  currentUsername=data.user.user_metadata?.username||"";
+ if(ADMIN_USERNAMES.has(currentUsername)){const b=document.getElementById("coinAdminButton");if(b){b.style.display="block";b.onclick=openCoinAdmin;}}
  return !!currentUsername;
 }
 
@@ -138,7 +152,7 @@ async function claimLoginBonus(){
  const newCoins=Number(data.coins||0)+10;
  const {error:updateError}=await supabaseClient.from("user_coins").update({coins:newCoins,last_login_bonus_date:today,updated_at:new Date().toISOString()}).eq("user_id",currentUsername);
  if(updateError){showMessage("❌ ボーナスの受け取りに失敗しました");return}
- balance=newCoins;updateBalance();showMessage("🎉 ログインボーナス +10 COIN！");
+ balance=newCoins;updateBalance();await recordCoinHistory(10,newCoins,"ログインボーナス");showMessage("🎉 ログインボーナス +10 COIN！");
 }
 
 async function playSlot(){
@@ -157,6 +171,7 @@ async function playSlot(){
    if(a===b&&b===c){reward=100;result.textContent="🎉 大当たり！ +100 COIN"}else if(a===b||b===c||a===c){reward=50;result.textContent="✨ 当たり！ +50 COIN"}else{reward=10;result.textContent="🍀 参加賞！ +10 COIN"}
    balance+=reward;updateBalance();
    if(!await saveCoins()){balance-=reward;updateBalance();result.textContent="❌ コインの保存に失敗しました";button.disabled=false;return}
+   await recordCoinHistory(reward,balance,"運試し");
    localStorage.setItem("friendCoinSlotDate",today);button.disabled=false;
   }
  },100);
@@ -246,6 +261,29 @@ function scrollToShop(){
 }
 
 function showComingSoon(){showMessage("🚧 この機能はこれから追加するよ！")}
+
+function closeCoinAdmin(){document.getElementById("coinAdminModal").classList.remove("show")}
+function openCoinAdmin(){document.getElementById("coinAdminModal").classList.add("show");loadCoinAdminUsers()}
+async function loadCoinAdminUsers(){
+ const box=document.getElementById("coinAdminContent");document.getElementById("coinAdminTitle").textContent="🛡️ コイン管理・ユーザー一覧";
+ box.innerHTML="<div style='text-align:center;color:#777'>読み込み中…</div>";
+ const {data,error}=await supabaseClient.rpc("admin_list_coin_users");
+ if(error){box.innerHTML=`<div style="color:#d33">❌ ${escapeHtml(error.message)}</div>`;return}
+ if(!data?.length){box.innerHTML="<div style='color:#777'>ユーザーがいません。</div>";return}
+ box.innerHTML=data.map(u=>`<button class="coin-user" data-user="${escapeHtml(u.user_id)}"><span><strong>${escapeHtml(u.name||u.user_id)}</strong><small>@${escapeHtml(u.user_id)}</small></span><strong>🪙 ${Number(u.coins||0).toLocaleString()}</strong></button>`).join("");
+ box.querySelectorAll(".coin-user").forEach(b=>b.onclick=()=>loadCoinHistory(b.dataset.user));
+}
+async function loadCoinHistory(userId){
+ const box=document.getElementById("coinAdminContent");document.getElementById("coinAdminTitle").textContent="🪙 コイン獲得履歴";
+ box.innerHTML=`<button class="coin-admin-back" onclick="loadCoinAdminUsers()">← ユーザー一覧へ</button><div style="text-align:center;color:#777">読み込み中…</div>`;
+ const {data,error}=await supabaseClient.rpc("admin_get_user_coin_history",{target_user_id:userId});
+ if(error){box.innerHTML=`<button class="coin-admin-back" onclick="loadCoinAdminUsers()">← ユーザー一覧へ</button><div style="color:#d33">❌ ${escapeHtml(error.message)}</div>`;return}
+ let html=`<button class="coin-admin-back" onclick="loadCoinAdminUsers()">← ユーザー一覧へ</button><div style="font-weight:bold;margin-bottom:12px">ユーザーID：${escapeHtml(userId)}</div>`;
+ if(!data?.length)html+='<div style="color:#777;text-align:center;padding:20px 0">獲得履歴はありません。</div>';
+ else data.forEach(h=>{html+=`<div class="coin-history-row"><div class="coin-history-top"><strong>${escapeHtml(h.reason||"コイン獲得")}</strong><span class="coin-history-amount plus">+${Number(h.change_amount||0).toLocaleString()} COIN</span></div><div class="coin-history-meta">${new Date(h.created_at).toLocaleString("ja-JP")}<br>獲得後残高：${Number(h.balance_after||0).toLocaleString()} COIN<br>記録元：${escapeHtml(h.actor_id||"system")}</div></div>`});
+ box.innerHTML=html;
+}
+function escapeHtml(v){return String(v??"").replace(/[&<>\"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 
 async function start(){
  if(typeof checkFriendChatBan==="function"&&await checkFriendChatBan())return;
