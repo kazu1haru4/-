@@ -208,12 +208,28 @@ body{display:flex;flex-direction:column}
 .group-typing-indicator.show{opacity:1;transform:none}
 
 /* ===== グループメニュー ===== */
-.group-menu-button{border:none;background:white;color:#555;width:40px;height:40px;border-radius:12px;font-size:28px;line-height:1;font-weight:bold;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.08);padding:0}
-.group-menu{position:absolute;top:48px;right:0;width:190px;background:white;border:1px solid #eee;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:6px;z-index:100}
+.group-menu-button{position:absolute!important;top:max(12px,env(safe-area-inset-top))!important;right:12px!important;width:42px!important;height:42px!important;padding:0!important;border:0!important;border-radius:12px!important;background:#8f7cff!important;color:#fff!important;font-size:28px!important;font-weight:800!important;line-height:42px!important;text-align:center!important;z-index:20!important;cursor:pointer;box-shadow:none!important}
+.group-menu{position:absolute;top:60px;right:12px;width:190px;background:white;border:1px solid #eee;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:6px;z-index:100}
 .group-menu button{display:block;width:100%;border:none;background:white;color:#444;text-align:left;padding:11px 12px;border-radius:10px;font-size:13px;font-weight:bold;cursor:pointer}
 .group-menu button:hover{background:var(--theme-light)}
 .group-menu .group-menu-delete{color:#d9534f}
-@media(max-width:520px){.group-menu-button{width:38px;height:38px;font-size:26px}.group-menu{top:45px;right:0;width:180px}.group-menu button{font-size:12px;padding:10px 11px}}
+@media(max-width:520px){.group-menu-button{width:42px;height:42px;font-size:28px}.group-menu{top:45px;right:0;width:180px}.group-menu button{font-size:12px;padding:10px 11px}}
+
+/* ===== グループチャット検索 ===== */
+.group-search-overlay{position:fixed;inset:0;display:none;align-items:flex-start;justify-content:center;padding:70px 12px 20px;background:rgba(0,0,0,.45);z-index:10000}
+.group-search-overlay.show{display:flex}
+.group-search-modal{width:min(100%,460px);max-height:80vh;overflow:hidden;background:#fff;border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.group-search-head{display:flex;gap:8px;padding:12px;border-bottom:1px solid #eee}
+.group-search-input{flex:1;min-width:0;padding:11px 12px;border:1px solid #ddd;border-radius:10px;font-size:16px;outline:none}
+.group-search-close{width:42px;border:0;border-radius:10px;background:#eee;font-size:18px}
+.group-search-results{max-height:65vh;overflow:auto;padding:8px}
+.group-search-empty{padding:28px 12px;text-align:center;color:#777;font-size:14px}
+.group-search-result{display:block;width:100%;margin-bottom:7px;padding:11px 12px;border:0;border-radius:12px;background:#f7f7f8;text-align:left;cursor:pointer}
+.group-search-result-name{font-weight:700;font-size:13px}
+.group-search-result-text{margin-top:4px;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.group-search-result-time{margin-top:4px;font-size:11px;color:#888}
+.group-search-highlight{animation:groupSearchHighlight 1.5s ease}
+@keyframes groupSearchHighlight{0%,100%{box-shadow:none}35%{box-shadow:0 0 0 4px rgba(255,210,0,.8)}}
 </style>
 </head>
 <body>
@@ -229,6 +245,7 @@ body{display:flex;flex-direction:column}
   <div id="groupMenu" class="group-menu" style="display:none">
     <button id="groupMenuMemberButton" type="button">👥 メンバー</button>
     <button id="groupCallMenuButton" type="button">📞 グループ通話</button>
+    <button id="groupMenuSearchButton" type="button">🔍 チャット検索</button>
     <button id="groupMenuEditButton" type="button" style="display:none">✏️ 名前変更</button>
     <button id="groupMenuDeleteButton" type="button" style="display:none">🗑️ グループ削除</button>
     <button id="groupMenuLeaveButton" type="button" style="display:none">🚪 グループを抜ける</button>
@@ -566,7 +583,7 @@ else if(mediaRaw.startsWith("audio:"))box.appendChild(makeMediaElement(extras.si
 else{const img=document.createElement("img");img.className="chat-image";img.src=extras.signedUrls[message.id];img.alt="送信画像";box.appendChild(img)}
 }if(message.edited_at){const edited=document.createElement("span");edited.className="edited-label";edited.textContent="編集済み";sender.appendChild(edited)}}const replies=extras.replies.filter(reply=>String(reply.group_message_id)===String(message.id));replies.forEach(reply=>{const preview=document.createElement("div");preview.className="reply-preview";const replyProfile=profileCache[reply.sender_id]||null;const strong=document.createElement("strong");applyDecoratedName(strong,replyProfile,reply.sender_id);preview.appendChild(strong);preview.appendChild(document.createTextNode("："+(reply.content||"")));box.appendChild(preview)});const reactionRows=extras.reactions.filter(reaction=>String(reaction.group_message_id)===String(message.id));if(reactionRows.length){const reactionMap={};reactionRows.forEach(r=>{if(!reactionMap[r.reaction])reactionMap[r.reaction]=0;reactionMap[r.reaction]++});const reactions=document.createElement("div");reactions.className="reactions";Object.entries(reactionMap).forEach(([reaction,count])=>{const item=document.createElement("div");item.className="reaction-item";item.textContent=reaction+" "+count;reactions.appendChild(item)});box.appendChild(reactions)}if(message.sender_id===currentUsername){const read=document.createElement("div");read.dataset.readMessageId=message.id;read.className="read-status";const count=groupReadCounts[String(message.id)]||0;read.textContent=count>0?"既読 "+count+"人":"";read.style.display=count>0?"block":"none";box.appendChild(read)}const menu=document.createElement("div");menu.className="message-menu";const reactionButton=document.createElement("button");reactionButton.type="button";reactionButton.textContent="😀 リアクション";menu.appendChild(reactionButton);const replyButton=document.createElement("button");replyButton.type="button";replyButton.textContent="↩️ 返信";menu.appendChild(replyButton);if(message.sender_id!==currentUsername&&!message.is_deleted){const reportButton=document.createElement("button");reportButton.type="button";reportButton.textContent="🚨 通報";reportButton.addEventListener("click",async event=>{event.stopPropagation();menu.style.display="none";await reportGroupMessage(message)});menu.appendChild(reportButton)}if((message.sender_id===currentUsername||isGroupAdmin)&&!message.is_deleted){const editButton=document.createElement("button");editButton.type="button";editButton.className="edit-button";editButton.textContent="✏️ 編集";editButton.addEventListener("click",async event=>{event.stopPropagation();menu.style.display="none";await editMessage(message.id,message.content||"")});menu.appendChild(editButton);const deleteButton=document.createElement("button");deleteButton.type="button";deleteButton.className="delete-button";deleteButton.textContent="🗑️ 削除";deleteButton.addEventListener("click",async event=>{event.stopPropagation();menu.style.display="none";await deleteMessage(message.id)});menu.appendChild(deleteButton)}const picker=document.createElement("div");picker.className="reaction-picker";["👍","❤️","😂","😮","😢","👏"].forEach(reaction=>{const button=document.createElement("button");button.type="button";button.textContent=reaction;button.addEventListener("click",async event=>{event.stopPropagation();await addReaction(message.id,reaction);picker.style.display="none";menu.style.display="none"});picker.appendChild(button)});reactionButton.addEventListener("click",event=>{event.stopPropagation();picker.style.display=picker.style.display==="flex"?"none":"flex"});replyButton.addEventListener("click",event=>{event.stopPropagation();startReply(message);menu.style.display="none";picker.style.display="none"});box.appendChild(menu);box.appendChild(picker);box.addEventListener("click",event=>{if(event.target.closest(".message-menu")||event.target.closest(".reaction-picker"))return;document.querySelectorAll(".message-menu").forEach(el=>{if(el!==menu)el.style.display="none"});document.querySelectorAll(".reaction-picker").forEach(el=>{if(el!==picker)el.style.display="none"});menu.style.display=menu.style.display==="block"?"none":"block"});row.appendChild(box);return row}
 async function renderMessages(list,keepBottom=true){if(!list.length){messages.innerHTML='<div class="member-empty">まだメッセージはありません</div>';return}const extras=await fetchMessageExtras(list),fragment=document.createDocumentFragment(),unreadIds=[];list.forEach(message=>{fragment.appendChild(buildMessageElement(message,extras));if(message.sender_id!==currentUsername)unreadIds.push(message.id)});messages.innerHTML="";messages.appendChild(fragment);if(keepBottom)requestAnimationFrame(scrollToBottom);if(unreadIds.length)void markMessagesRead(unreadIds)}
-async function loadMessages(){if(!groupId||loadingMessages)return;loadingMessages=true;const keepBottom=isNearBottom();try{const {data,error}=await supabaseClient.from("group_messages").select("id,group_id,sender_id,content,image_url,created_at,is_deleted,edited_at").eq("group_id",groupId).order("created_at",{ascending:true});if(error){console.error("メッセージ取得エラー:",error);messages.innerHTML='<div class="error">メッセージを読み込めませんでした</div>';return}await renderMessages(data||[],keepBottom);await loadGroupReadCounts()}catch(error){console.error("高速メッセージ読み込みエラー:",error)}finally{loadingMessages=false}}
+async function loadMessages(){if(!groupId||loadingMessages)return;loadingMessages=true;const keepBottom=isNearBottom();try{const {data,error}=await supabaseClient.from("group_messages").select("id,group_id,sender_id,content,image_url,created_at,is_deleted,edited_at").eq("group_id",groupId).order("created_at",{ascending:true});if(error){console.error("メッセージ取得エラー:",error);messages.innerHTML='<div class="error">メッセージを読み込めませんでした</div>';return}window.__fcGroupSearchMessages=data||[];await renderMessages(data||[],keepBottom);await loadGroupReadCounts()}catch(error){console.error("高速メッセージ読み込みエラー:",error)}finally{loadingMessages=false}}
 async function refreshSingleMessage(messageId){const wasBottom=isNearBottom();const {data,error}=await supabaseClient.from("group_messages").select("id,group_id,sender_id,content,image_url,created_at,is_deleted,edited_at").eq("id",messageId).eq("group_id",groupId).maybeSingle();if(error){console.error(error);return}if(!data)return;const old=messages.querySelector(`[data-message-id="${messageId}"]`);if(!old){await loadMessages();return}const extras=await fetchMessageExtras([data]);old.replaceWith(buildMessageElement(data,extras));if(wasBottom)scrollToBottom();await loadGroupReadCounts()}
 async function addReaction(messageId,reaction){const {data:existing,error:existingError}=await supabaseClient.from("group_reactions").select("id").eq("group_message_id",messageId).eq("user_id",currentUsername).eq("reaction",reaction).maybeSingle();if(existingError){console.error(existingError);return}if(existing){const {error}=await supabaseClient.from("group_reactions").delete().eq("id",existing.id);if(error){console.error(error);return}}else{const {error}=await supabaseClient.from("group_reactions").insert({group_message_id:messageId,user_id:currentUsername,reaction});if(error){console.error(error);return}}await refreshSingleMessage(messageId)}
 function startReply(message){replyingToMessage=message;editingMessage=null;replyArea.style.display="block";const profile=profileCache[message.sender_id];replyText.innerHTML="<strong></strong>："+renderMentions(message.content||"画像");const strong=replyText.querySelector("strong");applyDecoratedName(strong,profile,message.sender_id);messageInput.focus()}
@@ -796,6 +813,10 @@ function setupRealtime(){
   },payload=>{
     realtimeQueue=realtimeQueue.then(async()=>{
       const message=payload.new;
+      const cache=window.__fcGroupSearchMessages||[];
+      const cacheIndex=cache.findIndex(item=>String(item.id)===String(message.id));
+      if(cacheIndex>=0)cache[cacheIndex]=message;else cache.push(message);
+      window.__fcGroupSearchMessages=cache;
       const messageId=String(message.id);
 
       if(pendingLocalMessageIds.has(messageId)){
@@ -820,6 +841,10 @@ function setupRealtime(){
   },payload=>{
     realtimeQueue=realtimeQueue.then(async()=>{
       const message=payload.new;
+      const cache=window.__fcGroupSearchMessages||[];
+      const cacheIndex=cache.findIndex(item=>String(item.id)===String(message.id));
+      if(cacheIndex>=0)cache[cacheIndex]=message;else cache.push(message);
+      window.__fcGroupSearchMessages=cache;
       const old=messages.querySelector(`[data-message-id="${message.id}"]`);
       if(!old){await loadMessages();return}
       const extras=await fetchMessageExtras([message]);
@@ -871,6 +896,122 @@ async function reportGroupMessage(message){
  if(error){alert("通報に失敗しました。\n\n"+error.message);return}
  alert("🚨 通報を送信しました。管理者が確認します。");
 }
+</script>
+
+<div id="groupSearchOverlay" class="group-search-overlay" aria-hidden="true">
+  <div class="group-search-modal" role="dialog" aria-modal="true" aria-label="グループチャット検索">
+    <div class="group-search-head">
+      <input id="groupSearchInput" class="group-search-input" type="search" placeholder="メッセージを検索…" autocomplete="off">
+      <button id="groupSearchClose" class="group-search-close" type="button" aria-label="閉じる">✕</button>
+    </div>
+    <div id="groupSearchResults" class="group-search-results">
+      <div class="group-search-empty">検索したい言葉を入力してください</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const searchButton=document.getElementById("groupMenuSearchButton");
+  const overlay=document.getElementById("groupSearchOverlay");
+  const input=document.getElementById("groupSearchInput");
+  const close=document.getElementById("groupSearchClose");
+  const results=document.getElementById("groupSearchResults");
+  if(!searchButton||!overlay||!input||!close||!results)return;
+
+  function closeSearch(){
+    overlay.classList.remove("show");
+    overlay.setAttribute("aria-hidden","true");
+  }
+
+  searchButton.addEventListener("click",function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    if(typeof groupMenu!=="undefined")groupMenu.style.display="none";
+    overlay.classList.add("show");
+    overlay.setAttribute("aria-hidden","false");
+    input.value="";
+    results.innerHTML='<div class="group-search-empty">検索したい言葉を入力してください</div>';
+    setTimeout(function(){input.focus()},50);
+  });
+
+  close.addEventListener("click",closeSearch);
+  overlay.addEventListener("click",function(e){
+    if(e.target===overlay)closeSearch();
+  });
+
+  function esc(v){
+    const d=document.createElement("div");
+    d.textContent=String(v==null?"":v);
+    return d.innerHTML;
+  }
+  function timeText(v){
+    const d=new Date(v);
+    if(Number.isNaN(d.getTime()))return "";
+    return d.toLocaleString("ja-JP",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
+  }
+
+  let timer=null;
+  input.addEventListener("input",function(){
+    clearTimeout(timer);
+    timer=setTimeout(searchGroup,120);
+  });
+
+  function searchGroup(){
+    const q=input.value.trim();
+    if(!q){
+      results.innerHTML='<div class="group-search-empty">検索したい言葉を入力してください</div>';
+      return;
+    }
+
+    const messages=window.__fcGroupSearchMessages||[];
+    const lower=q.toLocaleLowerCase();
+
+    const rows=messages
+      .filter(function(m){
+        return !m.is_deleted &&
+          typeof m.content==="string" &&
+          m.content.toLocaleLowerCase().includes(lower);
+      })
+      .sort(function(a,b){
+        return new Date(b.created_at)-new Date(a.created_at);
+      });
+
+    if(!rows.length){
+      results.innerHTML='<div class="group-search-empty">「'+esc(q)+'」に一致するメッセージはありません</div>';
+      return;
+    }
+
+    results.innerHTML="";
+    rows.forEach(function(row){
+      const btn=document.createElement("button");
+      btn.type="button";
+      btn.className="group-search-result";
+
+      const profile=(typeof profileCache!=="undefined"&&profileCache[row.sender_id])||null;
+      const name=profile?.name||row.sender_id||"ユーザー";
+
+      btn.innerHTML=
+        '<div class="group-search-result-name">'+esc(name)+'</div>'+
+        '<div class="group-search-result-text">'+esc(row.content)+'</div>'+
+        '<div class="group-search-result-time">'+esc(timeText(row.created_at))+'</div>';
+
+      btn.addEventListener("click",function(){
+        closeSearch();
+        const target=document.querySelector('[data-message-id="'+CSS.escape(String(row.id))+'"]');
+        if(target){
+          target.scrollIntoView({behavior:"smooth",block:"center"});
+          target.classList.remove("group-search-highlight");
+          void target.offsetWidth;
+          target.classList.add("group-search-highlight");
+          setTimeout(function(){target.classList.remove("group-search-highlight")},1600);
+        }
+      });
+
+      results.appendChild(btn);
+    });
+  }
+})();
 </script>
 </body>
 </html>
