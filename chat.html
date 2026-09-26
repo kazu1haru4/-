@@ -33,7 +33,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
 .message-content-box{display:flex;flex-direction:column;align-items:flex-end;max-width:75%}
 .bubble{max-width:100%;padding:10px 14px;border-radius:18px;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.05);word-break:break-word}
 .mine .bubble{background:#8f7cff;color:#fff}
-.chat-image{display:block;max-width:220px;max-height:300px;border-radius:14px;margin-bottom:5px;object-fit:contain}
+.chat-image{display:block;max-width:220px;max-height:300px;border-radius:14px;margin-bottom:5px;object-fit:contain}.chat-image-lazy{overflow:hidden}
 .time{font-size:10px;color:#999;margin-top:4px;text-align:right}.mine .time{color:#eee}
 .read-status{font-size:10px;color:#8f7cff;margin-top:3px;font-weight:bold}
 .deleted-message{color:#999!important;background:#f1f1f1!important;box-shadow:none!important;font-size:13px;font-style:italic}
@@ -306,8 +306,28 @@ async function loadReadStatuses(messages){
  if(!error)(data||[]).forEach(x=>readMessageIds.add(x.message_id));
 }
 async function prepareImageUrls(messages){
- const list=messages.filter(m=>!m.is_deleted&&m.image_url);if(!list.length)return new Map();
+ // 画像はタップされるまでSigned URLを取得しない。動画・音声だけ従来どおり先に取得する。
+ const list=messages.filter(m=>!m.is_deleted&&m.image_url&&mediaKind(m.image_url)!=="image");
+ if(!list.length)return new Map();
  const out=await Promise.all(list.map(async m=>{const {data,error}=await db.storage.from("chat-images").createSignedUrl(mediaPath(m.image_url),3600);return[m.id,error?"":data?.signedUrl||""]}));return new Map(out);
+}
+async function loadChatImageInto(container,message){
+ if(!container||container.dataset.loading==="1"||container.dataset.loaded==="1")return;
+ container.dataset.loading="1";
+ const button=container.querySelector("button");if(button){button.disabled=true;button.textContent="⏳ 読み込み中…"}
+ try{
+  const {data,error}=await db.storage.from("chat-images").createSignedUrl(mediaPath(message.image_url),3600);
+  if(error||!data?.signedUrl)throw error||new Error("画像URLを取得できませんでした");
+  const img=document.createElement("img");img.className="chat-image";img.src=data.signedUrl;img.alt="送信された画像";
+  img.onload=()=>{container.replaceWith(img)};
+  img.onerror=()=>{throw new Error("画像を読み込めませんでした")};
+  container.replaceChildren(img);
+  container.dataset.loaded="1";
+ }catch(e){
+  console.error("画像読み込みエラー:",e);container.dataset.loading="";
+  if(button){button.disabled=false;button.textContent="🖼️ タップして画像を読み込む"}
+  else container.textContent="🖼️ 画像を読み込めませんでした";
+ }
 }
 async function editMessage(id,currentContent){
  if(!currentContent){alert("画像メッセージは編集できません。");return}
@@ -554,7 +574,10 @@ function makeMediaMessage(message,url,kind){
    const label=document.createElement("div");label.className="media-duration";label.textContent="⏱️ 読み込み中...";
    wrap.append(audio,label);addMediaDurationLabel(audio,label);return wrap;
  }
- const img=document.createElement("img");img.className="chat-image";img.src=url;img.alt="送信された画像";return img
+ const holder=document.createElement("div");holder.className="chat-image-lazy";holder.dataset.loading="";holder.style.cssText="display:flex;align-items:center;justify-content:center;min-width:220px;min-height:110px;max-width:220px;border-radius:14px;background:#f1efff;color:#6f61d9;margin-bottom:5px;padding:12px";
+ const button=document.createElement("button");button.type="button";button.textContent="🖼️ タップして画像を読み込む";button.style.cssText="border:0;background:#fff;border-radius:10px;padding:10px 12px;color:#6f61d9;font-weight:bold";button.addEventListener("click",e=>{e.stopPropagation();loadChatImageInto(holder,message)});holder.appendChild(button);
+ // urlが渡された場合も、画像本体はここでは取得せずタップ式にする。
+ return holder
 }
 async function uploadMediaFile(file,kind){
  if(!file||!currentUsername||!friendId)return;
