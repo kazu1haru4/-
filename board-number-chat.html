@@ -86,9 +86,9 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
 <div id="boardHeaderMenu" class="board-header-menu">
   <button id="boardMenuMembers" type="button">👥 メンバー一覧</button>
   <button id="boardMenuSearch" type="button">🔍 チャット検索</button>
-  <button id="boardMenuRename" type="button">✏️ グループ名変更</button>
-  <button id="boardMenuDelete" type="button" style="color:#d9534f">🗑️ グループを削除</button>
-  <button id="boardMenuLeave" type="button" style="color:#c87522">🚪 グループから抜ける</button>
+  <button id="boardMenuRename" type="button">✏️ 掲示板名変更</button>
+  <button id="boardMenuDelete" type="button" style="color:#d9534f">🗑️ 掲示板を削除</button>
+  <button id="boardMenuLeave" type="button" style="color:#c87522">🚪 掲示板から抜ける</button>
 </div>
 </div>
 <div class="title">🔢 掲示板チャット</div>
@@ -117,7 +117,8 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
 const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
 const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const boardId=new URLSearchParams(location.search).get("board");
+const params=new URLSearchParams(location.search);
+const boardId=params.get("board") || params.get("id");
 const $=id=>document.getElementById(id);
 let username="",room=null,members=[],profiles={},items={},isOwner=false,isBoardAdmin=false,isMuted=false,replyTarget=null,giftTargetUsername="";
 let boardRealtimeChannel=null,boardTypingChannel=null,boardTypingReady=false,typingTimer=null,typingHideTimer=null;
@@ -432,7 +433,8 @@ async function start(){
  username=session.user.user_metadata?.username||"";if(!username){location.href="index.html";return}
  if(typeof checkFriendChatBan==="function"){if(await checkFriendChatBan())return}
  if(!(await loadRoom()))return;await loadMembers();
- const joined=isOwner||members.some(m=>String(m.user_id).toLowerCase()===String(username).toLowerCase());
+ const isGlobalAdmin=ADMIN_USERNAMES.has(username);
+  const joined=isGlobalAdmin||isOwner||members.some(m=>String(m.user_id).toLowerCase()===String(username).toLowerCase());
  if(!joined){alert("この掲示板には参加していません。まず参加番号から参加してください。");location.href="board-number.html";return}
  await Promise.all([updatePresence(),refreshMute(),loadMessages()]);setupRealtime();setInterval(updatePresence,30000);setInterval(refreshMute,30000)
 }
