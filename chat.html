@@ -85,54 +85,57 @@ button:disabled{opacity:.5}#imageInput{display:none}
 .chat-name{font-size:12px;font-weight:800;margin-bottom:3px;align-self:flex-start}
 .mine .chat-name{align-self:flex-end}
 
+/* ⋯メニュー */
 .menu-button{
   border:0;
   background:transparent;
   color:#fff;
-  font-size:30px;
+  font-size:28px;
+  font-weight:700;
   line-height:1;
   width:42px;
   height:42px;
+  padding:0;
   border-radius:12px;
-  cursor:pointer;
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:0;
+  cursor:pointer;
 }
-.menu-button:active{background:rgba(255,255,255,.16)}
+.menu-button:active{background:rgba(255,255,255,.15)}
 .header-menu{
   position:absolute;
-  right:10px;
-  top:58px;
+  top:52px;
+  right:8px;
   width:190px;
   background:#fff;
   border:1px solid #ddd;
   border-radius:14px;
-  box-shadow:0 8px 25px rgba(0,0,0,.18);
+  box-shadow:0 8px 25px rgba(0,0,0,.2);
   padding:6px;
-  z-index:1500;
+  z-index:9999;
   display:none;
 }
 .header-menu.show{display:block}
 .header-menu button{
+  display:block;
   width:100%;
   border:0;
-  background:transparent;
+  background:#fff;
   color:#222;
   text-align:left;
-  padding:12px 13px;
+  padding:13px 12px;
   border-radius:10px;
   font-size:15px;
-  cursor:pointer;
 }
-.header-menu button:active{background:#f0f0f0}
+.header-menu button:active{background:#f1f1f1}
 
+/* チャット検索 */
 .chat-search-overlay{
   position:fixed;
   inset:0;
+  z-index:10000;
   background:rgba(0,0,0,.45);
-  z-index:3000;
   display:none;
   align-items:flex-start;
   justify-content:center;
@@ -146,66 +149,23 @@ button:disabled{opacity:.5}#imageInput{display:none}
   border-radius:18px;
   overflow:hidden;
   box-shadow:0 12px 40px rgba(0,0,0,.25);
-  display:flex;
-  flex-direction:column;
 }
-.chat-search-head{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:12px;
-  border-bottom:1px solid #eee;
-}
-.chat-search-input{
-  flex:1;
-  min-width:0;
-  border:1px solid #ddd;
-  border-radius:10px;
-  padding:11px 12px;
-  font-size:16px;
-  outline:none;
-}
-.chat-search-input:focus{border-color:#777}
-.chat-search-close{
-  border:0;
-  background:#f1f1f1;
-  border-radius:10px;
-  width:42px;
-  height:42px;
-  font-size:19px;
-  cursor:pointer;
-}
-.chat-search-results{overflow:auto;padding:8px}
-.chat-search-empty{
-  padding:28px 14px;
-  text-align:center;
-  color:#777;
-  font-size:14px;
-}
+.chat-search-head{display:flex;gap:8px;padding:12px;border-bottom:1px solid #eee}
+.chat-search-input{flex:1;min-width:0;padding:11px;border:1px solid #ddd;border-radius:10px;font-size:16px}
+.chat-search-close{width:42px;border:0;border-radius:10px;background:#eee;font-size:18px}
+.chat-search-results{max-height:65vh;overflow:auto;padding:8px}
+.chat-search-empty{text-align:center;color:#777;padding:28px 12px}
 .chat-search-result{
-  border:0;
-  background:#f7f7f8;
-  width:100%;
-  text-align:left;
-  border-radius:12px;
-  padding:11px 12px;
-  margin-bottom:7px;
-  cursor:pointer;
+  display:block;width:100%;border:0;background:#f7f7f8;
+  text-align:left;border-radius:12px;padding:11px;margin-bottom:7px;
 }
-.chat-search-result:active{background:#ececf0}
-.chat-search-result-name{font-weight:700;font-size:13px;margin-bottom:4px}
-.chat-search-result-text{
-  font-size:14px;
-  line-height:1.45;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
+.chat-search-result-name{font-weight:700;font-size:13px}
+.chat-search-result-text{font-size:14px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chat-search-result-time{font-size:11px;color:#888;margin-top:4px}
 .search-highlight{animation:searchHighlight 1.5s ease}
 @keyframes searchHighlight{
-  0%,100%{filter:none}
-  35%{filter:drop-shadow(0 0 8px rgba(255,200,0,.95))}
+  0%,100%{box-shadow:none}
+  35%{box-shadow:0 0 0 4px rgba(255,210,0,.8)}
 }
 
 </style>
@@ -214,7 +174,7 @@ button:disabled{opacity:.5}#imageInput{display:none}
 <main class="container">
 <header class="header">
 <a href="home.html" class="home-button">🏠 ホーム</a>
-<button id="menuButton" class="menu-button" aria-label="メニュー">⋯</button>
+<button id="menuButton" class="menu-button" type="button" aria-label="メニュー">⋯</button>
 <div id="headerMenu" class="header-menu">
   <button id="menuCallButton" type="button">📞 通話</button>
   <button id="menuSearchButton" type="button">🔍 チャット検索</button>
@@ -935,204 +895,152 @@ async function start(){
 start();
 
 
-// ===== 右上「⋯」メニュー =====
-const menuButton = document.getElementById("menuButton");
-const headerMenu = document.getElementById("headerMenu");
-const menuCallButton = document.getElementById("menuCallButton");
-const menuSearchButton = document.getElementById("menuSearchButton");
+/* ===== 右上 ⋯ メニュー ===== */
+(function(){
+  const menuButton = document.getElementById("menuButton");
+  const headerMenu = document.getElementById("headerMenu");
+  const menuCallButton = document.getElementById("menuCallButton");
+  const menuSearchButton = document.getElementById("menuSearchButton");
+  const searchOverlay = document.getElementById("chatSearchOverlay");
+  const searchInput = document.getElementById("chatSearchInput");
+  const searchClose = document.getElementById("chatSearchClose");
+  const searchResults = document.getElementById("chatSearchResults");
 
-menuButton.addEventListener("click", (e) => {
-  e.stopPropagation();
-  headerMenu.classList.toggle("show");
-});
+  if(!menuButton || !headerMenu) return;
 
-document.addEventListener("click", (e) => {
-  if (!headerMenu.contains(e.target) && e.target !== menuButton) {
-    headerMenu.classList.remove("show");
-  }
-});
-
-menuCallButton.addEventListener("click", () => {
-  headerMenu.classList.remove("show");
-  if (!currentUsername || !friendId) {
-    alert("通話相手の情報を取得できません。");
-    return;
-  }
-  location.href = "call.html?user=" + encodeURIComponent(friendId);
-});
-
-// ===== チャット検索 =====
-const chatSearchOverlay = document.getElementById("chatSearchOverlay");
-const chatSearchInput = document.getElementById("chatSearchInput");
-const chatSearchClose = document.getElementById("chatSearchClose");
-const chatSearchResults = document.getElementById("chatSearchResults");
-
-function escapeSearchHtml(value){
-  return String(value)
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#039;");
-}
-
-function closeChatSearch(){
-  chatSearchOverlay.classList.remove("show");
-  chatSearchOverlay.setAttribute("aria-hidden","true");
-}
-
-function openChatSearch(){
-  headerMenu.classList.remove("show");
-  chatSearchOverlay.classList.add("show");
-  chatSearchOverlay.setAttribute("aria-hidden","false");
-  chatSearchInput.value="";
-  chatSearchResults.innerHTML =
-    '<div class="chat-search-empty">検索したい言葉を入力してください</div>';
-  setTimeout(() => chatSearchInput.focus(), 50);
-}
-
-menuSearchButton.addEventListener("click", openChatSearch);
-chatSearchClose.addEventListener("click", closeChatSearch);
-
-chatSearchOverlay.addEventListener("click", (e) => {
-  if(e.target === chatSearchOverlay) closeChatSearch();
-});
-
-document.addEventListener("keydown", (e) => {
-  if(e.key === "Escape" && chatSearchOverlay.classList.contains("show")){
-    closeChatSearch();
-  }
-});
-
-function formatSearchTime(value){
-  const d = new Date(value);
-  if(Number.isNaN(d.getTime())) return "";
-  return d.toLocaleString("ja-JP",{
-    year:"numeric", month:"2-digit", day:"2-digit",
-    hour:"2-digit", minute:"2-digit"
+  menuButton.addEventListener("click", function(e){
+    e.stopPropagation();
+    headerMenu.classList.toggle("show");
   });
-}
 
-let searchTimer = null;
+  document.addEventListener("click", function(e){
+    if(!headerMenu.contains(e.target) && e.target !== menuButton){
+      headerMenu.classList.remove("show");
+    }
+  });
 
-async function searchCurrentChat(){
-  const keyword = chatSearchInput.value.trim();
+  menuCallButton.addEventListener("click", function(){
+    headerMenu.classList.remove("show");
+    if(!currentUsername || !friendId){
+      alert("通話相手の情報を取得できません。");
+      return;
+    }
+    location.href = "call.html?user=" + encodeURIComponent(friendId);
+  });
 
-  if(!keyword){
-    chatSearchResults.innerHTML =
-      '<div class="chat-search-empty">検索したい言葉を入力してください</div>';
-    return;
+  function closeSearch(){
+    searchOverlay.classList.remove("show");
+    searchOverlay.setAttribute("aria-hidden","true");
   }
 
-  chatSearchResults.innerHTML =
-    '<div class="chat-search-empty">検索中…</div>';
+  menuSearchButton.addEventListener("click", function(){
+    headerMenu.classList.remove("show");
+    searchOverlay.classList.add("show");
+    searchOverlay.setAttribute("aria-hidden","false");
+    searchInput.value = "";
+    searchResults.innerHTML = '<div class="chat-search-empty">検索したい言葉を入力してください</div>';
+    setTimeout(function(){searchInput.focus();},50);
+  });
 
-  try{
-    const [sent, received] = await Promise.all([
-      supabaseClient
-        .from("messages")
-        .select("id,sender_id,receiver_id,content,created_at,is_deleted")
-        .eq("sender_id", currentUsername)
-        .eq("receiver_id", friendId)
-        .order("created_at",{ascending:false}),
+  searchClose.addEventListener("click", closeSearch);
+  searchOverlay.addEventListener("click", function(e){
+    if(e.target === searchOverlay) closeSearch();
+  });
 
-      supabaseClient
-        .from("messages")
-        .select("id,sender_id,receiver_id,content,created_at,is_deleted")
-        .eq("sender_id", friendId)
-        .eq("receiver_id", currentUsername)
-        .order("created_at",{ascending:false})
-    ]);
+  function esc(v){
+    const d=document.createElement("div");
+    d.textContent=String(v ?? "");
+    return d.innerHTML;
+  }
 
-    if(sent.error) throw sent.error;
-    if(received.error) throw received.error;
+  function timeText(v){
+    const d=new Date(v);
+    if(Number.isNaN(d.getTime())) return "";
+    return d.toLocaleString("ja-JP",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
+  }
 
-    const results = [...(sent.data || []), ...(received.data || [])]
-      .filter(m =>
-        !m.is_deleted &&
-        typeof m.content === "string" &&
-        m.content.toLocaleLowerCase().includes(keyword.toLocaleLowerCase())
-      )
-      .sort((a,b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+  let timer=null;
+  searchInput.addEventListener("input",function(){
+    clearTimeout(timer);
+    timer=setTimeout(searchMessages,200);
+  });
 
-    if(!results.length){
-      chatSearchResults.innerHTML =
-        '<div class="chat-search-empty">「' +
-        escapeSearchHtml(keyword) +
-        '」に一致するメッセージはありません</div>';
+  async function searchMessages(){
+    const q=searchInput.value.trim();
+    if(!q){
+      searchResults.innerHTML='<div class="chat-search-empty">検索したい言葉を入力してください</div>';
       return;
     }
 
-    chatSearchResults.innerHTML = "";
+    searchResults.innerHTML='<div class="chat-search-empty">検索中…</div>';
 
-    results.forEach(m => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "chat-search-result";
+    try{
+      const a=await supabaseClient.from("messages")
+        .select("id,sender_id,receiver_id,content,created_at,is_deleted")
+        .eq("sender_id",currentUsername)
+        .eq("receiver_id",friendId)
+        .order("created_at",{ascending:false});
 
-      const name = m.sender_id === currentUsername
-        ? "自分"
-        : (typeof friendName !== "undefined" && friendName ? friendName : friendId);
+      const b=await supabaseClient.from("messages")
+        .select("id,sender_id,receiver_id,content,created_at,is_deleted")
+        .eq("sender_id",friendId)
+        .eq("receiver_id",currentUsername)
+        .order("created_at",{ascending:false});
 
-      button.innerHTML =
-        '<div class="chat-search-result-name">' +
-          escapeSearchHtml(name) +
-        '</div>' +
-        '<div class="chat-search-result-text">' +
-          escapeSearchHtml(m.content) +
-        '</div>' +
-        '<div class="chat-search-result-time">' +
-          escapeSearchHtml(formatSearchTime(m.created_at)) +
-        '</div>';
+      if(a.error) throw a.error;
+      if(b.error) throw b.error;
 
-      button.addEventListener("click", async () => {
-        closeChatSearch();
+      const ql=q.toLocaleLowerCase();
+      const rows=[...(a.data||[]),...(b.data||[])]
+        .filter(x=>!x.is_deleted && typeof x.content==="string" && x.content.toLocaleLowerCase().includes(ql))
+        .sort((x,y)=>new Date(y.created_at)-new Date(x.created_at));
 
-        let target = document.querySelector(
-          '[data-message-id="' + CSS.escape(String(m.id)) + '"]'
-        );
+      if(!rows.length){
+        searchResults.innerHTML='<div class="chat-search-empty">「'+esc(q)+'」に一致するメッセージはありません</div>';
+        return;
+      }
 
-        if(!target){
-          await loadMessages();
-          target = document.querySelector(
-            '[data-message-id="' + CSS.escape(String(m.id)) + '"]'
-          );
-        }
+      searchResults.innerHTML="";
+      rows.forEach(row=>{
+        const btn=document.createElement("button");
+        btn.type="button";
+        btn.className="chat-search-result";
+        const name=row.sender_id===currentUsername ? "自分" : (friendName || friendId);
+        btn.innerHTML='<div class="chat-search-result-name">'+esc(name)+'</div>'+
+          '<div class="chat-search-result-text">'+esc(row.content)+'</div>'+
+          '<div class="chat-search-result-time">'+esc(timeText(row.created_at))+'</div>';
 
-        if(target){
-          target.scrollIntoView({behavior:"smooth",block:"center"});
-          target.classList.remove("search-highlight");
-          void target.offsetWidth;
-          target.classList.add("search-highlight");
-          setTimeout(() => target.classList.remove("search-highlight"),1600);
-        }
+        btn.addEventListener("click",async()=>{
+          closeSearch();
+          let el=document.querySelector('[data-message-id="'+CSS.escape(String(row.id))+'"]');
+          if(!el){
+            await loadMessages();
+            el=document.querySelector('[data-message-id="'+CSS.escape(String(row.id))+'"]');
+          }
+          if(el){
+            el.scrollIntoView({behavior:"smooth",block:"center"});
+            el.classList.remove("search-highlight");
+            void el.offsetWidth;
+            el.classList.add("search-highlight");
+            setTimeout(()=>el.classList.remove("search-highlight"),1600);
+          }
+        });
+        searchResults.appendChild(btn);
       });
-
-      chatSearchResults.appendChild(button);
-    });
-
-  }catch(error){
-    console.error("chat search error:", error);
-    chatSearchResults.innerHTML =
-      '<div class="chat-search-empty">検索に失敗しました</div>';
+    }catch(err){
+      console.error("chat search error:",err);
+      searchResults.innerHTML='<div class="chat-search-empty">検索に失敗しました</div>';
+    }
   }
-}
-
-chatSearchInput.addEventListener("input", () => {
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(searchCurrentChat, 180);
-});
+})();
 
 </script>
 
 <div id="chatSearchOverlay" class="chat-search-overlay" aria-hidden="true">
-  <div class="chat-search-modal" role="dialog" aria-modal="true" aria-label="チャット検索">
+  <div class="chat-search-modal" role="dialog" aria-modal="true">
     <div class="chat-search-head">
-      <input id="chatSearchInput" class="chat-search-input" type="search"
-             placeholder="メッセージを検索…" autocomplete="off">
-      <button id="chatSearchClose" class="chat-search-close" type="button" aria-label="閉じる">✕</button>
+      <input id="chatSearchInput" class="chat-search-input" type="search" placeholder="メッセージを検索…" autocomplete="off">
+      <button id="chatSearchClose" class="chat-search-close" type="button">✕</button>
     </div>
     <div id="chatSearchResults" class="chat-search-results">
       <div class="chat-search-empty">検索したい言葉を入力してください</div>
