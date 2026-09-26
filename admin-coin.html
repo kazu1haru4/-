@@ -26,6 +26,13 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic
 .history-title{font-size:18px;font-weight:bold;margin-bottom:12px}
 .back-users{border:none;background:#eee;border-radius:12px;padding:10px 12px;font-weight:bold;margin-bottom:12px}
 .history-list{display:grid;gap:10px}
+.gift-title{font-size:18px;font-weight:bold;margin:20px 0 12px;padding-top:16px;border-top:2px solid #eee}
+.gift-item{border:2px solid #eee;border-radius:16px;padding:13px;background:#fff}
+.gift-top{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.gift-type{font-weight:bold}
+.gift-type.send{color:#d06a00}.gift-type.receive{color:#159447}
+.gift-amount{font-size:18px;font-weight:bold}
+.gift-meta{font-size:12px;color:#777;margin-top:6px;line-height:1.5}
 .history-item{border:2px solid #eee;border-radius:16px;padding:13px;background:#fff}
 .history-top{display:flex;justify-content:space-between;gap:10px;align-items:center}
 .amount{font-size:18px;font-weight:bold}.amount.plus{color:#159447}
@@ -56,6 +63,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic
       <button class="back-users" id="backUsers">← ユーザー一覧へ</button>
       <div class="history-title" id="historyTitle">🪙 コイン獲得履歴</div>
       <div id="historyList" class="history-list"><div class="loading">読み込み中……</div></div>
+      <div class="gift-title">🎁 コインギフト履歴</div>
+      <div id="giftHistoryList" class="history-list"><div class="loading">読み込み中……</div></div>
     </div>
   </div>
 
@@ -155,30 +164,54 @@ async function openHistory(userId){
  const user=allUsers.find(x=>x.user_id===userId);
  document.getElementById("historyTitle").textContent="🪙 "+(user?.name||userId)+" のコイン獲得履歴";
 
- const {data,error}=await supabaseClient.rpc("admin_get_user_coin_history",{target_user_id:userId});
+ const [coinResult,giftResult]=await Promise.all([
+   supabaseClient.rpc("admin_get_user_coin_history",{target_user_id:userId}),
+   supabaseClient.rpc("admin_get_user_coin_gifts",{target_user_id:userId})
+ ]);
+
+ const {data,error}=coinResult;
+ const {data:giftData,error:giftError}=giftResult;
+
  if(error){
    console.error(error);
-   document.getElementById("historyList").innerHTML='<div class="empty">❌ 履歴を取得できませんでした<br><small>'+escapeHtml(error.message)+'</small></div>';
-   return;
- }
-
- if(!data?.length){
+   document.getElementById("historyList").innerHTML='<div class="empty">❌ コイン獲得履歴を取得できませんでした<br><small>'+escapeHtml(error.message)+'</small></div>';
+ }else if(!data?.length){
    document.getElementById("historyList").innerHTML='<div class="empty">コイン獲得履歴はありません。</div>';
-   return;
+ }else{
+   document.getElementById("historyList").innerHTML=data.map(h=>{
+     const amount=Number(h.change_amount||0);
+     const date=h.created_at?new Date(h.created_at).toLocaleString("ja-JP"):"日時不明";
+     return `<div class="history-item">
+       <div class="history-top">
+         <div class="amount plus">+${amount.toLocaleString()} COIN</div>
+         <div class="meta">${escapeHtml(date)}</div>
+       </div>
+       <div class="reason">${escapeHtml(h.reason||"コイン獲得")}</div>
+       <div class="meta">獲得後残高：${Number(h.balance_after||0).toLocaleString()} COIN<br>記録元：${escapeHtml(h.actor_id||"system")}</div>
+     </div>`;
+   }).join("");
  }
 
- document.getElementById("historyList").innerHTML=data.map(h=>{
-   const amount=Number(h.change_amount||0);
-   const date=h.created_at?new Date(h.created_at).toLocaleString("ja-JP"):"日時不明";
-   return `<div class="history-item">
-     <div class="history-top">
-       <div class="amount plus">+${amount.toLocaleString()} COIN</div>
-       <div class="meta">${escapeHtml(date)}</div>
-     </div>
-     <div class="reason">${escapeHtml(h.reason||"コイン獲得")}</div>
-     <div class="meta">獲得後残高：${Number(h.balance_after||0).toLocaleString()} COIN<br>記録元：${escapeHtml(h.actor_id||"system")}</div>
-   </div>`;
- }).join("");
+ if(giftError){
+   console.error(giftError);
+   document.getElementById("giftHistoryList").innerHTML='<div class="empty">❌ コインギフト履歴を取得できませんでした<br><small>'+escapeHtml(giftError.message)+'</small></div>';
+ }else if(!giftData?.length){
+   document.getElementById("giftHistoryList").innerHTML='<div class="empty">コインギフト履歴はありません。</div>';
+ }else{
+   document.getElementById("giftHistoryList").innerHTML=giftData.map(g=>{
+     const amount=Number(g.amount||0);
+     const isSend=g.sender_id===userId;
+     const otherUser=isSend?g.receiver_id:g.sender_id;
+     const date=g.created_at?new Date(g.created_at).toLocaleString("ja-JP"):"日時不明";
+     return `<div class="gift-item">
+       <div class="gift-top">
+         <div class="gift-type ${isSend?"send":"receive"}">${isSend?"📤 送信":"📥 受信"}</div>
+         <div class="gift-amount">${amount.toLocaleString()} COIN</div>
+       </div>
+       <div class="gift-meta">${isSend?"送信先":"送信元"}：@${escapeHtml(otherUser)}<br>${escapeHtml(date)}</div>
+     </div>`;
+   }).join("");
+ }
 }
 
 document.getElementById("userSearch").addEventListener("input",renderUsers);
