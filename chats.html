@@ -48,6 +48,24 @@
     .header h1 { margin: 2px 0 0; font-size: 22px; }
     .header p { margin: 5px 0 0; color: #999; font-size: 12px; }
 
+    .admin-button {
+      position: absolute;
+      right: 15px;
+      top: 15px;
+      min-width: 52px;
+      height: 40px;
+      padding: 0 12px;
+      border: none;
+      border-radius: 13px;
+      background: #f1f1f5;
+      color: #555;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      display: none;
+    }
+    .admin-button:active { transform: scale(.96); }
+
     .new-chat {
       display: block;
       width: 100%;
@@ -293,6 +311,7 @@
       <a href="home.html" class="back-button" aria-label="ホームへ戻る">←</a>
       <h1>💬 個別チャット</h1>
       <p>チャットした相手</p>
+      <button id="adminButton" class="admin-button" type="button">管理</button>
     </section>
 
     <a href="friends.html" class="new-chat">＋ 新しいチャットを始める</a>
@@ -840,6 +859,15 @@
 
       currentUsername =
         data.user.user_metadata?.username || "";
+
+      // 管理者だけ右上の「管理」ボタンを表示
+      const adminButton = document.getElementById("adminButton");
+      if (ADMIN_USERNAMES.has(currentUsername)) {
+        adminButton.style.display = "block";
+        adminButton.addEventListener("click", () => {
+          window.location.href = "admin-chats.html";
+        });
+      }
 
       await loadChats();
     }
