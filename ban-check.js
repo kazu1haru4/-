@@ -1,158 +1,69 @@
-const FRIEND_CHAT_SUPABASE_URL =
-  "https://yxonmqdyekwenyzekjwj.supabase.co";
+const FRIEND_CHAT_SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
+const FRIEND_CHAT_SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+const friendChatSupabase=window.supabase.createClient(FRIEND_CHAT_SUPABASE_URL,FRIEND_CHAT_SUPABASE_KEY);
 
-const FRIEND_CHAT_SUPABASE_KEY =
-  "sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+function friendChatGetDeviceId(){
+  let id=localStorage.getItem("friendChatDeviceId");
+  if(!id){
+    id=(crypto.randomUUID?crypto.randomUUID():"fc-"+Date.now()+"-"+Math.random().toString(36).slice(2));
+    localStorage.setItem("friendChatDeviceId",id);
+  }
+  return id;
+}
+function friendChatDeviceLabel(){
+  const ua=navigator.userAgent;
+  if(/iPhone|iPad|iPod/i.test(ua))return"iPhone / iPad";
+  if(/Android/i.test(ua))return"Android端末";
+  if(/Windows/i.test(ua))return"Windows";
+  if(/Mac/i.test(ua))return"Mac";
+  return"この端末";
+}
+async function friendChatRegisterDevice(session){
+  try{
+    if(!session?.user?.id)return;
+    const deviceId=friendChatGetDeviceId();
+    await friendChatSupabase.from("device_sessions").upsert({
+      auth_user_id:session.user.id,
+      device_id:deviceId,
+      device_label:friendChatDeviceLabel(),
+      last_seen:new Date().toISOString(),
+      revoked_at:null
+    },{onConflict:"auth_user_id,device_id"});
+  }catch(error){
+    console.error("端末登録エラー:",error);
+    // 端末登録に失敗しても既存のBAN確認・サイト機能は止めない。
+  }
+}
 
-const friendChatSupabase =
-  window.supabase.createClient(
-    FRIEND_CHAT_SUPABASE_URL,
-    FRIEND_CHAT_SUPABASE_KEY
-  );
+async function checkFriendChatBan(){
+  try{
+    const {data:sessionData,error:sessionError}=await friendChatSupabase.auth.getSession();
+    if(sessionError){console.error("セッション確認エラー:",sessionError);return false}
+    const session=sessionData.session;
+    if(!session)return false;
 
+    await friendChatRegisterDevice(session);
 
-async function checkFriendChatBan() {
-  try {
+    const username=session.user?.user_metadata?.username||"";
+    if(!username)return false;
 
-    const {
-      data: sessionData,
-      error: sessionError
-    } = await friendChatSupabase.auth.getSession();
+    const {data:banned,error}=await friendChatSupabase.rpc("check_user_banned",{target_username:username});
+    if(error){console.error("BAN確認エラー:",error);return false}
 
-    if (sessionError) {
-      console.error(
-        "セッション確認エラー:",
-        sessionError
-      );
-      return false;
-    }
-
-    const session = sessionData.session;
-
-    if (!session) {
-      return false;
-    }
-
-    const username =
-      session.user?.user_metadata?.username || "";
-
-    if (!username) {
-      return false;
-    }
-
-    const {
-      data: banned,
-      error
-    } = await friendChatSupabase.rpc(
-      "check_user_banned",
-      {
-        target_username: username
-      }
-    );
-
-    if (error) {
-      console.error(
-        "BAN確認エラー:",
-        error
-      );
-
-      return false;
-    }
-
-    if (banned === true) {
-
-      /*
-       * BANされた場合
-       *
-       * ・ログアウトしない
-       * ・ログイン画面へ移動しない
-       * ・alert()を使わない
-       * ・OKボタンを表示しない
-       * ・画面全体をBAN表示にする
-       */
-
-      document.body.innerHTML = `
-        <div
-          id="friendChatBanScreen"
-          style="
-            position:fixed;
-            inset:0;
-            width:100%;
-            height:100%;
-            background:#ffffff;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            padding:24px;
-            box-sizing:border-box;
-            text-align:center;
-            font-family:-apple-system,BlinkMacSystemFont,
-              'Segoe UI',sans-serif;
-            z-index:999999999;
-          "
-        >
-
-          <div
-            style="
-              width:100%;
-              max-width:420px;
-              padding:32px 24px;
-              box-sizing:border-box;
-              border-radius:24px;
-              background:#f8f8fb;
-              box-shadow:0 8px 30px rgba(0,0,0,0.10);
-            "
-          >
-
-            <div
-              style="
-                font-size:64px;
-                line-height:1;
-                margin-bottom:20px;
-              "
-            >
-              🚫
-            </div>
-
-            <h1
-              style="
-                margin:0 0 16px;
-                font-size:24px;
-                color:#222;
-              "
-            >
-              このアカウントはBANされています
-            </h1>
-
-            <p
-              style="
-                margin:0;
-                color:#666;
-                font-size:15px;
-                line-height:1.8;
-              "
-            >
-              現在、このアカウントでは<br>
-              Friend Chatを利用できません。
-            </p>
-
+    if(banned===true){
+      document.body.innerHTML=`
+        <div id="friendChatBanScreen" style="position:fixed;inset:0;width:100%;height:100%;background:#fff;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;z-index:999999999">
+          <div style="width:100%;max-width:420px;padding:32px 24px;box-sizing:border-box;border-radius:24px;background:#f8f8fb;box-shadow:0 8px 30px rgba(0,0,0,.10)">
+            <div style="font-size:64px;line-height:1;margin-bottom:20px">🚫</div>
+            <h1 style="margin:0 0 16px;font-size:24px;color:#222">このアカウントはBANされています</h1>
+            <p style="margin:0;color:#666;font-size:15px;line-height:1.8">現在、このアカウントでは<br>Friend Chatを利用できません。</p>
           </div>
-
-        </div>
-      `;
-
+        </div>`;
       return true;
     }
-
     return false;
-
-  } catch (error) {
-
-    console.error(
-      "BAN確認エラー:",
-      error
-    );
-
+  }catch(error){
+    console.error("BAN確認エラー:",error);
     return false;
   }
 }
