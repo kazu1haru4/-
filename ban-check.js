@@ -10,6 +10,7 @@ function friendChatGetDeviceId(){
   }
   return id;
 }
+
 function friendChatDeviceLabel(){
   const ua=navigator.userAgent;
   if(/iPhone|iPad|iPod/i.test(ua))return"iPhone / iPad";
@@ -18,17 +19,22 @@ function friendChatDeviceLabel(){
   if(/Mac/i.test(ua))return"Mac";
   return"この端末";
 }
+
 async function friendChatRegisterDevice(session){
   try{
     if(!session?.user?.id)return;
+
     const deviceId=friendChatGetDeviceId();
-    await friendChatSupabase.from("device_sessions").upsert({
-      auth_user_id:session.user.id,
-      device_id:deviceId,
-      device_label:friendChatDeviceLabel(),
-      last_seen:new Date().toISOString(),
-      revoked_at:null
-    },{onConflict:"auth_user_id,device_id"});
+    const deviceLabel=friendChatDeviceLabel();
+
+    const {error}=await friendChatSupabase.rpc("register_device_session",{
+      p_device_id:deviceId,
+      p_device_label:deviceLabel
+    });
+
+    if(error){
+      console.error("端末登録エラー:",error);
+    }
   }catch(error){
     console.error("端末登録エラー:",error);
     // 端末登録に失敗しても既存のBAN確認・サイト機能は止めない。
@@ -38,17 +44,29 @@ async function friendChatRegisterDevice(session){
 async function checkFriendChatBan(){
   try{
     const {data:sessionData,error:sessionError}=await friendChatSupabase.auth.getSession();
-    if(sessionError){console.error("セッション確認エラー:",sessionError);return false}
+    if(sessionError){
+      console.error("セッション確認エラー:",sessionError);
+      return false;
+    }
+
     const session=sessionData.session;
     if(!session)return false;
 
+    // ログイン済み端末を登録・最終アクセス更新
     await friendChatRegisterDevice(session);
 
     const username=session.user?.user_metadata?.username||"";
     if(!username)return false;
 
-    const {data:banned,error}=await friendChatSupabase.rpc("check_user_banned",{target_username:username});
-    if(error){console.error("BAN確認エラー:",error);return false}
+    const {data:banned,error}=await friendChatSupabase.rpc(
+      "check_user_banned",
+      {target_username:username}
+    );
+
+    if(error){
+      console.error("BAN確認エラー:",error);
+      return false;
+    }
 
     if(banned===true){
       document.body.innerHTML=`
@@ -61,6 +79,7 @@ async function checkFriendChatBan(){
         </div>`;
       return true;
     }
+
     return false;
   }catch(error){
     console.error("BAN確認エラー:",error);
