@@ -121,6 +121,59 @@
       font-size: 14px;
     }
 
+    /* 今日の通知数 */
+    .today-notifications {
+      background: white;
+      border-radius: 22px;
+      padding: 17px;
+      margin-bottom: 14px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .today-notifications-title {
+      color: var(--theme-text);
+      font-size: 17px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .today-notifications-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+    }
+
+    .today-notification-item {
+      min-width: 0;
+      min-height: 72px;
+      padding: 10px 8px;
+      border-radius: 16px;
+      background: #f8f8fc;
+      color: #333;
+      text-decoration: none;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .today-notification-icon {
+      font-size: 22px;
+    }
+
+    .today-notification-label {
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .today-notification-item strong {
+      min-width: 26px;
+      text-align: center;
+      color: var(--theme-text);
+      font-size: 18px;
+    }
+
     .menu {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -279,6 +332,33 @@
 
     </section>
 
+
+    <!-- 今日の通知数（既存機能には変更を加えず、表示だけ追加） -->
+    <section class="today-notifications" aria-label="今日の通知数">
+      <div class="today-notifications-title">🌟 今日の通知数</div>
+      <div class="today-notifications-grid">
+        <a href="notifications.html" class="today-notification-item">
+          <span class="today-notification-icon">🔔</span>
+          <span class="today-notification-label">通知</span>
+          <strong id="todayNotificationCount">0</strong>
+        </a>
+        <a href="chats.html" class="today-notification-item">
+          <span class="today-notification-icon">💬</span>
+          <span class="today-notification-label">チャット</span>
+          <strong id="todayChatCount">0</strong>
+        </a>
+        <a href="groups.html" class="today-notification-item">
+          <span class="today-notification-icon">👥</span>
+          <span class="today-notification-label">グループ</span>
+          <strong id="todayGroupCount">0</strong>
+        </a>
+        <a href="board-number.html" class="today-notification-item">
+          <span class="today-notification-icon">📢</span>
+          <span class="today-notification-label">掲示板</span>
+          <strong id="todayBoardCount">0</strong>
+        </a>
+      </div>
+    </section>
 
     <section class="menu">
 
@@ -648,6 +728,18 @@
         currentUsername
       );
 
+      // 今日の通知数
+      await loadTodayNotificationCounts(
+        currentUsername
+      );
+
+      // 1分ごとに今日の件数を更新
+      setInterval(function() {
+        loadTodayNotificationCounts(
+          currentUsername
+        );
+      }, 60 * 1000);
+
 
       // 通知リアルタイム
       setupNotificationRealtime(
@@ -659,6 +751,132 @@
     // =========================
     // 未読通知件数
     // =========================
+
+    // =========================
+    // 今日の通知数
+    // =========================
+
+    function getTodayRange() {
+      const now = new Date();
+      const jstText = now.toLocaleString("en-US", {
+        timeZone: "Asia/Tokyo"
+      });
+      const jstNow = new Date(jstText);
+
+      const start = new Date(jstNow);
+      start.setHours(0, 0, 0, 0);
+
+      const end = new Date(start);
+      end.setDate(end.getDate() + 1);
+
+      const jstOffsetMinutes = 9 * 60;
+      const toUtcIso = date =>
+        new Date(
+          date.getTime() - jstOffsetMinutes * 60 * 1000
+        ).toISOString();
+
+      return {
+        start: toUtcIso(start),
+        end: toUtcIso(end)
+      };
+    }
+
+    function setTodayCount(id, count) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = String(Number(count) || 0);
+    }
+
+    async function loadTodayNotificationCounts(username) {
+      if (!username) return;
+
+      const { start, end } = getTodayRange();
+
+      const [notificationResult, chatResult, groupMembersResult, boardMembersResult] =
+        await Promise.all([
+          supabaseClient
+            .from("notifications")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", username)
+            .gte("created_at", start)
+            .lt("created_at", end),
+
+          supabaseClient
+            .from("messages")
+            .select("id", { count: "exact", head: true })
+            .eq("receiver_id", username)
+            .neq("sender_id", username)
+            .gte("created_at", start)
+            .lt("created_at", end),
+
+          supabaseClient
+            .from("group_members")
+            .select("group_id")
+            .eq("user_id", username),
+
+          supabaseClient
+            .from("board_room_members")
+            .select("board_id")
+            .eq("user_id", username)
+        ]);
+
+      if (!notificationResult.error) {
+        setTodayCount(
+          "todayNotificationCount",
+          notificationResult.count || 0
+        );
+      }
+
+      if (!chatResult.error) {
+        setTodayCount(
+          "todayChatCount",
+          chatResult.count || 0
+        );
+      }
+
+      if (!groupMembersResult.error) {
+        const groupIds = (groupMembersResult.data || [])
+          .map(row => row.group_id)
+          .filter(id => id !== null && id !== undefined);
+
+        if (groupIds.length) {
+          const result = await supabaseClient
+            .from("group_messages")
+            .select("id", { count: "exact", head: true })
+            .in("group_id", groupIds)
+            .neq("sender_id", username)
+            .gte("created_at", start)
+            .lt("created_at", end);
+
+          if (!result.error) {
+            setTodayCount("todayGroupCount", result.count || 0);
+          }
+        } else {
+          setTodayCount("todayGroupCount", 0);
+        }
+      }
+
+      if (!boardMembersResult.error) {
+        const boardIds = (boardMembersResult.data || [])
+          .map(row => row.board_id)
+          .filter(id => id !== null && id !== undefined);
+
+        if (boardIds.length) {
+          const result = await supabaseClient
+            .from("board_room_messages")
+            .select("id", { count: "exact", head: true })
+            .in("board_id", boardIds)
+            .neq("sender_id", username)
+            .gte("created_at", start)
+            .lt("created_at", end);
+
+          if (!result.error) {
+            setTodayCount("todayBoardCount", result.count || 0);
+          }
+        } else {
+          setTodayCount("todayBoardCount", 0);
+        }
+      }
+    }
 
     async function loadNotificationCount(
       username
