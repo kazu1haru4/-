@@ -12,12 +12,22 @@ function friendChatGetDeviceId(){
 }
 
 function friendChatDeviceLabel(){
-  const ua=navigator.userAgent;
-  if(/iPhone|iPad|iPod/i.test(ua))return"iPhone / iPad";
-  if(/Android/i.test(ua))return"Android端末";
-  if(/Windows/i.test(ua))return"Windows";
-  if(/Mac/i.test(ua))return"Mac";
-  return"この端末";
+  const ua = navigator.userAgent;
+
+  // iPadOSのSafariはMacとして判定されることがある
+  if(
+    /iPad|Macintosh/i.test(ua) &&
+    (navigator.maxTouchPoints > 1 || /iPad/i.test(ua))
+  ){
+    return "iPad";
+  }
+
+  if(/iPhone|iPod/i.test(ua)) return "iPhone";
+  if(/Android/i.test(ua)) return "Android端末";
+  if(/Windows/i.test(ua)) return "Windows";
+  if(/Mac/i.test(ua)) return "Mac";
+
+  return "この端末";
 }
 
 async function friendChatRegisterDevice(session){
