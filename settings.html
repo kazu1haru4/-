@@ -182,7 +182,8 @@ function getDeviceId(){
 }
 function deviceLabel(){
   const ua=navigator.userAgent;
-  if(/iPhone|iPad|iPod/i.test(ua))return"iPhone / iPad";
+  if(/iPad|Macintosh/i.test(ua) && (navigator.maxTouchPoints > 1 || /iPad/i.test(ua)))return"iPad";
+  if(/iPhone|iPod/i.test(ua))return"iPhone";
   if(/Android/i.test(ua))return"Android端末";
   if(/Windows/i.test(ua))return"Windows";
   if(/Mac/i.test(ua))return"Mac";
@@ -193,6 +194,7 @@ async function loadDeviceSessions(){
   const list=document.getElementById("deviceList"),id=getDeviceId();
   const {data,error}=await supabaseClient.from("device_sessions")
     .select("id,device_id,device_label,last_seen,created_at,revoked_at")
+    .is("revoked_at",null)
     .order("last_seen",{ascending:false});
   if(error){console.error(error);list.innerHTML='<div class="device-card">端末情報を読み込めませんでした。</div>';return}
   if(!data?.length){list.innerHTML='<div class="device-card">登録された端末はありません。</div>';return}
