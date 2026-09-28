@@ -20,7 +20,7 @@ h2{font-size:16px;margin:0 0 12px}
 .user-name{font-weight:700}.user-id{font-size:12px;color:#777;margin-top:3px}
 .ban-buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:12px}
 button{cursor:pointer;border:0;border-radius:9px;padding:9px 6px;font-weight:700}
-.ban-buttons button{background:#ffe8e8;color:#c62828}
+.ban-buttons button{background:#ffe8e8;color:#c62828}.unban-btn{background:#e8f7ed!important;color:#198754!important;grid-column:1/-1}
 .primary{background:#3156c9;color:#fff}.danger{background:#ffe8e8;color:#c62828}
 .empty{color:#777;font-size:14px;padding:10px 0}
 details{border:1px solid #e5e8ee;border-radius:13px;padding:12px;margin-top:10px}
@@ -250,6 +250,7 @@ async function renderAssignedUsers(users){
       <div class="small" style="margin-top:9px">
         ${ban ? "現在BAN中："+new Date(ban.expires_at).toLocaleString("ja-JP") : "現在BANされていません"}
       </div>
+      ${ban ? `<button class="unban-btn" data-unban-id="${esc(u.user_id)}" style="width:100%;margin-top:10px">🔓 BAN解除</button>` : ""}
     `;
 
     box.appendChild(div);
@@ -258,6 +259,35 @@ async function renderAssignedUsers(users){
   box.querySelectorAll(".ban-buttons button").forEach(btn=>{
     btn.addEventListener("click",()=>banUser(btn.dataset.id,Number(btn.dataset.min)));
   });
+  box.querySelectorAll(".unban-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>unbanUser(btn.dataset.unbanId));
+  });
+}
+
+async function unbanUser(userId){
+  if(!assignedIds.has(userId)){
+    toast("このユーザーは管理対象ではありません");
+    return;
+  }
+  if(!confirm("このユーザーの現在のBANを解除しますか？")) return;
+
+  try{
+    const {data,error}=await supabaseClient.rpc("sub_admin_unban_user",{
+      target_user_id:userId
+    });
+
+    if(error) throw error;
+
+    if(Number(data||0)>0){
+      toast("BANを解除しました");
+    }else{
+      toast("有効なBANはありませんでした");
+    }
+    await loadAssignedUsers();
+  }catch(e){
+    console.error(e);
+    toast(e.message || "BAN解除に失敗しました");
+  }
 }
 
 async function banUser(userId,minutes){
