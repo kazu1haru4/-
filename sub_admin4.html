@@ -297,36 +297,19 @@ async function banUser(userId,minutes){
   }
 
   try{
-    const until=new Date(Date.now()+minutes*60*1000);
+    const {error}=await supabaseClient.rpc("sub_admin_ban_user",{
+      target_user_id:userId,
+      ban_minutes:minutes,
+      ban_reason:`副管理者BAN（${minutes}分）`
+    });
 
-    // 既存の管理画面と同じ user_bans の列構成を使用します。
-    // 既存BANがあれば更新、なければ新規作成します。
-    const payload={
-      reason:`副管理者BAN（${minutes}分）`,
-      banned_by:currentProfile.user_id,
-      banned_at:new Date().toISOString(),
-      expires_at:until.toISOString()
-    };
-
-    /*
-      副管理者はINSERT権限でBANできるようにしています。
-      UPDATE権限を要求するとRLSで弾かれる環境があるため、
-      既存の更新処理は使わず、新しい期限のBANを追加します。
-    */
-    const {error:insertError}=await supabaseClient
-      .from("user_bans")
-      .insert({
-        user_id:userId,
-        ...payload
-      });
-
-    if(insertError) throw insertError;
+    if(error) throw error;
 
     toast(minutes+"分BANしました");
     await loadAssignedUsers();
   }catch(e){
     console.error(e);
-    toast("BANに失敗しました");
+    toast(e.message || "BANに失敗しました");
   }
 }
 
