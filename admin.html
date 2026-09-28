@@ -746,36 +746,36 @@ async function loadSiteStats(){
 async function loadFrameList(){
  const loading=document.getElementById("framesLoading"),list=document.getElementById("framesList");
  loading.classList.remove("hidden");list.innerHTML="";
- const {data,error}=await supabaseClient.from("coin_items")
-   .select("item_key,name,icon,price,frame_color,item_type")
-   .neq("item_key","admin")
-   .order("price",{ascending:true});
- if(error){loading.textContent="❌ フレーム一覧の読み込みに失敗しました：
-"+error.message;return}
+ const {data,error}=await supabaseClient.from("coin_items").select("item_key,name,icon,price,frame_color,item_type").neq("item_key","admin").order("price",{ascending:true});
+ if(error){loading.textContent="❌ フレーム一覧の読み込みに失敗しました：\n"+error.message;return}
 
  const frames=(data||[]).filter(item=>{
-   const key=String(item.item_key||"");
-   const type=String(item.item_type||"").toLowerCase();
-   if(type) return type==="frame";
-   return !key.startsWith("nd_") && !key.startsWith("bg_");
+  const type=String(item.item_type||"").toLowerCase();
+  const key=String(item.item_key||"");
+  if(type==="frame")return true;
+  if(type==="name_decoration"||type==="background")return false;
+  if(key.startsWith("nd_")||key.startsWith("bg_"))return false;
+  return true;
  });
+
  loading.classList.add("hidden");
  if(!frames.length){list.innerHTML='<div class="empty">フレームがありません。</div>';return}
 
  frames.forEach(item=>{
-   const card=document.createElement("div");card.className="reward-code-card";
-   const icon=item.icon||"🖼️",frameColor=item.frame_color||"#ffd0e7";
-   card.innerHTML=`<div style="display:flex;align-items:center;gap:12px"><div style="width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;background:${escapeAttribute(frameColor)};border:4px solid ${escapeAttribute(frameColor)}">${escapeHtml(icon)}</div><div style="flex:1;min-width:0"><div class="reward-code-title">${escapeHtml(item.name||item.item_key)}</div><div class="reward-code-info">ID：${escapeHtml(item.item_key)}<br>価格：${Number(item.price||0).toLocaleString("ja-JP")} COIN<br>フレーム色：${escapeHtml(frameColor)}</div></div></div>`;
-   list.appendChild(card);
+  const card=document.createElement("div");
+  card.className="reward-code-card";
+  const icon=item.icon||"🖼️",frameColor=item.frame_color||"#ffd0e7";
+  card.innerHTML='<div style="display:flex;align-items:center;gap:12px"><div style="width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;background:'+escapeAttribute(frameColor)+';border:4px solid '+escapeAttribute(frameColor)+'">'+escapeHtml(icon)+'</div><div style="flex:1;min-width:0"><div class="reward-code-title">'+escapeHtml(item.name||item.item_key)+'</div><div class="reward-code-info">ID：'+escapeHtml(item.item_key)+'<br>価格：'+Number(item.price||0).toLocaleString("ja-JP")+' COIN<br>フレーム色：'+escapeHtml(frameColor)+'</div></div></div>';
+  list.appendChild(card);
  });
 }
 
-function getItemType(item){
- const type=String(item?.item_type||"").toLowerCase();
- if(type==="frame"||type==="name_decoration"||type==="background") return type;
- const key=String(item?.item_key||"");
- if(key.startsWith("nd_")) return "name_decoration";
- if(key.startsWith("bg_")) return "background";
+function getAdminItemType(item){
+ const type=String(item.item_type||"").toLowerCase();
+ const key=String(item.item_key||"");
+ if(type==="frame"||type==="name_decoration"||type==="background")return type;
+ if(key.startsWith("nd_"))return "name_decoration";
+ if(key.startsWith("bg_"))return "background";
  return "frame";
 }
 
@@ -783,20 +783,16 @@ async function loadNameDecorationList(){
  const loading=document.getElementById("nameDecorationsLoading"),list=document.getElementById("nameDecorationsList");
  if(!loading||!list)return;
  loading.classList.remove("hidden");list.innerHTML="";
- const {data,error}=await supabaseClient.from("coin_items")
-   .select("item_key,name,icon,price,frame_color,item_type")
-   .order("price",{ascending:true});
- if(error){loading.textContent="❌ 名前装飾一覧の読み込みに失敗しました：
-"+error.message;return}
-
- const items=(data||[]).filter(item=>getItemType(item)==="name_decoration");
+ const {data,error}=await supabaseClient.from("coin_items").select("item_key,name,icon,price,frame_color,item_type").order("price",{ascending:true});
+ if(error){loading.textContent="❌ 名前装飾一覧の読み込みに失敗しました：\n"+error.message;return}
+ const items=(data||[]).filter(item=>getAdminItemType(item)==="name_decoration");
  loading.classList.add("hidden");
  if(!items.length){list.innerHTML='<div class="empty">名前装飾がありません。</div>';return}
-
  items.forEach(item=>{
-   const card=document.createElement("div");card.className="reward-code-card";
-   card.innerHTML=`<div style="display:flex;align-items:center;gap:12px"><div style="width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;background:#f5f5f5">${escapeHtml(item.icon||"✨")}</div><div style="flex:1;min-width:0"><div class="reward-code-title">${escapeHtml(item.name||item.item_key)}</div><div class="reward-code-info">ID：${escapeHtml(item.item_key)}<br>価格：${Number(item.price||0).toLocaleString("ja-JP")} COIN</div></div></div>`;
-   list.appendChild(card);
+  const card=document.createElement("div");
+  card.className="reward-code-card";
+  card.innerHTML='<div style="display:flex;align-items:center;gap:12px"><div style="width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;background:#f5f5f5">'+escapeHtml(item.icon||"✨")+'</div><div style="flex:1;min-width:0"><div class="reward-code-title">'+escapeHtml(item.name||item.item_key)+'</div><div class="reward-code-info">ID：'+escapeHtml(item.item_key)+'<br>価格：'+Number(item.price||0).toLocaleString("ja-JP")+' COIN</div></div></div>';
+  list.appendChild(card);
  });
 }
 
@@ -804,21 +800,17 @@ async function loadBackgroundList(){
  const loading=document.getElementById("backgroundsLoading"),list=document.getElementById("backgroundsList");
  if(!loading||!list)return;
  loading.classList.remove("hidden");list.innerHTML="";
- const {data,error}=await supabaseClient.from("coin_items")
-   .select("item_key,name,icon,price,frame_color,item_type")
-   .order("price",{ascending:true});
- if(error){loading.textContent="❌ 背景一覧の読み込みに失敗しました：
-"+error.message;return}
-
- const items=(data||[]).filter(item=>getItemType(item)==="background");
+ const {data,error}=await supabaseClient.from("coin_items").select("item_key,name,icon,price,frame_color,item_type").order("price",{ascending:true});
+ if(error){loading.textContent="❌ 背景一覧の読み込みに失敗しました：\n"+error.message;return}
+ const items=(data||[]).filter(item=>getAdminItemType(item)==="background");
  loading.classList.add("hidden");
  if(!items.length){list.innerHTML='<div class="empty">背景がありません。</div>';return}
-
  items.forEach(item=>{
-   const card=document.createElement("div");card.className="reward-code-card";
-   const bg=item.frame_color||"#f5f5f5";
-   card.innerHTML=`<div style="display:flex;align-items:center;gap:12px"><div style="width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;background:${escapeAttribute(bg)}">${escapeHtml(item.icon||"🎨")}</div><div style="flex:1;min-width:0"><div class="reward-code-title">${escapeHtml(item.name||item.item_key)}</div><div class="reward-code-info">ID：${escapeHtml(item.item_key)}<br>価格：${Number(item.price||0).toLocaleString("ja-JP")} COIN</div></div></div>`;
-   list.appendChild(card);
+  const card=document.createElement("div");
+  card.className="reward-code-card";
+  const bg=item.frame_color||"#f5f5f5";
+  card.innerHTML='<div style="display:flex;align-items:center;gap:12px"><div style="width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;background:'+escapeAttribute(bg)+'">'+escapeHtml(item.icon||"🎨")+'</div><div style="flex:1;min-width:0"><div class="reward-code-title">'+escapeHtml(item.name||item.item_key)+'</div><div class="reward-code-info">ID：'+escapeHtml(item.item_key)+'<br>価格：'+Number(item.price||0).toLocaleString("ja-JP")+' COIN</div></div></div>';
+  list.appendChild(card);
  });
 }
 
