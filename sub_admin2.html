@@ -246,6 +246,7 @@ async function renderAssignedUsers(users){
         <button data-id="${esc(u.user_id)}" data-min="10">10分BAN</button>
         <button data-id="${esc(u.user_id)}" data-min="30">30分BAN</button>
         <button data-id="${esc(u.user_id)}" data-min="60">1時間BAN</button>
+        ${ban ? `<button class="unban-btn" data-unban-id="${esc(u.user_id)}">BAN解除</button>` : ""}
       </div>
       <div class="small" style="margin-top:9px">
         ${ban ? "現在BAN中："+new Date(ban.expires_at).toLocaleString("ja-JP") : "現在BANされていません"}
@@ -255,8 +256,11 @@ async function renderAssignedUsers(users){
     box.appendChild(div);
   }
 
-  box.querySelectorAll(".ban-buttons button").forEach(btn=>{
+  box.querySelectorAll(".ban-buttons button[data-min]").forEach(btn=>{
     btn.addEventListener("click",()=>banUser(btn.dataset.id,Number(btn.dataset.min)));
+  });
+  box.querySelectorAll(".unban-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>unbanUser(btn.dataset.unbanId));
   });
 }
 
@@ -267,36 +271,45 @@ async function banUser(userId,minutes){
   }
 
   try{
-    const until=new Date(Date.now()+minutes*60*1000);
+    const {error}=await supabaseClient.rpc("sub_admin_ban_user",{
+      target_user_id:userId,
+      ban_minutes:minutes,
+      ban_reason:`副管理者BAN（${minutes}分）`
+    });
 
-    // 既存の管理画面と同じ user_bans の列構成を使用します。
-    // 既存BANがあれば更新、なければ新規作成します。
-    const payload={
-      reason:`副管理者BAN（${minutes}分）`,
-      banned_by:currentProfile.user_id,
-      banned_at:new Date().toISOString(),
-      expires_at:until.toISOString()
-    };
-
-    /*
-      副管理者はINSERT権限でBANできるようにしています。
-      UPDATE権限を要求するとRLSで弾かれる環境があるため、
-      既存の更新処理は使わず、新しい期限のBANを追加します。
-    */
-    const {error:insertError}=await supabaseClient
-      .from("user_bans")
-      .insert({
-        user_id:userId,
-        ...payload
-      });
-
-    if(insertError) throw insertError;
+    if(error) throw error;
 
     toast(minutes+"分BANしました");
     await loadAssignedUsers();
   }catch(e){
     console.error(e);
-    toast("BANに失敗しました");
+    toast(e.message || "BANに失敗しました");
+  }
+}
+
+async function unbanUser(userId){
+  if(!assignedIds.has(userId)){
+    toast("このユーザーは管理対象ではありません");
+    return;
+  }
+  if(!confirm("このユーザーの現在のBANを解除しますか？")) return;
+
+  try{
+    const {data,error}=await supabaseClient.rpc("sub_admin_unban_user",{
+      target_user_id:userId
+    });
+
+    if(error) throw error;
+
+    if(Number(data||0)>0){
+      toast("BANを解除しました");
+    }else{
+      toast("有効なBANはありませんでした");
+    }
+    await loadAssignedUsers();
+  }catch(e){
+    console.error(e);
+    toast(e.message || "BAN解除に失敗しました");
   }
 }
 
