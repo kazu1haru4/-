@@ -297,19 +297,53 @@ async function banUser(userId,minutes){
   }
 
   try{
-    const {error}=await supabaseClient.rpc("sub_admin_ban_user",{
-      target_user_id:userId,
-      ban_minutes:minutes,
-      ban_reason:`副管理者BAN（${minutes}分）`
-    });
+    const until=new Date(Date.now()+minutes*60*1000);
 
-    if(error) throw error;
+    // 既存の管理画面と同じ user_bans の列構成を使用します。
+    // 既存BANがあれば更新、なければ新規作成します。
+    const payload={
+      reason:`副管理者BAN（${minutes}分）`,
+      banned_by:currentProfile.user_id,
+      banned_at:new Date().toISOString(),
+      expires_at:until.toISOString()
+    };
+
+    // user_bans.user_id は1ユーザー1行のUNIQUE制約なので、
+    // 以前のBANが期限切れでもINSERTすると重複エラーになります。
+    // 既存行があれば期限を更新し、なければ新規作成します。
+    const {data:existingBan,error:findError}=await supabaseClient
+      .from("user_bans")
+      .select("user_id")
+      .eq("user_id",userId)
+      .maybeSingle();
+
+    if(findError) throw findError;
+
+    let banError=null;
+
+    if(existingBan){
+      const {error:updateError}=await supabaseClient
+        .from("user_bans")
+        .update(payload)
+        .eq("user_id",userId);
+      banError=updateError;
+    }else{
+      const {error:insertError}=await supabaseClient
+        .from("user_bans")
+        .insert({
+          user_id:userId,
+          ...payload
+        });
+      banError=insertError;
+    }
+
+    if(banError) throw banError;
 
     toast(minutes+"分BANしました");
     await loadAssignedUsers();
   }catch(e){
     console.error(e);
-    toast(e.message || "BANに失敗しました");
+    toast("BANに失敗しました");
   }
 }
 
