@@ -73,6 +73,17 @@ textarea{min-height:120px;resize:vertical}
 .save-button{width:100%;margin-top:25px;border:none;border-radius:16px;padding:15px;background:#7658d9;color:white;font-size:17px;font-weight:bold;cursor:pointer}
 .save-button:disabled{opacity:.65;cursor:wait}
 #message{text-align:center;margin-top:15px;min-height:22px;font-size:14px;white-space:pre-line;color:#7658d9}
+
+.status-section{margin:24px 0 20px;padding:16px;border-radius:18px;background:#faf9ff;border:2px solid #e8e3ff}
+.status-title{font-size:17px;font-weight:bold;margin-bottom:12px;color:#5f4ab8}
+.status-block{background:white;border-radius:15px;padding:13px;margin-top:10px;border:1px solid #eee}
+.status-label{font-size:13px;font-weight:bold;margin:0 0 7px;color:#555}
+.status-input,.status-select{width:100%;border:2px solid #eee;border-radius:12px;padding:11px;font-size:14px;font-family:inherit;background:white;outline:none}
+.status-input:focus,.status-select:focus{border-color:#b8a7ef}
+.status-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.status-save{width:100%;border:none;border-radius:13px;padding:12px;background:#7658d9;color:white;font-size:14px;font-weight:bold;cursor:pointer;margin-top:12px}
+.status-save:disabled{opacity:.65;cursor:wait}
+.status-current{font-size:12px;color:#777;line-height:1.6;margin-top:10px;white-space:pre-line}
 .item-details{margin-bottom:12px;border-radius:18px;overflow:hidden;background:#faf9ff}
 .item-summary{list-style:none;cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border:2px solid #e8e3ff;border-radius:18px;background:linear-gradient(135deg,#f8f5ff,#fff4fb);font-size:16px;font-weight:bold}
 .item-summary::-webkit-details-marker{display:none}
@@ -121,6 +132,50 @@ textarea{min-height:120px;resize:vertical}
 
 <label for="bio">自己紹介</label>
 <textarea id="bio" placeholder="自己紹介を書こう！" maxlength="300"></textarea>
+
+
+<div class="status-section">
+<div class="status-title">🎮 カスタムステータス</div>
+<div class="status-block">
+<div class="status-label">ステータスを選ぶ</div>
+<select id="customStatus" class="status-select">
+<option value="">なし</option>
+<option value="🎮 ゲーム中">🎮 ゲーム中</option>
+<option value="📚 勉強中">📚 勉強中</option>
+<option value="🎧 音楽中">🎧 音楽中</option>
+<option value="🍚 ごはん中">🍚 ごはん中</option>
+<option value="😴 休憩中">😴 休憩中</option>
+<option value="💬 暇！">💬 暇！</option>
+<option value="🔕 通知OFF">🔕 通知OFF</option>
+</select>
+<div class="status-row">
+<select id="customStatusDuration" class="status-select" aria-label="カスタムステータスの表示時間">
+<option value="30">30分</option>
+<option value="60">1時間</option>
+<option value="180">3時間</option>
+<option value="today">今日まで</option>
+</select>
+<div></div>
+</div>
+</div>
+
+<div class="status-title" style="margin-top:18px">💬 自由入力</div>
+<div class="status-block">
+<input id="freeStatus" class="status-input" type="text" maxlength="100" placeholder="好きなひとことを書こう！">
+<div class="status-row">
+<select id="freeStatusDuration" class="status-select" aria-label="自由入力の表示時間">
+<option value="30">30分</option>
+<option value="60">1時間</option>
+<option value="180">3時間</option>
+<option value="today">今日まで</option>
+</select>
+<div></div>
+</div>
+</div>
+
+<button id="statusSaveButton" class="status-save" type="button">💾 ステータスを保存</button>
+<div id="statusCurrent" class="status-current"></div>
+</div>
 
 <button id="saveButton" class="save-button" type="button">プロフィールを保存</button>
 <div id="message"></div>
@@ -516,6 +571,74 @@ document.getElementById("imageInput").addEventListener("change",async function()
 
 document.getElementById("saveButton").addEventListener("click",saveProfile);
 
+function getStatusExpiry(value){
+ if(value==="today"){
+  const d=new Date();
+  d.setHours(24,0,0,0);
+  return d.toISOString();
+ }
+ const minutes=Number(value);
+ if(!Number.isFinite(minutes)||minutes<=0)return null;
+ return new Date(Date.now()+minutes*60*1000).toISOString();
+}
+
+function formatStatusExpiry(value){
+ if(!value)return"";
+ try{return new Date(value).toLocaleString("ja-JP")}catch{return value}
+}
+
+function isStatusActive(text,expiresAt){
+ return !!text && !!expiresAt && new Date(expiresAt).getTime()>Date.now();
+}
+
+function loadStatusEditor(){
+ const custom=currentProfile?.custom_status||"";
+ const free=currentProfile?.free_status||"";
+ const customActive=isStatusActive(custom,currentProfile?.custom_status_expires_at);
+ const freeActive=isStatusActive(free,currentProfile?.free_status_expires_at);
+ document.getElementById("customStatus").value=customActive?custom:"";
+ document.getElementById("freeStatus").value=freeActive?free:"";
+ const lines=[];
+ if(customActive)lines.push("🎮 "+custom+"（"+formatStatusExpiry(currentProfile.custom_status_expires_at)+"まで）");
+ if(freeActive)lines.push("💬 "+free+"（"+formatStatusExpiry(currentProfile.free_status_expires_at)+"まで）");
+ document.getElementById("statusCurrent").textContent=lines.length?"現在の表示：\n"+lines.join("\n"):"現在、表示中のステータスはありません。";
+}
+
+async function saveStatuses(){
+ if(typeof checkFriendChatBan==="function"&&await checkFriendChatBan())return;
+ const button=document.getElementById("statusSaveButton");
+ const custom=document.getElementById("customStatus").value;
+ const free=document.getElementById("freeStatus").value.trim();
+ button.disabled=true;
+ button.textContent="保存しています...";
+ try{
+  const {data,error}=await supabaseClient.rpc("save_my_status",{
+   p_custom_status:custom||null,
+   p_custom_status_expires_at:custom?getStatusExpiry(document.getElementById("customStatusDuration").value):null,
+   p_free_status:free||null,
+   p_free_status_expires_at:free?getStatusExpiry(document.getElementById("freeStatusDuration").value):null
+  });
+  if(error){
+   console.error("ステータス保存エラー:",error);
+   showMessage("ステータスの保存に失敗しました。\n"+error.message,true);
+   return;
+  }
+  let result=data;
+  if(typeof result==="string"){try{result=JSON.parse(result)}catch{}}
+  if(result)currentProfile=result;
+  loadStatusEditor();
+  showMessage("ステータスを保存しました！✨");
+ }catch(error){
+  console.error("saveStatuses exception:",error);
+  showMessage("ステータスの保存中にエラーが発生しました。\n"+(error.message||error),true);
+ }finally{
+  button.disabled=false;
+  button.textContent="💾 ステータスを保存";
+ }
+}
+
+document.getElementById("statusSaveButton").addEventListener("click",saveStatuses);
+
 async function uploadAvatar(file){
  if(!file)return currentProfile?.avatar_url||null;
 
@@ -585,29 +708,25 @@ async function saveProfile(){
    avatarUrl=await uploadAvatar(selectedAvatarFile);
   }
 
-  // profilesはUPDATEで保存する
+  // RPC経由でプロフィールを保存
   showMessage("💾 プロフィール情報を保存しています...");
 
-  const payload={
-   name:name,
-   bio:bio,
-   avatar_url:avatarUrl,
-   equipped_item_key:currentProfile?.equipped_item_key||null,
-   equipped_name_decoration_key:
-    currentProfile?.equipped_name_decoration_key||null,
-   equipped_background_key:
-    currentProfile?.equipped_background_key||null
-  };
-
-  const {data,error}=await supabaseClient
-   .from("profiles")
-   .update(payload)
-   .eq("user_id",currentUsername)
-   .select("*")
-   .maybeSingle();
+  const {data:rpcData,error}=await supabaseClient.rpc(
+   "save_my_profile",
+   {
+    p_name:name,
+    p_bio:bio,
+    p_avatar_url:avatarUrl,
+    p_frame_key:currentProfile?.equipped_item_key||null,
+    p_name_decoration_key:
+     currentProfile?.equipped_name_decoration_key||null,
+    p_background_key:
+     currentProfile?.equipped_background_key||null
+   }
+  );
 
   if(error){
-   console.error("プロフィール保存エラー:",error);
+   console.error("プロフィール保存RPCエラー:",error);
    showMessage(
     "プロフィールの保存に失敗しました。\n"+error.message,
     true
@@ -615,13 +734,24 @@ async function saveProfile(){
    return;
   }
 
-  if(!data){
+  if(!rpcData){
    showMessage(
     "プロフィールを保存できませんでした。\n"+
-    "profiles の更新権限を確認してください。",
+    "save_my_profile が正しく作成されているか確認してください。",
     true
    );
    return;
+  }
+
+  let data=rpcData;
+
+  // RETURNS json のRPC結果が文字列として返る環境にも対応
+  if(typeof data==="string"){
+   try{
+    data=JSON.parse(data);
+   }catch(e){
+    console.error("RPC JSON parse error:",e);
+   }
   }
 
   currentProfile=data;
@@ -657,6 +787,7 @@ async function init(){
 
  await loadProfile();
  await loadItems();
+ loadStatusEditor();
  updatePreview();
 }
 
