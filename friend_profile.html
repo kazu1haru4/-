@@ -48,6 +48,11 @@
     .background-neon{background:linear-gradient(135deg,#c8ffe7,#b9ffff,#ffd0f8,#d9c8ff)!important}
     .background-admin{background:radial-gradient(circle at 20% 20%,rgba(255,255,255,.8) 0 5px,transparent 6px),linear-gradient(135deg,#fff9cf,#ffd700,#fff2a1,#fffbe1)!important}
     .user-id{margin-top:6px;color:#999;font-size:14px;word-break:break-word}
+    .presence-status{margin-top:10px;font-size:14px;font-weight:bold}
+    .presence-status.online{color:#35a66b}.presence-status.offline{color:#999}
+    .custom-status-box{margin-top:16px;display:grid;gap:8px;text-align:left}
+    .profile-status{padding:10px 13px;border-radius:13px;background:#faf9ff;color:#555;font-size:14px;line-height:1.5;word-break:break-word}
+    .profile-status-title{font-weight:bold;color:#7658d9;margin-right:5px}
     .bio-box{margin-top:22px;padding:18px;border-radius:16px;background:#fafafa;text-align:left}
     .bio-title{font-weight:bold;color:#777;margin-bottom:8px}
     .bio{color:#555;line-height:1.7;white-space:pre-wrap;word-break:break-word}
@@ -91,6 +96,8 @@
 
     <div id="name" class="name"></div>
     <div id="userId" class="user-id"></div>
+    <div id="presenceStatus" class="presence-status offline">○ オフライン</div>
+    <div id="profileStatuses" class="custom-status-box"></div>
 
     <div class="bio-box">
       <div class="bio-title">自己紹介</div>
@@ -169,7 +176,7 @@ async function loadProfile(){
   const isOwnProfile=currentUsername===friendUsername;
 
   const {data,error}=await db.from("profiles")
-    .select("user_id,name,bio,avatar_url,equipped_item_key,equipped_name_decoration_key,equipped_background_key")
+    .select("user_id,name,bio,avatar_url,equipped_item_key,equipped_name_decoration_key,equipped_background_key,custom_status,custom_status_expires_at,free_status,free_status_expires_at")
     .eq("user_id",friendUsername).maybeSingle();
 
   if(error){console.error(error);throw new Error("プロフィールを読み込めませんでした。")}
@@ -267,6 +274,75 @@ async function loadProfile(){
     nameEl.textContent=(data.name||data.user_id)+" 👑";
   }
   document.getElementById("userId").textContent="@"+data.user_id;
+
+  // オンライン／オフライン表示
+  const {data:presence,error:presenceError}=await db
+    .from("user_presence")
+    .select("last_seen")
+    .eq("user_id",friendUsername)
+    .maybeSingle();
+
+  if(presenceError){
+    console.error("オンライン状態取得エラー:",presenceError);
+  }
+
+  const isOnline=!!presence?.last_seen &&
+    (Date.now()-new Date(presence.last_seen).getTime()<90000);
+
+  const presenceEl=document.getElementById("presenceStatus");
+  presenceEl.className="presence-status "+(isOnline?"online":"offline");
+  presenceEl.textContent=isOnline?"● オンライン":"○ オフライン";
+
+  // カスタムステータス・自由入力ステータス
+  function renderProfileStatuses(){
+    const box=document.getElementById("profileStatuses");
+    if(!box)return;
+
+    const now=Date.now();
+    const customActive=
+      data.custom_status &&
+      data.custom_status_expires_at &&
+      new Date(data.custom_status_expires_at).getTime()>now;
+
+    const freeActive=
+      data.free_status &&
+      data.free_status_expires_at &&
+      new Date(data.free_status_expires_at).getTime()>now;
+
+    box.innerHTML="";
+
+    if(customActive){
+      const el=document.createElement("div");
+      el.className="profile-status";
+      el.innerHTML='<span class="profile-status-title">🎮 カスタムステータス</span>'+escapeHtml(data.custom_status);
+      box.appendChild(el);
+    }
+
+    if(freeActive){
+      const el=document.createElement("div");
+      el.className="profile-status";
+      el.innerHTML='<span class="profile-status-title">💬 自由入力</span>'+escapeHtml(data.free_status);
+      box.appendChild(el);
+    }
+
+    if(!box.children.length)box.style.display="none";
+    else box.style.display="grid";
+  }
+
+  renderProfileStatuses();
+
+  const expiryTimes=[
+    data.custom_status_expires_at,
+    data.free_status_expires_at
+  ].filter(Boolean)
+   .map(v=>new Date(v).getTime())
+   .filter(v=>Number.isFinite(v)&&v>Date.now());
+
+  if(expiryTimes.length){
+    const nextExpiry=Math.min(...expiryTimes);
+    const delay=Math.max(0,nextExpiry-Date.now()+50);
+    setTimeout(renderProfileStatuses,delay);
+  }
 
   const bio=document.getElementById("bio");
   if(data.bio)bio.textContent=data.bio;
