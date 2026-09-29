@@ -8,12 +8,15 @@
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:linear-gradient(135deg,#fff3fb,#eef5ff);color:#333}
 .container{max-width:600px;margin:0 auto;min-height:100vh;background:rgba(255,255,255,.7)}
-.header{position:relative;background:#fff;padding:18px 170px 18px 60px;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,.06);min-height:62px;display:flex;align-items:center;justify-content:center}
+.header{position:relative;background:#fff;padding:18px 170px 18px 60px;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,.06);min-height:82px;display:flex;align-items:center;justify-content:center}
 .header h1{margin:0;font-size:20px}
 .back-button{position:absolute;left:12px;top:12px;padding:9px 12px;background:#f5f5f5;color:#555;text-decoration:none;border-radius:12px;font-size:13px;font-weight:bold}
 #clearAllButton{position:absolute;right:12px;top:10px;border:none;background:#fff0f0;color:#d9534f;border-radius:12px;padding:9px 10px;font-size:12px;font-weight:bold;cursor:pointer}
 #clearAllButton:active{transform:scale(.96)}
 #clearAllButton:disabled{background:#eee;color:#aaa;cursor:default}
+#readAllButton{position:absolute;right:12px;top:43px;border:none;background:#f1efff;color:#7658d9;border-radius:10px;padding:6px 9px;font-size:11px;font-weight:bold;cursor:pointer}
+#readAllButton:disabled{opacity:.45;cursor:default}
+#unreadCount{position:absolute;left:60px;bottom:7px;font-size:11px;color:#8f7cff;font-weight:bold}
 .push-settings{margin:14px;padding:15px;background:#fff;border-radius:18px;box-shadow:0 3px 10px rgba(0,0,0,.05)}
 .push-title{font-size:15px;font-weight:bold;margin-bottom:6px}
 .push-description{font-size:12px;color:#777;line-height:1.5;margin-bottom:12px}
@@ -22,10 +25,14 @@ body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Seg
 #pushToggleButton:disabled{opacity:.6;cursor:default}
 #resetPushButton{width:100%;margin-top:8px;border:1px solid #ddd;border-radius:13px;padding:11px;font-size:13px;font-weight:bold;cursor:pointer;background:#fff;color:#555}
 #resetPushButton:disabled{opacity:.6;cursor:default}
+.notification-filter{display:flex;gap:8px;padding:0 14px 4px}
+.notification-filter button{flex:1;border:1px solid #e5e0ff;background:#fff;color:#777;border-radius:12px;padding:9px;font-size:12px;font-weight:bold;cursor:pointer}
+.notification-filter button.active{background:#8f7cff;color:#fff}
 .notifications{padding:14px}
 .notification{display:block;text-decoration:none;color:#333;background:#fff;border-radius:18px;padding:15px;margin-bottom:10px;box-shadow:0 3px 10px rgba(0,0,0,.05);cursor:pointer;transition:transform .12s,background .12s}
 .notification:active{transform:scale(.98);background:#f8f8ff}
 .notification.unread{background:#f3f0ff;border-left:5px solid #8f7cff}
+.notification.hidden{display:none}
 .notification-title{font-weight:bold;font-size:15px;margin-bottom:5px}
 .notification-message{font-size:14px;color:#555;line-height:1.5}
 .notification-time{margin-top:7px;font-size:11px;color:#999}
@@ -34,6 +41,7 @@ body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Seg
 .header{padding-left:58px;padding-right:120px}
 .header h1{font-size:18px}
 #clearAllButton{font-size:11px;padding:8px 9px}
+#unreadCount{left:58px}
 }
 </style>
 </head>
@@ -43,6 +51,8 @@ body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Seg
 <a href="home.html" class="back-button">🏠 ホーム</a>
 <h1>🔔 通知</h1>
 <button id="clearAllButton" type="button">🗑️ すべて削除</button>
+<button id="readAllButton" type="button">✅ すべて既読</button>
+<span id="unreadCount">未読 0件</span>
 </header>
 
 <section class="push-settings">
@@ -51,6 +61,11 @@ body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Seg
 <button id="pushToggleButton" type="button">🔔 通知を確認中...</button>
 <button id="resetPushButton" type="button">🔄 Push購読を作り直す</button>
 </section>
+
+<div class="notification-filter">
+<button type="button" class="active" data-filter="all">すべて</button>
+<button type="button" data-filter="unread">未読</button>
+</div>
 
 <section class="notifications" id="notifications">
 <div class="empty">通知を読み込み中...</div>
@@ -65,13 +80,15 @@ const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 const notificationsElement=document.getElementById("notifications");
 const clearAllButton=document.getElementById("clearAllButton");
+const readAllButton=document.getElementById("readAllButton");
+const unreadCountElement=document.getElementById("unreadCount");
 const pushToggleButton=document.getElementById("pushToggleButton");
 const resetPushButton=document.getElementById("resetPushButton");
 
 let currentUsername="";
 let pushRegistration=null;
+let currentFilter="all";
 
-/* テスト用・新しいVAPID公開キー */
 const VAPID_PUBLIC_KEY="BEIYWpQomaUWBd6hxIydJnYvJM5PsNu4yInKrXVb8y36CJwPe2300pmBW2-rRtHeHKXaxZzeDfoMhA-u26bZexI";
 
 function urlBase64ToUint8Array(base64String){
@@ -89,37 +106,20 @@ await navigator.serviceWorker.ready;
 return pushRegistration;
 }
 
-/* 現在のブラウザ購読とDBの購読を完全に解除 */
 async function removeCurrentPushSubscription(){
 if(!currentUsername)throw new Error("ログイン中のユーザーを取得できません。");
-
 const registration=await getPushRegistration();
 const subscription=await registration.pushManager.getSubscription();
 
 if(subscription){
 const endpoint=subscription.endpoint;
-
-const {error}=await supabaseClient
-.from("push_subscriptions")
-.delete()
-.eq("user_id",currentUsername)
-.eq("endpoint",endpoint);
-
+const {error}=await supabaseClient.from("push_subscriptions").delete()
+.eq("user_id",currentUsername).eq("endpoint",endpoint);
 if(error)throw error;
-
-try{
-await subscription.unsubscribe();
-}catch(error){
-console.warn("Push購読の解除警告:",error);
-}
+try{await subscription.unsubscribe();}catch(error){console.warn("Push購読の解除警告:",error);}
 }
 
-/* DBに残っている自分の購読も念のため削除 */
-const {error:cleanupError}=await supabaseClient
-.from("push_subscriptions")
-.delete()
-.eq("user_id",currentUsername);
-
+const {error:cleanupError}=await supabaseClient.from("push_subscriptions").delete().eq("user_id",currentUsername);
 if(cleanupError)throw cleanupError;
 }
 
@@ -129,38 +129,23 @@ resetPushButton.disabled=false;
 
 if(!("Notification" in window)){
 pushToggleButton.textContent="🔔 この端末は通知に未対応";
-pushToggleButton.disabled=true;
-resetPushButton.disabled=true;
-pushToggleButton.classList.add("off");
-return;
+pushToggleButton.disabled=true;resetPushButton.disabled=true;pushToggleButton.classList.add("off");return;
 }
-
 if(!("serviceWorker" in navigator)||!("PushManager" in window)){
 pushToggleButton.textContent="🔔 プッシュ通知に未対応";
-pushToggleButton.disabled=true;
-resetPushButton.disabled=true;
-pushToggleButton.classList.add("off");
-return;
+pushToggleButton.disabled=true;resetPushButton.disabled=true;pushToggleButton.classList.add("off");return;
 }
 
 try{
 const registration=await getPushRegistration();
 const subscription=await registration.pushManager.getSubscription();
-
 if(Notification.permission==="granted"&&subscription){
-pushToggleButton.textContent="🔔 通知はオンです";
-pushToggleButton.classList.add("off");
-return;
+pushToggleButton.textContent="🔔 通知はオンです";pushToggleButton.classList.add("off");return;
 }
-
 if(Notification.permission==="denied"){
-pushToggleButton.textContent="🔒 通知がブロックされています";
-pushToggleButton.classList.add("off");
-return;
+pushToggleButton.textContent="🔒 通知がブロックされています";pushToggleButton.classList.add("off");return;
 }
-}catch(error){
-console.warn("通知状態確認エラー:",error);
-}
+}catch(error){console.warn("通知状態確認エラー:",error);}
 
 pushToggleButton.textContent="🔔 通知をオンにする";
 pushToggleButton.classList.remove("off");
@@ -175,19 +160,13 @@ let permission=Notification.permission;
 if(permission!=="granted")permission=await Notification.requestPermission();
 
 if(permission!=="granted"){
-if(permission==="denied"){
-alert("通知がブロックされています。\n\niPhoneの設定からFriend Chatの通知を許可してください。");
-}else{
-alert("通知を許可するとプッシュ通知を受け取れます。");
-}
+if(permission==="denied")alert("通知がブロックされています。\n\niPhoneの設定からFriend Chatの通知を許可してください。");
+else alert("通知を許可するとプッシュ通知を受け取れます。");
 return false;
 }
 
-/* ここが重要：古いVAPIDキーの購読を必ず解除 */
 await removeCurrentPushSubscription();
-
 const registration=await getPushRegistration();
-
 const subscription=await registration.pushManager.subscribe({
 userVisibleOnly:true,
 applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
@@ -197,68 +176,44 @@ const json=subscription.toJSON();
 const endpoint=json.endpoint;
 const p256dh=json.keys&&json.keys.p256dh;
 const auth=json.keys&&json.keys.auth;
-
 if(!endpoint||!p256dh||!auth)throw new Error("プッシュ通知情報を取得できませんでした。");
 
-const {error}=await supabaseClient
-.from("push_subscriptions")
-.insert({
-user_id:currentUsername,
-endpoint:endpoint,
-p256dh:p256dh,
-auth:auth
+const {error}=await supabaseClient.from("push_subscriptions").insert({
+user_id:currentUsername,endpoint:endpoint,p256dh:p256dh,auth:auth
 });
-
-if(error){
-try{await subscription.unsubscribe();}catch(_){}
-throw error;
-}
-
+if(error){try{await subscription.unsubscribe();}catch(_){}throw error;}
 return true;
 }
 
 async function enablePushNotifications(){
 try{
-pushToggleButton.disabled=true;
-resetPushButton.disabled=true;
+pushToggleButton.disabled=true;resetPushButton.disabled=true;
 pushToggleButton.textContent="通知を設定中...";
-
 const created=await createFreshPushSubscription();
-
 if(created)alert("🔔 通知をオンにしました！");
 }catch(error){
 console.error("プッシュ通知ONエラー:",error);
 alert("通知の設定に失敗しました。\n\n"+(error&&error.message?error.message:"もう一度試してください。"));
-}finally{
-await updatePushButton();
-}
+}finally{await updatePushButton();}
 }
 
 async function disablePushNotifications(){
 try{
-pushToggleButton.disabled=true;
-resetPushButton.disabled=true;
+pushToggleButton.disabled=true;resetPushButton.disabled=true;
 pushToggleButton.textContent="通知をオフにしています...";
-
 await removeCurrentPushSubscription();
-
 alert("🔕 通知をオフにしました。");
 }catch(error){
 console.error("プッシュ通知OFFエラー:",error);
 alert("通知をオフにできませんでした。\n\n"+(error&&error.message?error.message:"もう一度試してください。"));
-}finally{
-await updatePushButton();
-}
+}finally{await updatePushButton();}
 }
 
 async function resetPushSubscription(){
 try{
-pushToggleButton.disabled=true;
-resetPushButton.disabled=true;
+pushToggleButton.disabled=true;resetPushButton.disabled=true;
 resetPushButton.textContent="🔄 作り直しています...";
-
 const created=await createFreshPushSubscription();
-
 if(created)alert("✅ Push購読を新しいVAPIDキーで作り直しました！");
 }catch(error){
 console.error("Push購読作り直しエラー:",error);
@@ -274,18 +229,19 @@ if("Notification" in window&&Notification.permission==="granted"){
 try{
 const registration=await getPushRegistration();
 const subscription=await registration.pushManager.getSubscription();
-if(subscription){
-await disablePushNotifications();
-return;
-}
-}catch(error){
-console.warn("通知状態取得エラー:",error);
-}
+if(subscription){await disablePushNotifications();return;}
+}catch(error){console.warn("通知状態取得エラー:",error);}
 }
 await enablePushNotifications();
 });
 
 resetPushButton.addEventListener("click",resetPushSubscription);
+
+function updateUnreadCount(notifications){
+const count=(notifications||[]).filter(n=>!n.is_read).length;
+unreadCountElement.textContent=`未読 ${count}件`;
+readAllButton.disabled=count===0;
+}
 
 async function markAsRead(notificationId){
 const {error}=await supabaseClient.from("notifications").update({is_read:true})
@@ -293,47 +249,65 @@ const {error}=await supabaseClient.from("notifications").update({is_read:true})
 if(error)console.error("既読処理エラー:",error);
 }
 
+async function markAllAsRead(){
+if(!currentUsername)return;
+readAllButton.disabled=true;
+const {error}=await supabaseClient.from("notifications").update({is_read:true})
+.eq("user_id",currentUsername).eq("is_read",false);
+if(error){
+console.error("一括既読エラー:",error);
+alert("すべて既読にできませんでした。\n\n"+error.message);
+await loadNotifications();
+return;
+}
+await loadNotifications();
+}
+
 async function openNotification(notification){
-if(!notification.is_read)await markAsRead(notification.id);
+if(!notification.is_read){
+await markAsRead(notification.id);
+notification.is_read=true;
+updateUnreadCount(lastNotifications);
+}
 if(notification.link&&notification.link!=="#")window.location.href=notification.link;
 }
 
 async function clearAllNotifications(){
-if(!currentUsername){
-alert("ユーザー情報を取得できていません。");
-return;
-}
+if(!currentUsername){alert("ユーザー情報を取得できていません。");return;}
 if(!window.confirm("すべての通知を削除しますか？"))return;
-
 clearAllButton.disabled=true;
 
 const {error}=await supabaseClient.from("notifications").delete().eq("user_id",currentUsername);
-
 if(error){
 console.error("通知削除エラー:",error);
 alert("通知を削除できませんでした。\n\n"+error.message);
-clearAllButton.disabled=false;
-return;
+clearAllButton.disabled=false;return;
 }
-
+lastNotifications=[];
+updateUnreadCount([]);
 notificationsElement.innerHTML='<div class="empty">まだ通知はありません 🔔</div>';
 clearAllButton.disabled=false;
 }
 
+let lastNotifications=[];
+
+function applyCurrentFilter(){
+document.querySelectorAll(".notification").forEach(item=>{
+const unread=item.dataset.read==="false";
+item.classList.toggle("hidden",currentFilter==="unread"&&!unread);
+});
+}
+
 async function loadNotifications(){
 const {data,error}=await supabaseClient.auth.getSession();
-
 if(error||!data.session){
-alert("ログインしてください。");
-window.location.href="index.html";
-return;
+alert("ログインしてください.");
+window.location.href="index.html";return;
 }
 
 currentUsername=data.session.user.user_metadata?.username||"";
-
 if(!currentUsername){
-notificationsElement.innerHTML='<div class="empty">ユーザーIDを取得できませんでした。</div>';
-return;
+notificationsElement.innerHTML='<div class="empty">ユーザーIDを取得できませんでした。</div>';return;
 }
 
 await updatePushButton();
@@ -343,22 +317,23 @@ const {data:notifications,error:notificationError}=await supabaseClient.from("no
 
 if(notificationError){
 console.error(notificationError);
-notificationsElement.innerHTML='<div class="empty">通知を読み込めませんでした。</div>';
-return;
+notificationsElement.innerHTML='<div class="empty">通知を読み込めませんでした。</div>';return;
 }
 
+lastNotifications=notifications||[];
+updateUnreadCount(lastNotifications);
 notificationsElement.innerHTML="";
 
 if(!notifications||notifications.length===0){
-notificationsElement.innerHTML='<div class="empty">まだ通知はありません 🔔</div>';
-return;
+notificationsElement.innerHTML='<div class="empty">まだ通知はありません 🔔</div>';return;
 }
 
 for(const notification of notifications){
 const item=document.createElement("div");
 item.className="notification";
 if(!notification.is_read)item.classList.add("unread");
-item.addEventListener("click",function(){openNotification(notification);});
+item.dataset.read=notification.is_read?"true":"false";
+item.addEventListener("click",()=>openNotification(notification));
 
 const title=document.createElement("div");
 title.className="notification-title";
@@ -372,11 +347,10 @@ const time=document.createElement("div");
 time.className="notification-time";
 time.textContent=formatTime(notification.created_at);
 
-item.appendChild(title);
-item.appendChild(message);
-item.appendChild(time);
+item.appendChild(title);item.appendChild(message);item.appendChild(time);
 notificationsElement.appendChild(item);
 }
+applyCurrentFilter();
 }
 
 function formatTime(value){
@@ -386,7 +360,16 @@ if(Number.isNaN(date.getTime()))return"";
 return date.toLocaleString("ja-JP",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});
 }
 
+document.querySelectorAll(".notification-filter button").forEach(button=>{
+button.addEventListener("click",()=>{
+currentFilter=button.dataset.filter||"all";
+document.querySelectorAll(".notification-filter button").forEach(b=>b.classList.toggle("active",b===button));
+applyCurrentFilter();
+});
+});
+
 clearAllButton.addEventListener("click",clearAllNotifications);
+readAllButton.addEventListener("click",markAllAsRead);
 loadNotifications();
 </script>
 </body>
