@@ -20,7 +20,7 @@ h2{font-size:16px;margin:0 0 12px}
 .user-name{font-weight:700}.user-id{font-size:12px;color:#777;margin-top:3px}
 .ban-buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:12px}
 button{cursor:pointer;border:0;border-radius:9px;padding:9px 6px;font-weight:700}
-.ban-buttons button{background:#ffe8e8;color:#c62828}
+.ban-buttons button{background:#ffe8e8;color:#c62828}.unban-btn{background:#e8f7ed!important;color:#198754!important;grid-column:1/-1}
 .primary{background:#3156c9;color:#fff}.danger{background:#ffe8e8;color:#c62828}
 .empty{color:#777;font-size:14px;padding:10px 0}
 details{border:1px solid #e5e8ee;border-radius:13px;padding:12px;margin-top:10px}
@@ -65,7 +65,7 @@ select{width:100%;border:1px solid #d8dde6;border-radius:9px;padding:10px;font-s
     </details>
 
     <details>
-      <summary>副管理者を任命・解任</summary>
+      <summary>副管理者5を任命・解任</summary>
       <div class="setting-box">
         <div id="currentSubAdmin" class="small">確認中...</div>
         <div class="setting-row">
@@ -246,45 +246,22 @@ async function renderAssignedUsers(users){
         <button data-id="${esc(u.user_id)}" data-min="10">10分BAN</button>
         <button data-id="${esc(u.user_id)}" data-min="30">30分BAN</button>
         <button data-id="${esc(u.user_id)}" data-min="60">1時間BAN</button>
-        ${ban ? `<button class="unban-btn" data-unban-id="${esc(u.user_id)}">BAN解除</button>` : ""}
       </div>
       <div class="small" style="margin-top:9px">
         ${ban ? "現在BAN中："+new Date(ban.expires_at).toLocaleString("ja-JP") : "現在BANされていません"}
       </div>
+      <button class="unban-btn" data-unban-id="${esc(u.user_id)}" style="width:100%;margin-top:10px">🔓 BAN解除</button>
     `;
 
     box.appendChild(div);
   }
 
-  box.querySelectorAll(".ban-buttons button[data-min]").forEach(btn=>{
+  box.querySelectorAll(".ban-buttons button").forEach(btn=>{
     btn.addEventListener("click",()=>banUser(btn.dataset.id,Number(btn.dataset.min)));
   });
   box.querySelectorAll(".unban-btn").forEach(btn=>{
     btn.addEventListener("click",()=>unbanUser(btn.dataset.unbanId));
   });
-}
-
-async function banUser(userId,minutes){
-  if(!assignedIds.has(userId)){
-    toast("このユーザーは管理対象ではありません");
-    return;
-  }
-
-  try{
-    const {error}=await supabaseClient.rpc("sub_admin_ban_user",{
-      target_user_id:userId,
-      ban_minutes:minutes,
-      ban_reason:`副管理者BAN（${minutes}分）`
-    });
-
-    if(error) throw error;
-
-    toast(minutes+"分BANしました");
-    await loadAssignedUsers();
-  }catch(e){
-    console.error(e);
-    toast(e.message || "BANに失敗しました");
-  }
 }
 
 async function unbanUser(userId){
@@ -310,6 +287,29 @@ async function unbanUser(userId){
   }catch(e){
     console.error(e);
     toast(e.message || "BAN解除に失敗しました");
+  }
+}
+
+async function banUser(userId,minutes){
+  if(!assignedIds.has(userId)){
+    toast("このユーザーは管理対象ではありません");
+    return;
+  }
+
+  try{
+    const {error}=await supabaseClient.rpc("sub_admin_ban_user",{
+      target_user_id:userId,
+      ban_minutes:minutes,
+      ban_reason:`副管理者BAN（${minutes}分）`
+    });
+
+    if(error) throw error;
+
+    toast(minutes+"分BANしました");
+    await loadAssignedUsers();
+  }catch(e){
+    console.error(e);
+    toast(e.message || "BANに失敗しました");
   }
 }
 
