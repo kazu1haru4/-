@@ -151,7 +151,8 @@ textarea{min-height:100px;resize:vertical}.form-row{margin-bottom:12px}.form-row
 <div class="form-row"><label>🖼️ フレーム報酬</label><select id="rewardFrameItem"><option value="">なし</option></select></div>
 <div class="form-row"><label>✨ 名前装飾報酬</label><select id="rewardNameDecorationItem"><option value="">なし</option></select></div>
 <div class="form-row"><label>🎨 背景報酬</label><select id="rewardBackgroundItem"><option value="">なし</option></select></div>
-<div id="rewardFrameStatus" class="frame-status">🔄 フレーム・名前装飾・背景を読み込んでいます...</div>
+<div class="form-row"><label>💬 チャットフレーム報酬</label><select id="rewardChatFrameItem"><option value="">なし</option></select></div>
+<div id="rewardFrameStatus" class="frame-status">🔄 フレーム・名前装飾・背景・チャットフレームを読み込んでいます...</div>
 <div class="hint">フレーム・名前装飾・背景は、1つのコードにつき1種類だけ選択できます。コインとは同時に設定できます。</div>
 <div class="form-row"><label>👥 最大利用人数</label><input id="rewardCodeMaxUses" type="number" min="0" step="1" value="0"><div class="hint">0なら無制限です。</div></div>
 <button id="createRewardCodeButton" type="button">🎁 配布コードを作成</button></details>
@@ -368,7 +369,7 @@ async function loadAdminUserItems(targetUserId){
     return;
   }
 
-  const visibleItems=(allItems||[]).filter(item=>!isAdminOnlyItem(item));
+  const visibleItems=(allItems||[]).filter(item=>!isAdminOnlyItem(item) && String(item.item_key||"")!=="admin_chat");
   const genericOwned=(owned||[]).map(item=>({
     ...item,
     _type:normalizeItemType(item)
@@ -575,15 +576,17 @@ async function loadItems() {
   const frameSelect = document.getElementById("rewardFrameItem");
   const nameSelect = document.getElementById("rewardNameDecorationItem");
   const bgSelect = document.getElementById("rewardBackgroundItem");
+  const chatFrameSelect = document.getElementById("rewardChatFrameItem");
   const eventSelect = document.getElementById("eventItem");
   const status = document.getElementById("rewardFrameStatus");
 
   status.className = "frame-status";
-  status.textContent = "🔄 フレーム・名前装飾・背景を読み込んでいます...";
+  status.textContent = "🔄 フレーム・名前装飾・背景・チャットフレームを読み込んでいます...";
 
   frameSelect.innerHTML = '<option value="">なし</option>';
   nameSelect.innerHTML = '<option value="">なし</option>';
   bgSelect.innerHTML = '<option value="">なし</option>';
+  if(chatFrameSelect) chatFrameSelect.innerHTML = '<option value="">なし</option>';
   eventSelect.innerHTML = '<option value="">なし</option>';
 
   const { data, error } = await supabaseClient
@@ -600,11 +603,11 @@ async function loadItems() {
 
   // 管理者専用アイテムは配布対象から完全に除外
   const items = (data || []).filter(item =>
-    !["admin", "admin_name", "admin_bg"].includes(item.item_key)
+    !["admin", "admin_name", "admin_bg", "admin_chat"].includes(item.item_key)
   );
 
   const getType = item => {
-    if (["frame", "name_decoration", "background"].includes(item.item_type)) {
+    if (["frame", "name_decoration", "background", "chat_frame"].includes(item.item_type)) {
       return item.item_type;
     }
     if (item.item_key?.startsWith("nd_")) return "name_decoration";
@@ -623,6 +626,12 @@ async function loadItems() {
     if (type === "frame") frameSelect.appendChild(option);
     if (type === "name_decoration") nameSelect.appendChild(option);
     if (type === "background") bgSelect.appendChild(option);
+    if (type === "chat_frame" && chatFrameSelect && item.item_key !== "admin_chat") {
+      const chatOption = document.createElement("option");
+      chatOption.value = item.item_key;
+      chatOption.textContent = `${icon} ${item.name}`;
+      chatFrameSelect.appendChild(chatOption);
+    }
 
     const eventOption = document.createElement("option");
     eventOption.value = item.item_key;
@@ -631,7 +640,7 @@ async function loadItems() {
   });
 
   // 3つから同時に選ばれないようにする
-  const selects = [frameSelect, nameSelect, bgSelect];
+  const selects = [frameSelect, nameSelect, bgSelect, ...(chatFrameSelect ? [chatFrameSelect] : [])];
   selects.forEach(current => {
     current.addEventListener("change", () => {
       if (!current.value) return;
@@ -670,7 +679,8 @@ async function createRewardCode() {
     const rewardFrame = document.getElementById("rewardFrameItem").value || "";
     const rewardNameDecoration = document.getElementById("rewardNameDecorationItem").value || "";
     const rewardBackground = document.getElementById("rewardBackgroundItem").value || "";
-    const rewardItem = rewardFrame || rewardNameDecoration || rewardBackground || null;
+    const rewardChatFrame = document.getElementById("rewardChatFrameItem")?.value || "";
+    const rewardItem = rewardFrame || rewardNameDecoration || rewardBackground || rewardChatFrame || null;
 
     const maxUses =
       Number(
@@ -726,6 +736,7 @@ async function createRewardCode() {
     document.getElementById("rewardFrameItem").value = "";
     document.getElementById("rewardNameDecorationItem").value = "";
     document.getElementById("rewardBackgroundItem").value = "";
+    if(document.getElementById("rewardChatFrameItem")) document.getElementById("rewardChatFrameItem").value = "";
     document.getElementById("rewardCodeMaxUses").value = "0";
 
     await loadRewardCodes();
