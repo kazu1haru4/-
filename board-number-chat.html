@@ -302,7 +302,7 @@ async function renderMembers(){
   if(profiles[member.user_id]?.equipped_name_decoration_key==="admin_name"&&ADMIN_USERNAMES.has(member.user_id)){const crown=document.createElement("span");crown.className="admin-name-badge";crown.textContent="👑";memberNameEl.appendChild(crown)}
   info.appendChild(memberNameEl);const memberIdEl=document.createElement("div");memberIdEl.className="member-id";memberIdEl.textContent="@"+member.user_id;info.appendChild(memberIdEl);
   if(isOwner&&member.user_id!==username){const select=document.createElement("select");select.className="control";select.innerHTML="<option value='member'>通常メンバー</option><option value='admin'>副管理者</option>";select.value=member.role==="admin"?"admin":"member";select.onchange=async()=>{const {error}=await supabaseClient.rpc("board_set_subadmin",{target_board_id:Number(boardId),target_username:member.user_id,make_admin:select.value==="admin"});if(error)alert(error.message);await renderMembers()};info.appendChild(select)}
-  const myMember=members.find(m=>m.user_id===username);const canMute=isBoardAdmin&&member.user_id!==username&&member.user_id!==room.created_by&&!(myMember?.role==="admin"&&member.role==="admin");
+  const myMember=members.find(m=>m.user_id===username);const canMute=(isOwner||ADMIN_USERNAMES.has(username))&&member.user_id!==username&&member.user_id!==room.created_by;
   if(canMute){
  const minutes=document.createElement("input");minutes.type="number";minutes.min="1";minutes.placeholder="発言禁止（分）";minutes.className="control";
  const presetWrap=document.createElement("div");presetWrap.style.cssText="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:6px";
@@ -323,7 +323,7 @@ async function renderMembers(){
  };
  info.append(minutes,presetWrap,muteButton)
 }
-  if(isBoardAdmin&&member.user_id!==username&&member.user_id!==room.created_by&&!(members.find(m=>m.user_id===username)?.role==="admin"&&member.role==="admin")){const kick=document.createElement("button");kick.className="control danger";kick.textContent="🚪 掲示板から蹴る";kick.onclick=async()=>{if(!confirm(member.user_id+"さんを掲示板から退出させますか？"))return;const {error}=await supabaseClient.rpc("board_kick_member",{target_board_id:Number(boardId),target_username:member.user_id});if(error)alert(error.message);await renderMembers()};info.appendChild(kick)}
+  if((isOwner||ADMIN_USERNAMES.has(username))&&member.user_id!==username&&member.user_id!==room.created_by){const kick=document.createElement("button");kick.className="control danger";kick.textContent="🚪 掲示板から蹴る";kick.onclick=async()=>{if(!confirm(member.user_id+"さんを掲示板から退出させますか？"))return;const {error}=await supabaseClient.rpc("board_kick_member",{target_board_id:Number(boardId),target_username:member.user_id});if(error)alert(error.message);await renderMembers()};info.appendChild(kick)}
   item.appendChild(info);list.appendChild(item);
  });
 }
