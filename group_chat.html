@@ -215,6 +215,48 @@ body{display:flex;flex-direction:column}
 .group-menu button:hover{background:var(--theme-light)}
 .group-menu .group-menu-delete{color:#d9534f}
 @media(max-width:520px){.group-menu{top:60px;right:12px;width:190px}.group-menu button{font-size:15px;padding:13px 12px}}
+
+/* GROUP_CHAT_SEARCH_CSS */
+#groupSearchModal{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  background:rgba(0,0,0,.45);
+  padding:18px;
+  box-sizing:border-box;
+}
+#groupSearchModal .modal-content{
+  background:#fff;
+  color:#222;
+  border-radius:16px;
+  padding:16px;
+  max-height:85vh;
+  overflow:auto;
+  margin:0 auto;
+}
+#groupSearchInput{
+  min-height:44px;
+  border:1px solid #ccc;
+  border-radius:10px;
+  padding:10px 12px;
+  font-size:16px;
+}
+.group-search-result{
+  display:block;
+  width:100%;
+  text-align:left;
+  border:1px solid #e3e3e3;
+  background:#fafafa;
+  border-radius:12px;
+  padding:10px 12px;
+  margin:8px 0;
+  cursor:pointer;
+}
+.group-search-result:hover{background:#f1f1f1;}
+.group-search-result-name{font-weight:700;font-size:13px;margin-bottom:4px;}
+.group-search-result-text{font-size:14px;white-space:pre-wrap;word-break:break-word;}
+.group-search-result-time{font-size:11px;color:#777;margin-top:5px;}
+
 </style>
 </head>
 <body>
@@ -230,7 +272,8 @@ body{display:flex;flex-direction:column}
   <div id="groupMenu" class="group-menu" style="display:none">
     <button id="groupMenuMemberButton" type="button">👥 メンバー</button>
     <button id="groupCallMenuButton" type="button">📞 グループ通話</button>
-    <button id="groupMenuEditButton" type="button" style="display:none">✏️ 名前変更</button>
+    <button id="groupMenuSearchButton">🔍 チャット検索</button>
+<button id="groupMenuEditButton" type="button" style="display:none">✏️ 名前変更</button>
     <button id="groupMenuDeleteButton" type="button" style="display:none">🗑️ グループ削除</button>
     <button id="groupMenuLeaveButton" type="button" style="display:none">🚪 グループを抜ける</button>
   </div>
@@ -874,6 +917,119 @@ async function reportGroupMessage(message){
  if(error){alert("通報に失敗しました。\n\n"+error.message);return}
  alert("🚨 通報を送信しました。管理者が確認します。");
 }
+
+
+/* GROUP_CHAT_SEARCH_JS */
+let groupSearchMessages=[];
+
+function openGroupSearch(){
+  const modal=document.getElementById("groupSearchModal");
+  const input=document.getElementById("groupSearchInput");
+  if(!modal) return;
+  modal.style.display="block";
+  renderGroupSearch("");
+  setTimeout(()=>input?.focus(),50);
+}
+
+function closeGroupSearchModal(){
+  const modal=document.getElementById("groupSearchModal");
+  if(modal) modal.style.display="none";
+}
+
+function formatGroupSearchTime(value){
+  if(!value) return "";
+  const d=new Date(value);
+  if(Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString("ja-JP",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});
+}
+
+function renderGroupSearch(keyword){
+  const box=document.getElementById("groupSearchResults");
+  if(!box) return;
+
+  const q=String(keyword||"").trim().toLowerCase();
+  if(!q){
+    box.innerHTML='<div style="color:#777;padding:10px 0;">検索したい文字を入力してください。</div>';
+    return;
+  }
+
+  const results=groupSearchMessages.filter(m=>{
+    if(!m || m.is_deleted) return false;
+    const text=String(m.content||"");
+    return text.toLowerCase().includes(q);
+  }).slice().reverse();
+
+  if(!results.length){
+    box.innerHTML='<div style="color:#777;padding:10px 0;">見つかりませんでした。</div>';
+    return;
+  }
+
+  box.innerHTML=results.map(m=>{
+    const id=String(m.id??"").replace(/"/g,"&quot;");
+    const sender=String(m.sender_username||m.username||"").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const text=String(m.content||"").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const time=formatGroupSearchTime(m.created_at);
+    return `<button type="button" class="group-search-result" data-search-message-id="${id}">
+      <div class="group-search-result-name">${sender||"ユーザー"}</div>
+      <div class="group-search-result-text">${text}</div>
+      <div class="group-search-result-time">${time}</div>
+    </button>`;
+  }).join("");
+
+  box.querySelectorAll("[data-search-message-id]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const id=btn.getAttribute("data-search-message-id");
+      closeGroupSearchModal();
+      setTimeout(()=>{
+        const target=document.querySelector(`[data-message-id="${CSS.escape(id)}"]`);
+        if(target){
+          target.scrollIntoView({behavior:"smooth",block:"center"});
+          target.animate(
+            [{backgroundColor:"rgba(255,235,59,.75)"},{backgroundColor:"transparent"}],
+            {duration:1200}
+          );
+        }
+      },100);
+    });
+  });
+}
+
+function setupGroupSearch(){
+  const menuButton=document.getElementById("groupMenuSearchButton");
+  const closeButton=document.getElementById("groupSearchCloseButton");
+  const modal=document.getElementById("groupSearchModal");
+  const input=document.getElementById("groupSearchInput");
+
+  menuButton?.addEventListener("click",()=>{
+    if(typeof closeGroupMenu==="function") closeGroupMenu();
+    openGroupSearch();
+  });
+  closeButton?.addEventListener("click",closeGroupSearchModal);
+  modal?.addEventListener("click",e=>{
+    if(e.target===modal) closeGroupSearchModal();
+  });
+  input?.addEventListener("input",e=>renderGroupSearch(e.target.value));
+}
+
+if(document.readyState==="loading"){
+  document.addEventListener("DOMContentLoaded",setupGroupSearch);
+}else{
+  setupGroupSearch();
+}
+
 </script>
+
+<div id="groupSearchModal" class="modal" style="display:none;">
+  <div class="modal-content" style="max-width:520px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <h3 style="margin:0;">🔍 チャット検索</h3>
+      <button id="groupSearchCloseButton" type="button">✕</button>
+    </div>
+    <input id="groupSearchInput" type="search" placeholder="メッセージを検索…" autocomplete="off"
+      style="width:100%;box-sizing:border-box;margin-top:12px;">
+    <div id="groupSearchResults" style="margin-top:12px;"></div>
+  </div>
+</div>
+
 </body>
 </html>
