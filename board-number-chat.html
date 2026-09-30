@@ -8,7 +8,7 @@
 <script src="ban-check.js"></script>
 <style>
 *{box-sizing:border-box}
-body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-serif;background:#f4f1ff;color:#333}
+body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-serif;background:#fff;color:#333}
 .header{background:#fff;padding:11px 100px;text-align:center;box-shadow:0 2px 8px #0002;position:relative;z-index:10}
 .header a,.header button{border:0;border-radius:11px;padding:9px 11px;background:#8f7cff;color:#fff;font-weight:bold;text-decoration:none;cursor:pointer}
 .header>a{position:absolute;top:9px;left:9px}
@@ -24,7 +24,7 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
 .board-header-menu.show{display:block}
 .board-header-menu button{display:block;width:100%;border:0;background:#fff;text-align:left;padding:12px 11px;border-radius:9px;color:#333;font-size:14px;cursor:pointer}
 .board-header-menu button:hover{background:#f5f3ff}
-.search-result{padding:10px;border-radius:10px;background:#f5f3ff;margin:7px 0;cursor:pointer}
+.search-result{padding:10px;border-radius:10px;background:#fff;margin:7px 0;cursor:pointer}
 .search-result .sr-name{font-weight:bold;color:#6253c7;font-size:13px}
 .search-result .sr-text{font-size:13px;margin-top:3px;white-space:pre-wrap;word-break:break-word}
 .search-empty{text-align:center;color:#888;padding:18px}
@@ -43,7 +43,7 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
 .admin-name-badge{margin-left:4px;font-size:12px}.content{white-space:pre-wrap;word-break:break-word;margin-top:3px}
 .mention{color:#6655c9;font-weight:bold;background:#f0edff;border-radius:4px;padding:1px 3px}.edited{font-size:10px;color:#999}.deleted{color:#999;font-style:italic}
 .message-image{display:block;max-width:270px;max-height:330px;border-radius:13px;margin-top:6px}.media-box{display:inline-block;max-width:280px;margin-top:6px}.media-video{display:block;max-width:280px;max-height:330px;border-radius:13px}.media-audio{display:block;max-width:280px}.media-duration{font-size:11px;color:#777;text-align:right;margin-top:2px}
-.reply{margin-top:7px;padding:7px 9px;background:#f0edff;border-left:4px solid #8f7cff;border-radius:8px;font-size:12px}
+.reply{margin-top:7px;padding:7px 9px;background:#fff;border-left:4px solid #8f7cff;border-radius:8px;font-size:12px}
 .reactions{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.reaction{background:#eef1f7;border-radius:18px;padding:4px 8px;font-size:14px}
 .read{text-align:right;color:#6354c8;font-size:11px;margin-top:4px}
 .menu,.picker{display:none;position:absolute;z-index:50;background:#fff;border-radius:12px;box-shadow:0 5px 18px #0003;padding:6px}
@@ -55,7 +55,7 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
 .mention-list{display:none;position:fixed;left:8px;right:8px;bottom:62px;max-width:500px;margin:auto;background:#fff;border-radius:13px;box-shadow:0 4px 18px #0003;padding:6px;z-index:80}.mention-list.show{display:block}
 .mention-item{display:block;width:100%;border:0;background:#fff;text-align:left;padding:9px;border-radius:8px}
 .modal{display:none;position:fixed;inset:0;background:#0007;z-index:100;align-items:center;justify-content:center;padding:18px}.box{background:#fff;border-radius:19px;padding:18px;width:100%;max-width:410px;max-height:86vh;overflow:auto}
-.box h2{text-align:center;font-size:19px;margin:0 0 13px}.member-item{display:flex;gap:9px;background:#f3f0ff;border-radius:12px;padding:9px;margin:7px 0}
+.box h2{text-align:center;font-size:19px;margin:0 0 13px}.member-item{display:flex;gap:9px;background:#fff;border-radius:12px;padding:9px;margin:7px 0}
 .member-avatar{width:42px;height:42px;border-radius:50%;padding:3px;background:#8f7cff;flex:none}.member-avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover}
 .member-info{flex:1;min-width:0}.member-id{font-size:12px;color:#888}.role{display:inline-block;font-size:11px;padding:3px 7px;border-radius:8px;background:#eee;margin-top:4px}.owner{background:#fff0bf;color:#9b7600}.deputy{background:#e7e0ff;color:#5e50c9}
 .control{width:100%;margin-top:6px;padding:7px;border:1px solid #ddd;border-radius:8px;background:#fff}.danger{color:#c44}.close{width:100%;border:0;border-radius:11px;padding:11px;margin-top:8px;background:#eee;cursor:pointer}
@@ -137,6 +137,21 @@ const $=id=>document.getElementById(id);
 let username="",room=null,members=[],profiles={},items={},isOwner=false,isBoardAdmin=false,isMuted=false,replyTarget=null,giftTargetUsername="";
 let boardRealtimeChannel=null,boardTypingChannel=null,boardTypingReady=false,typingTimer=null,typingHideTimer=null;
 let boardSearchMessages=[];
+const scrollBottomButton=$("scrollBottomButton");
+function updateScrollBottomButton(){
+ const main=$("main");
+ if(!main||!scrollBottomButton)return;
+ const distance=main.scrollHeight-main.scrollTop-main.clientHeight;
+ scrollBottomButton.classList.toggle("show",distance>120);
+}
+function scrollToBoardBottom(){
+ const main=$("main");
+ if(!main)return;
+ main.scrollTo({top:main.scrollHeight,behavior:"smooth"});
+}
+scrollBottomButton.onclick=scrollToBoardBottom;
+$("main").addEventListener("scroll",updateScrollBottomButton,{passive:true});
+window.addEventListener("resize",updateScrollBottomButton);
 const mediaPlusButton=$("mediaPlusButton"),mediaMenu=$("mediaMenu"),mediaPhotoButton=$("mediaPhotoButton"),mediaVideoButton=$("mediaVideoButton"),mediaVoiceButton=$("mediaVoiceButton"),videoInput=$("videoInput"),mediaStatus=$("mediaStatus");
 let voiceRecorder=null,voiceStream=null,voiceChunks=[];
 function formatMediaDuration(seconds){if(!Number.isFinite(seconds)||seconds<0)return "";const s=Math.round(seconds),m=Math.floor(s/60),r=s%60;return "⏱️ "+m+":"+String(r).padStart(2,"0")}
@@ -288,7 +303,26 @@ async function renderMembers(){
   info.appendChild(memberNameEl);const memberIdEl=document.createElement("div");memberIdEl.className="member-id";memberIdEl.textContent="@"+member.user_id;info.appendChild(memberIdEl);
   if(isOwner&&member.user_id!==username){const select=document.createElement("select");select.className="control";select.innerHTML="<option value='member'>通常メンバー</option><option value='admin'>副管理者</option>";select.value=member.role==="admin"?"admin":"member";select.onchange=async()=>{const {error}=await supabaseClient.rpc("board_set_subadmin",{target_board_id:Number(boardId),target_username:member.user_id,make_admin:select.value==="admin"});if(error)alert(error.message);await renderMembers()};info.appendChild(select)}
   const myMember=members.find(m=>m.user_id===username);const canMute=isBoardAdmin&&member.user_id!==username&&member.user_id!==room.created_by&&!(myMember?.role==="admin"&&member.role==="admin");
-  if(canMute){const minutes=document.createElement("input");minutes.type="number";minutes.min="1";minutes.placeholder="発言禁止（分）";minutes.className="control";const muteButton=document.createElement("button");muteButton.className="control";muteButton.textContent="🔇 発言禁止";muteButton.onclick=async()=>{const value=Number(minutes.value);if(!Number.isInteger(value)||value<1){alert("1分以上を入力してください");return}const {error}=await supabaseClient.rpc("board_set_mute",{target_board_id:Number(boardId),target_username:member.user_id,mute_minutes:value});if(error)alert(error.message);await renderMembers()};info.append(minutes,muteButton)}
+  if(canMute){
+ const minutes=document.createElement("input");minutes.type="number";minutes.min="1";minutes.placeholder="発言禁止（分）";minutes.className="control";
+ const presetWrap=document.createElement("div");presetWrap.style.cssText="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:6px";
+ [5,10,30,60].forEach(value=>{
+  const preset=document.createElement("button");preset.type="button";preset.className="control";preset.style.marginTop="0";preset.textContent=value<60?value+"分":"1時間";
+  preset.onclick=()=>{minutes.value=String(value)};
+  presetWrap.appendChild(preset);
+ });
+ const muteButton=document.createElement("button");muteButton.type="button";muteButton.className="control";muteButton.textContent="🔇 発言禁止";
+ muteButton.onclick=async()=>{
+  const value=Number(minutes.value);
+  if(!Number.isInteger(value)||value<1){alert("発言禁止時間を選択するか、1分以上を入力してください");return}
+  muteButton.disabled=true;
+  const {error}=await supabaseClient.rpc("board_set_mute",{target_board_id:Number(boardId),target_username:member.user_id,mute_minutes:value});
+  muteButton.disabled=false;
+  if(error){console.error("発言禁止エラー:",error);alert("発言禁止に失敗しました\\n\\n"+(error.message||"原因不明のエラー"));return}
+  await renderMembers();
+ };
+ info.append(minutes,presetWrap,muteButton)
+}
   if(isBoardAdmin&&member.user_id!==username&&member.user_id!==room.created_by&&!(members.find(m=>m.user_id===username)?.role==="admin"&&member.role==="admin")){const kick=document.createElement("button");kick.className="control danger";kick.textContent="🚪 掲示板から蹴る";kick.onclick=async()=>{if(!confirm(member.user_id+"さんを掲示板から退出させますか？"))return;const {error}=await supabaseClient.rpc("board_kick_member",{target_board_id:Number(boardId),target_username:member.user_id});if(error)alert(error.message);await renderMembers()};info.appendChild(kick)}
   item.appendChild(info);list.appendChild(item);
  });
@@ -364,26 +398,19 @@ else{const holder=document.createElement("div");holder.className="message-image-
   }
   const picker=document.createElement("div");picker.className="picker";["👍","❤️","😂","😮","😢","👏"].forEach(reaction=>{const button=document.createElement("button");button.textContent=reaction;button.onclick=async e=>{e.stopPropagation();const old=await supabaseClient.from("board_room_reactions").select("id").eq("board_message_id",message.id).eq("user_id",username).eq("reaction",reaction).maybeSingle();let result;if(old.data)result=await supabaseClient.from("board_room_reactions").delete().eq("id",old.data.id);else result=await supabaseClient.from("board_room_reactions").insert({board_message_id:message.id,user_id:username,reaction});if(result.error)alert(result.error.message);else await loadMessages()};picker.appendChild(button)});
   reactionButton.onclick=e=>{e.stopPropagation();picker.style.display=picker.style.display==="flex"?"none":"flex"};replyButton.onclick=e=>{e.stopPropagation();replyTarget=message;$("messageInput").placeholder="↩️ 返信先を入力...";$("messageInput").focus();menu.style.display="none"};
-  bubble.append(menu,picker);bubble.onclick=e=>{if(e.target.closest(".menu,.picker"))return;document.querySelectorAll(".menu,.picker").forEach(x=>x.style.display="none");menu.style.display=menu.style.display==="block"?"none":"block"};
+  bubble.append(menu,picker);
+  bubble.onclick=e=>{
+   if(e.target.closest(".menu,.picker"))return;
+   const wasOpen=menu.style.display==="block";
+   document.querySelectorAll(".menu,.picker").forEach(x=>x.style.display="none");
+   if(!wasOpen)menu.style.display="block";
+  };
+
   row.appendChild(bubble);fragment.appendChild(row)
  });
  $("messages").innerHTML="";$("messages").appendChild(fragment);$("main").scrollTop=$("main").scrollHeight;updateScrollBottomButton();
  const unread=messages.filter(m=>m.sender_id!==username).map(m=>m.id);if(unread.length)await supabaseClient.from("board_room_message_reads").upsert(unread.map(id=>({board_message_id:id,user_id:username,read_at:new Date().toISOString()})),{onConflict:"board_message_id,user_id"})
 }
-const scrollBottomButton=$("scrollBottomButton");
-function updateScrollBottomButton(){
- const main=$("main");
- if(!main||!scrollBottomButton)return;
- const distance=main.scrollHeight-main.scrollTop-main.clientHeight;
- scrollBottomButton.classList.toggle("show",distance>120);
-}
-function scrollToBottom(){
- const main=$("main");
- if(!main)return;
- main.scrollTo({top:main.scrollHeight,behavior:"smooth"});
-}
-scrollBottomButton.onclick=scrollToBottom;
-$("main").addEventListener("scroll",updateScrollBottomButton,{passive:true});
 function formatMentions(text){return escapeHtml(text).replace(/@([A-Za-z0-9_-]+)/g,(full,user)=>members.some(m=>m.user_id===user)?"<span class='mention'>"+full+"</span>":full)}
 async function sendMessage(){
  if(isMuted){alert("現在、発言禁止中です");return}const input=$("messageInput"),text=input.value.trim();if(!text)return;
@@ -410,7 +437,10 @@ document.querySelectorAll(".presets button").forEach(button=>{button.onclick=()=
 $("sendButton").onclick=sendMessage;
 $("messageInput").onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage()}};
 mediaPlusButton.onclick=e=>{e.stopPropagation();mediaMenu.style.display=mediaMenu.style.display==="block"?"none":"block"};
-document.addEventListener("click",e=>{if(!mediaMenu.contains(e.target)&&e.target!==mediaPlusButton)closeMediaMenu()});
+document.addEventListener("click",e=>{
+ if(!mediaMenu.contains(e.target)&&e.target!==mediaPlusButton)closeMediaMenu();
+ if(!e.target.closest(".bubble"))document.querySelectorAll(".menu,.picker").forEach(x=>x.style.display="none");
+});
 mediaPhotoButton.onclick=()=>{closeMediaMenu();if(!isMuted)$("imageInput").click()};
 mediaVideoButton.onclick=()=>{closeMediaMenu();if(!isMuted)videoInput.click()};
 mediaVoiceButton.onclick=e=>{e.stopPropagation();toggleBoardVoiceRecording()};
