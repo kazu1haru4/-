@@ -73,6 +73,17 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
  .board-action{padding:6px 7px;font-size:10px}
  .member-button{padding:7px 8px!important;font-size:10px}
 }
+
+/* ===== チャットフレーム（メッセージ装飾） ===== */
+.chat-frame-sakura{border:2px solid #ff8fbd!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 12px rgba(255,105,170,.28)!important;background:linear-gradient(135deg,#fff,#fff3f8)!important}
+.chat-frame-star{border:2px solid #f4bf3f!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 12px rgba(244,191,63,.3)!important;background:linear-gradient(135deg,#fff,#fff9df)!important}
+.chat-frame-diamond{border:2px solid #4db9ee!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 12px rgba(77,185,238,.3)!important;background:linear-gradient(135deg,#fff,#effaff)!important}
+.chat-frame-heart{border:2px solid #ff4f9a!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 12px rgba(255,79,154,.28)!important;background:linear-gradient(135deg,#fff,#fff0f6)!important}
+.chat-frame-rainbow{border:2px solid #8b5cf6!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 12px rgba(139,92,246,.3)!important;background:linear-gradient(135deg,#fff,#f7f2ff)!important}
+.chat-frame-flame{border:2px solid #ff6b35!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 12px rgba(255,107,53,.3)!important;background:linear-gradient(135deg,#fff,#fff4ee)!important}
+.chat-frame-sea{border:2px solid #29a9e8!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 12px rgba(41,169,232,.3)!important;background:linear-gradient(135deg,#fff,#eefaff)!important}
+.chat-frame-space{border:2px solid #7c5cff!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 14px rgba(124,92,255,.3)!important;background:linear-gradient(135deg,#fff,#f3f0ff)!important}
+.chat-frame-neon{border:2px solid #39d14a!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 14px rgba(57,255,20,.3)!important;background:linear-gradient(135deg,#fff,#f2fff2)!important}
 </style>
 </head>
 <body>
@@ -190,7 +201,7 @@ document.documentElement.style.setProperty("--theme",theme[0]);
 function escapeHtml(value){return String(value??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
 async function loadProfiles(usernames){
  usernames=[...new Set(usernames.filter(Boolean))]; if(!usernames.length)return;
- const {data,error}=await supabaseClient.from("profiles").select("user_id,name,avatar_url,equipped_item_key,equipped_name_decoration_key").in("user_id",usernames);
+ const {data,error}=await supabaseClient.from("profiles").select("user_id,name,avatar_url,equipped_item_key,equipped_name_decoration_key,equipped_chat_frame_key").in("user_id",usernames);
  if(error){console.error(error);return} (data||[]).forEach(p=>profiles[p.user_id]=p);
  const keys=[...new Set((data||[]).map(p=>p.equipped_item_key).filter(Boolean))];
  if(keys.length){const r=await supabaseClient.from("coin_items").select("item_key,icon,frame_color").in("item_key",keys);if(!r.error)(r.data||[]).forEach(i=>items[i.item_key]=i)}
@@ -314,7 +325,7 @@ async function loadMessages(){
  const fragment=document.createDocumentFragment();
  messages.forEach(message=>{
   const row=document.createElement("div");row.className="row";row.dataset.boardMessageId=String(message.id);row.appendChild(makeAvatar(message.sender_id));const bubble=document.createElement("div");bubble.className="bubble";
-  const senderNameEl=document.createElement("div");const senderNameClass=getNameClass(profiles[message.sender_id]?.equipped_name_decoration_key);senderNameEl.className="name"+(senderNameClass?" "+senderNameClass:"");senderNameEl.textContent=profiles[message.sender_id]?.name||message.sender_id;
+  const senderNameEl=document.createElement("div");const chatCls=chatFrameClass(profiles[message.sender_id]?.equipped_chat_frame_key);if(chatCls)bubble.classList.add(chatCls);const senderNameClass=getNameClass(profiles[message.sender_id]?.equipped_name_decoration_key);senderNameEl.className="name"+(senderNameClass?" "+senderNameClass:"");senderNameEl.textContent=profiles[message.sender_id]?.name||message.sender_id;
   if(profiles[message.sender_id]?.equipped_name_decoration_key==="admin_name"&&ADMIN_USERNAMES.has(message.sender_id)){const crown=document.createElement("span");crown.className="admin-name-badge";crown.textContent="👑";senderNameEl.appendChild(crown)}
   if(message.edited_at){const edited=document.createElement("span");edited.className="edited";edited.textContent=" 編集済み";senderNameEl.appendChild(edited)}bubble.appendChild(senderNameEl);
   if(message.is_deleted)bubble.innerHTML+="<div class='deleted'>このメッセージは削除されました</div>";else{if(message.content)bubble.innerHTML+="<div class='content'>"+formatMentions(message.content)+"</div>";if(signed[message.id]){
