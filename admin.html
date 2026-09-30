@@ -112,6 +112,12 @@ textarea{min-height:100px;resize:vertical}.form-row{margin-bottom:12px}.form-row
 </details>
 
 <details class="panel collapsible-panel">
+<summary>💬 チャットフレーム一覧</summary>
+<div id="chatFramesLoading" class="loading">チャットフレームを読み込んでいます...</div>
+<div id="chatFramesList"></div>
+</details>
+
+<details class="panel collapsible-panel">
 <summary>👤 ユーザー管理</summary>
 <div class="toolbar">
 <input id="userSearch" type="search" placeholder="ID・名前で検索">
@@ -180,6 +186,11 @@ textarea{min-height:100px;resize:vertical}.form-row{margin-bottom:12px}.form-row
   <details class="user-item-category">
     <summary>🎨 背景一覧 <span id="userItemCountBackground" class="user-item-count">0 / 0</span></summary>
     <div id="userItemsBackgroundList" class="user-item-checklist"></div>
+  </details>
+
+  <details class="user-item-category">
+    <summary>💬 チャットフレーム一覧 <span id="userItemCountChatFrame" class="user-item-count">0 / 0</span></summary>
+    <div id="userItemsChatFrameList" class="user-item-checklist"></div>
   </details>
 </div>
 </div><div class="actions"><button id="closeUserDetail" class="gray" type="button">閉じる</button></div></div></div>
@@ -285,18 +296,24 @@ function isAdminOnlyItem(item){
 }
 
 function normalizeItemType(item){
-  return item?.item_type === "name_decoration" ? "name_decoration"
+  return item?.item_type === "chat_frame" ? "chat_frame"
+    : item?.item_type === "name_decoration" ? "name_decoration"
     : item?.item_type === "background" ? "background"
     : "frame";
 }
 
 function itemTypeLabel(type){
-  return type === "name_decoration" ? "✨ 名前装飾"
+  return type === "chat_frame" ? "💬 チャットフレーム"
+    : type === "name_decoration" ? "✨ 名前装飾"
     : type === "background" ? "🎨 背景"
     : "🖼️ フレーム";
 }
 
 function itemListElements(type){
+  if(type === "chat_frame") return {
+    list:document.getElementById("userItemsChatFrameList"),
+    count:document.getElementById("userItemCountChatFrame")
+  };
   if(type === "name_decoration") return {
     list:document.getElementById("userItemsNameList"),
     count:document.getElementById("userItemCountName")
@@ -316,7 +333,8 @@ async function loadAdminUserItems(targetUserId){
   const lists=[
     document.getElementById("userItemsFrameList"),
     document.getElementById("userItemsNameList"),
-    document.getElementById("userItemsBackgroundList")
+    document.getElementById("userItemsBackgroundList"),
+    document.getElementById("userItemsChatFrameList")
   ];
   if(!loading||lists.some(x=>!x))return;
 
@@ -325,13 +343,17 @@ async function loadAdminUserItems(targetUserId){
   loading.textContent="🔄 アイテム所持状況を読み込んでいます...";
   lists.forEach(list=>list.innerHTML='<div class="loading">読み込み中...</div>');
 
-  const {data:owned,error}=await supabaseClient.rpc("admin_get_user_items",{
-    target_user_id:userItemTargetUsername
-  });
+  const [{data:owned,error},{data:chatFrameData,error:chatFrameError}]=await Promise.all([
+    supabaseClient.rpc("admin_get_user_items",{target_user_id:userItemTargetUsername}),
+    supabaseClient.rpc("admin_get_user_chat_frames",{target_username:userItemTargetUsername})
+  ]);
   if(error){
     loading.textContent="❌ 所持アイテム取得エラー：\n"+error.message;
     lists.forEach(list=>list.innerHTML='<div class="empty">読み込みに失敗しました。</div>');
     return;
+  }
+  if(chatFrameError){
+    console.warn("チャットフレーム所持状況取得エラー:",chatFrameError.message);
   }
 
   const {data:allItems,error:allError}=await supabaseClient
@@ -346,25 +368,35 @@ async function loadAdminUserItems(targetUserId){
     return;
   }
 
-  // 管理者限定アイテムは、他ユーザーへの付与・所持管理の対象から除外。
   const visibleItems=(allItems||[]).filter(item=>!isAdminOnlyItem(item));
-  const ownedKeys=new Set((owned||[]).map(item=>String(item.item_key)));
+  const genericOwned=(owned||[]).map(item=>({
+    ...item,
+    _type:normalizeItemType(item)
+  }));
+  const chatOwnedItems=(chatFrameData?.items||[]).map(item=>({
+    ...item,
+    _type:"chat_frame"
+  }));
+  const ownedKeys=new Set(genericOwned.map(item=>String(item.item_key)));
+  const chatOwnedKeys=new Set(chatOwnedItems.map(item=>String(item.item_key)));
 
   const grouped={
     frame:[],
     name_decoration:[],
-    background:[]
+    background:[],
+    chat_frame:[]
   };
 
   visibleItems.forEach(item=>{
     const type=normalizeItemType(item);
-    grouped[type].push(item);
+    if(grouped[type])grouped[type].push(item);
   });
 
-  ["frame","name_decoration","background"].forEach(type=>{
+  ["frame","name_decoration","background","chat_frame"].forEach(type=>{
     const {list,count}=itemListElements(type);
     const items=grouped[type];
-    const ownedCount=items.filter(item=>ownedKeys.has(String(item.item_key))).length;
+    const ownedSet=type==="chat_frame"?chatOwnedKeys:ownedKeys;
+    const ownedCount=items.filter(item=>ownedSet.has(String(item.item_key))).length;
     count.textContent=`${ownedCount} / ${items.length}`;
 
     if(!items.length){
@@ -375,19 +407,24 @@ async function loadAdminUserItems(targetUserId){
     list.innerHTML="";
     items.forEach(item=>{
       const itemKey=String(item.item_key);
-      const checked=ownedKeys.has(itemKey);
-      const ownedItem=(owned||[]).find(x=>String(x.item_key)===itemKey);
+      const checked=ownedSet.has(itemKey);
+      const ownedItem=type==="chat_frame"
+        ? chatOwnedItems.find(x=>String(x.item_key)===itemKey)
+        : genericOwned.find(x=>String(x.item_key)===itemKey);
+      const equipped=type==="chat_frame"
+        ? String(chatFrameData?.equipped||"")===itemKey
+        : !!ownedItem?.is_equipped;
       const row=document.createElement("label");
-      row.className="user-item-check"+(ownedItem?.is_equipped?" equipped":"");
+      row.className="user-item-check"+(equipped?" equipped":"");
       row.innerHTML=`
         <input type="checkbox"
           data-user-item-toggle="${escapeAttribute(itemKey)}"
-          data-item-type="${escapeAttribute(type)}"
+          data-user-item-type="${escapeAttribute(type)}"
           ${checked?"checked":""}>
         <div class="user-item-check-icon">${escapeHtml(item.icon||"🎁")}</div>
         <div class="user-item-check-main">
           <div class="user-item-check-name">${escapeHtml(item.name||itemKey)}</div>
-          <div class="user-item-check-meta">${itemTypeLabel(type)} / ID：${escapeHtml(itemKey)}${ownedItem?.is_equipped?" / 現在装備中":""}</div>
+          <div class="user-item-check-meta">${itemTypeLabel(type)} / ID：${escapeHtml(itemKey)}${equipped?" / 現在装備中":""}</div>
         </div>
         <span class="user-item-check-saving"></span>`;
       list.appendChild(row);
@@ -403,9 +440,9 @@ async function loadAdminUserItems(targetUserId){
 
 async function toggleAdminUserItem(input){
   const itemKey=String(input.dataset.userItemToggle||"");
+  const itemType=String(input.dataset.userItemType||"");
   if(!itemKey||!userItemTargetUsername)return;
 
-  // 管理者限定3アイテムは絶対に変更させない。
   if(ADMIN_ONLY_ITEM_KEYS.has(itemKey)){
     input.checked=false;
     alert("管理者限定アイテムは他のユーザーに渡せません。");
@@ -419,20 +456,30 @@ async function toggleAdminUserItem(input){
   if(saving)saving.textContent="保存中…";
 
   try{
-    if(shouldOwn){
-      const {data,error}=await supabaseClient.rpc("admin_add_user_item",{
-        target_user_id:userItemTargetUsername,
+    if(itemType==="chat_frame"){
+      const rpcName=shouldOwn?"admin_grant_chat_frame":"admin_revoke_chat_frame";
+      const {data,error}=await supabaseClient.rpc(rpcName,{
+        target_username:userItemTargetUsername,
         target_item_key:itemKey
       });
       if(error)throw error;
-      if(data?.ok===false)throw new Error(data.message||"アイテムを付与できませんでした。");
+      if(data?.ok===false)throw new Error(data.message||"チャットフレームを変更できませんでした。");
     }else{
-      const {data,error}=await supabaseClient.rpc("admin_remove_user_item",{
-        target_user_id:userItemTargetUsername,
-        target_item_key:itemKey
-      });
-      if(error)throw error;
-      if(data?.ok===false)throw new Error(data.message||"アイテムを削除できませんでした。");
+      if(shouldOwn){
+        const {data,error}=await supabaseClient.rpc("admin_add_user_item",{
+          target_user_id:userItemTargetUsername,
+          target_item_key:itemKey
+        });
+        if(error)throw error;
+        if(data?.ok===false)throw new Error(data.message||"アイテムを付与できませんでした。");
+      }else{
+        const {data,error}=await supabaseClient.rpc("admin_remove_user_item",{
+          target_user_id:userItemTargetUsername,
+          target_item_key:itemKey
+        });
+        if(error)throw error;
+        if(data?.ok===false)throw new Error(data.message||"アイテムを削除できませんでした。");
+      }
     }
 
     if(saving)saving.textContent="保存しました";
@@ -442,7 +489,6 @@ async function toggleAdminUserItem(input){
         : `ユーザー「${userItemTargetUsername}」からアイテム「${itemKey}」を削除しました。`
     );
 
-    // 現在装備中表示や所持数を正確に更新。
     await loadAdminUserItems(userItemTargetUsername);
   }catch(error){
     input.checked=!shouldOwn;
@@ -753,7 +799,7 @@ async function loadFrameList(){
   const type=String(item.item_type||"").toLowerCase();
   const key=String(item.item_key||"");
   if(type==="frame")return true;
-  if(type==="name_decoration"||type==="background")return false;
+  if(type==="name_decoration"||type==="background"||type==="chat_frame")return false;
   if(key.startsWith("nd_")||key.startsWith("bg_"))return false;
   return true;
  });
@@ -777,6 +823,29 @@ function getAdminItemType(item){
  if(key.startsWith("nd_"))return "name_decoration";
  if(key.startsWith("bg_"))return "background";
  return "frame";
+}
+
+async function loadChatFrameList(){
+ const loading=document.getElementById("chatFramesLoading"),list=document.getElementById("chatFramesList");
+ if(!loading||!list)return;
+ loading.classList.remove("hidden");list.innerHTML="";
+ const {data,error}=await supabaseClient
+   .from("coin_items")
+   .select("item_key,name,icon,price,frame_color,item_type")
+   .order("price",{ascending:true});
+ if(error){loading.textContent="❌ チャットフレーム一覧の読み込みに失敗しました：\n"+error.message;return}
+
+ const items=(data||[]).filter(item=>String(item.item_type||"").toLowerCase()==="chat_frame");
+ loading.classList.add("hidden");
+ if(!items.length){list.innerHTML='<div class="empty">チャットフレームがありません。</div>';return}
+
+ items.forEach(item=>{
+  const card=document.createElement("div");
+  card.className="reward-code-card";
+  const color=item.frame_color||"#d9d9d9";
+  card.innerHTML='<div style="display:flex;align-items:center;gap:12px"><div style="width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;background:'+escapeAttribute(color)+';border:3px solid '+escapeAttribute(color)+'">'+escapeHtml(item.icon||"💬")+'</div><div style="flex:1;min-width:0"><div class="reward-code-title">'+escapeHtml(item.name||item.item_key)+'</div><div class="reward-code-info">ID：'+escapeHtml(item.item_key)+'<br>価格：'+Number(item.price||0).toLocaleString("ja-JP")+' COIN<br>チャットフレーム</div></div></div>';
+  list.appendChild(card);
+ });
 }
 
 async function loadNameDecorationList(){
@@ -845,7 +914,7 @@ async function init(){
  try{
   setStatus("🔄 Supabaseを起動しています...","info");createSupabaseClient();setStatus("🔄 ログイン状態を確認しています...","info");const loggedIn=await checkLogin();if(!loggedIn)return;const banned=await checkBan();if(banned)return;
   setStatus("✅ 管理者としてログインしています。読み込みを開始します。","success");
-  await loadAnnouncements();await loadSiteStats();await loadFrameList();await loadNameDecorationList();await loadBackgroundList();await loadUsers();await loadSubAdminManagement();await loadAdvancedStats();await loadCoinHistory();await loadReports();await loadMaintenance();await loadOperationLogs();await loadBoardMessages();await loadItems();await loadRewardCodes();await loadEvents();
+  await loadAnnouncements();await loadSiteStats();await loadFrameList();await loadNameDecorationList();await loadBackgroundList();await loadChatFrameList();await loadUsers();await loadSubAdminManagement();await loadAdvancedStats();await loadCoinHistory();await loadReports();await loadMaintenance();await loadOperationLogs();await loadBoardMessages();await loadItems();await loadRewardCodes();await loadEvents();
   setStatus("✅ 管理者パネルの読み込みが完了しました！","success");
  }catch(error){console.error("管理者パネルエラー:",error);setStatus("❌ エラーが発生しました\n\n"+(error.message||error),"error")}
 }
