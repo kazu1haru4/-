@@ -104,6 +104,17 @@ button:disabled{opacity:.5}#imageInput{display:none}
 .fc-search-result-time{margin-top:4px;font-size:11px;color:#888}
 .fc-search-highlight{animation:fcSearchHighlight 1.5s ease}
 @keyframes fcSearchHighlight{0%,100%{box-shadow:none}35%{box-shadow:0 0 0 4px rgba(255,210,0,.8)}}
+
+/* ===== チャットフレーム（メッセージ装飾） ===== */
+.chat-frame-sakura{border:2px solid #ff8fbd!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 12px rgba(255,105,170,.28)!important;background:linear-gradient(135deg,#fff,#fff3f8)!important}
+.chat-frame-star{border:2px solid #f4bf3f!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 12px rgba(244,191,63,.3)!important;background:linear-gradient(135deg,#fff,#fff9df)!important}
+.chat-frame-diamond{border:2px solid #4db9ee!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 12px rgba(77,185,238,.3)!important;background:linear-gradient(135deg,#fff,#effaff)!important}
+.chat-frame-heart{border:2px solid #ff4f9a!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 12px rgba(255,79,154,.28)!important;background:linear-gradient(135deg,#fff,#fff0f6)!important}
+.chat-frame-rainbow{border:2px solid #8b5cf6!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 12px rgba(139,92,246,.3)!important;background:linear-gradient(135deg,#fff,#f7f2ff)!important}
+.chat-frame-flame{border:2px solid #ff6b35!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 12px rgba(255,107,53,.3)!important;background:linear-gradient(135deg,#fff,#fff4ee)!important}
+.chat-frame-sea{border:2px solid #29a9e8!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 12px rgba(41,169,232,.3)!important;background:linear-gradient(135deg,#fff,#eefaff)!important}
+.chat-frame-space{border:2px solid #7c5cff!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 14px rgba(124,92,255,.3)!important;background:linear-gradient(135deg,#fff,#f3f0ff)!important}
+.chat-frame-neon{border:2px solid #39d14a!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 14px rgba(57,255,20,.3)!important;background:linear-gradient(135deg,#fff,#f2fff2)!important}
 </style>
 </head>
 <body>
@@ -191,8 +202,10 @@ let incomingCallId="";
 
 const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
 const frameMap={sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",heart:"frame-heart",rainbow:"frame-rainbow",flame:"frame-flame",sea:"frame-sea",space:"frame-space",neon:"frame-neon",admin:"admin-frame"};
+const chatFrameMap={sakura:"chat-frame-sakura",star:"chat-frame-star",diamond:"chat-frame-diamond",heart:"chat-frame-heart",rainbow:"chat-frame-rainbow",flame:"chat-frame-flame",sea:"chat-frame-sea",space:"chat-frame-space",neon:"chat-frame-neon"};
+function chatFrameClass(key){return chatFrameMap[String(key||"")]||""}
 const nameMap={nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",nd_neon:"name-decoration-neon",name_sakura:"name-decoration-sakura",admin_name:"name-decoration-admin"};
-let currentUsername="",myAvatarUrl="",friendAvatarUrl="",myItem=null,friendItem=null,myName="",friendName="",myNameClass="",friendNameClass="",realtimeChannel=null,presenceTimer=null,readMessageIds=new Set(),replyTarget=null;
+let currentUsername="",myAvatarUrl="",friendAvatarUrl="",myItem=null,friendItem=null,myChatFrameKey="",friendChatFrameKey="",myName="",friendName="",myNameClass="",friendNameClass="",realtimeChannel=null,presenceTimer=null,readMessageIds=new Set(),replyTarget=null;
 let typingTimer=null,typingHideTimer=null,typingChannel=null,typingChannelReady=false;
 const ONLINE_LIMIT=60000;
 
@@ -419,7 +432,7 @@ function createMessageElement(message,imageUrl,extras={replies:[],reactions:[]})
  if(!mine)wrap.appendChild(createAvatar(avatarUrl,"👤",item));
  const box=document.createElement("div");box.className="message-content-box";
  const nm=document.createElement("div");nm.className="chat-name "+(nc||"");nm.textContent=name||message.sender_id;box.appendChild(nm);
- const bubble=document.createElement("div");bubble.className="bubble";
+ const bubble=document.createElement("div");bubble.className="bubble";const chatCls=chatFrameClass(mine?myChatFrameKey:friendChatFrameKey);if(chatCls)bubble.classList.add(chatCls);
  if(message.is_deleted){bubble.classList.add("deleted-message");bubble.textContent="このメッセージは取り消されました"}
  else{
   if(imageUrl){bubble.appendChild(makeMediaMessage(message,imageUrl,mediaKind(message.image_url)))}
@@ -838,11 +851,11 @@ async function start(){
  const {data,error}=await db.auth.getSession();if(error||!data.session){alert("ログインしてください。");location.href="index.html";return}
  currentUsername=data.session.user.user_metadata?.username||"";if(!currentUsername){alert("ログイン中のユーザーIDを取得できませんでした。");return}
  const [{data:fp,error:fe},{data:mp,error:me}]=await Promise.all([
-  db.from("profiles").select("user_id,name,avatar_url,equipped_item_key,equipped_name_decoration_key").eq("user_id",friendId).maybeSingle(),
-  db.from("profiles").select("user_id,name,avatar_url,equipped_item_key,equipped_name_decoration_key").eq("user_id",currentUsername).maybeSingle()
+  db.from("profiles").select("user_id,name,avatar_url,equipped_item_key,equipped_name_decoration_key,equipped_chat_frame_key").eq("user_id",friendId).maybeSingle(),
+  db.from("profiles").select("user_id,name,avatar_url,equipped_item_key,equipped_name_decoration_key,equipped_chat_frame_key").eq("user_id",currentUsername).maybeSingle()
  ]);
  if(fe)console.error("相手プロフィール:",fe);if(me)console.error("自分プロフィール:",me);
- friendAvatarUrl=fp?.avatar_url||"";myAvatarUrl=mp?.avatar_url||"";friendName=fp?.name||friendId;myName=mp?.name||currentUsername;
+ friendAvatarUrl=fp?.avatar_url||"";myAvatarUrl=mp?.avatar_url||"";friendChatFrameKey=fp?.equipped_chat_frame_key||"";myChatFrameKey=mp?.equipped_chat_frame_key||"";friendName=fp?.name||friendId;myName=mp?.name||currentUsername;
  let friendNameKey=fp?.equipped_name_decoration_key||"";let myNameKey=mp?.equipped_name_decoration_key||"";
  if(ADMIN_USERNAMES.has(friendId)&&friendNameKey==="")friendNameKey="";if(ADMIN_USERNAMES.has(currentUsername)&&myNameKey==="")myNameKey="";
  friendNameClass=nameClass(friendNameKey);myNameClass=nameClass(myNameKey);
