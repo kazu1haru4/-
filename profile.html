@@ -90,6 +90,20 @@ textarea{min-height:120px;resize:vertical}
 .item-details[open] .item-arrow{transform:rotate(180deg)}
 .item-arrow{font-size:17px;transition:transform .2s ease}
 .item-content{padding:12px 10px 10px}
+
+/* ===== チャットフレーム ===== */
+.chat-frame-item-preview{width:54px;height:54px;margin:0 auto 6px;border-radius:14px;padding:4px;display:flex;align-items:center;justify-content:center;background:#fff}
+.chat-frame-item-preview-inner{width:100%;height:100%;border-radius:10px;background:white;display:flex;align-items:center;justify-content:center;font-size:25px}
+.chat-frame-sakura{border:2px solid #ff8fbd!important;box-shadow:0 0 10px rgba(255,105,170,.35)!important}
+.chat-frame-star{border:2px solid #f4bf3f!important;box-shadow:0 0 10px rgba(244,191,63,.4)!important}
+.chat-frame-diamond{border:2px solid #4db9ee!important;box-shadow:0 0 12px rgba(77,185,238,.45)!important}
+.chat-frame-heart{border:2px solid #ff4f91!important;box-shadow:0 0 11px rgba(255,80,145,.4)!important}
+.chat-frame-rainbow{border:2px solid #7467ff!important;box-shadow:0 0 12px rgba(120,100,255,.35)!important}
+.chat-frame-flame{border:2px solid #ff6b35!important;box-shadow:0 0 12px rgba(255,90,20,.45)!important}
+.chat-frame-sea{border:2px solid #29a9e8!important;box-shadow:0 0 12px rgba(40,190,255,.45)!important}
+.chat-frame-space{border:2px solid #7c5cff!important;box-shadow:0 0 13px rgba(93,78,210,.45)!important}
+.chat-frame-neon{border:2px solid #39ff14!important;box-shadow:0 0 14px rgba(0,255,220,.5)!important}
+.chat-frame-admin{border:2px solid #ffd700!important;box-shadow:0 0 14px rgba(255,200,0,.55)!important}
 </style>
 </head>
 <body>
@@ -113,6 +127,8 @@ textarea{min-height:120px;resize:vertical}
 <div class="item-content"><div id="frameItems" class="items"><div class="no-items">読み込み中...</div></div></div>
 </details>
 
+
+
 <details class="item-details">
 <summary class="item-summary"><span>✨ 名前装飾</span><span class="item-arrow">▼</span></summary>
 <div class="item-content"><div id="nameDecorationItems" class="items"><div class="no-items">読み込み中...</div></div></div>
@@ -121,6 +137,11 @@ textarea{min-height:120px;resize:vertical}
 <details class="item-details">
 <summary class="item-summary"><span>🎨 プロフィール背景</span><span class="item-arrow">▼</span></summary>
 <div class="item-content"><div id="backgroundItems" class="items"><div class="no-items">読み込み中...</div></div></div>
+</details>
+
+<details class="item-details">
+<summary class="item-summary"><span>💬 チャットフレーム</span><span class="item-arrow">▼</span></summary>
+<div class="item-content"><div id="chatFrameItems" class="items"><div class="no-items">読み込み中...</div></div></div>
 </details>
 </div>
 
@@ -190,7 +211,8 @@ const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
 const ADMIN_ITEMS={
  admin:{item_key:"admin",name:"管理者限定フレーム",icon:"👑",frame_color:"#ffd700",item_type:"frame"},
  admin_name:{item_key:"admin_name",name:"管理者限定名前装飾",icon:"👑",frame_color:"#ffd700",item_type:"name_decoration"},
- admin_bg:{item_key:"admin_bg",name:"管理者限定背景",icon:"👑",frame_color:"#ffd700",item_type:"background"}
+ admin_bg:{item_key:"admin_bg",name:"管理者限定背景",icon:"👑",frame_color:"#ffd700",item_type:"background"},
+ admin_chat:{item_key:"admin_chat",name:"管理者限定チャットフレーム",icon:"👑",frame_color:"#ffd700",item_type:"chat_frame"}
 };
 
 let currentUsername="",currentProfile=null,ownedItems=[];
@@ -254,7 +276,8 @@ async function loadProfile(){
   avatar_url:null,
   equipped_item_key:null,
   equipped_name_decoration_key:null,
-  equipped_background_key:null
+  equipped_background_key:null,
+  equipped_chat_frame_key:null
  };
 
  document.getElementById("name").value=currentProfile.name||"";
@@ -317,7 +340,8 @@ function getItem(key){
 
 function normalizeItemType(item){
  const key=String(item?.item_key||"");
- if(item?.item_type==="frame"||item?.item_type==="name_decoration"||item?.item_type==="background")return item.item_type;
+ if(item?.item_type==="frame"||item?.item_type==="name_decoration"||item?.item_type==="background"||item?.item_type==="chat_frame")return item.item_type;
+ if(key.startsWith("chat_")||key==="admin_chat")return "chat_frame";
  if(key.startsWith("nd_")||key==="admin_name")return "name_decoration";
  if(key.startsWith("bg_")||key==="admin_bg")return "background";
  return "frame";
@@ -351,11 +375,22 @@ function getBackgroundClass(key){
  }[key]||"";
 }
 
+function getChatFrameClass(key){
+ return {
+  chat_sakura:"chat-frame-sakura",chat_star:"chat-frame-star",
+  chat_diamond:"chat-frame-diamond",chat_heart:"chat-frame-heart",
+  chat_rainbow:"chat-frame-rainbow",chat_flame:"chat-frame-flame",
+  chat_sea:"chat-frame-sea",chat_space:"chat-frame-space",
+  chat_neon:"chat-frame-neon",admin_chat:"chat-frame-admin"
+ }[key]||"";
+}
+
 function renderItems(){
  const groups={
   frame:document.getElementById("frameItems"),
   name_decoration:document.getElementById("nameDecorationItems"),
-  background:document.getElementById("backgroundItems")
+  background:document.getElementById("backgroundItems"),
+  chat_frame:document.getElementById("chatFrameItems")
  };
 
  Object.values(groups).forEach(x=>x.innerHTML="");
@@ -363,7 +398,8 @@ function renderItems(){
  const equipped={
   frame:currentProfile?.equipped_item_key||"",
   name_decoration:currentProfile?.equipped_name_decoration_key||"",
-  background:currentProfile?.equipped_background_key||""
+  background:currentProfile?.equipped_background_key||"",
+  chat_frame:currentProfile?.equipped_chat_frame_key||""
  };
 
  for(const raw of ownedItems){
@@ -371,7 +407,7 @@ function renderItems(){
   const key=String(item.item_key||"");
   const type=normalizeItemType(item);
 
-  if(!groups[type]||(!isAdmin()&&["admin","admin_name","admin_bg"].includes(key)))continue;
+  if(!groups[type]||(!isAdmin()&&["admin","admin_name","admin_bg","admin_chat"].includes(key)))continue;
 
   const isEquipped=equipped[type]===key;
   const card=document.createElement("div");
@@ -388,10 +424,14 @@ function renderItems(){
    const cls=getNameClass(key);
    typeLabel="名前装飾";
    preview=`<div class="item-preview name-item-preview ${cls}">名前${key==="admin_name"?" 👑":""}</div>`;
-  }else{
+  }else if(type==="background"){
    const cls=getBackgroundClass(key);
    typeLabel="プロフィール背景";
    preview=`<div class="item-preview background-item-preview ${cls}">${escapeHtml(item.icon||"🎨")}</div>`;
+  }else{
+   const cls=getChatFrameClass(key);
+   typeLabel="チャットフレーム";
+   preview=`<div class="chat-frame-item-preview ${cls}"><div class="chat-frame-item-preview-inner">${escapeHtml(item.icon||"💬")}</div></div>`;
   }
 
   card.innerHTML=`
@@ -416,12 +456,12 @@ async function equipItem(type,key){
  try{
   if(typeof checkFriendChatBan==="function"&&await checkFriendChatBan())return;
 
-  if(["admin","admin_name","admin_bg"].includes(key)&&!isAdmin()){
+  if(["admin","admin_name","admin_bg","admin_chat"].includes(key)&&!isAdmin()){
    showMessage("管理者専用アイテムです。",true);
    return;
   }
 
-  if(!["frame","name_decoration","background"].includes(type)){
+  if(!["frame","name_decoration","background","chat_frame"].includes(type)){
    showMessage("アイテム種類が不正です。",true);
    return;
   }
@@ -437,7 +477,9 @@ async function equipItem(type,key){
     ?"equipped_item_key"
     :type==="name_decoration"
     ?"equipped_name_decoration_key"
-    :"equipped_background_key";
+    :type==="background"
+    ?"equipped_background_key"
+    :"equipped_chat_frame_key";
 
   showMessage("装備しています...");
 
