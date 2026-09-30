@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -18,6 +18,17 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic
 .shop-item{background:#faf9ff;border:2px solid #e8e3ff;border-radius:18px;padding:15px;display:flex;align-items:center;gap:12px}.shop-preview{width:58px;height:58px;border-radius:50%;padding:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#ffd0e7}.shop-preview-inner{width:100%;height:100%;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:27px}
 .frame-sakura{background:linear-gradient(135deg,#ff9bc9,#ff5da8,#ffd1e7)!important}.frame-star{background:linear-gradient(135deg,#ffe98a,#f4bf3f,#fff1a8)!important}.frame-diamond{background:linear-gradient(135deg,#a8ecff,#4db9ee,#d4f7ff)!important}.frame-heart{background:linear-gradient(135deg,#ff9bb8,#ff4f81,#ffc4d5)!important}.frame-rainbow{background:conic-gradient(#ff4d4d,#ffb84d,#ffff66,#5cff8d,#4ddcff,#7b6cff,#ff4dd8,#ff4d4d)!important}.frame-flame{background:linear-gradient(135deg,#ff3b1f,#ff8c00,#ffd400)!important}.frame-sea{background:linear-gradient(135deg,#0077ff,#00cfff,#9ff5ff)!important}.frame-space{background:radial-gradient(circle at 20% 20%,#fff 1px,transparent 2px),radial-gradient(circle at 70% 35%,#fff 1px,transparent 2px),radial-gradient(circle at 45% 75%,#fff 1px,transparent 2px),linear-gradient(135deg,#08051c,#25104f,#09031c)!important}.frame-neon{background:linear-gradient(135deg,#00ff88,#00e5ff,#ff00d4)!important}
 .shop-info{flex:1;min-width:0}.shop-name{font-size:15px;font-weight:bold}.shop-price{margin-top:4px;color:#777;font-size:13px}.buy-button{border:none;background:#8f7cff;color:white;border-radius:12px;padding:10px 12px;font-size:13px;font-weight:bold;cursor:pointer;white-space:nowrap}.buy-button:disabled{opacity:.45}.buy-button.owned{background:#e8e5ff;color:#6255c7}
+.chat-frame-preview{width:58px;height:58px;border-radius:18px;padding:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.chat-frame-preview-inner{width:100%;height:100%;border-radius:14px;background:white;display:flex;align-items:center;justify-content:center;font-size:27px}
+.chat-frame-sakura{background:linear-gradient(135deg,#ff9bc9,#ff5da8,#ffd1e7)!important}
+.chat-frame-star{background:linear-gradient(135deg,#ffe98a,#f4bf3f,#fff1a8)!important}
+.chat-frame-diamond{background:linear-gradient(135deg,#a8ecff,#4db9ee,#d4f7ff)!important}
+.chat-frame-heart{background:linear-gradient(135deg,#ff9bb8,#ff4f81,#ffc4d5)!important}
+.chat-frame-rainbow{background:conic-gradient(#ff4d4d,#ffb84d,#ffff66,#5cff8d,#4ddcff,#7b6cff,#ff4dd8,#ff4d4d)!important}
+.chat-frame-flame{background:linear-gradient(135deg,#ff3b1f,#ff8c00,#ffd400)!important}
+.chat-frame-sea{background:linear-gradient(135deg,#0077ff,#00cfff,#9ff5ff)!important}
+.chat-frame-space{background:radial-gradient(circle at 20% 20%,#fff 1px,transparent 2px),radial-gradient(circle at 70% 35%,#fff 1px,transparent 2px),radial-gradient(circle at 45% 75%,#fff 1px,transparent 2px),linear-gradient(135deg,#08051c,#25104f,#09031c)!important}
+.chat-frame-neon{background:linear-gradient(135deg,#00ff88,#00e5ff,#ff00d4)!important}
 .notice{background:#fff8df;border-radius:16px;padding:13px;font-size:13px;color:#735f19;line-height:1.6}.message{text-align:center;margin-top:12px;min-height:22px;font-size:14px;font-weight:bold}
 @media(max-width:380px){.reward-code-box{flex-direction:column}.reward-code-box button{width:100%}.shop-item{padding:12px}.shop-preview{width:50px;height:50px}.shop-preview-inner{font-size:23px}.buy-button{padding:9px 10px}}
 </style>
@@ -65,6 +76,11 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic
 <details class="shop-details" id="backgroundShopDetails">
 <summary class="shop-summary"><div class="shop-summary-left"><div class="shop-summary-icon">🎨</div><div class="shop-summary-text"><div class="shop-summary-title">背景ショップ</div><div class="shop-summary-sub">プロフィールの背景を交換</div></div></div><div class="shop-arrow">▼</div></summary>
 <div class="shop-content"><p class="description">自分や友達のプロフィールに表示する背景を交換できます！</p><div id="backgroundShop" class="shop">読み込み中……</div></div>
+</details>
+
+<details class="shop-details" id="chatFrameShopDetails">
+<summary class="shop-summary"><div class="shop-summary-left"><div class="shop-summary-icon">💬</div><div class="shop-summary-text"><div class="shop-summary-title">チャットフレームショップ</div><div class="shop-summary-sub">チャット画面のフレームを交換</div></div></div><div class="shop-arrow">▼</div></summary>
+<div class="shop-content"><p class="description">集めたコインでチャット画面に使えるフレームを交換できます！</p><div id="chatFrameShop" class="shop">読み込み中……</div></div>
 </details>
 
 </div>
@@ -177,7 +193,7 @@ async function loadShop(){
  const {data:items,error:itemError}=await supabaseClient.from("coin_items").select("item_key,name,icon,price,frame_color,item_type").order("price",{ascending:true});
  if(itemError){
   console.error(itemError);
-  ["frameShop","nameDecorationShop","backgroundShop"].forEach(id=>document.getElementById(id).innerHTML="❌ ショップを読み込めませんでした");
+  ["frameShop","nameDecorationShop","backgroundShop","chatFrameShop"].forEach(id=>document.getElementById(id).innerHTML="❌ ショップを読み込めませんでした");
   return;
  }
 
@@ -193,6 +209,51 @@ function renderAllShops(){
  renderShopType("frame","frameShop","現在交換できるフレームはありません。","🖼️");
  renderShopType("name_decoration","nameDecorationShop","現在交換できる名前装飾はありません。","✨");
  renderShopType("background","backgroundShop","現在交換できる背景はありません。","🎨");
+ renderChatFrameShop();
+}
+
+
+function getChatFrameClass(itemKey){
+ const map={
+  chat_sakura:"chat-frame-sakura",
+  chat_star:"chat-frame-star",
+  chat_diamond:"chat-frame-diamond",
+  chat_heart:"chat-frame-heart",
+  chat_rainbow:"chat-frame-rainbow",
+  chat_flame:"chat-frame-flame",
+  chat_sea:"chat-frame-sea",
+  chat_space:"chat-frame-space",
+  chat_neon:"chat-frame-neon"
+ };
+ return map[itemKey]||"";
+}
+
+function renderChatFrameShop(){
+ const shop=document.getElementById("chatFrameShop");
+ if(!shop)return;
+ const items=shopItems.filter(item=>item.item_type==="chat_frame");
+ if(!items.length){
+  shop.innerHTML="現在交換できるチャットフレームはありません。";
+  return;
+ }
+ shop.innerHTML=items.map(item=>{
+  const owned=ownedItems.has(item.item_key);
+  const frameClass=getChatFrameClass(item.item_key);
+  const inlineStyle=frameClass?"":`style="background:${escapeAttribute(item.frame_color||"#ffd0e7")}"`;
+  return `<div class="shop-item">
+   <div class="chat-frame-preview ${frameClass}" ${inlineStyle}>
+    <div class="chat-frame-preview-inner">${escapeHtml(item.icon||"💬")}</div>
+   </div>
+   <div class="shop-info">
+    <div class="shop-name">${escapeHtml(item.name)}</div>
+    <div class="shop-price">🪙 ${Number(item.price).toLocaleString()} COIN</div>
+   </div>
+   ${owned?`<button class="buy-button owned" disabled>交換済み</button>`:`<button class="buy-button" data-buy-chat-frame="${escapeAttribute(item.item_key)}">交換</button>`}
+  </div>`;
+ }).join("");
+ shop.querySelectorAll("[data-buy-chat-frame]").forEach(button=>{
+  button.addEventListener("click",()=>buyItem(button.dataset.buyChatFrame));
+ });
 }
 
 function renderShopType(type,elementId,emptyText,defaultIcon){
