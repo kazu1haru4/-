@@ -59,6 +59,7 @@ h1{text-align:center;margin:0 0 20px;font-size:27px;color:#7158cf}
 .item-icon{position:relative;width:54px;height:54px;margin:0 auto 6px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:29px;background:#fff}
 .item-name{font-size:11px;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .equip-button{width:100%;border:none;border-radius:9px;padding:6px 3px;background:#7658d9;color:white;font-size:11px;font-weight:bold;cursor:pointer}.equip-button.equipped{background:#bbb}
+.unequip-button{width:100%;border:1px solid #ddd;border-radius:9px;padding:6px 3px;background:#fff;color:#777;font-size:11px;font-weight:bold;cursor:pointer;margin-top:5px}.unequip-button:hover{background:#f7f7f7}
 .item-preview{position:relative;width:54px;height:54px;margin:0 auto 6px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:#fff;overflow:hidden}
 .name-item-preview{font-size:17px;font-weight:900;white-space:nowrap}
 .background-item-preview{font-size:25px;width:54px;height:54px;border-radius:14px;border:2px solid #eee}
@@ -127,7 +128,10 @@ textarea{min-height:120px;resize:vertical}
 <div class="item-content"><div id="frameItems" class="items"><div class="no-items">読み込み中...</div></div></div>
 </details>
 
-
+<details class="item-details">
+<summary class="item-summary"><span>💬 チャットフレーム</span><span class="item-arrow">▼</span></summary>
+<div class="item-content"><div id="chatFrameItems" class="items"><div class="no-items">読み込み中...</div></div></div>
+</details>
 
 <details class="item-details">
 <summary class="item-summary"><span>✨ 名前装飾</span><span class="item-arrow">▼</span></summary>
@@ -137,11 +141,6 @@ textarea{min-height:120px;resize:vertical}
 <details class="item-details">
 <summary class="item-summary"><span>🎨 プロフィール背景</span><span class="item-arrow">▼</span></summary>
 <div class="item-content"><div id="backgroundItems" class="items"><div class="no-items">読み込み中...</div></div></div>
-</details>
-
-<details class="item-details">
-<summary class="item-summary"><span>💬 チャットフレーム</span><span class="item-arrow">▼</span></summary>
-<div class="item-content"><div id="chatFrameItems" class="items"><div class="no-items">読み込み中...</div></div></div>
 </details>
 </div>
 
@@ -438,7 +437,7 @@ function renderItems(){
    ${preview}
    <div class="item-type-label">${typeLabel}</div>
    <div class="item-name">${escapeHtml(item.name||key)}</div>
-   <button class="equip-button ${isEquipped?"equipped":""}" data-type="${type}" data-key="${escapeHtml(key)}">${isEquipped?"装備中":"装備する"}</button>`;
+   <button class="equip-button ${isEquipped?"equipped":""}" data-type="${type}" data-key="${escapeHtml(key)}">${isEquipped?"装備中":"装備する"}</button>${isEquipped?`<button class="unequip-button" data-type="${type}">装備解除</button>`:""}`;
 
   groups[type].appendChild(card);
  }
@@ -450,6 +449,38 @@ function renderItems(){
  document.querySelectorAll(".equip-button").forEach(btn=>{
   btn.addEventListener("click",()=>equipItem(btn.dataset.type,btn.dataset.key));
  });
+ document.querySelectorAll(".unequip-button").forEach(btn=>{
+  btn.addEventListener("click",()=>unequipItem(btn.dataset.type));
+ });
+}
+
+async function unequipItem(type){
+ try{
+  if(typeof checkFriendChatBan==="function"&&await checkFriendChatBan())return;
+
+  const column=
+   type==="frame"?"equipped_item_key":
+   type==="name_decoration"?"equipped_name_decoration_key":
+   type==="background"?"equipped_background_key":
+   type==="chat_frame"?"equipped_chat_frame_key":null;
+
+  if(!column){showMessage("装備種類が不正です。",true);return;}
+  showMessage("装備を解除しています...");
+
+  const {data,error}=await supabaseClient.from("profiles")
+   .update({[column]:null}).eq("user_id",currentUsername).select("*").maybeSingle();
+
+  if(error){console.error("unequipItem update error:",error);showMessage("装備解除に失敗しました。\n"+error.message,true);return;}
+  if(!data){showMessage("装備解除を保存できませんでした。プロフィールの更新権限を確認してください。",true);return;}
+
+  currentProfile=data;
+  renderItems();
+  updatePreview();
+  showMessage("装備を解除しました！");
+ }catch(e){
+  console.error("unequipItem exception:",e);
+  showMessage("装備解除中にエラーが発生しました。\n"+(e.message||e),true);
+ }
 }
 
 async function equipItem(type,key){
