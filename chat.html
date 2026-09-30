@@ -114,7 +114,7 @@ button:disabled{opacity:.5}#imageInput{display:none}
 .chat-frame-flame{border:2px solid #ff6b35!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 12px rgba(255,107,53,.3)!important;background:linear-gradient(135deg,#fff,#fff4ee)!important}
 .chat-frame-sea{border:2px solid #29a9e8!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 12px rgba(41,169,232,.3)!important;background:linear-gradient(135deg,#fff,#eefaff)!important}
 .chat-frame-space{border:2px solid #7c5cff!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 14px rgba(124,92,255,.3)!important;background:linear-gradient(135deg,#fff,#f3f0ff)!important}
-.chat-frame-neon{border:2px solid #39d14a!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 14px rgba(57,255,20,.3)!important;background:linear-gradient(135deg,#fff,#f2fff2)!important}
+.chat-frame-neon{border:2px solid #39d14a!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 14px rgba(57,255,20,.3)!important;background:linear-gradient(135deg,#fff,#f2fff2)!important}.chat-frame-admin{border:2px solid #ffd700!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 16px rgba(255,215,0,.55)!important;background:linear-gradient(135deg,#fff,#fff7c2)!important}
 </style>
 </head>
 <body>
@@ -202,7 +202,7 @@ let incomingCallId="";
 
 const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
 const frameMap={sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",heart:"frame-heart",rainbow:"frame-rainbow",flame:"frame-flame",sea:"frame-sea",space:"frame-space",neon:"frame-neon",admin:"admin-frame"};
-const chatFrameMap={sakura:"chat-frame-sakura",star:"chat-frame-star",diamond:"chat-frame-diamond",heart:"chat-frame-heart",rainbow:"chat-frame-rainbow",flame:"chat-frame-flame",sea:"chat-frame-sea",space:"chat-frame-space",neon:"chat-frame-neon"};
+const chatFrameMap={chat_sakura:"chat-frame-sakura",chat_star:"chat-frame-star",chat_diamond:"chat-frame-diamond",chat_heart:"chat-frame-heart",chat_rainbow:"chat-frame-rainbow",chat_flame:"chat-frame-flame",chat_sea:"chat-frame-sea",chat_space:"chat-frame-space",chat_neon:"chat-frame-neon",admin_chat:"chat-frame-admin",sakura:"chat-frame-sakura",star:"chat-frame-star",diamond:"chat-frame-diamond",heart:"chat-frame-heart",rainbow:"chat-frame-rainbow",flame:"chat-frame-flame",sea:"chat-frame-sea",space:"chat-frame-space",neon:"chat-frame-neon"};
 function chatFrameClass(key){return chatFrameMap[String(key||"")]||""}
 const nameMap={nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",nd_neon:"name-decoration-neon",name_sakura:"name-decoration-sakura",admin_name:"name-decoration-admin"};
 let currentUsername="",myAvatarUrl="",friendAvatarUrl="",myItem=null,friendItem=null,myChatFrameKey="",friendChatFrameKey="",myName="",friendName="",myNameClass="",friendNameClass="",realtimeChannel=null,presenceTimer=null,readMessageIds=new Set(),replyTarget=null;
