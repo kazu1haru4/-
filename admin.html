@@ -846,7 +846,7 @@ async function loadChatFrameList(){
    .order("price",{ascending:true});
  if(error){loading.textContent="❌ チャットフレーム一覧の読み込みに失敗しました：\n"+error.message;return}
 
- const items=(data||[]).filter(item=>String(item.item_type||"").toLowerCase()==="chat_frame");
+ const items=(data||[]).filter(item=>String(item.item_type||"").toLowerCase()==="chat_frame" && String(item.item_key||"")!=="admin_chat");
  loading.classList.add("hidden");
  if(!items.length){list.innerHTML='<div class="empty">チャットフレームがありません。</div>';return}
 
@@ -865,7 +865,7 @@ async function loadNameDecorationList(){
  loading.classList.remove("hidden");list.innerHTML="";
  const {data,error}=await supabaseClient.from("coin_items").select("item_key,name,icon,price,frame_color,item_type").order("price",{ascending:true});
  if(error){loading.textContent="❌ 名前装飾一覧の読み込みに失敗しました：\n"+error.message;return}
- const items=(data||[]).filter(item=>getAdminItemType(item)==="name_decoration");
+ const items=(data||[]).filter(item=>getAdminItemType(item)==="name_decoration" && !["admin_name","admin"].includes(String(item.item_key||"")));
  loading.classList.add("hidden");
  if(!items.length){list.innerHTML='<div class="empty">名前装飾がありません。</div>';return}
  items.forEach(item=>{
@@ -882,7 +882,7 @@ async function loadBackgroundList(){
  loading.classList.remove("hidden");list.innerHTML="";
  const {data,error}=await supabaseClient.from("coin_items").select("item_key,name,icon,price,frame_color,item_type").order("price",{ascending:true});
  if(error){loading.textContent="❌ 背景一覧の読み込みに失敗しました：\n"+error.message;return}
- const items=(data||[]).filter(item=>getAdminItemType(item)==="background");
+ const items=(data||[]).filter(item=>getAdminItemType(item)==="background" && !["admin_bg","admin"].includes(String(item.item_key||"")));
  loading.classList.add("hidden");
  if(!items.length){list.innerHTML='<div class="empty">背景がありません。</div>';return}
  items.forEach(item=>{
