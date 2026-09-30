@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -30,6 +30,15 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic
 .chat-frame-space{background:radial-gradient(circle at 20% 20%,#fff 1px,transparent 2px),radial-gradient(circle at 70% 35%,#fff 1px,transparent 2px),radial-gradient(circle at 45% 75%,#fff 1px,transparent 2px),linear-gradient(135deg,#08051c,#25104f,#09031c)!important}
 .chat-frame-neon{background:linear-gradient(135deg,#00ff88,#00e5ff,#ff00d4)!important}
 .notice{background:#fff8df;border-radius:16px;padding:13px;font-size:13px;color:#735f19;line-height:1.6}.message{text-align:center;margin-top:12px;min-height:22px;font-size:14px;font-weight:bold}
+.daily-missions{display:grid;gap:10px}
+.daily-mission{background:#faf9ff;border:2px solid #e8e3ff;border-radius:18px;padding:14px;display:flex;align-items:center;gap:10px}
+.daily-mission-info{flex:1;min-width:0}
+.daily-mission-title{font-size:14px;font-weight:bold}
+.daily-mission-reward{margin-top:4px;color:#777;font-size:12px}
+.daily-mission-button{border:none;background:#8f7cff;color:white;border-radius:12px;padding:9px 11px;font-size:12px;font-weight:bold;white-space:nowrap;cursor:pointer}
+.daily-mission-button.done{background:#e8e5ff;color:#6255c7}
+.daily-mission-total{margin-top:12px;padding:12px;border-radius:14px;background:#fff8df;color:#735f19;text-align:center;font-size:13px}
+
 @media(max-width:380px){.reward-code-box{flex-direction:column}.reward-code-box button{width:100%}.shop-item{padding:12px}.shop-preview{width:50px;height:50px}.shop-preview-inner{font-size:23px}.buy-button{padding:9px 10px}}
 </style>
 </head>
@@ -52,13 +61,10 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic
 </div>
 
 <div class="card">
-<h2>🎮 コインを集める</h2><p class="description">フレンドチャットのいろいろな機能でコインを集めよう！</p>
-<div class="actions">
-<button class="action" onclick="showComingSoon()"><div class="icon">🎮</div><strong>ゲーム</strong><span>ゲームで獲得</span></button>
-<button class="action" onclick="showComingSoon()"><div class="icon">🎯</div><strong>チャレンジ</strong><span>達成して獲得</span></button>
-<button class="action" onclick="claimLoginBonus()"><div class="icon">📅</div><strong>ログイン</strong><span>+10 COIN</span></button>
-<button class="action" onclick="scrollToShop()"><div class="icon">🛍️</div><strong>ショップ</strong><span>アイテムと交換</span></button>
-</div>
+<h2>📋 デイリーミッション</h2>
+<p class="description">毎日5つのミッションに挑戦して、合計60 COINを集めよう！</p>
+<div id="dailyMissionList" class="daily-missions">読み込み中……</div>
+<div class="daily-mission-total">今日の合計報酬：🪙 <strong>60</strong> COIN</div>
 </div>
 
 <div class="card" id="shopCard">
@@ -116,6 +122,74 @@ async function getCurrentUser(){
   adminButton.onclick=()=>location.href="admin-coin.html";
  }
  return !!currentUsername;
+}
+
+
+async function loadDailyMissions(){
+ const box=document.getElementById("dailyMissionList");
+ if(!box||!currentUsername)return;
+ const today=getToday();
+ const {data,error}=await supabaseClient.from("daily_mission_claims")
+  .select("mission_key,reward")
+  .eq("user_id",currentUsername)
+  .eq("claim_date",today);
+ if(error){
+  console.error("daily missions:",error);
+  box.innerHTML="❌ ミッションを読み込めませんでした";
+  return;
+ }
+ const done=new Set((data||[]).map(x=>x.mission_key));
+ const missions=[
+  {key:"messages_5",icon:"💬",title:"メッセージを5回送る",reward:15,action:"chat"},
+  {key:"group_message_1",icon:"👥",title:"グループで1回送信",reward:15,action:"group"},
+  {key:"board_post_1",icon:"📋",title:"掲示板に1回投稿",reward:10,action:"board"},
+  {key:"message_search_1",icon:"🔎",title:"メッセージを1回検索",reward:10,action:"search"},
+  {key:"profile_open_1",icon:"👤",title:"プロフィールを開く",reward:10,action:"profile"}
+ ];
+ box.innerHTML=missions.map(m=>{
+  const isDone=done.has(m.key);
+  const label=isDone?"✅ 達成済み":(m.action==="profile"?"プロフィールへ":"挑戦する");
+  const click=isDone?"":`onclick="dailyMissionAction('${m.action}')"`;
+  return `<div class="daily-mission">
+   <div style="font-size:26px">${m.icon}</div>
+   <div class="daily-mission-info">
+    <div class="daily-mission-title">${m.title}</div>
+    <div class="daily-mission-reward">🪙 ${m.reward} COIN</div>
+   </div>
+   <button class="daily-mission-button ${isDone?"done":""}" ${isDone?"disabled":click}>${label}</button>
+  </div>`;
+ }).join("");
+}
+
+async function claimDailyMission(key){
+ const rewards={messages_5:15,group_message_1:15,board_post_1:10,message_search_1:10,profile_open_1:10};
+ if(!rewards[key]||!currentUsername)return false;
+ const {error}=await supabaseClient.from("daily_mission_claims").insert({
+  user_id:currentUsername,
+  claim_date:getToday(),
+  mission_key:key,
+  reward:rewards[key]
+ });
+ if(error){
+  if(error.code==="23505"){
+   await loadDailyMissions();
+   return false;
+  }
+  console.error("daily mission claim:",error);
+  return false;
+ }
+ await loadCoins();
+ await loadDailyMissions();
+ showMessage("🎉 ミッション達成！ コインを獲得しました！");
+ return true;
+}
+
+function dailyMissionAction(action){
+ if(action==="chat") location.href="chat.html?dailyMission=messages_5";
+ else if(action==="group") location.href="group_chat.html?dailyMission=group_message_1";
+ else if(action==="search") location.href="group_chat.html?dailyMission=message_search_1";
+ else if(action==="profile") location.href="profile.html?dailyMission=profile_open_1";
+ else if(action==="board") showMessage("📋 掲示板に1回投稿してから、フレンドコインに戻ってね！");
 }
 
 async function loadCoins(){
@@ -318,6 +392,7 @@ async function start(){
  if(typeof checkFriendChatBan==="function"&&await checkFriendChatBan())return;
  if(!await loadCoins())return;
  await loadShop();
+ await loadDailyMissions();
 }
 start();
 </script>
