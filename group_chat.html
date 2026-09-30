@@ -209,12 +209,12 @@ body{display:flex;flex-direction:column}
 .group-typing-indicator.show{opacity:1;transform:none}
 
 /* ===== グループメニュー ===== */
-.group-menu-button{border:none;background:white;color:#555;width:40px;height:40px;border-radius:12px;font-size:28px;line-height:1;font-weight:bold;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.08);padding:0}
+.group-menu-button{position:absolute!important;top:max(12px,env(safe-area-inset-top))!important;right:12px!important;width:42px!important;height:42px!important;padding:0!important;border:0!important;border-radius:12px!important;background:#8f7cff!important;color:#fff!important;font-size:28px!important;font-weight:800!important;line-height:42px!important;z-index:20!important}
 .group-menu{position:absolute;top:48px;right:0;width:190px;background:white;border:1px solid #eee;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:6px;z-index:100}
 .group-menu button{display:block;width:100%;border:none;background:white;color:#444;text-align:left;padding:11px 12px;border-radius:10px;font-size:13px;font-weight:bold;cursor:pointer}
 .group-menu button:hover{background:var(--theme-light)}
 .group-menu .group-menu-delete{color:#d9534f}
-@media(max-width:520px){.group-menu-button{width:38px;height:38px;font-size:26px}.group-menu{top:45px;right:0;width:180px}.group-menu button{font-size:12px;padding:10px 11px}}
+@media(max-width:520px){.group-menu{top:60px;right:12px;width:190px}.group-menu button{font-size:15px;padding:13px 12px}}
 </style>
 </head>
 <body>
@@ -226,7 +226,7 @@ body{display:flex;flex-direction:column}
 <div id="groupName" class="group-name">読み込み中...</div>
 </div>
 <div class="group-actions">
-  <button id="groupMenuButton" class="group-menu-button" type="button" aria-label="グループメニュー">⋮</button>
+  <button id="groupMenuButton" class="group-menu-button" type="button" aria-label="グループメニュー">⋯</button>
   <div id="groupMenu" class="group-menu" style="display:none">
     <button id="groupMenuMemberButton" type="button">👥 メンバー</button>
     <button id="groupCallMenuButton" type="button">📞 グループ通話</button>
