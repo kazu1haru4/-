@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>フレンドビンゴ</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:linear-gradient(135deg,#fff4fb,#eef7ff);color:#333}.wrap{width:min(92%,460px);margin:auto;padding:22px 0 40px}.head{display:flex;align-items:center;gap:10px;margin-bottom:16px}.back{width:42px;height:42px;border:0;border-radius:14px;background:#fff;font-size:26px;box-shadow:0 4px 12px rgba(0,0,0,.08);cursor:pointer}.head h1{margin:0;font-size:23px;flex:1}.card{background:rgba(255,255,255,.95);border-radius:22px;padding:18px;margin-bottom:16px;box-shadow:0 6px 18px rgba(0,0,0,.07)}.card h2{margin:0 0 7px;font-size:20px}.desc{margin:0 0 15px;color:#777;font-size:13px;line-height:1.6}.board{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:10px;background:#f6f3ff;border:2px solid #e6e0ff;border-radius:20px}.cell{aspect-ratio:1;border:0;border-radius:17px;background:#fff;box-shadow:0 4px 10px rgba(0,0,0,.07);font-size:35px;cursor:pointer;transition:transform .12s,opacity .12s}.cell:active{transform:scale(.94)}.cell.open{background:#fff8d9}.cell.line{outline:3px solid #8f7cff}.cell:disabled{cursor:default}.result{min-height:28px;text-align:center;font-weight:800;margin:13px 0 8px}.lines{font-size:14px;color:#6d5cc7;text-align:center;min-height:20px}.play{width:100%;border:0;border-radius:16px;padding:14px;background:#8f7cff;color:#fff;font-size:16px;font-weight:800;cursor:pointer}.play:disabled{opacity:.45;cursor:not-allowed}.status{text-align:center;min-height:24px;font-weight:700;font-size:14px;margin-top:10px}.history{display:flex;justify-content:space-between;gap:8px;text-align:center}.stat{flex:1;background:#faf9ff;border:2px solid #e8e3ff;border-radius:15px;padding:12px 6px}.stat strong{display:block;font-size:21px}.stat span{font-size:11px;color:#777}.small{font-size:12px;color:#777;text-align:center;margin-top:8px}.prob{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.prob div{background:#faf9ff;border-radius:10px;padding:8px;text-align:center;font-size:12px;transition:.25s}.prob b{display:block;font-size:15px}.prob span{display:block;font-size:11px;color:#6d5cc7;margin-top:3px;font-weight:700}.prob div.hit{background:#fff2a8;box-shadow:0 0 0 3px #ffd84d,0 0 18px rgba(255,216,77,.8);transform:scale(1.03)}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <div class="head"><button class="back" type="button" onclick="history.back()">‹</button><h1>🎯 フレンドビンゴ</h1></div>
+ <div class="card">
+  <h2>🎯 9マスチャレンジ</h2>
+  <p class="desc">無料で遊べる3×3ミニゲーム！9マスを開けて、そろったラインを探そう。</p>
+  <div id="board" class="board" aria-label="3×3ビンゴボード"></div>
+  <div id="lineResult" class="lines"></div>
+  <div id="result" class="result">「プレイする」を押してスタート！</div>
+  <button id="playButton" class="play" type="button">🎮 プレイする</button>
+  <div id="status" class="status"></div>
+ </div>
+
+ <div class="card">
+  <h2>📈 ライン成立率・報酬</h2>
+  <div class="prob" id="probList">
+   <div data-lines="1">1ライン<b>30%</b><span data-reward="1">20コイン</span></div>
+   <div data-lines="2">2ライン<b>20%</b><span data-reward="2">20コイン</span></div>
+   <div data-lines="3">3ライン<b>15%</b><span data-reward="3">20コイン</span></div>
+   <div data-lines="4">4ライン<b>10%</b><span data-reward="4">20コイン</span></div>
+   <div data-lines="5">5ライン<b>5%</b><span data-reward="5">20コイン</span></div>
+   <div data-lines="6">6ライン<b>4%</b><span data-reward="6">20コイン</span></div>
+   <div data-lines="7">7ライン<b>2%</b><span data-reward="7">20コイン</span></div>
+   <div data-lines="8">8ライン<b>1%</b><span data-reward="8">20コイン</span></div>
+   <div data-lines="9">9ライン<b>0.1%</b><span data-reward="9">20コイン</span></div>
+  </div>
+  <div class="small">※ 表示用の設定値。実際の盤面生成では複数ラインが同時成立するため、これらを単純に足して100%にはしません。</div>
+ </div>
+ <div class="card">
+  <h2>📊 プレイ記録</h2>
+  <div class="history"><div class="stat"><strong id="plays">0</strong><span>プレイ</span></div><div class="stat"><strong id="bestLines">0</strong><span>最高ライン</span></div><div class="stat"><strong id="totalLines">0</strong><span>成立ライン</span></div></div>
+  <div class="small">記録はこの端末に保存されます。</div>
+ </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let currentCoins=0;
+
+async function loadCoins(){
+  const {data,error}=await db.rpc("get_my_coins");
+  if(error){
+    console.warn("コイン取得エラー:",error);
+    return;
+  }
+  currentCoins=Number(data||0);
+  const el=document.getElementById("coins");
+  if(el)el.textContent=currentCoins;
+}
+
+async function playWithCoins(){
+  const {data,error}=await db.rpc("play_friend_bingo");
+  if(error)throw error;
+  currentCoins=Number(data||0);
+  const el=document.getElementById("coins");
+  if(el)el.textContent=currentCoins;
+  return currentCoins;
+}
+
+async function rewardCoins(){
+  const {data,error}=await db.rpc("reward_friend_bingo");
+  if(error)throw error;
+  currentCoins=Number(data||0);
+  const el=document.getElementById("coins");
+  if(el)el.textContent=currentCoins;
+  return currentCoins;
+}
+
+const icons=["🌸","⭐","💎","❤️","🌈","🔥"];
+const lines=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+const board=document.getElementById("board");
+const playButton=document.getElementById("playButton");
+let playing=false,opened=[],symbols=[];
+function getCoins(){return currentCoins}
+function setCoins(v){currentCoins=Number(v||0);const el=document.getElementById("coins");if(el)el.textContent=currentCoins}
+function stats(){document.getElementById("plays").textContent=localStorage.getItem("friendBingoPlays")||"0";document.getElementById("bestLines").textContent=localStorage.getItem("friendBingoBest")||"0";document.getElementById("totalLines").textContent=localStorage.getItem("friendBingoTotalLines")||"0"}
+function setStatus(t){document.getElementById("status").textContent=t}
+function makeBoard(){board.innerHTML="";for(let i=0;i<9;i++){const b=document.createElement("button");b.type="button";b.className="cell";b.textContent="❓";b.disabled=true;b.dataset.i=i;board.appendChild(b)}}
+function randomize(){symbols=Array.from({length:9},()=>icons[Math.floor(Math.random()*icons.length)]);opened=[];document.querySelectorAll(".cell").forEach(b=>{b.textContent="❓";b.classList.remove("open","line");b.disabled=false})}
+function openCell(i){if(!playing||opened.includes(i))return;opened.push(i);const b=document.querySelector(`.cell[data-i="${i}"]`);b.textContent=symbols[i];b.classList.add("open");b.disabled=true;if(opened.length===9)finishGame()}
+function countLines(){let wins=[];for(const line of lines){if(line.every(i=>symbols[i]===symbols[line[0]]))wins.push(line)}return wins}
+function updateRewardDisplay(){
+  document.querySelectorAll("#probList [data-reward]").forEach(el=>{
+    const n=Number(el.dataset.reward);
+    el.textContent=`${BINGO_REWARDS[n]||0}コイン`;
+  });
+}
+
+function highlightResult(count){
+  document.querySelectorAll("#probList [data-lines]").forEach(el=>el.classList.remove("hit"));
+  if(count>0){
+    document.querySelector(`#probList [data-lines="${count}"]`)?.classList.add("hit");
+  }
+}
+const BINGO_REWARDS = {
+  1: 20,
+  2: 20,
+  3: 20,
+  4: 20,
+  5: 20,
+  6: 20,
+  7: 20,
+  8: 20,
+  9: 20
+};
+
+async function addBingoReward(amount){
+  // Supabase側の報酬RPCは1回20コイン固定なので、
+  // 個別報酬に合わせて20コイン単位で必要回数だけ反映する。
+  // 後からBINGO_REWARDSの数字だけ変更できる。
+  if(!Number.isInteger(amount)||amount<0)throw new Error("報酬設定が不正です");
+  if(amount===0)return;
+  if(amount%20!==0)throw new Error("報酬は20コイン単位で設定してください");
+  for(let i=0;i<amount/20;i++)await rewardCoins();
+}
+
+async function finishGame(){
+ const wins=countLines();
+ const count=wins.length;
+ wins.forEach(line=>line.forEach(i=>document.querySelector(`.cell[data-i="${i}"]`)?.classList.add("line")));
+ highlightResult(count);
+
+ const reward=BINGO_REWARDS[count]||0;
+ let rewardError=null;
+ if(reward){
+   try{
+     await addBingoReward(reward);
+   }catch(error){
+     rewardError=error;
+     console.error("ビンゴ報酬エラー:",error);
+   }
+ }
+
+ document.getElementById("lineResult").textContent=count
+   ? (rewardError ? `✨ ${count}ライン成立！ 報酬処理に失敗しました` : `✨ ${count}ライン成立！ +${reward}コイン`)
+   : "💨 今回はラインなし！";
+ document.getElementById("result").textContent=count?`🎉 ${count}ラインそろった！`:"もう一度チャレンジしてみよう！";
+
+ const p=Number(localStorage.getItem("friendBingoPlays")||0)+1;
+ const best=Math.max(Number(localStorage.getItem("friendBingoBest")||0),count);
+ const total=Number(localStorage.getItem("friendBingoTotalLines")||0)+count;
+ localStorage.setItem("friendBingoPlays",p);
+ localStorage.setItem("friendBingoBest",best);
+ localStorage.setItem("friendBingoTotalLines",total);
+ stats();
+
+ playing=false;
+ playButton.disabled=false;
+ document.querySelectorAll(".cell").forEach(b=>b.disabled=true);
+ setStatus(
+   rewardError
+     ? "⚠️ コイン報酬の処理に失敗しました。管理者に確認してください。"
+     : (count ? `プレイ完了！${reward}コイン獲得！` : "プレイ完了！もう一度遊べます")
+ );
+}
+async function startGame(){
+ if(playing)return;
+ playButton.disabled=true;
+ setStatus("🪙 コインを確認しています…");
+ try{
+   await playWithCoins();
+ }catch(error){
+   console.error("ビンゴプレイ料金エラー:",error);
+   playButton.disabled=false;
+   setStatus(error?.message?.includes("コインが足りません")
+     ?"🪙 コインが足りません（1プレイ100コイン）"
+     :"⚠️ コイン処理に失敗しました。ログイン状態を確認してください。");
+   return;
+ }
+ playing=true;
+ setStatus("🪙 100コイン消費！マスを9個すべて開けよう！");
+ document.getElementById("result").textContent="マスを開けています…";
+ document.getElementById("lineResult").textContent="";
+ randomize()
+}
+board.addEventListener("click",e=>{const b=e.target.closest(".cell");if(b)openCell(Number(b.dataset.i))});
+playButton.addEventListener("click",startGame);
+makeBoard();
+stats();
+loadCoins();
+</script>
+</body>
+</html>
