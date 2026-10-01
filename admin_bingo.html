@@ -6,24 +6,24 @@
 <title>フレンドビンゴ 管理</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:linear-gradient(135deg,#f5f5f7,#eef3ff);color:#333}.wrap{width:min(92%,520px);margin:auto;padding:22px 0 40px}.head{display:flex;align-items:center;gap:10px;margin-bottom:16px}.back{width:42px;height:42px;border:0;border-radius:14px;background:#fff;font-size:26px;box-shadow:0 4px 12px rgba(0,0,0,.08)}.head h1{margin:0;font-size:22px;flex:1}.card{background:rgba(255,255,255,.96);border-radius:22px;padding:18px;margin-bottom:16px;box-shadow:0 6px 18px rgba(0,0,0,.07)}.card h2{margin:0 0 12px;font-size:19px}.desc{font-size:13px;color:#777;line-height:1.6;margin:0 0 14px}.row{display:grid;grid-template-columns:1fr 110px;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #eee}.row:last-child{border-bottom:0}.row label{font-weight:700;font-size:14px}.row small{display:block;color:#888;font-weight:400;margin-top:2px}input{width:100%;padding:11px;border:2px solid #e5e5e5;border-radius:12px;font-size:16px;text-align:right}input:focus{outline:none;border-color:#8f7cff}.save{width:100%;border:0;border-radius:15px;padding:14px;background:#8f7cff;color:#fff;font-size:16px;font-weight:800}.save:disabled{opacity:.55}.status{text-align:center;min-height:24px;margin-top:10px;font-weight:700;font-size:14px}.note{font-size:12px;color:#777;line-height:1.6}
-details.card{padding:0;overflow:hidden}details.card>summary{list-style:none;cursor:pointer;padding:18px;font-weight:800;font-size:19px}details.card>summary::-webkit-details-marker{display:none}details.card>summary:after{content:"＋";float:right;color:#8f7cff}details.card[open]>summary:after{content:"−"}.panel{padding:0 18px 18px}.select,.userSelect{width:100%;padding:12px;border:2px solid #e5e5e5;border-radius:12px;font-size:15px;background:#fff}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.secondary{width:100%;border:0;border-radius:14px;padding:12px;background:#eee;color:#444;font-weight:800}.targetRow{display:grid;grid-template-columns:1fr 110px;gap:10px;align-items:center;margin:10px 0}.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#f0edff;color:#6654c8;font-size:11px;font-weight:800}
+foldCard{overflow:hidden}.foldBtn{width:100%;border:0;background:transparent;text-align:left;padding:18px;font-size:19px;font-weight:800;color:#333;cursor:pointer}.foldBtn span{float:right;color:#8f7cff;font-size:24px;line-height:1}.foldPanel{display:none;padding:0 18px 18px}.foldPanel.open{display:block}.select,.userSelect{width:100%;padding:12px;border:2px solid #e5e5e5;border-radius:12px;font-size:15px;background:#fff;text-align:left}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.secondary{width:100%;border:0;border-radius:14px;padding:12px;background:#eee;color:#444;font-weight:800}.targetRow{display:grid;grid-template-columns:1fr 110px;gap:10px;align-items:center;margin:10px 0}.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#f0edff;color:#6654c8;font-size:11px;font-weight:800}
 </style>
 </head>
 
 <body>
 <div class="wrap">
  <div class="head"><button class="back" type="button" onclick="location.href='bingo_supabase_coins.html'">‹</button><h1>⚙️ ビンゴ管理</h1></div>
- <details class="card">
-  <summary>📈 当選確率</summary>
-  <div class="panel"><p class="desc">各ラインの設定値を個別に変更できます。0ラインはゲーム画面には表示されません。</p><div id="probFields"></div></div>
- </details>
- <details class="card">
-  <summary>🪙 ライン別報酬</summary>
-  <div class="panel"><p class="desc">ライン数ごとに別々の報酬を設定できます。</p><div id="rewardFields"></div></div>
- </details>
- <details class="card">
-  <summary>🎯 次に当たるライン数を指定</summary>
-  <div class="panel">
+ <div class="card foldCard">
+  <button type="button" class="foldBtn" data-target="probPanel">📈 当選確率 <span>＋</span></button>
+  <div id="probPanel" class="foldPanel"><p class="desc">各ラインの設定値を個別に変更できます。0ラインはゲーム画面には表示されません。</p><div id="probFields"></div></div>
+ </div>
+ <div class="card foldCard">
+  <button type="button" class="foldBtn" data-target="rewardPanel">🪙 ライン別報酬 <span>＋</span></button>
+  <div id="rewardPanel" class="foldPanel"><p class="desc">ライン数ごとに別々の報酬を設定できます。</p><div id="rewardFields"></div></div>
+ </div>
+ <div class="card foldCard">
+  <button type="button" class="foldBtn" data-target="nextPanel">🎯 次に当たるライン数を指定 <span>＋</span></button>
+  <div id="nextPanel" class="foldPanel">
    <p class="desc">次の1プレイだけ、指定したライン数になるようにします。個人を選ぶとユーザーIDを直接入力できます。</p>
    <div class="targetRow"><label>対象</label><select id="targetScope" class="select"><option value="all">全員</option><option value="user">個人</option></select></div>
    <div id="userRow" class="targetRow" style="display:none"><label>ユーザーID</label><input id="targetUser" class="userSelect" type="text" inputmode="text" autocomplete="off" placeholder="例：kazu123"></div>
@@ -32,7 +32,7 @@ details.card{padding:0;overflow:hidden}details.card>summary{list-style:none;curs
    <div id="targetStatus" class="status"></div>
    <div class="note">※ 3×3ビンゴで成立できるラインは最大8ラインです。</div>
   </div>
- </details>
+ </div>
  <div class="card"><button id="save" class="save" type="button">💾 設定を保存</button><div id="status" class="status"></div></div>
  <div class="card"><div class="note">※ 管理者権限はSupabase側で確認しています。この画面を直接開いても、管理者以外は設定を保存できません。</div></div>
 </div>
@@ -52,6 +52,14 @@ const targetLines=document.getElementById("targetLines");
 const setTarget=document.getElementById("setTarget");
 const clearTarget=document.getElementById("clearTarget");
 const targetStatus=document.getElementById("targetStatus");
+
+document.querySelectorAll(".foldBtn").forEach(btn=>{
+ btn.addEventListener("click",()=>{
+  const panel=document.getElementById(btn.dataset.target);
+  const open=panel.classList.toggle("open");
+  btn.querySelector("span").textContent=open?"−":"＋";
+ });
+});
 
 function field(label,name,value,sub=""){
  const row=document.createElement("div");row.className="row";
