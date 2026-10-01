@@ -412,11 +412,22 @@ else{const holder=document.createElement("div");holder.className="message-image-
  const unread=messages.filter(m=>m.sender_id!==username).map(m=>m.id);if(unread.length)await supabaseClient.from("board_room_message_reads").upsert(unread.map(id=>({board_message_id:id,user_id:username,read_at:new Date().toISOString()})),{onConflict:"board_message_id,user_id"})
 }
 function formatMentions(text){return escapeHtml(text).replace(/@([A-Za-z0-9_-]+)/g,(full,user)=>members.some(m=>m.user_id===user)?"<span class='mention'>"+full+"</span>":full)}
+async function claimBoardPostMission(){
+ if(!username)return;
+ const {error}=await supabaseClient.from("daily_mission_claims").insert({
+  user_id:username,
+  claim_date:new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Tokyo"}),
+  mission_key:"board_post_1",
+  reward:10
+ });
+ if(error&&error.code!=="23505")console.warn("board post mission claim:",error);
+}
 async function sendMessage(){
  if(isMuted){alert("現在、発言禁止中です");return}const input=$("messageInput"),text=input.value.trim();if(!text)return;
  sendBoardTypingState(false);clearTimeout(typingTimer);
  $("sendButton").disabled=true;
  try{const {data,error}=await supabaseClient.from("board_room_messages").insert({board_id:Number(boardId),sender_id:username,content:text}).select().single();if(error)throw error;
+   void claimBoardPostMission();
   if(replyTarget){const {error:replyError}=await supabaseClient.from("board_room_replies").insert({board_message_id:data.id,sender_id:username,content:replyTarget.content||"画像"});if(replyError)console.error(replyError);replyTarget=null}
   input.value="";input.placeholder="メッセージを入力...";await sendMentionNotifications(text);await loadMessages()
  }catch(error){console.error("メッセージ送信エラー:",error);alert("❌ メッセージ送信に失敗しました\n\n"+(error?.message||"原因不明のエラー"))}finally{$("sendButton").disabled=isMuted}
