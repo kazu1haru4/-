@@ -121,7 +121,15 @@ function chooseTargetLines(){
  return 0;
 }
 function buildBoardForLines(target){
- if(target===0){symbols=Array.from({length:9},()=>icons[Math.floor(Math.random()*icons.length)]);return;}
+ if(target===0){
+   for(let attempt=0;attempt<5000;attempt++){
+     const candidate=Array.from({length:9},()=>icons[Math.floor(Math.random()*icons.length)]);
+     const wins=lines.filter(line=>line.every(i=>candidate[i]===candidate[line[0]]));
+     if(wins.length===0){symbols=candidate;return;}
+   }
+   symbols=Array.from({length:9},()=>icons[Math.floor(Math.random()*icons.length)]);
+   return;
+ }
  if(target===9){symbols=Array(9).fill(icons[0]);return;}
  for(let attempt=0;attempt<5000;attempt++){
    const candidate=Array.from({length:9},()=>icons[Math.floor(Math.random()*icons.length)]);
@@ -130,8 +138,11 @@ function buildBoardForLines(target){
  }
  symbols=Array.from({length:9},()=>icons[Math.floor(Math.random()*icons.length)]);
 }
-function prepareBoard(){
- const target=chooseTargetLines();buildBoardForLines(target);opened=[];
+function prepareBoard(forcedTarget=null){
+ const target=(Number.isInteger(forcedTarget)&&forcedTarget>=0&&forcedTarget<=9)
+   ? forcedTarget
+   : chooseTargetLines();
+ buildBoardForLines(target);opened=[];
  document.querySelectorAll(".cell").forEach(b=>{b.textContent="❓";b.classList.remove("open","line");b.disabled=false});
 }
 
@@ -196,12 +207,21 @@ async function startGame(){
      :"⚠️ コイン処理に失敗しました。ログイン状態を確認してください。");
    return;
  }
+
+ let forcedTarget=null;
+ try{
+   const {data,error}=await db.rpc("consume_friend_bingo_next_lines");
+   if(!error && Number.isInteger(Number(data))) forcedTarget=Number(data);
+ }catch(error){
+   console.warn("次回ライン指定の取得エラー:",error);
+ }
+
  playing=true;
  setStatus("🪙 100コイン消費！マスを9個すべて開けよう！");
  document.getElementById("result").textContent="マスを開けています…";
  document.getElementById("lineResult").textContent="";
  document.querySelectorAll("#probList [data-lines]").forEach(el=>el.classList.remove("hit"));
- prepareBoard()
+ prepareBoard(forcedTarget)
 }
 board.addEventListener("click",e=>{const b=e.target.closest(".cell");if(b)openCell(Number(b.dataset.i))});
 playButton.addEventListener("click",startGame);
