@@ -71,9 +71,9 @@ function field(label,name,value,sub=""){
 function buildFields(data){
  probFields.innerHTML="";
  probFields.appendChild(field("ハズレ","p_miss",data.p_miss,"0ライン"));
- for(let i=1;i<=9;i++) probFields.appendChild(field(`${i}ライン`,`p_${i}`,data[`p_${i}`]));
+ for(let i=1;i<=8;i++) probFields.appendChild(field(`${i}ライン`,`p_${i}`,data[`p_${i}`]));
  rewardFields.innerHTML="";
- for(let i=1;i<=9;i++) rewardFields.appendChild(field(`${i}ラインの報酬`,`reward_${i}`,data[`reward_${i}`],"コイン"));
+ for(let i=1;i<=8;i++) rewardFields.appendChild(field(`${i}ラインの報酬`,`reward_${i}`,data[`reward_${i}`],"コイン"));
 }
 async function guard(){
  const {data,error}=await db.rpc("is_friend_bingo_admin");
@@ -118,7 +118,7 @@ save.addEventListener("click",async()=>{
  save.disabled=true;statusEl.textContent="保存しています…";
  try{
   const args={p_miss:num("p_miss")};
-  for(let i=1;i<=9;i++){args[`p_${i}`]=num(`p_${i}`);args[`reward_${i}`]=num(`reward_${i}`)}
+  for(let i=1;i<=8;i++){args[`p_${i}`]=num(`p_${i}`);args[`reward_${i}`]=num(`reward_${i}`)}
   for(const k of Object.keys(args)) if(!Number.isFinite(args[k])||args[k]<0) throw new Error("数値は0以上で入力してください");
   const {data,error}=await db.rpc("admin_update_friend_bingo_settings",args);
   if(error)throw error;
