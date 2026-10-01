@@ -24,9 +24,9 @@ details.card{padding:0;overflow:hidden}details.card>summary{list-style:none;curs
  <details class="card">
   <summary>🎯 次に当たるライン数を指定</summary>
   <div class="panel">
-   <p class="desc">次の1プレイだけ、指定したライン数になるようにします。</p>
+   <p class="desc">次の1プレイだけ、指定したライン数になるようにします。個人を選ぶとユーザーIDを直接入力できます。</p>
    <div class="targetRow"><label>対象</label><select id="targetScope" class="select"><option value="all">全員</option><option value="user">個人</option></select></div>
-   <div id="userRow" class="targetRow" style="display:none"><label>ユーザー</label><select id="targetUser" class="userSelect"></select></div>
+   <div id="userRow" class="targetRow" style="display:none"><label>ユーザーID</label><input id="targetUser" class="userSelect" type="text" inputmode="text" autocomplete="off" placeholder="例：kazu123"></div>
    <div class="targetRow"><label>次のライン数</label><input id="targetLines" type="number" min="0" max="8" step="1" value="1"></div>
    <div class="actions"><button id="setTarget" class="save" type="button">🎯 次回に設定</button><button id="clearTarget" class="secondary" type="button">設定を解除</button></div>
    <div id="targetStatus" class="status"></div>
@@ -71,25 +71,15 @@ async function guard(){
  if(error||!data){location.href="bingo_supabase_coins.html";return false}
  return true;
 }
-async function loadUsers(){
- const {data,error}=await db.rpc("admin_list_friend_bingo_users");
- if(error){targetStatus.textContent="⚠️ ユーザー一覧の読み込みに失敗しました";return}
- targetUser.innerHTML="";
- (data||[]).forEach(u=>{
-  const opt=document.createElement("option");
-  opt.value=u.user_id;
-  opt.textContent=u.name?`${u.user_id}（${u.name}）`:u.user_id;
-  targetUser.appendChild(opt);
- });
-}
 targetScope.addEventListener("change",()=>{
  userRow.style.display=targetScope.value==="user"?"grid":"none";
 });
 setTarget.addEventListener("click",async()=>{
  setTarget.disabled=true;targetStatus.textContent="設定しています…";
  try{
-  const userId=targetScope.value==="all"?"*":targetUser.value;
+  const userId=targetScope.value==="all"?"*":targetUser.value.trim();
   const n=Number(targetLines.value);
+  if(targetScope.value==="user" && !userId)throw new Error("ユーザーIDを入力してください");
   if(!Number.isInteger(n)||n<0||n>8)throw new Error("ライン数は0〜8で指定してください");
   const {error}=await db.rpc("admin_set_friend_bingo_next_lines",{p_user_id:userId,p_lines:n});
   if(error)throw error;
@@ -100,8 +90,8 @@ setTarget.addEventListener("click",async()=>{
 clearTarget.addEventListener("click",async()=>{
  clearTarget.disabled=true;targetStatus.textContent="解除しています…";
  try{
-  const userId=targetScope.value==="all"?"*":targetUser.value;
-  if(!userId)throw new Error("ユーザーを選択してください");
+  const userId=targetScope.value==="all"?"*":targetUser.value.trim();
+  if(!userId)throw new Error("ユーザーIDを入力してください");
   const {error}=await db.rpc("admin_clear_friend_bingo_next_lines",{p_user_id:userId});
   if(error)throw error;
   targetStatus.textContent="✅ 次回指定を解除しました";
