@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>フレンドビンゴ</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:linear-gradient(135deg,#fff4fb,#eef7ff);color:#333}.wrap{width:min(92%,460px);margin:auto;padding:22px 0 40px}.head{display:flex;align-items:center;gap:10px;margin-bottom:16px}.back{width:42px;height:42px;border:0;border-radius:14px;background:#fff;font-size:26px;box-shadow:0 4px 12px rgba(0,0,0,.08);cursor:pointer}.head h1{margin:0;font-size:23px;flex:1}.card{background:rgba(255,255,255,.95);border-radius:22px;padding:18px;margin-bottom:16px;box-shadow:0 6px 18px rgba(0,0,0,.07)}.card h2{margin:0 0 7px;font-size:20px}.desc{margin:0 0 15px;color:#777;font-size:13px;line-height:1.6}.board{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:10px;background:#f6f3ff;border:2px solid #e6e0ff;border-radius:20px}.cell{aspect-ratio:1;border:0;border-radius:17px;background:#fff;box-shadow:0 4px 10px rgba(0,0,0,.07);font-size:35px;cursor:pointer;transition:transform .12s,opacity .12s}.cell:active{transform:scale(.94)}.cell.open{background:#fff8d9}.cell.line{outline:3px solid #8f7cff}.cell:disabled{cursor:default}.result{min-height:28px;text-align:center;font-weight:800;margin:13px 0 8px}.lines{font-size:14px;color:#6d5cc7;text-align:center;min-height:20px}.play{width:100%;border:0;border-radius:16px;padding:14px;background:#8f7cff;color:#fff;font-size:16px;font-weight:800;cursor:pointer}.play:disabled{opacity:.45;cursor:not-allowed}.status{text-align:center;min-height:24px;font-weight:700;font-size:14px;margin-top:10px}.history{display:flex;justify-content:space-between;gap:8px;text-align:center}.stat{flex:1;background:#faf9ff;border:2px solid #e8e3ff;border-radius:15px;padding:12px 6px}.stat strong{display:block;font-size:21px}.stat span{font-size:11px;color:#777}.small{font-size:12px;color:#777;text-align:center;margin-top:8px}.prob{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.prob div{background:#faf9ff;border-radius:10px;padding:8px;text-align:center;font-size:12px;transition:.25s}.prob b{display:block;font-size:15px}.prob span{display:block;font-size:11px;color:#6d5cc7;margin-top:3px;font-weight:700}.prob div.hit{background:#fff2a8;box-shadow:0 0 0 3px #ffd84d,0 0 18px rgba(255,216,77,.8);transform:scale(1.03)}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:linear-gradient(135deg,#fff4fb,#eef7ff);color:#333}.wrap{width:min(92%,460px);margin:auto;padding:22px 0 40px}.head{display:flex;align-items:center;gap:10px;margin-bottom:16px}.back{width:42px;height:42px;border:0;border-radius:14px;background:#fff;font-size:26px;box-shadow:0 4px 12px rgba(0,0,0,.08);cursor:pointer}.head h1{margin:0;font-size:23px;flex:1}.adminBtn{display:none;border:0;border-radius:12px;background:#eee;color:#444;font-weight:800;padding:10px 12px;cursor:pointer}.card{background:rgba(255,255,255,.95);border-radius:22px;padding:18px;margin-bottom:16px;box-shadow:0 6px 18px rgba(0,0,0,.07)}.card h2{margin:0 0 7px;font-size:20px}.desc{margin:0 0 15px;color:#777;font-size:13px;line-height:1.6}.board{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:10px;background:#f6f3ff;border:2px solid #e6e0ff;border-radius:20px}.cell{aspect-ratio:1;border:0;border-radius:17px;background:#fff;box-shadow:0 4px 10px rgba(0,0,0,.07);font-size:35px;cursor:pointer;transition:transform .12s,opacity .12s}.cell:active{transform:scale(.94)}.cell.open{background:#fff8d9}.cell.line{outline:3px solid #8f7cff}.cell:disabled{cursor:default}.result{min-height:28px;text-align:center;font-weight:800;margin:13px 0 8px}.lines{font-size:14px;color:#6d5cc7;text-align:center;min-height:20px}.play{width:100%;border:0;border-radius:16px;padding:14px;background:#8f7cff;color:#fff;font-size:16px;font-weight:800;cursor:pointer}.play:disabled{opacity:.45;cursor:not-allowed}.status{text-align:center;min-height:24px;font-weight:700;font-size:14px;margin-top:10px}.history{display:flex;justify-content:space-between;gap:8px;text-align:center}.stat{flex:1;background:#faf9ff;border:2px solid #e8e3ff;border-radius:15px;padding:12px 6px}.stat strong{display:block;font-size:21px}.stat span{font-size:11px;color:#777}.small{font-size:12px;color:#777;text-align:center;margin-top:8px}.prob{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.prob div{background:#faf9ff;border-radius:10px;padding:8px;text-align:center;font-size:12px;transition:.25s}.prob b{display:block;font-size:15px}.prob span{display:block;font-size:11px;color:#6d5cc7;margin-top:3px;font-weight:700}.prob div.hit{background:#fff2a8;box-shadow:0 0 0 3px #ffd84d,0 0 18px rgba(255,216,77,.8);transform:scale(1.03)}
 </style>
 </head>
 <body>
 <div class="wrap">
- <div class="head"><button class="back" type="button" onclick="history.back()">‹</button><h1>🎯 フレンドビンゴ</h1></div>
+ <div class="head"><button class="back" type="button" onclick="history.back()">‹</button><h1>🎯 フレンドビンゴ</h1><button id="adminBtn" class="adminBtn" type="button">管理</button></div>
  <div class="card">
   <h2>🎯 9マスチャレンジ</h2>
   <p class="desc">無料で遊べる3×3ミニゲーム！9マスを開けて、そろったラインを探そう。</p>
@@ -24,15 +24,15 @@
  <div class="card">
   <h2>📈 ライン成立率・報酬</h2>
   <div class="prob" id="probList">
-   <div data-lines="1">1ライン<b>30%</b><span data-reward="1">20コイン</span></div>
-   <div data-lines="2">2ライン<b>20%</b><span data-reward="2">20コイン</span></div>
-   <div data-lines="3">3ライン<b>15%</b><span data-reward="3">20コイン</span></div>
-   <div data-lines="4">4ライン<b>10%</b><span data-reward="4">20コイン</span></div>
-   <div data-lines="5">5ライン<b>5%</b><span data-reward="5">20コイン</span></div>
-   <div data-lines="6">6ライン<b>4%</b><span data-reward="6">20コイン</span></div>
-   <div data-lines="7">7ライン<b>2%</b><span data-reward="7">20コイン</span></div>
-   <div data-lines="8">8ライン<b>1%</b><span data-reward="8">20コイン</span></div>
-   <div data-lines="9">9ライン<b>0.1%</b><span data-reward="9">20コイン</span></div>
+   <div data-lines="1">1ライン<b id="p1">30%</b><span data-reward="1">20コイン</span></div>
+   <div data-lines="2">2ライン<b id="p2">20%</b><span data-reward="2">20コイン</span></div>
+   <div data-lines="3">3ライン<b id="p3">15%</b><span data-reward="3">20コイン</span></div>
+   <div data-lines="4">4ライン<b id="p4">10%</b><span data-reward="4">20コイン</span></div>
+   <div data-lines="5">5ライン<b id="p5">5%</b><span data-reward="5">20コイン</span></div>
+   <div data-lines="6">6ライン<b id="p6">4%</b><span data-reward="6">20コイン</span></div>
+   <div data-lines="7">7ライン<b id="p7">2%</b><span data-reward="7">20コイン</span></div>
+   <div data-lines="8">8ライン<b id="p8">1%</b><span data-reward="8">20コイン</span></div>
+   <div data-lines="9">9ライン<b id="p9">0.1%</b><span data-reward="9">20コイン</span></div>
   </div>
   <div class="small">※ 表示用の設定値。実際の盤面生成では複数ラインが同時成立するため、これらを単純に足して100%にはしません。</div>
  </div>
@@ -105,26 +105,51 @@ function highlightResult(count){
     document.querySelector(`#probList [data-lines="${count}"]`)?.classList.add("hit");
   }
 }
-const BINGO_REWARDS = {
-  1: 20,
-  2: 20,
-  3: 20,
-  4: 20,
-  5: 20,
-  6: 20,
-  7: 20,
-  8: 20,
-  9: 20
-};
+let BINGO_SETTINGS={p_miss:60,p_1:30,p_2:20,p_3:15,p_4:10,p_5:5,p_6:4,p_7:2,p_8:1,p_9:0.1,reward_1:20,reward_2:20,reward_3:20,reward_4:20,reward_5:20,reward_6:20,reward_7:20,reward_8:20,reward_9:20};
+const BINGO_REWARDS=new Proxy({}, {get:(_,key)=>Number(BINGO_SETTINGS[`reward_${key}`]||0)});
+async function loadBingoSettings(){
+ const {data,error}=await db.rpc("get_friend_bingo_settings");
+ if(error){console.warn("ビンゴ設定取得エラー:",error);return;}
+ BINGO_SETTINGS={...BINGO_SETTINGS,...data};
+ for(let n=1;n<=9;n++){const p=document.getElementById(`p${n}`);if(p)p.textContent=`${BINGO_SETTINGS[`p_${n}`]}%`;}
+ updateRewardDisplay();
+}
+async function checkAdmin(){
+ const {data,error}=await db.rpc("is_friend_bingo_admin");
+ if(!error && data){const b=document.getElementById("adminBtn");b.style.display="block";b.addEventListener("click",()=>location.href="admin_bingo.html");}
+}
+function chooseTargetLines(){
+ const weights=[1,2,3,4,5,6,7,8,9].map(n=>Math.max(0,Number(BINGO_SETTINGS[`p_${n}`]||0)));
+ const miss=Math.max(0,Number(BINGO_SETTINGS.p_miss||0));
+ const total=miss+weights.reduce((a,b)=>a+b,0);
+ if(total<=0)return 0;
+ let r=Math.random()*total;
+ if(r<miss)return 0;
+ r-=miss;
+ for(let i=0;i<weights.length;i++){r-=weights[i];if(r<0)return i+1;}
+ return 0;
+}
+function buildBoardForLines(target){
+ if(target===0){symbols=Array.from({length:9},()=>icons[Math.floor(Math.random()*icons.length)]);return;}
+ if(target===9){symbols=Array(9).fill(icons[0]);return;}
+ for(let attempt=0;attempt<5000;attempt++){
+   const candidate=Array.from({length:9},()=>icons[Math.floor(Math.random()*icons.length)]);
+   const wins=lines.filter(line=>line.every(i=>candidate[i]===candidate[line[0]]));
+   if(wins.length===target){symbols=candidate;return;}
+ }
+ symbols=Array.from({length:9},()=>icons[Math.floor(Math.random()*icons.length)]);
+}
+function prepareBoard(){
+ const target=chooseTargetLines();buildBoardForLines(target);opened=[];
+ document.querySelectorAll(".cell").forEach(b=>{b.textContent="❓";b.classList.remove("open","line");b.disabled=false});
+}
 
-async function addBingoReward(amount){
-  // Supabase側の報酬RPCは1回20コイン固定なので、
-  // 個別報酬に合わせて20コイン単位で必要回数だけ反映する。
-  // 後からBINGO_REWARDSの数字だけ変更できる。
-  if(!Number.isInteger(amount)||amount<0)throw new Error("報酬設定が不正です");
-  if(amount===0)return;
-  if(amount%20!==0)throw new Error("報酬は20コイン単位で設定してください");
-  for(let i=0;i<amount/20;i++)await rewardCoins();
+async function addBingoReward(linesCount){
+ const {data,error}=await db.rpc("reward_friend_bingo",{p_lines:linesCount});
+ if(error)throw error;
+ currentCoins=Number(data||0);
+ const el=document.getElementById("coins");if(el)el.textContent=currentCoins;
+ return data;
 }
 
 async function finishGame(){
@@ -137,7 +162,7 @@ async function finishGame(){
  let rewardError=null;
  if(reward){
    try{
-     await addBingoReward(reward);
+     await addBingoReward(count);
    }catch(error){
      rewardError=error;
      console.error("ビンゴ報酬エラー:",error);
@@ -184,13 +209,16 @@ async function startGame(){
  setStatus("🪙 100コイン消費！マスを9個すべて開けよう！");
  document.getElementById("result").textContent="マスを開けています…";
  document.getElementById("lineResult").textContent="";
- randomize()
+ document.querySelectorAll("#probList [data-lines]").forEach(el=>el.classList.remove("hit"));
+ prepareBoard()
 }
 board.addEventListener("click",e=>{const b=e.target.closest(".cell");if(b)openCell(Number(b.dataset.i))});
 playButton.addEventListener("click",startGame);
 makeBoard();
 stats();
 loadCoins();
+loadBingoSettings();
+checkAdmin();
 </script>
 </body>
 </html>
