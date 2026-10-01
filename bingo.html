@@ -105,13 +105,13 @@ function highlightResult(count){
     document.querySelector(`#probList [data-lines="${count}"]`)?.classList.add("hit");
   }
 }
-let BINGO_SETTINGS={p_miss:60,p_1:30,p_2:20,p_3:15,p_4:10,p_5:5,p_6:4,p_7:2,p_8:1,p_9:0.1,reward_1:20,reward_2:20,reward_3:20,reward_4:20,reward_5:20,reward_6:20,reward_7:20,reward_8:20,reward_9:20};
+let BINGO_SETTINGS={p_miss:60,p_1:30,p_2:20,p_3:15,p_4:10,p_5:5,p_6:4,p_7:2,p_8:1,reward_1:20,reward_2:20,reward_3:20,reward_4:20,reward_5:20,reward_6:20,reward_7:20,reward_8:20};
 const BINGO_REWARDS=new Proxy({}, {get:(_,key)=>Number(BINGO_SETTINGS[`reward_${key}`]||0)});
 async function loadBingoSettings(){
  const {data,error}=await db.rpc("get_friend_bingo_settings");
  if(error){console.warn("ビンゴ設定取得エラー:",error);return;}
  BINGO_SETTINGS={...BINGO_SETTINGS,...data};
- for(let n=1;n<=9;n++){const p=document.getElementById(`p${n}`);if(p)p.textContent=`${BINGO_SETTINGS[`p_${n}`]}%`;}
+ for(let n=1;n<=8;n++){const p=document.getElementById(`p${n}`);if(p)p.textContent=`${BINGO_SETTINGS[`p_${n}`]}%`;}
  updateRewardDisplay();
 }
 async function checkAdmin(){
