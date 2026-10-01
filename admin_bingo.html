@@ -6,6 +6,18 @@
 <title>フレンドビンゴ 管理</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:linear-gradient(135deg,#f5f5f7,#eef3ff);color:#333}.wrap{width:min(92%,520px);margin:auto;padding:22px 0 40px}.head{display:flex;align-items:center;gap:10px;margin-bottom:16px}.back{width:42px;height:42px;border:0;border-radius:14px;background:#fff;font-size:26px;box-shadow:0 4px 12px rgba(0,0,0,.08)}.head h1{margin:0;font-size:22px;flex:1}.card{background:rgba(255,255,255,.96);border-radius:22px;padding:18px;margin-bottom:16px;box-shadow:0 6px 18px rgba(0,0,0,.07)}.card h2{margin:0 0 12px;font-size:19px}.desc{font-size:13px;color:#777;line-height:1.6;margin:0 0 14px}.row{display:grid;grid-template-columns:1fr 110px;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #eee}.row:last-child{border-bottom:0}.row label{font-weight:700;font-size:14px}.row small{display:block;color:#888;font-weight:400;margin-top:2px}input{width:100%;padding:11px;border:2px solid #e5e5e5;border-radius:12px;font-size:16px;text-align:right}input:focus{outline:none;border-color:#8f7cff}.save{width:100%;border:0;border-radius:15px;padding:14px;background:#8f7cff;color:#fff;font-size:16px;font-weight:800}.save:disabled{opacity:.55}.status{text-align:center;min-height:24px;margin-top:10px;font-weight:700;font-size:14px}.note{font-size:12px;color:#777;line-height:1.6}
+details.card{padding:0;overflow:hidden}
+details.card>summary{list-style:none;cursor:pointer;padding:18px;font-weight:800;font-size:19px}
+details.card>summary::-webkit-details-marker{display:none}
+details.card>summary:after{content:"＋";float:right;color:#8f7cff}
+details.card[open]>summary:after{content:"−"}
+.panel{padding:0 18px 18px}
+.select,.userSelect{width:100%;padding:12px;border:2px solid #e5e5e5;border-radius:12px;font-size:15px;background:#fff}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.secondary{width:100%;border:0;border-radius:14px;padding:12px;background:#eee;color:#444;font-weight:800}
+.targetRow{display:grid;grid-template-columns:1fr 110px;gap:10px;align-items:center;margin:10px 0}
+.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#f0edff;color:#6654c8;font-size:11px;font-weight:800}
+
 </style>
 </head>
 <body>
@@ -22,6 +34,7 @@ const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
 const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const probFields=document.getElementById("probFields"),rewardFields=document.getElementById("rewardFields"),save=document.getElementById("save"),statusEl=document.getElementById("status");
+const targetScope=document.getElementById("targetScope"),userRow=document.getElementById("userRow"),targetUser=document.getElementById("targetUser"),targetLines=document.getElementById("targetLines"),setTarget=document.getElementById("setTarget"),clearTarget=document.getElementById("clearTarget"),targetStatus=document.getElementById("targetStatus");
 function field(label,name,value,sub=""){
  const row=document.createElement("div");row.className="row";
  const isProb=name==="p_miss"||name.startsWith("p_");
@@ -34,10 +47,52 @@ function buildFields(data){
  rewardFields.innerHTML="";for(let i=1;i<=9;i++)rewardFields.appendChild(field(`${i}ラインの報酬`,`reward_${i}`,data[`reward_${i}`],"コイン"));
 }
 async function guard(){const {data,error}=await db.rpc("is_friend_bingo_admin");if(error||!data){location.href="bingo_supabase_coins.html";return false}return true}
+
+async function loadUsers(){
+  const {data,error}=await db.rpc("admin_list_friend_bingo_users");
+  if(error){targetStatus.textContent="⚠️ ユーザー一覧の読み込みに失敗しました";return}
+  targetUser.innerHTML="";
+  (data||[]).forEach(u=>{
+    const opt=document.createElement("option");
+    opt.value=u.user_id;
+    opt.textContent=u.name?`${u.user_id}（${u.name}）`:u.user_id;
+    targetUser.appendChild(opt);
+  });
+}
+targetScope.addEventListener("change",()=>{
+  userRow.style.display=targetScope.value==="user"?"grid":"none";
+});
+setTarget.addEventListener("click",async()=>{
+  setTarget.disabled=true;targetStatus.textContent="設定しています…";
+  try{
+    const userId=targetScope.value==="all"?"*":targetUser.value;
+    const n=Number(targetLines.value);
+    if(!Number.isInteger(n)||n<0||n>9)throw new Error("ライン数は0〜9で指定してください");
+    const {error}=await db.rpc("admin_set_friend_bingo_next_lines",{p_user_id:userId,p_lines:n});
+    if(error)throw error;
+    targetStatus.textContent=targetScope.value==="all"
+      ?`✅ 全員の次回を${n}ラインに設定しました`
+      :`✅ ${userId} さんの次回を${n}ラインに設定しました`;
+  }catch(e){targetStatus.textContent=`⚠️ ${e.message||"設定に失敗しました"}`}
+  finally{setTarget.disabled=false}
+});
+clearTarget.addEventListener("click",async()=>{
+  clearTarget.disabled=true;targetStatus.textContent="解除しています…";
+  try{
+    const userId=targetScope.value==="all"?"*":targetUser.value;
+    if(!userId)throw new Error("ユーザーを選択してください");
+    const {error}=await db.rpc("admin_clear_friend_bingo_next_lines",{p_user_id:userId});
+    if(error)throw error;
+    targetStatus.textContent="✅ 次回指定を解除しました";
+  }catch(e){targetStatus.textContent=`⚠️ ${e.message||"解除に失敗しました"}`}
+  finally{clearTarget.disabled=false}
+});
+
 async function load(){if(!await guard())return;const {data,error}=await db.rpc("get_friend_bingo_settings");if(error){statusEl.textContent="⚠️ 設定の読み込みに失敗しました";return}buildFields(data)}
 function num(name){return Number(document.getElementById(name).value)}
 save.addEventListener("click",async()=>{save.disabled=true;statusEl.textContent="保存しています…";try{const args={p_miss:num("p_miss"),p_1:num("p_1"),p_2:num("p_2"),p_3:num("p_3"),p_4:num("p_4"),p_5:num("p_5"),p_6:num("p_6"),p_7:num("p_7"),p_8:num("p_8"),p_9:num("p_9"),reward_1:num("reward_1"),reward_2:num("reward_2"),reward_3:num("reward_3"),reward_4:num("reward_4"),reward_5:num("reward_5"),reward_6:num("reward_6"),reward_7:num("reward_7"),reward_8:num("reward_8"),reward_9:num("reward_9")};for(const k of Object.keys(args))if(!Number.isFinite(args[k])||args[k]<0)throw new Error("数値は0以上で入力してください");const {data,error}=await db.rpc("admin_update_friend_bingo_settings",args);if(error)throw error;buildFields(data);statusEl.textContent="✅ ビンゴ設定を保存しました！"}catch(e){console.error(e);statusEl.textContent=`⚠️ ${e.message||"保存に失敗しました"}`}finally{save.disabled=false}});
 load();
+loadUsers();
 </script>
 </body>
 </html>
