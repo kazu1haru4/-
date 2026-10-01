@@ -612,7 +612,7 @@ else if(mediaRaw.startsWith("audio:"))box.appendChild(makeMediaElement(extras.si
 else{const img=document.createElement("img");img.className="chat-image";img.src=extras.signedUrls[message.id];img.alt="送信画像";box.appendChild(img)}
 }if(message.edited_at){const edited=document.createElement("span");edited.className="edited-label";edited.textContent="編集済み";sender.appendChild(edited)}}const replies=extras.replies.filter(reply=>String(reply.group_message_id)===String(message.id));replies.forEach(reply=>{const preview=document.createElement("div");preview.className="reply-preview";const replyProfile=profileCache[reply.sender_id]||null;const strong=document.createElement("strong");applyDecoratedName(strong,replyProfile,reply.sender_id);preview.appendChild(strong);preview.appendChild(document.createTextNode("："+(reply.content||"")));box.appendChild(preview)});const reactionRows=extras.reactions.filter(reaction=>String(reaction.group_message_id)===String(message.id));if(reactionRows.length){const reactionMap={};reactionRows.forEach(r=>{if(!reactionMap[r.reaction])reactionMap[r.reaction]=0;reactionMap[r.reaction]++});const reactions=document.createElement("div");reactions.className="reactions";Object.entries(reactionMap).forEach(([reaction,count])=>{const item=document.createElement("div");item.className="reaction-item";item.textContent=reaction+" "+count;reactions.appendChild(item)});box.appendChild(reactions)}if(message.sender_id===currentUsername){const read=document.createElement("div");read.dataset.readMessageId=message.id;read.className="read-status";const count=groupReadCounts[String(message.id)]||0;read.textContent=count>0?"既読 "+count+"人":"";read.style.display=count>0?"block":"none";box.appendChild(read)}const menu=document.createElement("div");menu.className="message-menu";const reactionButton=document.createElement("button");reactionButton.type="button";reactionButton.textContent="😀 リアクション";menu.appendChild(reactionButton);const replyButton=document.createElement("button");replyButton.type="button";replyButton.textContent="↩️ 返信";menu.appendChild(replyButton);if(message.sender_id!==currentUsername&&!message.is_deleted){const reportButton=document.createElement("button");reportButton.type="button";reportButton.textContent="🚨 通報";reportButton.addEventListener("click",async event=>{event.stopPropagation();menu.style.display="none";await reportGroupMessage(message)});menu.appendChild(reportButton)}if((message.sender_id===currentUsername||isGroupAdmin)&&!message.is_deleted){const editButton=document.createElement("button");editButton.type="button";editButton.className="edit-button";editButton.textContent="✏️ 編集";editButton.addEventListener("click",async event=>{event.stopPropagation();menu.style.display="none";await editMessage(message.id,message.content||"")});menu.appendChild(editButton);const deleteButton=document.createElement("button");deleteButton.type="button";deleteButton.className="delete-button";deleteButton.textContent="🗑️ 削除";deleteButton.addEventListener("click",async event=>{event.stopPropagation();menu.style.display="none";await deleteMessage(message.id)});menu.appendChild(deleteButton)}const picker=document.createElement("div");picker.className="reaction-picker";["👍","❤️","😂","😮","😢","👏"].forEach(reaction=>{const button=document.createElement("button");button.type="button";button.textContent=reaction;button.addEventListener("click",async event=>{event.stopPropagation();await addReaction(message.id,reaction);picker.style.display="none";menu.style.display="none"});picker.appendChild(button)});reactionButton.addEventListener("click",event=>{event.stopPropagation();picker.style.display=picker.style.display==="flex"?"none":"flex"});replyButton.addEventListener("click",event=>{event.stopPropagation();startReply(message);menu.style.display="none";picker.style.display="none"});box.appendChild(menu);box.appendChild(picker);box.addEventListener("click",event=>{if(event.target.closest(".message-menu")||event.target.closest(".reaction-picker"))return;document.querySelectorAll(".message-menu").forEach(el=>{if(el!==menu)el.style.display="none"});document.querySelectorAll(".reaction-picker").forEach(el=>{if(el!==picker)el.style.display="none"});menu.style.display=menu.style.display==="block"?"none":"block"});row.appendChild(box);return row}
 async function renderMessages(list,keepBottom=true){if(!list.length){messages.innerHTML='<div class="member-empty">まだメッセージはありません</div>';return}const extras=await fetchMessageExtras(list),fragment=document.createDocumentFragment(),unreadIds=[];list.forEach(message=>{fragment.appendChild(buildMessageElement(message,extras));if(message.sender_id!==currentUsername)unreadIds.push(message.id)});messages.innerHTML="";messages.appendChild(fragment);if(keepBottom)requestAnimationFrame(scrollToBottom);if(unreadIds.length)void markMessagesRead(unreadIds)}
-async function loadMessages(){if(!groupId||loadingMessages)return;loadingMessages=true;const keepBottom=isNearBottom();try{const {data,error}=await supabaseClient.from("group_messages").select("id,group_id,sender_id,content,image_url,created_at,is_deleted,edited_at").eq("group_id",groupId).order("created_at",{ascending:true});if(error){console.error("メッセージ取得エラー:",error);messages.innerHTML='<div class="error">メッセージを読み込めませんでした</div>';return}await renderMessages(data||[],keepBottom);await loadGroupReadCounts()}catch(error){console.error("高速メッセージ読み込みエラー:",error)}finally{loadingMessages=false}}
+async function loadMessages(){if(!groupId||loadingMessages)return;loadingMessages=true;const keepBottom=isNearBottom();try{const {data,error}=await supabaseClient.from("group_messages").select("id,group_id,sender_id,content,image_url,created_at,is_deleted,edited_at").eq("group_id",groupId).order("created_at",{ascending:true});if(error){console.error("メッセージ取得エラー:",error);messages.innerHTML='<div class="error">メッセージを読み込めませんでした</div>';return}groupSearchMessages=data||[];await renderMessages(data||[],keepBottom);await loadGroupReadCounts()}catch(error){console.error("高速メッセージ読み込みエラー:",error)}finally{loadingMessages=false}}
 async function refreshSingleMessage(messageId){const wasBottom=isNearBottom();const {data,error}=await supabaseClient.from("group_messages").select("id,group_id,sender_id,content,image_url,created_at,is_deleted,edited_at").eq("id",messageId).eq("group_id",groupId).maybeSingle();if(error){console.error(error);return}if(!data)return;const old=messages.querySelector(`[data-message-id="${messageId}"]`);if(!old){await loadMessages();return}const extras=await fetchMessageExtras([data]);old.replaceWith(buildMessageElement(data,extras));if(wasBottom)scrollToBottom();await loadGroupReadCounts()}
 async function addReaction(messageId,reaction){const {data:existing,error:existingError}=await supabaseClient.from("group_reactions").select("id").eq("group_message_id",messageId).eq("user_id",currentUsername).eq("reaction",reaction).maybeSingle();if(existingError){console.error(existingError);return}if(existing){const {error}=await supabaseClient.from("group_reactions").delete().eq("id",existing.id);if(error){console.error(error);return}}else{const {error}=await supabaseClient.from("group_reactions").insert({group_message_id:messageId,user_id:currentUsername,reaction});if(error){console.error(error);return}}await refreshSingleMessage(messageId)}
 function startReply(message){replyingToMessage=message;editingMessage=null;replyArea.style.display="block";const profile=profileCache[message.sender_id];replyText.innerHTML="<strong></strong>："+renderMentions(message.content||"画像");const strong=replyText.querySelector("strong");applyDecoratedName(strong,profile,message.sender_id);messageInput.focus()}
@@ -668,6 +668,28 @@ messageInput.addEventListener("blur",()=>{
   sendGroupTypingState(false);
 });
 
+async function claimGroupMessageMission(){
+  if(!currentUsername)return;
+  const {error}=await supabaseClient.from("daily_mission_claims").insert({
+    user_id:currentUsername,
+    claim_date:new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Tokyo"}),
+    mission_key:"group_message_1",
+    reward:15
+  });
+  if(error&&error.code!=="23505")console.warn("group message mission claim:",error);
+}
+
+async function claimGroupSearchMission(){
+  if(!currentUsername)return;
+  const {error}=await supabaseClient.from("daily_mission_claims").insert({
+    user_id:currentUsername,
+    claim_date:new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Tokyo"}),
+    mission_key:"message_search_1",
+    reward:10
+  });
+  if(error&&error.code!=="23505")console.warn("group search mission claim:",error);
+}
+
 async function sendMessage(){
 const wasBanned=await checkFriendChatBan();
 if(wasBanned)return;
@@ -692,6 +714,7 @@ void sendMentionNotifications(value,data.id);
 
 /* グループ全員へPush通知 */
 void createGroupMessageNotifications(value,data.id);
+void claimGroupMessageMission();
 
 /* Realtimeとの二重表示防止 */
 pendingLocalMessageIds.add(String(data.id));
@@ -843,6 +866,8 @@ function setupRealtime(){
     realtimeQueue=realtimeQueue.then(async()=>{
       const message=payload.new;
       const messageId=String(message.id);
+      groupSearchMessages=groupSearchMessages.filter(item=>String(item.id)!==messageId);
+      groupSearchMessages.push(message);
 
       if(pendingLocalMessageIds.has(messageId)){
         pendingLocalMessageIds.delete(messageId);
@@ -866,6 +891,7 @@ function setupRealtime(){
   },payload=>{
     realtimeQueue=realtimeQueue.then(async()=>{
       const message=payload.new;
+      groupSearchMessages=groupSearchMessages.map(item=>String(item.id)===String(message.id)?message:item);
       const old=messages.querySelector(`[data-message-id="${message.id}"]`);
       if(!old){await loadMessages();return}
       const extras=await fetchMessageExtras([message]);
@@ -896,7 +922,7 @@ function setupRealtime(){
     if(status!=="SUBSCRIBED")console.warn("グループRealtime接続状態:",status);
   });
 }
-async function start(){const wasBanned=await checkFriendChatBan();if(wasBanned)return;if(!groupId){groupName.textContent="グループIDがありません";return}const {data:{session}}=await supabaseClient.auth.getSession();if(!session){location.href="index.html";return}currentUsername=session.user.user_metadata?.username||"";if(!currentUsername){alert("ログイン情報が取得できませんでした");location.href="index.html";return}await Promise.all([updateMyPresence(),loadGroup()]);await loadGroupMembers();await loadGroupMutes();await loadMessages();setupRealtime();if(presenceTimer)clearInterval(presenceTimer);presenceTimer=setInterval(updateMyPresence,30000)}
+async function start(){const wasBanned=await checkFriendChatBan();if(wasBanned)return;if(!groupId){groupName.textContent="グループIDがありません";return}const {data:{session}}=await supabaseClient.auth.getSession();if(!session){location.href="index.html";return}currentUsername=session.user.user_metadata?.username||"";if(!currentUsername){alert("ログイン情報が取得できませんでした");location.href="index.html";return}await Promise.all([updateMyPresence(),loadGroup()]);await loadGroupMembers();await loadGroupMutes();await loadMessages();setupRealtime();if(new URLSearchParams(window.location.search).get("dailyMission")==="message_search_1")setTimeout(openGroupSearch,100);if(presenceTimer)clearInterval(presenceTimer);presenceTimer=setInterval(updateMyPresence,30000)}
 window.addEventListener("pagehide",()=>{try{if(voiceRecorder&&voiceRecorder.state==="recording")voiceRecorder.stop()}catch(e){}voiceStream?.getTracks().forEach(t=>t.stop())});
 start().catch(error=>{console.error("グループチャット起動エラー:",error);if(groupName)groupName.textContent="読み込みに失敗しました";if(messages)messages.innerHTML="<div class=\"error\">読み込みに失敗しました。ページを再読み込みしてください。<br><small>"+String(error?.message||error)+"</small></div>"});
 
@@ -948,6 +974,7 @@ function renderGroupSearch(keyword){
   if(!box) return;
 
   const q=String(keyword||"").trim().toLowerCase();
+  if(q) void claimGroupSearchMission();
   if(!q){
     box.innerHTML='<div style="color:#777;padding:10px 0;">検索したい文字を入力してください。</div>';
     return;
