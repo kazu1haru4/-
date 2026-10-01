@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>フレンドビンゴ 管理</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:linear-gradient(135deg,#f5f5f7,#eef3ff);color:#333}.wrap{width:min(92%,520px);margin:auto;padding:22px 0 40px}.head{display:flex;align-items:center;gap:10px;margin-bottom:16px}.back{width:42px;height:42px;border:0;border-radius:14px;background:#fff;font-size:26px;box-shadow:0 4px 12px rgba(0,0,0,.08)}.head h1{margin:0;font-size:22px;flex:1}.card{background:rgba(255,255,255,.96);border-radius:22px;padding:18px;margin-bottom:16px;box-shadow:0 6px 18px rgba(0,0,0,.07)}.card h2{margin:0 0 12px;font-size:19px}.desc{font-size:13px;color:#777;line-height:1.6;margin:0 0 14px}.row{display:grid;grid-template-columns:1fr 110px;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #eee}.row:last-child{border-bottom:0}.row label{font-weight:700;font-size:14px}.row small{display:block;color:#888;font-weight:400;margin-top:2px}input{width:100%;padding:11px;border:2px solid #e5e5e5;border-radius:12px;font-size:16px;text-align:right}input:focus{outline:none;border-color:#8f7cff}.save{width:100%;border:0;border-radius:15px;padding:14px;background:#8f7cff;color:#fff;font-size:16px;font-weight:800}.save:disabled{opacity:.55}.status{text-align:center;min-height:24px;margin-top:10px;font-weight:700;font-size:14px}.note{font-size:12px;color:#777;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <div class="head"><button class="back" type="button" onclick="location.href='bingo_supabase_coins.html'">‹</button><h1>⚙️ ビンゴ管理</h1></div>
+ <div class="card"><h2>📈 当選確率</h2><p class="desc">各ラインの設定値を個別に変更できます。0ラインはゲーム画面には表示されません。</p><div id="probFields"></div></div>
+ <div class="card"><h2>🪙 ライン別報酬</h2><p class="desc">ライン数ごとに別々の報酬を設定できます。たとえば9ラインだけ1000コインにもできます。</p><div id="rewardFields"></div></div>
+ <div class="card"><button id="save" class="save" type="button">💾 設定を保存</button><div id="status" class="status"></div></div>
+ <div class="card"><div class="note">※ 管理者権限はSupabase側で確認しています。この画面を直接開いても、管理者以外は設定を保存できません。</div></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const probFields=document.getElementById("probFields"),rewardFields=document.getElementById("rewardFields"),save=document.getElementById("save"),statusEl=document.getElementById("status");
+function field(label,name,value,sub=""){
+ const row=document.createElement("div");row.className="row";
+ const isProb=name==="p_miss"||name.startsWith("p_");
+ row.innerHTML=`<label>${label}${sub?`<small>${sub}</small>`:""}</label><input id="${name}" type="number" min="0" max="${isProb?100:1000000000}" step="${isProb?"0.1":"1"}" value="${value}">`;
+ return row;
+}
+function buildFields(data){
+ probFields.innerHTML="";probFields.appendChild(field("ハズレ","p_miss",data.p_miss,"管理画面だけで変更できます"));
+ for(let i=1;i<=9;i++)probFields.appendChild(field(`${i}ライン`,`p_${i}`,data[`p_${i}`]));
+ rewardFields.innerHTML="";for(let i=1;i<=9;i++)rewardFields.appendChild(field(`${i}ラインの報酬`,`reward_${i}`,data[`reward_${i}`],"コイン"));
+}
+async function guard(){const {data,error}=await db.rpc("is_friend_bingo_admin");if(error||!data){location.href="bingo_supabase_coins.html";return false}return true}
+async function load(){if(!await guard())return;const {data,error}=await db.rpc("get_friend_bingo_settings");if(error){statusEl.textContent="⚠️ 設定の読み込みに失敗しました";return}buildFields(data)}
+function num(name){return Number(document.getElementById(name).value)}
+save.addEventListener("click",async()=>{save.disabled=true;statusEl.textContent="保存しています…";try{const args={p_miss:num("p_miss"),p_1:num("p_1"),p_2:num("p_2"),p_3:num("p_3"),p_4:num("p_4"),p_5:num("p_5"),p_6:num("p_6"),p_7:num("p_7"),p_8:num("p_8"),p_9:num("p_9"),reward_1:num("reward_1"),reward_2:num("reward_2"),reward_3:num("reward_3"),reward_4:num("reward_4"),reward_5:num("reward_5"),reward_6:num("reward_6"),reward_7:num("reward_7"),reward_8:num("reward_8"),reward_9:num("reward_9")};for(const k of Object.keys(args))if(!Number.isFinite(args[k])||args[k]<0)throw new Error("数値は0以上で入力してください");const {data,error}=await db.rpc("admin_update_friend_bingo_settings",args);if(error)throw error;buildFields(data);statusEl.textContent="✅ ビンゴ設定を保存しました！"}catch(e){console.error(e);statusEl.textContent=`⚠️ ${e.message||"保存に失敗しました"}`}finally{save.disabled=false}});
+load();
+</script>
+</body>
+</html>
