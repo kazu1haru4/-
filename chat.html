@@ -246,6 +246,16 @@ async function updateFriendStatus(){
  friendStatus.className="friend-status "+(online?"online":"offline");friendStatus.textContent=online?"🟢 オンライン":"⚪ オフライン";
 }
 async function updateMyPresence(){if(currentUsername)await db.from("user_presence").upsert({user_id:currentUsername,last_seen:new Date().toISOString()},{onConflict:"user_id"})}
+async function claimMessagesMission(){
+ if(!currentUsername)return;
+ const {error}=await db.from("daily_mission_claims").insert({
+  user_id:currentUsername,
+  claim_date:new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Tokyo"}),
+  mission_key:"messages_5",
+  reward:15
+ });
+ if(error&&error.code!=="23505")console.warn("message mission claim:",error);
+}
 async function createNotification(messageText="新しいメッセージがあります。"){
  if(!currentUsername||!friendId)return;
  const message=String(messageText||"新しいメッセージがあります。").trim()||"新しいメッセージがあります。";
@@ -819,7 +829,7 @@ messageForm.onsubmit=async e=>{
  const {data,error}=await db.from("messages").insert({sender_id:currentUsername,receiver_id:friendId,content:text,image_url:"",is_deleted:false,is_edited:false}).select().single();
  sendButton.disabled=false;
  if(error){alert("メッセージを送信できませんでした。\n\n"+error.message);return}
- messageInput.value="";messagesElement.appendChild(createMessageElement(data,""));scrollToBottom();updateLatestButton();await createNotification(text);await sendPushToUser(friendId,"💬 "+currentUsername+"さんからメッセージ",currentUsername+"さん: "+text,"./chat.html?user="+encodeURIComponent(currentUsername));
+ messageInput.value="";messagesElement.appendChild(createMessageElement(data,""));scrollToBottom();updateLatestButton();void claimMessagesMission();await createNotification(text);await sendPushToUser(friendId,"💬 "+currentUsername+"さんからメッセージ",currentUsername+"さん: "+text,"./chat.html?user="+encodeURIComponent(currentUsername));
 };
 plusButton.onclick=e=>{e.preventDefault();e.stopPropagation();mediaMenu.classList.toggle("show")};
 menuImageButton.onclick=()=>imageInput.click();
