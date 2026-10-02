@@ -119,6 +119,9 @@ save.addEventListener("click",async()=>{
  try{
   const args={p_miss:num("p_miss")};
   for(let i=1;i<=8;i++){args[`p_${i}`]=num(`p_${i}`);args[`reward_${i}`]=num(`reward_${i}`)}
+  // Supabase側の既存RPCは9ライン用引数も必要。UIには表示せず0で渡す。
+  args.p_9=0;
+  args.reward_9=0;
   for(const k of Object.keys(args)) if(!Number.isFinite(args[k])||args[k]<0) throw new Error("数値は0以上で入力してください");
   const {data,error}=await db.rpc("admin_update_friend_bingo_settings",args);
   if(error)throw error;
