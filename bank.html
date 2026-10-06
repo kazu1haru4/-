@@ -176,7 +176,10 @@ async function loadLoan(){
     return;
   }
   const due=new Date(loan.due_at).toLocaleString("ja-JP",{timeZone:"Asia/Tokyo"});
-  box.innerHTML=`現在の借入：<b>${Number(loan.principal).toLocaleString()} COIN</b><br>返済期限：<b>${due}</b><br>※返済額は借入額と同じです。`;
+  const days=Math.max(1,Math.floor((Date.now()-new Date(loan.borrowed_at).getTime())/86400000));
+  const interest=Math.ceil(Number(loan.principal)*0.001*days);
+  const totalDue=Number(loan.principal)+interest;
+  box.innerHTML=`現在の借入：<b>${Number(loan.principal).toLocaleString()} COIN</b><br>返済期限：<b>${due}</b><br>現在の返済額：<b>${totalDue.toLocaleString()} COIN</b>（利息 ${interest.toLocaleString()} COIN）`;
 }
 
 async function borrowCoin(){
@@ -200,8 +203,11 @@ async function repayCoinLoan(){
   if(loanError){msg.textContent="❌ 借入情報を取得できませんでした";return;}
   const loan=Array.isArray(loanData)?loanData[0]:loanData;
   if(!loan||loan.repaid_at){msg.textContent="現在、借入はありません";return;}
-  const amount=Number(loan.principal);
-  if(!confirm(`${amount.toLocaleString()} COINを返済しますか？`))return;
+  const principal=Number(loan.principal);
+  const days=Math.max(1,Math.floor((Date.now()-new Date(loan.borrowed_at).getTime())/86400000));
+  const interest=Math.ceil(principal*0.001*days);
+  const amount=principal+interest;
+  if(!confirm(`${amount.toLocaleString()} COIN（元金 ${principal.toLocaleString()} + 利息 ${interest.toLocaleString()}）を返済しますか？`))return;
   const button=document.getElementById("repayButton");
   button.disabled=true;
   const {error}=await supabaseClient.rpc("repay_coin_loan",{p_amount:amount});
