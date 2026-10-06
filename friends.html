@@ -86,7 +86,13 @@ h1{text-align:center;margin:0 0 22px;color:#7158cf;font-size:27px}
 const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
 const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
+let ADMIN_USERNAMES=new Set();
+async function loadSiteAdmins(){
+  const {data,error}=await supabaseClient.rpc("admin_list_site_admins");
+  if(error){console.error("管理者一覧取得エラー:",error);return false}
+  ADMIN_USERNAMES=new Set((data||[]).map(row=>String(row.user_id||"")).filter(Boolean));
+  return true;
+}
 const ADMIN_ITEM_KEY="admin";
 let currentUsername="",presenceTimer=null;
 
@@ -95,6 +101,7 @@ async function getCurrentUser(){
   const {data,error}=await supabaseClient.auth.getUser();
   if(error||!data.user){location.href="index.html";return null}
   currentUsername=data.user.user_metadata?.username||"";
+  await loadSiteAdmins();
   if(!currentUsername){location.href="index.html";return null}
   const adminLink=document.getElementById("adminLink");
   if(ADMIN_USERNAMES.has(currentUsername))adminLink.style.display="inline-block";
