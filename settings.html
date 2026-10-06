@@ -119,7 +119,7 @@
         <button type="button" class="account-add" id="saveCurrentAccountButton">➕ 別のアカウントを追加</button>
         <button type="button" class="account-close" id="accountCloseButton">閉じる</button>
       </div>
-      <p class="account-note">登録したアカウントのパスワードは保存しません。ログインセッションだけを端末に保存します。</p>
+      <p class="account-note">アカウント切替ではパスワードを保存しません。別のアカウントを追加すると、ログイン画面から一度ログインしてください。</p>
     </div>
   </div>
 
@@ -337,52 +337,75 @@ function closeAccountModal(){
   const modal=document.getElementById("accountModal");
   modal.classList.remove("show");modal.setAttribute("aria-hidden","true");
 }
+let accountSwitching=false;
+
 async function switchAccount(account){
+  if(accountSwitching)return;
   if(!account?.session?.access_token||!account?.session?.refresh_token){
     alert("このアカウントのログイン情報が見つかりません。");
     return;
   }
   if(account.username===currentUsername){closeAccountModal();return}
-  if(await checkFriendChatBan())return;
-  const message=document.getElementById("accountMessage");
-  message.style.color="#5e50c9";message.textContent="アカウントを切り替えています...";
-  const oldUsername=currentUsername;
-  try{
-    // auth state change より先に切替先を記録します。
-    activeAccountUsername=account.username;
-    currentUsername=account.username;
 
+  const message=document.getElementById("accountMessage");
+  message.style.color="#5e50c9";
+  message.textContent="アカウントを切り替えています...";
+  accountSwitching=true;
+
+  // 現在のセッションを退避。切替失敗時に元へ戻せるようにする。
+  const {data:beforeData}=await supabaseClient.auth.getSession();
+  const oldSession=beforeData?.session||null;
+  const oldUsername=currentUsername;
+
+  try{
+    // 切替先のセッションをセット。
     const {data,error}=await supabaseClient.auth.setSession({
       access_token:account.session.access_token,
       refresh_token:account.session.refresh_token
     });
     if(error)throw error;
 
-    // setSession 後のセッションを実際に確認する。
-    // 古い保存セッションや別アカウントの状態を使わない。
-    const {data:verifyData,error:verifyError}=await supabaseClient.auth.getSession();
-    if(verifyError || !verifyData.session){
-      throw verifyError || new Error("切り替え後のセッションを確認できませんでした");
-    }
+    // setSession直後に本当に切り替わったか確認。
+    const {data:verifyData,error:verifyError}=await supabaseClient.auth.getUser();
+    if(verifyError||!verifyData?.user)throw verifyError||new Error("切替後のユーザー確認に失敗しました");
 
-    const username=verifyData.session.user?.user_metadata?.username||account.username;
-    if(username!==account.username){
-      throw new Error("切り替え先アカウントを確認できませんでした");
-    }
+    const username=verifyData.user.user_metadata?.username||account.username;
+    if(username!==account.username)throw new Error("切替先アカウントを確認できませんでした");
 
     activeAccountUsername=username;
     currentUsername=username;
-    updateCurrentSavedSession(verifyData.session);
+
+    if(data.session)updateCurrentSavedSession(data.session);
+
     closeAccountModal();
     message.style.color="#22a447";
     message.textContent="✓ "+username+" に切り替えました";
-    setTimeout(()=>location.reload(),500);
+
+    // セッション反映を待ってから再読み込み。
+    setTimeout(()=>location.reload(),700);
   }catch(error){
     console.error("アカウント切り替えエラー:",error);
-    currentUsername=oldUsername;
-    activeAccountUsername=oldUsername;
+
+    // 切替に失敗したら、元のセッションを復元する。
+    if(oldSession?.access_token&&oldSession?.refresh_token){
+      try{
+        const restored=await supabaseClient.auth.setSession({
+          access_token:oldSession.access_token,
+          refresh_token:oldSession.refresh_token
+        });
+        if(!restored.error){
+          currentUsername=oldUsername;
+          activeAccountUsername=oldUsername;
+        }
+      }catch(restoreError){
+        console.error("元アカウント復元エラー:",restoreError);
+      }
+    }
+
     message.style.color="#d65a5a";
-    message.textContent="切り替えに失敗しました。もう一度ログインしてください。";
+    message.textContent="切り替えに失敗しました。現在のアカウントは維持しています。";
+  }finally{
+    accountSwitching=false;
   }
 }
 document.getElementById("accountSwitchButton").addEventListener("click",async()=>{
@@ -394,36 +417,35 @@ document.getElementById("accountModal").addEventListener("click",e=>{
   if(e.target.id==="accountModal")closeAccountModal();
 });
 document.getElementById("saveCurrentAccountButton").addEventListener("click",async()=>{
-  await addAnotherAccount();
-});
-
-async function addAnotherAccount(){
   const message=document.getElementById("accountMessage");
   const {data,error}=await supabaseClient.auth.getSession();
-  if(error||!data.session||!currentUsername){
+  if(error||!data.session){
     message.style.color="#d65a5a";
     message.textContent="ログイン状態を確認できませんでした。";
     return;
   }
 
-  // 現在のアカウントのセッションだけ保存します。
-  // パスワードは保存しません。
+  // 現在のアカウントは保存するが、パスワードは保存しない。
   saveAccountSession(currentUsername,data.session);
   activeAccountUsername=currentUsername;
 
-  try{
-    // ログイン画面側で「別アカウント追加」の流れだと分かるようにします。
-    localStorage.setItem("friendChatAccountAddMode","1");
-    await supabaseClient.auth.signOut();
-    location.href="index.html?accountAdd=1";
-  }catch(error){
-    localStorage.removeItem("friendChatAccountAddMode");
-    console.error("別アカウント追加エラー:",error);
+  // 現在のセッションを明示的にログアウトしてから既存のログイン画面へ。
+  // 保存済みアカウント一覧は localStorage に残る。
+  const {error:signOutError}=await supabaseClient.auth.signOut();
+  if(signOutError){
+    console.error("追加アカウント用ログアウトエラー:",signOutError);
     message.style.color="#d65a5a";
-    message.textContent="アカウント追加を開始できませんでした。";
+    message.textContent="ログイン画面へ移動できませんでした。";
+    return;
   }
-}
+
+  location.href="index.html?accountAdd=1";
+});
 supabaseClient.auth.onAuthStateChange((event,session)=>{
+  // 明示的なログアウト以外では、セッションが存在するときだけ保存情報を更新。
+  // アカウント切替中はswitchAccount側で検証する。
+  if(accountSwitching)return;
+
   if(session){
     const username=session.user?.user_metadata?.username||"";
     if(username){
