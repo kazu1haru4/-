@@ -67,6 +67,12 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic
 <div class="daily-mission-total">今日の合計報酬：🪙 <strong>60</strong> COIN</div>
 </div>
 
+<div class="card" id="bankCard">
+<h2>🏦 コイン銀行</h2>
+<p class="description">コインを預けたり、預けたコインを確認できます。</p>
+<button class="main-button" type="button" onclick="location.href='bank.html'">🏦 銀行を開く</button>
+</div>
+
 <div class="card" id="shopCard">
 
 <details class="shop-details" id="frameShopDetails">
@@ -107,7 +113,7 @@ const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 const ADMIN_ITEM_KEYS=new Set(["admin","admin_name","admin_bg"]);
-const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
+let isSiteAdmin=false;
 
 let currentUsername="",balance=0,shopItems=[],ownedItems=new Set();
 
@@ -120,9 +126,19 @@ async function getCurrentUser(){
  const {data,error}=await supabaseClient.auth.getUser();
  if(error||!data.user)return false;
  currentUsername=data.user.user_metadata?.username||"";
+
+ // 管理者判定はSupabase側のsite_adminsを基準にする
+ try{
+  const {data:adminData,error:adminError}=await supabaseClient.rpc("is_friendchat_admin");
+  isSiteAdmin=!adminError&&adminData===true;
+ }catch(error){
+  console.warn("admin check:",error);
+  isSiteAdmin=false;
+ }
+
  const adminButton=document.getElementById("coinAdminButton");
  if(adminButton){
-  adminButton.style.display=ADMIN_USERNAMES.has(currentUsername)?"block":"none";
+  adminButton.style.display=isSiteAdmin?"block":"none";
   adminButton.onclick=()=>location.href="admin-coin.html";
  }
  return !!currentUsername;
