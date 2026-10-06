@@ -99,7 +99,7 @@ async function checkAdmin(){
    location.href="home.html";
    return false;
  }
- if(!(await isSiteAdmin())){
+ if(!ADMIN_USERNAMES.has(currentUsername)){
    alert("管理者専用ページです。");
    location.href="coin.html";
    return false;
