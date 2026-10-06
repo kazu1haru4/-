@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>銀行管理</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:18px;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif;background:linear-gradient(135deg,#eef5ff,#f6f0ff);color:#333}
+.container{max-width:720px;margin:0 auto}
+.header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.back{border:0;border-radius:12px;padding:10px 13px;background:#fff;color:#5e50c9;font-weight:bold;cursor:pointer;box-shadow:0 3px 12px #0001}
+h1{font-size:22px;margin:0;color:#5e50c9}
+.card{background:#fff;border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:0 8px 25px #0000000d}
+.summary{font-size:13px;color:#777;line-height:1.7;margin-bottom:12px}
+.user-list{display:grid;gap:10px}
+.user{background:#f8f8ff;border:2px solid #e6e2ff;border-radius:16px;padding:14px}
+.user-top{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.user-name{font-weight:900;font-size:16px}
+.user-id{font-size:12px;color:#888;margin-top:3px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.stat{background:#fff;border-radius:12px;padding:10px;font-size:12px}
+.stat b{display:block;font-size:17px;margin-top:3px;color:#5e50c9}
+.loan{margin-top:10px;background:#fff4df;border-radius:12px;padding:10px;font-size:12px;line-height:1.7;color:#795a20}
+.empty{text-align:center;color:#888;padding:20px}
+.error{color:#d9534f;font-weight:bold}
+.refresh{width:100%;border:0;border-radius:12px;padding:12px;background:#8f7cff;color:#fff;font-weight:bold;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <button class="back" onclick="location.href='bank.html'">‹ 戻る</button>
+    <h1>🛡️ 銀行管理</h1>
+  </div>
+
+  <div class="card">
+    <div class="summary">
+      管理者のみ閲覧できます。<br>
+      ユーザーごとの銀行預金額と現在の借入額を確認できます。
+    </div>
+    <button class="refresh" id="refreshButton">🔄 更新</button>
+  </div>
+
+  <div class="card">
+    <div id="status" class="summary">読み込み中……</div>
+    <div id="userList" class="user-list"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+function money(n){return Number(n||0).toLocaleString()+" COIN"}
+function dateText(v){return v?new Date(v).toLocaleString("ja-JP",{timeZone:"Asia/Tokyo"}):"—"}
+
+async function load(){
+  const status=document.getElementById("status");
+  const list=document.getElementById("userList");
+
+  const {data:userData,error:userError}=await supabaseClient.auth.getUser();
+  if(userError||!userData.user){
+    status.innerHTML='<span class="error">ログインが必要です。</span>';
+    return;
+  }
+
+  const {data:isAdmin,error:adminError}=await supabaseClient.rpc("is_friendchat_admin");
+  if(adminError||!isAdmin){
+    status.innerHTML='<span class="error">管理者権限がありません。</span>';
+    return;
+  }
+
+  const {data,error}=await supabaseClient.rpc("admin_list_coin_bank_accounts");
+  if(error){
+    console.error(error);
+    status.innerHTML='<span class="error">銀行情報を取得できませんでした。</span>';
+    return;
+  }
+
+  const rows=data||[];
+  status.textContent=`対象ユーザー：${rows.length}人`;
+
+  if(!rows.length){
+    list.innerHTML='<div class="empty">預金・借入のあるユーザーはいません。</div>';
+    return;
+  }
+
+  list.innerHTML=rows.map(row=>{
+    const loan=Number(row.active_loan||0);
+    return `<div class="user">
+      <div class="user-top">
+        <div>
+          <div class="user-name">${esc(row.display_name)}</div>
+          <div class="user-id">@${esc(row.user_id)}</div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat">🏦 預金<b>${money(row.bank_balance)}</b></div>
+        <div class="stat">💳 借入<b>${money(loan)}</b></div>
+      </div>
+      ${loan>0?`<div class="loan">借入日：${dateText(row.loan_borrowed_at)}<br>返済期限：${dateText(row.loan_due_at)}<br>利息：1日0.1%</div>`:""}
+    </div>`;
+  }).join("");
+}
+
+function esc(v){
+  return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+}
+
+document.getElementById("refreshButton").onclick=load;
+load();
+</script>
+</body>
+</html>
