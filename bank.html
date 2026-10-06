@@ -10,7 +10,7 @@
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif;background:linear-gradient(135deg,#eef5ff,#f6f0ff);color:#333;padding:18px}
 .container{max-width:520px;margin:0 auto}
-.header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.header{display:flex;align-items:center;gap:10px;margin-bottom:14px}.admin-button{margin-left:auto;border:0;border-radius:12px;padding:10px 12px;background:#777;color:#fff;font-weight:bold;cursor:pointer;box-shadow:0 3px 12px #0001}
 .back{border:0;border-radius:12px;padding:10px 13px;background:#fff;color:#5e50c9;font-weight:bold;text-decoration:none;box-shadow:0 3px 12px #0001}
 h1{font-size:22px;margin:0;color:#5e50c9}
 .card{background:#fff;border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:0 8px 25px #0000000d}
@@ -36,6 +36,7 @@ h1{font-size:22px;margin:0;color:#5e50c9}
   <div class="header">
     <a class="back" href="coin.html">‹ 戻る</a>
     <h1>🏦 フレンドコイン銀行</h1>
+    <button class="admin-button" id="adminButton" type="button" style="display:none">🛡️ 管理</button>
   </div>
 
   <div class="card">
@@ -78,7 +79,7 @@ h1{font-size:22px;margin:0;color:#5e50c9}
   <div class="card">
     <h2>💳 コインを借りる</h2>
     <div class="loan-status" id="loanStatus">借入情報を読み込み中……</div>
-    <input class="input" id="borrowAmount" type="number" min="1" max="1000" step="1" placeholder="借りるコイン数（最大1,000）">
+    <input class="input" id="borrowAmount" type="number" min="1" max="5000" step="1" placeholder="借りるコイン数（最大5,000）">
     <div class="loan-actions">
       <button class="borrow" id="borrowButton">💳 借りる</button>
       <button class="repay" id="repayButton">💰 全額返済</button>
@@ -127,6 +128,15 @@ async function load(){
   currentUsername=data.user.user_metadata?.username||"";
   if(!currentUsername)return;
 
+  const adminButton=document.getElementById("adminButton");
+  if(adminButton){
+    const {data:isAdmin,error:adminError}=await supabaseClient.rpc("is_friendchat_admin");
+    if(!adminError&&isAdmin){
+      adminButton.style.display="block";
+      adminButton.onclick=()=>location.href="bank-admin.html";
+    }
+  }
+
   await claimInterest(true);
   await refreshBalances();
   await loadLoan();
@@ -172,7 +182,7 @@ async function loadLoan(){
 async function borrowCoin(){
   const amount=Number(document.getElementById("borrowAmount").value);
   const msg=document.getElementById("loanMessage");
-  if(!Number.isInteger(amount)||amount<1||amount>1000){msg.textContent="❌ 1〜5,000 COINの整数を入力してください";return;}
+  if(!Number.isInteger(amount)||amount<1||amount>5000){msg.textContent="❌ 1〜5,000 COINの整数を入力してください";return;}
   const button=document.getElementById("borrowButton");
   button.disabled=true;
   const {data,error}=await supabaseClient.rpc("borrow_coin",{p_amount:amount});
