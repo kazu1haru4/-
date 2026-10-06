@@ -88,11 +88,13 @@ const manageButton =
    管理者ID
 ========================= */
 
-const ADMIN_USERNAMES =
-  new Set([
-    "kazu1haru100",
-    "kazu1haru4sub"
-  ]);
+let ADMIN_USERNAMES = new Set();
+async function loadSiteAdmins(){
+  const {data,error}=await supabaseClient.rpc("admin_list_site_admins");
+  if(error){console.error("管理者一覧取得エラー:",error);return false}
+  ADMIN_USERNAMES=new Set((data||[]).map(row=>String(row.user_id||"")).filter(Boolean));
+  return true;
+}
 
 
 let currentUsername = "";
@@ -144,6 +146,8 @@ async function start(){
   currentUsername =
     data.session.user
       .user_metadata?.username || "";
+
+  await loadSiteAdmins();
 
 
   if(!currentUsername){
