@@ -19,11 +19,14 @@
 const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
 const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const ADMINS=new Set(["kazu1haru100","kazu1haru4sub"]);
+async function isSiteAdmin(){
+ const {data,error}=await supabaseClient.rpc("is_friendchat_admin");
+ return !error && data===true;
+}
 const $=id=>document.getElementById(id);
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}
 function fmt(v){try{return new Date(v).toLocaleString("ja-JP")}catch{return ""}}
-async function auth(){const {data,error}=await db.auth.getSession();const u=data?.session?.user?.user_metadata?.username||"";if(error||!data.session||!ADMINS.has(u)){alert("管理者のみ利用できます。");location.href="home.html";return false}return true}
+async function auth(){const {data,error}=await db.auth.getSession();const u=data?.session?.user?.user_metadata?.username||"";if(error||!data.session||!(await isSiteAdmin())){alert("管理者のみ利用できます。");location.href="home.html";return false}return true}
 async function load(){const {data,error}=await db.rpc("admin_list_all_direct_chats");if(error){$("list").innerHTML='<div class="empty">個別チャットを読み込めませんでした<br><br>'+esc(error.message)+'</div>';return}const rows=data||[];if(!rows.length){$("list").innerHTML='<div class="empty">個別チャットはありません。</div>';return}$("list").innerHTML="";rows.forEach(r=>{const el=document.createElement("div");el.className="card";el.innerHTML='<div class="users">💬 '+esc(r.user1)+' ↔ '+esc(r.user2)+'</div><div class="last">'+esc(r.last_content||"（画像・メディア）")+'</div><div class="meta">'+Number(r.message_count||0)+'件 ・ '+esc(fmt(r.last_created_at))+'</div>';el.onclick=()=>openChat(r.user1,r.user2);$("list").appendChild(el)})}
 async function getMediaInfo(raw){
   const value=String(raw||"");
