@@ -204,7 +204,12 @@ textarea{min-height:100px;resize:vertical}.form-row{margin-bottom:12px}.form-row
 const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
 const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 let supabaseClient=null,currentUsername="",banTargetUsername="",editTargetMessageId=null;
-const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
+let ADMIN_USERNAMES=new Set();
+async function loadSiteAdmins(){
+ const {data,error}=await supabaseClient.rpc("admin_list_site_admins");
+ if(error)throw error;
+ ADMIN_USERNAMES=new Set((data||[]).map(row=>String(row.user_id||"")).filter(Boolean));
+}
 
 function setStatus(text,type="info"){const e=document.getElementById("status");if(e){e.textContent=text;e.className="status "+type}}
 function escapeHtml(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
@@ -217,6 +222,7 @@ async function checkLogin(){
  if(!session){document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif"><h2>🔐 ログインが必要です</h2><p>管理者アカウントでログインしてください。</p></div>';return false}
  currentUsername=session.user?.user_metadata?.username||"";
  if(!currentUsername){document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif"><h2>❌ ユーザーIDを取得できません</h2><p>ログイン情報を確認してください。</p></div>';return false}
+ await loadSiteAdmins();
  if(!ADMIN_USERNAMES.has(currentUsername)){document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif"><h2>🚫 アクセスできません</h2><p>このページは管理者専用です。</p></div>';return false}
  document.getElementById("adminName").textContent=`ログイン中：${currentUsername}`;return true;
 }
