@@ -39,7 +39,14 @@
     .device-name{font-weight:bold;font-size:14px}.device-meta{font-size:11px;color:#888;margin-top:4px;line-height:1.5}
     .current-device{display:inline-block;font-size:10px;background:var(--theme-light);color:var(--theme-text);padding:3px 7px;border-radius:999px;margin-left:5px}
     .danger-note{color:#d65a5a;font-size:12px;line-height:1.6;margin-top:9px}
-  </style>
+  
+    .account-switch-button{width:100%;border:none;border-radius:16px;padding:14px;font-size:15px;font-weight:bold;cursor:pointer;background:linear-gradient(135deg,#eee8ff,#dcd3ff);color:#5945b7;box-shadow:0 4px 12px rgba(110,90,220,.12)}
+    .account-switch-button:active{transform:scale(.98)}
+    .account-modal{position:fixed;inset:0;background:rgba(0,0,0,.38);display:none;align-items:center;justify-content:center;padding:18px;z-index:999}
+    .account-modal.show{display:flex}.account-modal-box{width:100%;max-width:420px;background:white;border-radius:22px;padding:20px;box-shadow:0 12px 40px rgba(0,0,0,.2)}
+    .account-modal-title{font-size:18px;font-weight:bold;margin-bottom:12px}.account-list{display:grid;gap:9px}.account-item{width:100%;border:1px solid #eee;border-radius:15px;background:#fafafa;padding:13px;text-align:left;cursor:pointer;font-size:14px}.account-item.current{border:2px solid var(--theme);background:var(--theme-light);color:var(--theme-text);font-weight:bold}.account-item:active{transform:scale(.98)}
+    .account-item small{display:block;color:#999;font-size:11px;margin-top:4px}.account-modal-actions{display:grid;gap:8px;margin-top:12px}.account-add{width:100%;border:none;border-radius:14px;padding:12px;background:var(--theme-light);color:var(--theme-text);font-weight:bold;cursor:pointer}.account-close{width:100%;border:none;border-radius:14px;padding:12px;background:#eee;color:#555;font-weight:bold;cursor:pointer}.account-note{font-size:12px;color:#888;line-height:1.6;margin:8px 0 0}
+</style>
 </head>
 <body>
 <main class="page">
@@ -98,9 +105,23 @@
 
   <section class="section">
     <div class="section-title">🚪 アカウント</div>
+    <button type="button" class="account-switch-button" id="accountSwitchButton">🔄 アカウントを切り替える</button>
+    <div style="height:9px"></div>
     <button type="button" class="logout-button" id="logoutButton">🚪 ログアウト</button>
     <div class="saved" id="accountMessage"></div>
   </section>
+
+  <div class="account-modal" id="accountModal" aria-hidden="true">
+    <div class="account-modal-box">
+      <div class="account-modal-title">🔄 切り替えるアカウントを選択</div>
+      <div class="account-list" id="accountList"></div>
+      <div class="account-modal-actions">
+        <button type="button" class="account-add" id="saveCurrentAccountButton">➕ このアカウントを登録</button>
+        <button type="button" class="account-close" id="accountCloseButton">閉じる</button>
+      </div>
+      <p class="account-note">登録したアカウントのパスワードは保存しません。ログインセッションだけを端末に保存します。</p>
+    </div>
+  </div>
 
   <div class="footer">Friend Chat</div>
 </main>
@@ -250,6 +271,133 @@ document.getElementById("signOutOthersButton").addEventListener("click",async()=
   }
   btn.disabled=false;btn.textContent="🚪 他の端末からログアウト";
 });
+
+/* ===== アカウント切り替え ===== */
+const ACCOUNT_STORAGE_KEY="friendChatSavedAccounts";
+let activeAccountUsername="";
+
+function getSavedAccounts(){
+  try{
+    const value=JSON.parse(localStorage.getItem(ACCOUNT_STORAGE_KEY)||"[]");
+    return Array.isArray(value)?value:[];
+  }catch{return[]}
+}
+function setSavedAccounts(accounts){
+  localStorage.setItem(ACCOUNT_STORAGE_KEY,JSON.stringify(accounts));
+}
+function saveAccountSession(username,session){
+  if(!username||!session?.access_token||!session?.refresh_token)return;
+  const accounts=getSavedAccounts().filter(a=>a.username!==username);
+  accounts.unshift({
+    username,
+    session:{
+      access_token:session.access_token,
+      refresh_token:session.refresh_token
+    },
+    saved_at:new Date().toISOString()
+  });
+  setSavedAccounts(accounts.slice(0,10));
+}
+function updateCurrentSavedSession(session){
+  if(!activeAccountUsername||!session?.access_token||!session?.refresh_token)return;
+  const accounts=getSavedAccounts();
+  const index=accounts.findIndex(a=>a.username===activeAccountUsername);
+  if(index<0)return;
+  accounts[index].session={
+    access_token:session.access_token,
+    refresh_token:session.refresh_token
+  };
+  accounts[index].saved_at=new Date().toISOString();
+  setSavedAccounts(accounts);
+}
+function renderAccountList(){
+  const list=document.getElementById("accountList");
+  const accounts=getSavedAccounts();
+  list.innerHTML="";
+  if(!accounts.length){
+    list.innerHTML='<div class="device-card">登録されたアカウントはありません。</div>';
+    return;
+  }
+  accounts.forEach(account=>{
+    const b=document.createElement("button");
+    b.type="button";
+    b.className="account-item"+(account.username===currentUsername?" current":"");
+    b.innerHTML=(account.username===currentUsername?"✓ ":"")+"👤 "+account.username+
+      (account.username===currentUsername?'<small>現在使用中</small>':"<small>タップして切り替え</small>");
+    b.addEventListener("click",()=>switchAccount(account));
+    list.appendChild(b);
+  });
+}
+function openAccountModal(){
+  renderAccountList();
+  const modal=document.getElementById("accountModal");
+  modal.classList.add("show");modal.setAttribute("aria-hidden","false");
+}
+function closeAccountModal(){
+  const modal=document.getElementById("accountModal");
+  modal.classList.remove("show");modal.setAttribute("aria-hidden","true");
+}
+async function switchAccount(account){
+  if(!account?.session?.access_token||!account?.session?.refresh_token){
+    alert("このアカウントのログイン情報が見つかりません。");
+    return;
+  }
+  if(account.username===currentUsername){closeAccountModal();return}
+  if(await checkFriendChatBan())return;
+  const message=document.getElementById("accountMessage");
+  message.style.color="#5e50c9";message.textContent="アカウントを切り替えています...";
+  const oldUsername=currentUsername;
+  try{
+    const {data,error}=await supabaseClient.auth.setSession({
+      access_token:account.session.access_token,
+      refresh_token:account.session.refresh_token
+    });
+    if(error)throw error;
+    const username=data.user?.user_metadata?.username||account.username;
+    activeAccountUsername=username;
+    currentUsername=username;
+    if(data.session)updateCurrentSavedSession(data.session);
+    closeAccountModal();
+    message.style.color="#22a447";
+    message.textContent="✓ "+username+" に切り替えました";
+    setTimeout(()=>location.reload(),500);
+  }catch(error){
+    console.error("アカウント切り替えエラー:",error);
+    message.style.color="#d65a5a";
+    message.textContent="切り替えに失敗しました。もう一度ログインしてください。";
+    if(oldUsername)activeAccountUsername=oldUsername;
+  }
+}
+document.getElementById("accountSwitchButton").addEventListener("click",async()=>{
+  if(await checkFriendChatBan())return;
+  openAccountModal();
+});
+document.getElementById("accountCloseButton").addEventListener("click",closeAccountModal);
+document.getElementById("accountModal").addEventListener("click",e=>{
+  if(e.target.id==="accountModal")closeAccountModal();
+});
+document.getElementById("saveCurrentAccountButton").addEventListener("click",async()=>{
+  const message=document.getElementById("accountMessage");
+  const {data,error}=await supabaseClient.auth.getSession();
+  if(error||!data.session){
+    message.style.color="#d65a5a";message.textContent="ログイン状態を確認できませんでした。";return;
+  }
+  saveAccountSession(currentUsername,data.session);
+  activeAccountUsername=currentUsername;
+  renderAccountList();
+  message.style.color="#22a447";message.textContent="✓ "+currentUsername+" を登録しました";
+  setTimeout(()=>message.textContent="",1800);
+});
+supabaseClient.auth.onAuthStateChange((event,session)=>{
+  if(session){
+    const username=session.user?.user_metadata?.username||"";
+    if(username){
+      currentUsername=username;
+      activeAccountUsername=username;
+      updateCurrentSavedSession(session);
+    }
+  }
+});
 document.getElementById("logoutButton").addEventListener("click",async()=>{
   const b=document.getElementById("logoutButton"),m=document.getElementById("accountMessage");
   b.disabled=true;b.textContent="ログアウトしています...";
@@ -264,6 +412,9 @@ async function init(){
   if(error||!data.user){location.href="index.html";return}
   currentUsername=data.user.user_metadata?.username||"";
   if(!currentUsername){location.href="index.html";return}
+  activeAccountUsername=currentUsername;
+  const {data:currentSessionData}=await supabaseClient.auth.getSession();
+  if(currentSessionData.session)saveAccountSession(currentUsername,currentSessionData.session);
   if(ADMIN_USERNAMES.has(currentUsername))document.getElementById("adminSection").classList.remove("hidden");
   await loadSubAdminPanel();
   applyTheme(localStorage.getItem("friendChatTheme")||"purple");
