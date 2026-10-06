@@ -494,6 +494,70 @@
         }
 
 
+        /* =========================
+           アカウント追加モード
+        ========================= */
+        const accountAddMode =
+          localStorage.getItem("friendChatAccountAddMode") === "1";
+
+        if (accountAddMode) {
+          try {
+            const savedKey = "friendChatSavedAccounts";
+            let accounts = [];
+
+            try {
+              accounts = JSON.parse(
+                localStorage.getItem(savedKey) || "[]"
+              );
+            } catch (e) {
+              accounts = [];
+            }
+
+            if (!Array.isArray(accounts)) accounts = [];
+
+            const session = data.session;
+            const existingIndex = accounts.findIndex(
+              account => account?.username === id
+            );
+
+            const accountData = {
+              username: id,
+              session: {
+                access_token: session.access_token,
+                refresh_token: session.refresh_token
+              }
+            };
+
+            if (existingIndex >= 0) {
+              accounts[existingIndex] = accountData;
+            } else {
+              accounts.push(accountData);
+            }
+
+            localStorage.setItem(
+              savedKey,
+              JSON.stringify(accounts)
+            );
+
+            localStorage.setItem(
+              "friendChatActiveAccount",
+              id
+            );
+
+            localStorage.removeItem(
+              "friendChatAccountAddMode"
+            );
+          } catch (accountError) {
+            console.error(
+              "アカウント登録保存エラー:",
+              accountError
+            );
+            message.textContent =
+              "ログインは成功しましたが、アカウント登録の保存に失敗しました。";
+            return;
+          }
+        }
+
         window.location.href =
           "home.html";
 
