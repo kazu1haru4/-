@@ -357,10 +357,22 @@ async function switchAccount(account){
       refresh_token:account.session.refresh_token
     });
     if(error)throw error;
-    const username=data.user?.user_metadata?.username||account.username;
+
+    // setSession 後のセッションを実際に確認する。
+    // 古い保存セッションや別アカウントの状態を使わない。
+    const {data:verifyData,error:verifyError}=await supabaseClient.auth.getSession();
+    if(verifyError || !verifyData.session){
+      throw verifyError || new Error("切り替え後のセッションを確認できませんでした");
+    }
+
+    const username=verifyData.session.user?.user_metadata?.username||account.username;
+    if(username!==account.username){
+      throw new Error("切り替え先アカウントを確認できませんでした");
+    }
+
     activeAccountUsername=username;
     currentUsername=username;
-    if(data.session)updateCurrentSavedSession(data.session);
+    updateCurrentSavedSession(verifyData.session);
     closeAccountModal();
     message.style.color="#22a447";
     message.textContent="✓ "+username+" に切り替えました";
