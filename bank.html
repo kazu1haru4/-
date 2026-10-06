@@ -49,8 +49,8 @@ h1{font-size:22px;margin:0;color:#5e50c9}
 
     <div class="rate">
       💰 <b>銀行の増加ルール</b><br>
-      ・1週間ごとに預金残高の <b>0.01%</b><br>
-      ・1週間あたりの利息は最大 <b>1,000 COIN</b><br>
+      ・1週間ごとに預金残高の <b>0.1%</b><br>
+      ・1週間あたりの利息は最大 <b>5,000 COIN</b><br>
       ・1週間未満では利息は発生しません<br>
       ・利息は銀行残高に加算されます
     </div>
@@ -162,7 +162,7 @@ async function loadLoan(){
   if(error){console.error(error);box.textContent="❌ 借入情報を読み込めませんでした";return;}
   const loan=Array.isArray(data)?data[0]:data;
   if(!loan||loan.repaid_at){
-    box.innerHTML="現在、借入はありません。<br>1回の借入につき最大1,000 COINまで借りられます。";
+    box.innerHTML="現在、借入はありません。<br>1回の借入につき最大5,000 COINまで借りられます。";
     return;
   }
   const due=new Date(loan.due_at).toLocaleString("ja-JP",{timeZone:"Asia/Tokyo"});
@@ -172,7 +172,7 @@ async function loadLoan(){
 async function borrowCoin(){
   const amount=Number(document.getElementById("borrowAmount").value);
   const msg=document.getElementById("loanMessage");
-  if(!Number.isInteger(amount)||amount<1||amount>1000){msg.textContent="❌ 1〜1,000 COINの整数を入力してください";return;}
+  if(!Number.isInteger(amount)||amount<1||amount>1000){msg.textContent="❌ 1〜5,000 COINの整数を入力してください";return;}
   const button=document.getElementById("borrowButton");
   button.disabled=true;
   const {data,error}=await supabaseClient.rpc("borrow_coin",{p_amount:amount});
