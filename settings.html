@@ -116,7 +116,7 @@
       <div class="account-modal-title">🔄 切り替えるアカウントを選択</div>
       <div class="account-list" id="accountList"></div>
       <div class="account-modal-actions">
-        <button type="button" class="account-add" id="saveCurrentAccountButton">➕ このアカウントを登録</button>
+        <button type="button" class="account-add" id="saveCurrentAccountButton">➕ 別のアカウントを追加</button>
         <button type="button" class="account-close" id="accountCloseButton">閉じる</button>
       </div>
       <p class="account-note">登録したアカウントのパスワードは保存しません。ログインセッションだけを端末に保存します。</p>
@@ -348,6 +348,10 @@ async function switchAccount(account){
   message.style.color="#5e50c9";message.textContent="アカウントを切り替えています...";
   const oldUsername=currentUsername;
   try{
+    // auth state change より先に切替先を記録します。
+    activeAccountUsername=account.username;
+    currentUsername=account.username;
+
     const {data,error}=await supabaseClient.auth.setSession({
       access_token:account.session.access_token,
       refresh_token:account.session.refresh_token
@@ -363,9 +367,10 @@ async function switchAccount(account){
     setTimeout(()=>location.reload(),500);
   }catch(error){
     console.error("アカウント切り替えエラー:",error);
+    currentUsername=oldUsername;
+    activeAccountUsername=oldUsername;
     message.style.color="#d65a5a";
     message.textContent="切り替えに失敗しました。もう一度ログインしてください。";
-    if(oldUsername)activeAccountUsername=oldUsername;
   }
 }
 document.getElementById("accountSwitchButton").addEventListener("click",async()=>{
@@ -377,17 +382,35 @@ document.getElementById("accountModal").addEventListener("click",e=>{
   if(e.target.id==="accountModal")closeAccountModal();
 });
 document.getElementById("saveCurrentAccountButton").addEventListener("click",async()=>{
+  await addAnotherAccount();
+});
+
+async function addAnotherAccount(){
   const message=document.getElementById("accountMessage");
   const {data,error}=await supabaseClient.auth.getSession();
-  if(error||!data.session){
-    message.style.color="#d65a5a";message.textContent="ログイン状態を確認できませんでした。";return;
+  if(error||!data.session||!currentUsername){
+    message.style.color="#d65a5a";
+    message.textContent="ログイン状態を確認できませんでした。";
+    return;
   }
+
+  // 現在のアカウントのセッションだけ保存します。
+  // パスワードは保存しません。
   saveAccountSession(currentUsername,data.session);
   activeAccountUsername=currentUsername;
-  renderAccountList();
-  message.style.color="#22a447";message.textContent="✓ "+currentUsername+" を登録しました";
-  setTimeout(()=>message.textContent="",1800);
-});
+
+  try{
+    // ログイン画面側で「別アカウント追加」の流れだと分かるようにします。
+    localStorage.setItem("friendChatAccountAddMode","1");
+    await supabaseClient.auth.signOut();
+    location.href="index.html?accountAdd=1";
+  }catch(error){
+    localStorage.removeItem("friendChatAccountAddMode");
+    console.error("別アカウント追加エラー:",error);
+    message.style.color="#d65a5a";
+    message.textContent="アカウント追加を開始できませんでした。";
+  }
+}
 supabaseClient.auth.onAuthStateChange((event,session)=>{
   if(session){
     const username=session.user?.user_metadata?.username||"";
