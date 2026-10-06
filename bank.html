@@ -27,6 +27,7 @@ h1{font-size:22px;margin:0;color:#5e50c9}
 .withdraw{background:#eef5ff;color:#2875c7}
 .interest{width:100%;border:0;border-radius:12px;padding:13px;background:#fff1d9;color:#b66a00;font-weight:bold;cursor:pointer;margin-top:10px}
 .message{min-height:22px;text-align:center;font-size:13px;font-weight:bold;margin-top:10px}
+.loan-status{background:#f7f5ff;border-radius:14px;padding:12px;font-size:13px;line-height:1.7;margin-bottom:12px}.loan-actions{display:flex;gap:8px;margin-top:10px}.loan-actions button{flex:1;border:0;border-radius:12px;padding:12px;font-weight:bold;font-size:14px;cursor:pointer}.borrow{background:#fff1d9;color:#a96500}.repay{background:#eaf9f1;color:#198754}.loan-message{min-height:22px;text-align:center;font-size:13px;font-weight:bold;margin-top:10px}
 .note{font-size:12px;color:#888;line-height:1.7}
 </style>
 </head>
@@ -75,6 +76,17 @@ h1{font-size:22px;margin:0;color:#5e50c9}
   </div>
 
   <div class="card">
+    <h2>💳 コインを借りる</h2>
+    <div class="loan-status" id="loanStatus">借入情報を読み込み中……</div>
+    <input class="input" id="borrowAmount" type="number" min="1" max="1000" step="1" placeholder="借りるコイン数（最大1,000）">
+    <div class="loan-actions">
+      <button class="borrow" id="borrowButton">💳 借りる</button>
+      <button class="repay" id="repayButton">💰 全額返済</button>
+    </div>
+    <div class="loan-message" id="loanMessage"></div>
+  </div>
+
+  <div class="card">
     <div class="note">
       ※ フレンドコインはFriend Chat内で使うゲーム内ポイントです。<br>
       ※ 利息は実際のお金ではなく、ゲーム内コインに対する設定です。
@@ -117,6 +129,7 @@ async function load(){
 
   await claimInterest(true);
   await refreshBalances();
+  await loadLoan();
 }
 
 async function refreshBalances(){
@@ -140,6 +153,53 @@ async function refreshBalances(){
   }else{
     document.getElementById("bankBalance").textContent=Number(bank.data?.balance||0).toLocaleString();
   }
+}
+
+async function loadLoan(){
+  const box=document.getElementById("loanStatus");
+  if(!box)return;
+  const {data,error}=await supabaseClient.rpc("get_my_coin_loan");
+  if(error){console.error(error);box.textContent="❌ 借入情報を読み込めませんでした";return;}
+  const loan=Array.isArray(data)?data[0]:data;
+  if(!loan||loan.repaid_at){
+    box.innerHTML="現在、借入はありません。<br>1回の借入につき最大1,000 COINまで借りられます。";
+    return;
+  }
+  const due=new Date(loan.due_at).toLocaleString("ja-JP",{timeZone:"Asia/Tokyo"});
+  box.innerHTML=`現在の借入：<b>${Number(loan.principal).toLocaleString()} COIN</b><br>返済期限：<b>${due}</b><br>※返済額は借入額と同じです。`;
+}
+
+async function borrowCoin(){
+  const amount=Number(document.getElementById("borrowAmount").value);
+  const msg=document.getElementById("loanMessage");
+  if(!Number.isInteger(amount)||amount<1||amount>1000){msg.textContent="❌ 1〜1,000 COINの整数を入力してください";return;}
+  const button=document.getElementById("borrowButton");
+  button.disabled=true;
+  const {data,error}=await supabaseClient.rpc("borrow_coin",{p_amount:amount});
+  button.disabled=false;
+  if(error){console.error(error);msg.textContent="❌ "+(error.message||"借入に失敗しました");return;}
+  document.getElementById("borrowAmount").value="";
+  msg.textContent=`🎉 ${Number(data||amount).toLocaleString()} COINを借りました！`;
+  await refreshBalances();
+  await loadLoan();
+}
+
+async function repayCoinLoan(){
+  const msg=document.getElementById("loanMessage");
+  const {data:loanData,error:loanError}=await supabaseClient.rpc("get_my_coin_loan");
+  if(loanError){msg.textContent="❌ 借入情報を取得できませんでした";return;}
+  const loan=Array.isArray(loanData)?loanData[0]:loanData;
+  if(!loan||loan.repaid_at){msg.textContent="現在、借入はありません";return;}
+  const amount=Number(loan.principal);
+  if(!confirm(`${amount.toLocaleString()} COINを返済しますか？`))return;
+  const button=document.getElementById("repayButton");
+  button.disabled=true;
+  const {error}=await supabaseClient.rpc("repay_coin_loan",{p_amount:amount});
+  button.disabled=false;
+  if(error){console.error(error);msg.textContent="❌ "+(error.message||"返済に失敗しました");return;}
+  msg.textContent=`✅ ${amount.toLocaleString()} COINを返済しました！`;
+  await refreshBalances();
+  await loadLoan();
 }
 
 async function claimInterest(silent=false){
@@ -197,6 +257,8 @@ document.getElementById("interestButton").onclick=async()=>{
 };
 document.getElementById("depositButton").onclick=deposit;
 document.getElementById("withdrawButton").onclick=withdraw;
+document.getElementById("borrowButton").onclick=borrowCoin;
+document.getElementById("repayButton").onclick=repayCoinLoan;
 
 load();
 </script>
