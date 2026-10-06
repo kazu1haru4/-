@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>フレンドコイン銀行</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="ban-check.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif;background:linear-gradient(135deg,#eef5ff,#f6f0ff);color:#333;padding:18px}
+.container{max-width:520px;margin:0 auto}
+.header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.back{border:0;border-radius:12px;padding:10px 13px;background:#fff;color:#5e50c9;font-weight:bold;text-decoration:none;box-shadow:0 3px 12px #0001}
+h1{font-size:22px;margin:0;color:#5e50c9}
+.card{background:#fff;border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:0 8px 25px #0000000d}
+.balance-label{font-size:13px;color:#888}
+.balance{font-size:32px;font-weight:900;color:#5e50c9;margin-top:5px}
+.coin{font-size:14px;margin-left:5px;color:#888}
+.bank-balance{font-size:28px;font-weight:900;color:#2677c9;margin-top:5px}
+.rate{background:#f5f8ff;border-radius:14px;padding:12px;margin-top:12px;font-size:13px;line-height:1.7}
+.input{width:100%;padding:13px;border:2px solid #e3e8f5;border-radius:12px;font-size:16px;outline:none}
+.input:focus{border-color:#8f7cff}
+.actions{display:flex;gap:8px;margin-top:10px}
+.actions button{flex:1;border:0;border-radius:12px;padding:12px;font-weight:bold;font-size:14px;cursor:pointer}
+.deposit{background:#eaf9f1;color:#198754}
+.withdraw{background:#eef5ff;color:#2875c7}
+.interest{width:100%;border:0;border-radius:12px;padding:13px;background:#fff1d9;color:#b66a00;font-weight:bold;cursor:pointer;margin-top:10px}
+.message{min-height:22px;text-align:center;font-size:13px;font-weight:bold;margin-top:10px}
+.note{font-size:12px;color:#888;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <a class="back" href="coin.html">‹ 戻る</a>
+    <h1>🏦 フレンドコイン銀行</h1>
+  </div>
+
+  <div class="card">
+    <div class="balance-label">手持ちコイン</div>
+    <div class="balance"><span id="walletBalance">---</span><span class="coin">COIN</span></div>
+  </div>
+
+  <div class="card">
+    <div class="balance-label">銀行預金</div>
+    <div class="bank-balance"><span id="bankBalance">---</span><span class="coin">COIN</span></div>
+
+    <div class="rate">
+      💰 <b>銀行の増加ルール</b><br>
+      ・1週間ごとに預金残高の <b>0.01%</b><br>
+      ・1週間あたりの利息は最大 <b>1,000 COIN</b><br>
+      ・1週間未満では利息は発生しません<br>
+      ・利息は銀行残高に加算されます
+    </div>
+
+    <button class="interest" id="interestButton">💰 利息を受け取る</button>
+    <div class="message" id="message"></div>
+  </div>
+
+  <div class="card">
+    <h2>📥 預ける</h2>
+    <input class="input" id="depositAmount" type="number" min="1" step="1" placeholder="預けるコイン数">
+    <div class="actions">
+      <button class="deposit" id="depositButton">預ける</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📤 引き出す</h2>
+    <input class="input" id="withdrawAmount" type="number" min="1" step="1" placeholder="引き出すコイン数">
+    <div class="actions">
+      <button class="withdraw" id="withdrawButton">引き出す</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      ※ フレンドコインはFriend Chat内で使うゲーム内ポイントです。<br>
+      ※ 利息は実際のお金ではなく、ゲーム内コインに対する設定です。
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let currentUsername="";
+
+function setMessage(text,ok=false){
+  const el=document.getElementById("message");
+  el.textContent=text||"";
+  el.style.color=ok?"#198754":"#d9534f";
+}
+
+function getAmount(id){
+  const n=Number(document.getElementById(id).value);
+  if(!Number.isInteger(n)||n<=0){
+    setMessage("1以上の整数を入力してください");
+    return null;
+  }
+  return n;
+}
+
+async function load(){
+  const {data,error}=await supabaseClient.auth.getUser();
+  if(error||!data.user){
+    document.getElementById("walletBalance").textContent="ログインしてください";
+    document.getElementById("bankBalance").textContent="---";
+    return;
+  }
+
+  currentUsername=data.user.user_metadata?.username||"";
+  if(!currentUsername)return;
+
+  await claimInterest(true);
+  await refreshBalances();
+}
+
+async function refreshBalances(){
+  const wallet=await supabaseClient.rpc("get_my_coins");
+  if(wallet.error){
+    console.error(wallet.error);
+    document.getElementById("walletBalance").textContent="エラー";
+  }else{
+    document.getElementById("walletBalance").textContent=Number(wallet.data||0).toLocaleString();
+  }
+
+  const bank=await supabaseClient
+    .from("coin_banks")
+    .select("balance")
+    .eq("user_id",currentUsername)
+    .maybeSingle();
+
+  if(bank.error){
+    console.error(bank.error);
+    document.getElementById("bankBalance").textContent="エラー";
+  }else{
+    document.getElementById("bankBalance").textContent=Number(bank.data?.balance||0).toLocaleString();
+  }
+}
+
+async function claimInterest(silent=false){
+  const {data,error}=await supabaseClient.rpc("claim_bank_interest");
+  if(error){
+    console.error(error);
+    if(!silent)setMessage(error.message||"利息の処理に失敗しました");
+    return;
+  }
+
+  const amount=Number(data||0);
+  if(!silent){
+    setMessage(
+      amount>0 ? `💰 ${amount.toLocaleString()} COINの利息が追加されました！` : "今回はまだ利息の対象期間ではありません。",
+      true
+    );
+  }
+}
+
+async function deposit(){
+  const amount=getAmount("depositAmount");
+  if(amount===null)return;
+
+  const {data,error}=await supabaseClient.rpc("bank_deposit",{p_amount:amount});
+  if(error){
+    console.error(error);
+    setMessage(error.message||"預金に失敗しました");
+    return;
+  }
+
+  document.getElementById("depositAmount").value="";
+  setMessage(`📥 ${amount.toLocaleString()} COINを預けました。`,true);
+  await refreshBalances();
+}
+
+async function withdraw(){
+  const amount=getAmount("withdrawAmount");
+  if(amount===null)return;
+
+  const {data,error}=await supabaseClient.rpc("bank_withdraw",{p_amount:amount});
+  if(error){
+    console.error(error);
+    setMessage(error.message||"引き出しに失敗しました");
+    return;
+  }
+
+  document.getElementById("withdrawAmount").value="";
+  setMessage(`📤 ${amount.toLocaleString()} COINを引き出しました。`,true);
+  await refreshBalances();
+}
+
+document.getElementById("interestButton").onclick=async()=>{
+  await claimInterest(false);
+  await refreshBalances();
+};
+document.getElementById("depositButton").onclick=deposit;
+document.getElementById("withdrawButton").onclick=withdraw;
+
+load();
+</script>
+</body>
+</html>
