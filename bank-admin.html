@@ -22,7 +22,7 @@ h1{font-size:22px;margin:0;color:#5e50c9}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .stat{background:#fff;border-radius:12px;padding:10px;font-size:12px}
 .stat b{display:block;font-size:17px;margin-top:3px;color:#5e50c9}
-.loan{margin-top:10px;background:#fff4df;border-radius:12px;padding:10px;font-size:12px;line-height:1.7;color:#795a20}
+.loan{margin-top:10px;background:#fff4df;border-radius:12px;padding:10px;font-size:12px;line-height:1.7;color:#795a20}.bank-edit{margin-top:10px;display:grid;grid-template-columns:1fr 110px;gap:8px}.bank-edit input{width:100%;padding:10px;border:2px solid #e6e2ff;border-radius:11px;font-size:15px;text-align:right}.bank-edit button{border:0;border-radius:11px;background:#5e50c9;color:#fff;font-weight:800;cursor:pointer}.bank-edit button:disabled{opacity:.5}.edit-status{grid-column:1/-1;font-size:12px;text-align:center;min-height:18px;font-weight:700}
 .empty{text-align:center;color:#888;padding:20px}
 .error{color:#d9534f;font-weight:bold}
 .refresh{width:100%;border:0;border-radius:12px;padding:12px;background:#8f7cff;color:#fff;font-weight:bold;cursor:pointer}
@@ -90,7 +90,7 @@ async function load(){
 
   list.innerHTML=rows.map(row=>{
     const loan=Number(row.active_loan||0);
-    return `<div class="user">
+    return `<div class="user" data-user-id="${esc(row.user_id)}">
       <div class="user-top">
         <div>
           <div class="user-name">${esc(row.display_name)}</div>
@@ -102,8 +102,40 @@ async function load(){
         <div class="stat">💳 借入<b>${money(loan)}</b></div>
       </div>
       ${loan>0?`<div class="loan">借入日：${dateText(row.loan_borrowed_at)}<br>返済期限：${dateText(row.loan_due_at)}<br>利息：1日0.1%</div>`:""}
+      <div class="bank-edit">
+        <input class="bank-balance-input" type="number" min="0" step="1" value="${Number(row.bank_balance||0)}" inputmode="numeric" aria-label="${esc(row.user_id)}の銀行預金額">
+        <button class="bank-balance-save" type="button">変更</button>
+        <div class="edit-status"></div>
+      </div>
     </div>`;
   }).join("");
+
+  list.querySelectorAll(".user").forEach(card=>{
+    const userId=card.dataset.userId;
+    const input=card.querySelector(".bank-balance-input");
+    const button=card.querySelector(".bank-balance-save");
+    const editStatus=card.querySelector(".edit-status");
+    button.addEventListener("click",async()=>{
+      const value=Number(input.value);
+      if(!Number.isInteger(value)||value<0){
+        editStatus.textContent="⚠️ 0以上の整数を入力してください";
+        return;
+      }
+      button.disabled=true;
+      editStatus.textContent="変更しています…";
+      try{
+        const {data,error}=await supabaseClient.rpc("admin_set_coin_bank_balance",{p_user_id:userId,p_balance:value});
+        if(error)throw error;
+        input.value=Number(data||0);
+        editStatus.textContent=`✅ ${Number(data||0).toLocaleString()} COIN に変更しました`;
+      }catch(e){
+        console.error(e);
+        editStatus.textContent=`⚠️ ${e.message||"変更に失敗しました"}`;
+      }finally{
+        button.disabled=false;
+      }
+    });
+  });
 }
 
 function esc(v){
