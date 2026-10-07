@@ -217,7 +217,8 @@ async function checkLogin(){
  if(!session){document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif"><h2>🔐 ログインが必要です</h2><p>管理者アカウントでログインしてください。</p></div>';return false}
  currentUsername=session.user?.user_metadata?.username||"";
  if(!currentUsername){document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif"><h2>❌ ユーザーIDを取得できません</h2><p>ログイン情報を確認してください。</p></div>';return false}
- if(!ADMIN_USERNAMES.has(currentUsername)){document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif"><h2>🚫 アクセスできません</h2><p>このページは管理者専用です。</p></div>';return false}
+ const {data:adminData,error:adminError}=await supabaseClient.rpc("is_friendchat_admin");
+ if(adminError||adminData!==true){document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif"><h2>🚫 アクセスできません</h2><p>このページは管理者専用です。</p></div>';return false}
  document.getElementById("adminName").textContent=`ログイン中：${currentUsername}`;return true;
 }
 async function checkBan(){
