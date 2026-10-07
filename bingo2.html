@@ -248,12 +248,12 @@ async function startGame(){
    console.error("ビンゴプレイ料金エラー:",error);
    playButton.disabled=false;
    setStatus(error?.message?.includes("コインが足りません")
-     ?"🪙 コインが足りません（1プレイ100コイン）"
+     ?"🪙 コインが足りません（1プレイ1000コイン）"
      :"⚠️ コイン処理に失敗しました。ログイン状態を確認してください。");
    return;
  }
  playing=true;
- setStatus("🪙 100コイン消費！マスを9個すべて開けよう！");
+ setStatus("🪙 1000コイン消費！マスを9個すべて開けよう！");
  document.getElementById("result").textContent="マスを開けています…";
  document.getElementById("lineResult").textContent="";
  document.querySelectorAll("#probList [data-lines]").forEach(el=>el.classList.remove("hit"));
