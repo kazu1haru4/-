@@ -9,7 +9,7 @@
 .foldCard{overflow:hidden}.foldBtn{width:100%;border:0;background:transparent;text-align:left;padding:18px;font-size:19px;font-weight:800;color:#333;cursor:pointer}.foldBtn span{float:right;color:#8f7cff;font-size:24px;line-height:1}.foldPanel{display:none;padding:0 18px 18px}.foldPanel.open{display:block}.select,.userSelect{width:100%;padding:12px;border:2px solid #e5e5e5;border-radius:12px;font-size:15px;background:#fff;text-align:left}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.secondary{width:100%;border:0;border-radius:14px;padding:12px;background:#eee;color:#444;font-weight:800}.targetRow{display:grid;grid-template-columns:1fr 110px;gap:10px;align-items:center;margin:10px 0}.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#f0edff;color:#6654c8;font-size:11px;font-weight:800}
 </style>
 </head>
- 
+
 <body>
 <div class="wrap">
  <div class="head"><button class="back" type="button" onclick="location.href='bingo_supabase_coins.html'">‹</button><h1>⚙️ ビンゴ2管理</h1></div>
@@ -71,9 +71,9 @@ function field(label,name,value,sub=""){
 function buildFields(data){
  probFields.innerHTML="";
  probFields.appendChild(field("ハズレ","p_miss",data.p_miss,"0ライン"));
- for(const i of [1,2,3,4,5,6,8]) probFields.appendChild(field(`${i}ライン`,`p_${i}`,data[`p_${i}`]));
+ for(let i=1;i<=8;i++) probFields.appendChild(field(`${i}ライン`,`p_${i}`,data[`p_${i}`]));
  rewardFields.innerHTML="";
- for(const i of [1,2,3,4,5,6,8]) rewardFields.appendChild(field(`${i}ラインの報酬`,`reward_${i}`,data[`reward_${i}`],"コイン"));
+ for(let i=1;i<=8;i++) rewardFields.appendChild(field(`${i}ラインの報酬`,`reward_${i}`,data[`reward_${i}`],"コイン"));
 }
 async function guard(){
  const {data,error}=await db.rpc("is_friend_bingo2_admin");
@@ -118,9 +118,7 @@ save.addEventListener("click",async()=>{
  save.disabled=true;statusEl.textContent="保存しています…";
  try{
   const args={p_miss:num("p_miss")};
-  for(const i of [1,2,3,4,5,6,8]){args[`p_${i}`]=num(`p_${i}`);args[`reward_${i}`]=num(`reward_${i}`)}
-  args.p_7=0;
-  args.reward_7=0;
+  for(let i=1;i<=8;i++){args[`p_${i}`]=num(`p_${i}`);args[`reward_${i}`]=num(`reward_${i}`)}
   // Supabase側の既存RPCは9ライン引数も必要。画面には表示せず0で送信。
   args.p_9=0;
   args.reward_9=0;
