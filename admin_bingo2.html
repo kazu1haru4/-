@@ -71,9 +71,9 @@ function field(label,name,value,sub=""){
 function buildFields(data){
  probFields.innerHTML="";
  probFields.appendChild(field("ハズレ","p_miss",data.p_miss,"0ライン"));
- for(let i=1;i<=8;i++) probFields.appendChild(field(`${i}ライン`,`p_${i}`,data[`p_${i}`]));
+ for(const i of [1,2,3,4,5,6,8]) probFields.appendChild(field(`${i}ライン`,`p_${i}`,data[`p_${i}`]));
  rewardFields.innerHTML="";
- for(let i=1;i<=8;i++) rewardFields.appendChild(field(`${i}ラインの報酬`,`reward_${i}`,data[`reward_${i}`],"コイン"));
+ for(const i of [1,2,3,4,5,6,8]) rewardFields.appendChild(field(`${i}ラインの報酬`,`reward_${i}`,data[`reward_${i}`],"コイン"));
 }
 async function guard(){
  const {data,error}=await db.rpc("is_friend_bingo2_admin");
@@ -118,7 +118,9 @@ save.addEventListener("click",async()=>{
  save.disabled=true;statusEl.textContent="保存しています…";
  try{
   const args={p_miss:num("p_miss")};
-  for(let i=1;i<=8;i++){args[`p_${i}`]=num(`p_${i}`);args[`reward_${i}`]=num(`reward_${i}`)}
+  for(const i of [1,2,3,4,5,6,8]){args[`p_${i}`]=num(`p_${i}`);args[`reward_${i}`]=num(`reward_${i}`)}
+  args.p_7=0;
+  args.reward_7=0;
   // Supabase側の既存RPCは9ライン引数も必要。画面には表示せず0で送信。
   args.p_9=0;
   args.reward_9=0;
