@@ -334,10 +334,11 @@
       SUPABASE_KEY
     );
 
-    const ADMIN_USERNAMES = new Set([
-      "kazu1haru100",
-      "kazu1haru4sub"
-    ]);
+    async function isFriendChatAdmin(){
+  const {data,error}=await supabaseClient.rpc("is_friendchat_admin");
+  if(error){console.error("管理者確認エラー:",error);return false}
+  return data===true;
+}
 
     const ADMIN_ITEM_KEYS = new Set([
       "admin",
@@ -862,7 +863,7 @@
 
       // 管理者だけ右上の「管理」ボタンを表示
       const adminButton = document.getElementById("adminButton");
-      if (ADMIN_USERNAMES.has(currentUsername)) {
+      if (await isFriendChatAdmin()) {
         adminButton.style.display = "block";
         adminButton.addEventListener("click", () => {
           window.location.href = "admin-chats.html";
