@@ -12,7 +12,7 @@
 
 <body>
 <div class="wrap">
- <div class="head"><button class="back" type="button" onclick="location.href='bingo2.html'">‹</button><h1>⚙️ ビンゴ管理</h1></div>
+ <div class="head"><button class="back" type="button" onclick="location.href='bingo_supabase_coins.html'">‹</button><h1>⚙️ ビンゴ2管理</h1></div>
  <div class="card foldCard">
   <button type="button" class="foldBtn" data-target="probPanel">📈 当選確率 <span>＋</span></button>
   <div id="probPanel" class="foldPanel"><p class="desc">各ラインの設定値を個別に変更できます。0ラインはゲーム画面には表示されません。</p><div id="probFields"></div></div>
@@ -77,7 +77,7 @@ function buildFields(data){
 }
 async function guard(){
  const {data,error}=await db.rpc("is_friend_bingo2_admin");
- if(error||!data){location.href="bingo2.html";return false}
+ if(error||!data){location.href="bingo_supabase_coins.html";return false}
  return true;
 }
 targetScope.addEventListener("change",()=>{
