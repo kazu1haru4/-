@@ -88,11 +88,11 @@ const manageButton =
    管理者ID
 ========================= */
 
-const ADMIN_USERNAMES =
-  new Set([
-    "kazu1haru100",
-    "kazu1haru4sub"
-  ]);
+async function isFriendChatAdmin(){
+  const {data,error}=await supabaseClient.rpc("is_friendchat_admin");
+  if(error){console.error("管理者確認エラー:",error);return false}
+  return data===true;
+}
 
 
 let currentUsername = "";
@@ -161,11 +161,7 @@ async function start(){
      管理者2アカウントのみ
   ========================= */
 
-  if(
-    ADMIN_USERNAMES.has(
-      currentUsername
-    )
-  ){
+  if(await isFriendChatAdmin()){
 
     manageButton.style.display =
       "block";
