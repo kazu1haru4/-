@@ -24,6 +24,7 @@
  <div class="card">
   <h2>📈 ライン成立率・報酬</h2>
   <div class="prob" id="probList">
+   <div data-lines="0">ハズレ<b id="pMiss">60%</b></div>
    <div data-lines="1">1ライン<b id="p1">30%</b><span data-reward="1">20コイン</span></div>
    <div data-lines="2">2ライン<b id="p2">20%</b><span data-reward="2">20コイン</span></div>
    <div data-lines="3">3ライン<b id="p3">15%</b><span data-reward="3">20コイン</span></div>
@@ -32,7 +33,7 @@
    <div data-lines="6">6ライン<b id="p6">4%</b><span data-reward="6">20コイン</span></div>
    <div data-lines="8">8ライン<b id="p8">1%</b><span data-reward="8">20コイン</span></div>
   </div>
-  <div class="small">※ 表示用の設定値。実際の盤面生成では複数ラインが同時成立するため、これらを単純に足して100%にはしません。</div>
+  <div class="small">※ 管理画面の設定値を合計して、実際の抽選確率として表示・使用します。</div>
  </div>
  <div class="card">
   <h2>📊 プレイ記録</h2>
@@ -116,15 +117,34 @@ async function checkAdmin(){
  const {data,error}=await db.rpc("is_friend_bingo2_admin");
  if(!error && data){const b=document.getElementById("adminBtn");b.style.display="block";b.addEventListener("click",()=>location.href="admin_bingo2.html");}
 }
+function getProbabilityValues(){
+ const values={miss:Math.max(0,Number(BINGO_SETTINGS.p_miss||0))};
+ for(let n=1;n<=8;n++) values[n]=Math.max(0,Number(BINGO_SETTINGS[`p_${n}`]||0));
+ const total=Object.values(values).reduce((a,b)=>a+b,0);
+ return {values,total};
+}
+
+function updateProbabilityDisplay(){
+ const {values,total}=getProbabilityValues();
+ if(total<=0)return;
+ const missEl=document.getElementById("pMiss");
+ if(missEl)missEl.textContent=`${(values.miss/total*100).toFixed(1).replace(/\.0$/,'')}%`;
+ for(let n=1;n<=8;n++){
+   const el=document.getElementById(`p${n}`);
+   if(el)el.textContent=`${(values[n]/total*100).toFixed(1).replace(/\.0$/,'')}%`;
+ }
+}
+
 function chooseTargetLines(){
- const weights=[1,2,3,4,5,6,7,8].map(n=>Math.max(0,Number(BINGO_SETTINGS[`p_${n}`]||0)));
- const miss=Math.max(0,Number(BINGO_SETTINGS.p_miss||0));
- const total=miss+weights.reduce((a,b)=>a+b,0);
+ const {values,total}=getProbabilityValues();
  if(total<=0)return 0;
  let r=Math.random()*total;
- if(r<miss)return 0;
- r-=miss;
- for(let i=0;i<weights.length;i++){r-=weights[i];if(r<0)return i+1;}
+ if(r<values.miss)return 0;
+ r-=values.miss;
+ for(let n=1;n<=8;n++){
+   r-=values[n];
+   if(r<0)return n;
+ }
  return 0;
 }
 
