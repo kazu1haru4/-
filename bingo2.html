@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>フレンドビンゴ</title>
+<title>フレンドビンゴ2</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:linear-gradient(135deg,#fff4fb,#eef7ff);color:#333}.wrap{width:min(92%,460px);margin:auto;padding:22px 0 40px}.head{display:flex;align-items:center;gap:10px;margin-bottom:16px}.back{width:42px;height:42px;border:0;border-radius:14px;background:#fff;font-size:26px;box-shadow:0 4px 12px rgba(0,0,0,.08);cursor:pointer}.head h1{margin:0;font-size:23px;flex:1}.adminBtn{display:none;border:0;border-radius:12px;background:#eee;color:#444;font-weight:800;padding:10px 12px;cursor:pointer}.card{background:rgba(255,255,255,.95);border-radius:22px;padding:18px;margin-bottom:16px;box-shadow:0 6px 18px rgba(0,0,0,.07)}.card h2{margin:0 0 7px;font-size:20px}.desc{margin:0 0 15px;color:#777;font-size:13px;line-height:1.6}.board{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:10px;background:#f6f3ff;border:2px solid #e6e0ff;border-radius:20px}.cell{aspect-ratio:1;border:0;border-radius:17px;background:#fff;box-shadow:0 4px 10px rgba(0,0,0,.07);font-size:35px;cursor:pointer;transition:transform .12s,opacity .12s}.cell:active{transform:scale(.94)}.cell.open{background:#fff8d9}.cell.line{outline:3px solid #8f7cff}.cell:disabled{cursor:default}.result{min-height:28px;text-align:center;font-weight:800;margin:13px 0 8px}.lines{font-size:14px;color:#6d5cc7;text-align:center;min-height:20px}.play{width:100%;border:0;border-radius:16px;padding:14px;background:#8f7cff;color:#fff;font-size:16px;font-weight:800;cursor:pointer}.play:disabled{opacity:.45;cursor:not-allowed}.status{text-align:center;min-height:24px;font-weight:700;font-size:14px;margin-top:10px}.history{display:flex;justify-content:space-between;gap:8px;text-align:center}.stat{flex:1;background:#faf9ff;border:2px solid #e8e3ff;border-radius:15px;padding:12px 6px}.stat strong{display:block;font-size:21px}.stat span{font-size:11px;color:#777}.small{font-size:12px;color:#777;text-align:center;margin-top:8px}.prob{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.prob div{background:#faf9ff;border-radius:10px;padding:8px;text-align:center;font-size:12px;transition:.25s}.prob b{display:block;font-size:15px}.prob span{display:block;font-size:11px;color:#6d5cc7;margin-top:3px;font-weight:700}.prob div.hit{background:#fff2a8;box-shadow:0 0 0 3px #ffd84d,0 0 18px rgba(255,216,77,.8);transform:scale(1.03)}
 </style>
 </head>
 <body>
 <div class="wrap">
- <div class="head"><button class="back" type="button" onclick="history.back()">‹</button><h1>🎯 フレンドビンゴ</h1><button id="adminBtn" class="adminBtn" type="button">管理</button></div>
+ <div class="head"><button class="back" type="button" onclick="history.back()">‹</button><h1>🎯 フレンドビンゴ2</h1><button id="adminBtn" class="adminBtn" type="button">管理</button></div>
  <div class="card">
   <h2>🎯 9マスチャレンジ</h2>
   <p class="desc">無料で遊べる3×3ミニゲーム！9マスを開けて、そろったラインを探そう。</p>
@@ -60,7 +60,7 @@ async function loadCoins(){
 }
 
 async function playWithCoins(){
-  const {data,error}=await db.rpc("play_friend_bingo");
+  const {data,error}=await db.rpc("play_friend_bingo2");
   if(error)throw error;
   currentCoins=Number(data||0);
   const el=document.getElementById("coins");
@@ -69,7 +69,7 @@ async function playWithCoins(){
 }
 
 async function rewardCoins(){
-  const {data,error}=await db.rpc("reward_friend_bingo");
+  const {data,error}=await db.rpc("reward_friend_bingo2");
   if(error)throw error;
   currentCoins=Number(data||0);
   const el=document.getElementById("coins");
@@ -84,7 +84,7 @@ const playButton=document.getElementById("playButton");
 let playing=false,opened=[],symbols=[];
 function getCoins(){return currentCoins}
 function setCoins(v){currentCoins=Number(v||0);const el=document.getElementById("coins");if(el)el.textContent=currentCoins}
-function stats(){document.getElementById("plays").textContent=localStorage.getItem("friendBingoPlays")||"0";document.getElementById("bestLines").textContent=localStorage.getItem("friendBingoBest")||"0";document.getElementById("totalLines").textContent=localStorage.getItem("friendBingoTotalLines")||"0"}
+function stats(){document.getElementById("plays").textContent=localStorage.getItem("friendBingo2Plays")||"0";document.getElementById("bestLines").textContent=localStorage.getItem("friendBingo2Best")||"0";document.getElementById("totalLines").textContent=localStorage.getItem("friendBingo2TotalLines")||"0"}
 function setStatus(t){document.getElementById("status").textContent=t}
 function makeBoard(){board.innerHTML="";for(let i=0;i<9;i++){const b=document.createElement("button");b.type="button";b.className="cell";b.textContent="❓";b.disabled=true;b.dataset.i=i;board.appendChild(b)}}
 function randomize(){symbols=Array.from({length:9},()=>icons[Math.floor(Math.random()*icons.length)]);opened=[];document.querySelectorAll(".cell").forEach(b=>{b.textContent="❓";b.classList.remove("open","line");b.disabled=false})}
@@ -106,15 +106,15 @@ function highlightResult(count){
 let BINGO_SETTINGS={p_miss:60,p_1:30,p_2:20,p_3:15,p_4:10,p_5:5,p_6:4,p_7:2,p_8:1,reward_1:20,reward_2:20,reward_3:20,reward_4:20,reward_5:20,reward_6:20,reward_7:20,reward_8:20};
 const BINGO_REWARDS=new Proxy({}, {get:(_,key)=>Number(BINGO_SETTINGS[`reward_${key}`]||0)});
 async function loadBingoSettings(){
- const {data,error}=await db.rpc("get_friend_bingo_settings");
+ const {data,error}=await db.rpc("get_friend_bingo2_settings");
  if(error){console.warn("ビンゴ設定取得エラー:",error);return;}
  BINGO_SETTINGS={...BINGO_SETTINGS,...data};
  for(let n=1;n<=8;n++){const p=document.getElementById(`p${n}`);if(p)p.textContent=`${BINGO_SETTINGS[`p_${n}`]}%`;}
  updateRewardDisplay();
 }
 async function checkAdmin(){
- const {data,error}=await db.rpc("is_friend_bingo_admin");
- if(!error && data){const b=document.getElementById("adminBtn");b.style.display="block";b.addEventListener("click",()=>location.href="admin_bingo.html");}
+ const {data,error}=await db.rpc("is_friend_bingo2_admin");
+ if(!error && data){const b=document.getElementById("adminBtn");b.style.display="block";b.addEventListener("click",()=>location.href="admin_bingo2.html");}
 }
 function chooseTargetLines(){
  const weights=[1,2,3,4,5,6,7,8].map(n=>Math.max(0,Number(BINGO_SETTINGS[`p_${n}`]||0)));
@@ -170,7 +170,7 @@ function buildBoardForLines(target){
 async function prepareBoard(){
  let forced=null;
  try{
-   const {data,error}=await db.rpc("consume_friend_bingo_next_lines");
+   const {data,error}=await db.rpc("consume_friend_bingo2_next_lines");
    if(!error && data!==null && data!==undefined){
      const n=Number(data);
      if(Number.isInteger(n) && n>=0 && n<=8) forced=n;
@@ -192,7 +192,7 @@ async function prepareBoard(){
 }
 
 async function addBingoReward(linesCount){
- const {data,error}=await db.rpc("reward_friend_bingo",{p_lines:linesCount});
+ const {data,error}=await db.rpc("reward_friend_bingo2",{p_lines:linesCount});
  if(error)throw error;
  currentCoins=Number(data||0);
  const el=document.getElementById("coins");if(el)el.textContent=currentCoins;
@@ -221,12 +221,12 @@ async function finishGame(){
    : "💨 今回はラインなし！";
  document.getElementById("result").textContent=count?`🎉 ${count}ラインそろった！`:"もう一度チャレンジしてみよう！";
 
- const p=Number(localStorage.getItem("friendBingoPlays")||0)+1;
- const best=Math.max(Number(localStorage.getItem("friendBingoBest")||0),count);
- const total=Number(localStorage.getItem("friendBingoTotalLines")||0)+count;
- localStorage.setItem("friendBingoPlays",p);
- localStorage.setItem("friendBingoBest",best);
- localStorage.setItem("friendBingoTotalLines",total);
+ const p=Number(localStorage.getItem("friendBingo2Plays")||0)+1;
+ const best=Math.max(Number(localStorage.getItem("friendBingo2Best")||0),count);
+ const total=Number(localStorage.getItem("friendBingo2TotalLines")||0)+count;
+ localStorage.setItem("friendBingo2Plays",p);
+ localStorage.setItem("friendBingo2Best",best);
+ localStorage.setItem("friendBingo2TotalLines",total);
  stats();
 
  playing=false;
