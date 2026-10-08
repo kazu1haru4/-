@@ -100,7 +100,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic
 <div class="card">
 <h2>🎯 ビンゴをする</h2>
 <p class="description">3×3のマスを開けて、そろったラインを探そう！</p>
-<button class="main-button" type="button" onclick="location.href='bingos.html'">🎯 ビンゴをする</button>
+<button class="main-button" type="button" onclick="location.href='bingo.html'">🎯 ビンゴをする</button>
 </div>
 <div class="message" id="message"></div>
 </div>
@@ -284,7 +284,7 @@ function getFrameClass(itemKey){
 }
 
 async function loadShop(){
- const {data:items,error:itemError}=await supabaseClient.from("coin_items").select("item_key,name,icon,price,frame_color,item_type").order("price",{ascending:true});
+ const {data:items,error:itemError}=await supabaseClient.from("coin_items").select("item_key,name,icon,price,frame_color,item_type,sale_end_at").order("price",{ascending:true});
  if(itemError){
   console.error(itemError);
   ["frameShop","nameDecorationShop","backgroundShop","chatFrameShop"].forEach(id=>document.getElementById(id).innerHTML="❌ ショップを読み込めませんでした");
@@ -292,7 +292,7 @@ async function loadShop(){
  }
 
  // 管理者限定アイテムはショップに表示しない
- shopItems=(items||[]).filter(item=>!ADMIN_ITEM_KEYS.has(item.item_key));
+ shopItems=(items||[]).filter(item=>!ADMIN_ITEM_KEYS.has(item.item_key) && (!item.sale_end_at || new Date(item.sale_end_at).getTime()>Date.now()));
 
  const {data:owned,error:ownedError}=await supabaseClient.from("user_coin_items").select("item_key").eq("user_id",currentUsername);
  ownedItems=ownedError?new Set() : new Set((owned||[]).map(x=>x.item_key));
@@ -381,6 +381,7 @@ async function buyItem(itemKey){
  }
 
  if(!item){showMessage("❌ アイテムが見つかりません");return}
+ if(item.sale_end_at && new Date(item.sale_end_at).getTime()<=Date.now()){showMessage("🎃 この限定アイテムの販売期間は終了しました");loadShop();return}
  if(ownedItems.has(itemKey)){showMessage("このアイテムはすでに交換済みだよ！");return}
  const price=Number(item.price);
  if(balance<price){showMessage("🪙 コインが足りません！");return}
