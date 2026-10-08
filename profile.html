@@ -450,6 +450,18 @@ function renderItems(){
    <button class="equip-button ${isEquipped?"equipped":""}" data-type="${type}" data-key="${escapeHtml(key)}">${isEquipped?"装備中":"装備する"}</button>${isEquipped?`<button class="unequip-button" data-type="${type}">装備解除</button>`:""}`;
 
   groups[type].appendChild(card);
+
+  // Supabaseのstyle_dataをプレビューにも直接適用する。
+  // CSSの固定クラスに依存せず、新しく追加したアイテムも同じ仕組みで表示する。
+  if(type==="frame"){
+   applyItemStyle(card.querySelector(".item-preview"),item);
+  }else if(type==="name_decoration"){
+   applyItemStyle(card.querySelector(".name-item-preview"),item);
+  }else if(type==="background"){
+   applyItemStyle(card.querySelector(".background-item-preview"),item);
+  }else if(type==="chat_frame"){
+   applyItemStyle(card.querySelector(".chat-frame-item-preview-inner"),item);
+  }
  }
 
  for(const el of Object.values(groups)){
@@ -579,6 +591,9 @@ function updatePreview(){
    frame.style.boxShadow=`0 0 0 3px white,0 0 15px ${frameItem.frame_color}`;
   }
 
+  // フレーム本体のstyle_dataを優先して適用
+  applyItemStyle(frame,frameItem);
+
   badge.textContent=frameItem.icon||"🎁";
   badge.classList.add("show");
 
@@ -598,6 +613,9 @@ function updatePreview(){
   escapeHtml(name)+
   (nameKey==="admin_name"?'<span class="admin-name-badge">👑</span>':"");
 
+ const nameItem=getItem(nameKey);
+ if(nameItem)applyItemStyle(nameEl,nameItem);
+
  const bgKey=currentProfile?.equipped_background_key;
 
  document.body.className="";
@@ -607,13 +625,18 @@ function updatePreview(){
  const bgItem=getItem(bgKey);
  const bgClass=getBackgroundClass(bgKey);
 
+ // 前の背景のinline styleが残らないようにリセット
+ document.body.removeAttribute("style");
+ container.removeAttribute("style");
+
  if(bgClass){
   document.body.classList.add(bgClass);
   container.classList.add(bgClass);
  }
  if(bgItem){
   applyItemStyle(document.body,bgItem);
-  applyItemStyle(container,bgItem);
+  // 背景はページ全体に適用。コンテナには背景を重ねない。
+  // これで背景アイテムのstyle_dataが白いカードに隠れない。
  }
 }
 
