@@ -373,39 +373,77 @@ function formatMediaDuration(seconds){if(!Number.isFinite(seconds)||seconds<0)re
 function addMediaDurationLabel(media,label){const set=()=>{const text=formatMediaDuration(media.duration);if(text)label.textContent=text};if(Number.isFinite(media.duration)&&media.duration>0)set();else media.addEventListener("loadedmetadata",set,{once:true})}
 function showMediaStatus(text){if(!mediaStatus)return;mediaStatus.textContent=text||"";mediaStatus.style.display=text?"block":"none"}
 function closeMediaMenu(){if(mediaMenu)mediaMenu.style.display="none"}
+async function loadGroupMediaInto(holder,message,kind){
+  if(!holder||holder.dataset.loading==="1"||holder.dataset.loaded==="1")return;
+  holder.dataset.loading="1";
+  const button=holder.querySelector("button");
+  if(button){button.disabled=true;button.textContent="⏳ 読み込み中…"}
+  try{
+    const raw=String(message.image_url||"");
+    const path=raw.replace(/^video:/,"").replace(/^audio:/,"");
+    const {data,error}=await supabaseClient.storage.from("chat-images").createSignedUrl(path,3600);
+    if(error||!data?.signedUrl)throw error||new Error("メディアURLを取得できませんでした");
+    if(kind==="image"){
+      const img=document.createElement("img");
+      img.className="chat-image";img.src=data.signedUrl;img.alt="送信画像";img.loading="lazy";
+      img.onload=()=>{holder.replaceWith(img)};
+      img.onerror=()=>{throw new Error("画像を読み込めませんでした")};
+      holder.replaceChildren(img);holder.dataset.loaded="1";return;
+    }
+    const box=document.createElement("div");box.className="media-box";
+    const media=document.createElement(kind==="video"?"video":"audio");
+    media.className=kind==="video"?"chat-video":"chat-audio";
+    media.controls=true;media.playsInline=true;media.preload="none";media.src=data.signedUrl;
+    box.appendChild(media);
+    const label=document.createElement("div");label.className="media-duration";label.textContent="⏱️ 読み込み中...";
+    addMediaDurationLabel(media,label);box.appendChild(label);
+    holder.replaceWith(box);box.dataset.loaded="1";
+  }catch(e){
+    console.error("グループメディア読み込みエラー:",e);
+    holder.dataset.loading="";
+    if(button){button.disabled=false;button.textContent=kind==="video"?"🎥 タップして動画を読み込む":kind==="audio"?"🎙️ タップして音声を読み込む":"🖼️ タップして画像を読み込む"}
+  }
+}
 function makeMediaElement(message,kind){
-  const holder=document.createElement("div");holder.className=kind==="video"?"chat-video-lazy":"chat-audio-lazy";holder.dataset.loading="";holder.style.cssText="display:flex;align-items:center;justify-content:center;min-width:220px;min-height:110px;max-width:320px;border-radius:14px;background:#f1efff;color:#6f61d9;margin-bottom:5px;padding:12px";
-  const button=document.createElement("button");button.type="button";button.textContent=kind==="video"?"🎥 タップして動画を読み込む":"🎙️ タップして音声を読み込む";button.style.cssText="border:0;background:#fff;border-radius:10px;padding:10px 12px;color:#6f61d9;font-weight:bold";button.addEventListener("click",e=>{e.stopPropagation();loadGroupMediaInto(holder,message,kind)});holder.appendChild(button);
+  const holder=document.createElement("div");
+  holder.className="group-media-lazy";
+  holder.dataset.loading="";
+  holder.style.cssText="display:flex;align-items:center;justify-content:center;min-width:220px;min-height:92px;max-width:280px;border-radius:14px;background:#f1efff;color:#6f61d9;margin:6px 0;padding:12px";
+  const button=document.createElement("button");button.type="button";
+  button.textContent=kind==="video"?"🎥 タップして動画を読み込む":kind==="audio"?"🎙️ タップして音声を読み込む":"🖼️ タップして画像を読み込む";
+  button.style.cssText="border:0;background:#fff;border-radius:10px;padding:10px 12px;color:#6f61d9;font-weight:bold";
+  button.addEventListener("click",e=>{e.stopPropagation();loadGroupMediaInto(holder,message,kind)});
+  holder.appendChild(button);
   return holder;
 }
-async function loadGroupMediaInto(container,message,kind){
- if(!container||container.dataset.loading==="1")return;
- container.dataset.loading="1";
- const button=container.querySelector("button");if(button){button.disabled=true;button.textContent=kind==="video"?"⏳ 動画を読み込み中…":"⏳ 音声を読み込み中…"}
- try{
-  const raw=String(message.image_url||"");const path=raw.replace(/^video:/,"").replace(/^audio:/,"");
-  const {data,error}=await supabaseClient.storage.from("chat-images").createSignedUrl(path,3600);
-  if(error||!data?.signedUrl)throw error||new Error("メディアURLを取得できませんでした");
-  const box=document.createElement("div");box.className="media-box";
-  const media=document.createElement(kind);media.className=kind==="video"?"chat-video":"chat-audio";media.controls=true;if(kind==="video")media.playsInline=true;media.preload="none";media.src=data.signedUrl;
-  box.appendChild(media);const label=document.createElement("div");label.className="media-duration";label.textContent="⏱️ 読み込み中...";box.appendChild(label);addMediaDurationLabel(media,label);container.replaceWith(box);
- }catch(error){console.error("メディア読み込みエラー:",error);container.dataset.loading="";if(button){button.disabled=false;button.textContent=kind==="video"?"🎥 タップして動画を読み込む":"🎙️ タップして音声を読み込む"}}
-}
-
-async function compressGroupVideoForUpload(file){
- if(!file||!file.type.startsWith("video/")||file.size<=8*1024*1024)return file;
- if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream)return file;
- try{
-  const video=document.createElement("video");video.muted=true;video.playsInline=true;video.preload="metadata";const url=URL.createObjectURL(file);video.src=url;
-  await new Promise((resolve,reject)=>{video.onloadedmetadata=resolve;video.onerror=reject});
-  const scale=Math.min(1,1280/video.videoWidth,720/video.videoHeight);const width=Math.max(2,Math.round(video.videoWidth*scale/2)*2),height=Math.max(2,Math.round(video.videoHeight*scale/2)*2);
-  const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;const ctx=canvas.getContext("2d",{alpha:false});if(!ctx)throw new Error("canvas unavailable");
-  const stream=canvas.captureStream(30);if(typeof video.captureStream==="function"){const source=video.captureStream();source.getAudioTracks().forEach(track=>stream.addTrack(track))}
-  const mime=["video/mp4","video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"].find(type=>MediaRecorder.isTypeSupported(type));if(!mime)throw new Error("video encoder unavailable");
-  const chunks=[],recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:2200000,audioBitsPerSecond:128000});recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};const stopped=new Promise((resolve,reject)=>{recorder.onstop=resolve;recorder.onerror=reject});
-  const draw=()=>{if(video.ended||video.paused&&video.currentTime>0)return;ctx.drawImage(video,0,0,width,height);requestAnimationFrame(draw)};recorder.start(1000);video.currentTime=0;await video.play();draw();await new Promise(resolve=>{video.onended=resolve});recorder.stop();await stopped;stream.getTracks().forEach(track=>track.stop());URL.revokeObjectURL(url);
-  const blob=new Blob(chunks,{type:mime});if(!blob.size||blob.size>=file.size)return file;const ext=mime.includes("mp4")?"mp4":"webm";return new File([blob],file.name.replace(/\.[^.]+$/,".")+ext,{type:mime,lastModified:Date.now()});
- }catch(error){console.warn("グループ動画圧縮をスキップ:",error);return file}
+async function compressGroupVideo(file){
+  if(!file||!file.type.startsWith("video/")||file.size<3*1024*1024)return file;
+  try{
+    if(!window.MediaRecorder||!HTMLVideoElement.prototype.captureStream)return file;
+    const sourceUrl=URL.createObjectURL(file);
+    const video=document.createElement("video");video.muted=true;video.playsInline=true;video.src=sourceUrl;
+    await new Promise((resolve,reject)=>{video.onloadedmetadata=resolve;video.onerror=reject;});
+    const maxWidth=1280,maxHeight=720;
+    const scale=Math.min(1,maxWidth/video.videoWidth,maxHeight/video.videoHeight);
+    const width=Math.max(2,Math.round(video.videoWidth*scale/2)*2),height=Math.max(2,Math.round(video.videoHeight*scale/2)*2);
+    if(width===video.videoWidth&&height===video.videoHeight&&file.size<8*1024*1024){URL.revokeObjectURL(sourceUrl);return file;}
+    const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;
+    const ctx=canvas.getContext("2d");if(!ctx)throw new Error("canvas unavailable");
+    const stream=canvas.captureStream(30);
+    const sourceStream=video.captureStream();
+    sourceStream.getAudioTracks().forEach(track=>stream.addTrack(track));
+    const mime=["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"].find(x=>MediaRecorder.isTypeSupported(x));
+    if(!mime)throw new Error("video recorder unavailable");
+    const chunks=[];const recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:1_800_000,audioBitsPerSecond:96_000});
+    const done=new Promise((resolve,reject)=>{recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};recorder.onerror=reject;recorder.onstop=resolve;});
+    const draw=()=>{if(video.ended||video.paused)return;ctx.drawImage(video,0,0,width,height);requestAnimationFrame(draw)};
+    video.currentTime=0;recorder.start(1000);await video.play();draw();
+    await new Promise(resolve=>video.onended=resolve);if(recorder.state!=="inactive")recorder.stop();await done;
+    video.pause();sourceStream.getTracks().forEach(t=>t.stop());stream.getTracks().forEach(t=>t.stop());URL.revokeObjectURL(sourceUrl);
+    const blob=new Blob(chunks,{type:mime});
+    if(!blob.size||blob.size>=file.size*0.95)return file;
+    return new File([blob],(file.name.replace(/\.[^.]+$/i,"")||"video")+".webm",{type:mime,lastModified:Date.now()});
+  }catch(e){console.warn("動画圧縮をスキップ:",e);return file}
 }
 async function uploadGroupMedia(file,kind){
   const wasBanned=await checkFriendChatBan();if(wasBanned)return;
@@ -415,7 +453,7 @@ async function uploadGroupMedia(file,kind){
   if(!allowed){alert("対応していないファイルです");return}
   showMediaStatus(kind==="video"?"🎥 動画を送信中…":"🎙️ ボイスメッセージを送信中…");
   try{
-    if(kind==="video"){showMediaStatus("🎥 動画を軽量化しています…");file=await compressGroupVideoForUpload(file);showMediaStatus("🎥 動画を送信中…")}
+    if(kind==="video")file=await compressGroupVideo(file);
     const ext=(file.name.split(".").pop()|| (kind==="video"?"mp4":"webm")).toLowerCase();
     const path=currentUsername+"/"+groupId+"/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+ext;
     const {error:upErr}=await supabaseClient.storage.from("chat-images").upload(path,file,{upsert:false});
@@ -633,9 +671,8 @@ async function fetchMessageExtras(list){if(!list.length)return{profiles:[],repli
 function applyDecoratedName(el,profile,username){const decorationClasses=Object.values(NAME_DECORATION_MAP);decorationClasses.forEach(cls=>el.classList.remove(cls));el.querySelectorAll(".admin-name-badge").forEach(badge=>badge.remove());const name=profile?.name||username;const cls=getNameClass(profile?.equipped_name_decoration_key);if(cls)el.classList.add(cls);el.textContent=name;if(profile?.equipped_name_decoration_key==="admin_name"&&ADMIN_USERNAMES.has(username)){const crown=document.createElement("span");crown.className="admin-name-badge";crown.textContent="👑";el.appendChild(crown)}}
 function buildMessageElement(message,extras){const profile=profileCache[message.sender_id]||null,row=document.createElement("div");row.className="message-row";row.dataset.messageId=message.id;row.appendChild(createAvatarSync(profile));const box=document.createElement("div");box.className="message";const chatFrameItem=profile?.equipped_chat_frame_key?itemCache[profile.equipped_chat_frame_key]:null;const chatFrameClass=getChatFrameClass(chatFrameItem?.item_key);if(chatFrameClass)box.classList.add(chatFrameClass);const senderRow=document.createElement("div");senderRow.className="sender-row";const sender=document.createElement("div");sender.className="sender";applyDecoratedName(sender,profile,message.sender_id);senderRow.appendChild(sender);const time=document.createElement("span");time.className="message-time";time.textContent=formatMessageTime(message.created_at);senderRow.appendChild(time);box.appendChild(senderRow);if(message.is_deleted){const deleted=document.createElement("div");deleted.className="deleted-message";deleted.textContent="このメッセージは削除されました";box.appendChild(deleted)}else{if(message.content){const content=document.createElement("div");content.className="content";content.innerHTML=renderMentions(message.content);box.appendChild(content)}if(message.image_url){
 const mediaRaw=String(message.image_url||"");
-if(mediaRaw.startsWith("video:"))box.appendChild(makeMediaElement(message,"video"));
-else if(mediaRaw.startsWith("audio:"))box.appendChild(makeMediaElement(message,"audio"));
-else{const holder=document.createElement("div");holder.className="chat-image-lazy";holder.style.cssText="display:flex;align-items:center;justify-content:center;min-width:220px;min-height:110px;max-width:320px;border-radius:14px;background:#f1efff;color:#6f61d9;margin-bottom:5px;padding:12px";const button=document.createElement("button");button.type="button";button.textContent="🖼️ タップして画像を読み込む";button.style.cssText="border:0;background:#fff;border-radius:10px;padding:10px 12px;color:#6f61d9;font-weight:bold";button.addEventListener("click",async e=>{e.stopPropagation();button.disabled=true;button.textContent="⏳ 画像を読み込み中…";try{const {data,error}=await supabaseClient.storage.from("chat-images").createSignedUrl(mediaRaw,3600);if(error||!data?.signedUrl)throw error||new Error("画像URLを取得できませんでした");const img=document.createElement("img");img.className="chat-image";img.src=data.signedUrl;img.alt="送信画像";holder.replaceWith(img)}catch(error){console.error("画像読み込みエラー:",error);button.disabled=false;button.textContent="🖼️ タップして画像を読み込む"}});holder.appendChild(button);box.appendChild(holder)}
+const kind=mediaRaw.startsWith("video:")?"video":mediaRaw.startsWith("audio:")?"audio":"image";
+box.appendChild(makeMediaElement(message,kind));
 }if(message.edited_at){const edited=document.createElement("span");edited.className="edited-label";edited.textContent="編集済み";sender.appendChild(edited)}}const replies=extras.replies.filter(reply=>String(reply.group_message_id)===String(message.id));replies.forEach(reply=>{const preview=document.createElement("div");preview.className="reply-preview";const replyProfile=profileCache[reply.sender_id]||null;const strong=document.createElement("strong");applyDecoratedName(strong,replyProfile,reply.sender_id);preview.appendChild(strong);preview.appendChild(document.createTextNode("："+(reply.content||"")));box.appendChild(preview)});const reactionRows=extras.reactions.filter(reaction=>String(reaction.group_message_id)===String(message.id));if(reactionRows.length){const reactionMap={};reactionRows.forEach(r=>{if(!reactionMap[r.reaction])reactionMap[r.reaction]=0;reactionMap[r.reaction]++});const reactions=document.createElement("div");reactions.className="reactions";Object.entries(reactionMap).forEach(([reaction,count])=>{const item=document.createElement("div");item.className="reaction-item";item.textContent=reaction+" "+count;reactions.appendChild(item)});box.appendChild(reactions)}if(message.sender_id===currentUsername){const read=document.createElement("div");read.dataset.readMessageId=message.id;read.className="read-status";const count=groupReadCounts[String(message.id)]||0;read.textContent=count>0?"既読 "+count+"人":"";read.style.display=count>0?"block":"none";box.appendChild(read)}const menu=document.createElement("div");menu.className="message-menu";const reactionButton=document.createElement("button");reactionButton.type="button";reactionButton.textContent="😀 リアクション";menu.appendChild(reactionButton);const replyButton=document.createElement("button");replyButton.type="button";replyButton.textContent="↩️ 返信";menu.appendChild(replyButton);if(message.sender_id!==currentUsername&&!message.is_deleted){const reportButton=document.createElement("button");reportButton.type="button";reportButton.textContent="🚨 通報";reportButton.addEventListener("click",async event=>{event.stopPropagation();menu.style.display="none";await reportGroupMessage(message)});menu.appendChild(reportButton)}if((message.sender_id===currentUsername||isGroupAdmin)&&!message.is_deleted){const editButton=document.createElement("button");editButton.type="button";editButton.className="edit-button";editButton.textContent="✏️ 編集";editButton.addEventListener("click",async event=>{event.stopPropagation();menu.style.display="none";await editMessage(message.id,message.content||"")});menu.appendChild(editButton);const deleteButton=document.createElement("button");deleteButton.type="button";deleteButton.className="delete-button";deleteButton.textContent="🗑️ 削除";deleteButton.addEventListener("click",async event=>{event.stopPropagation();menu.style.display="none";await deleteMessage(message.id)});menu.appendChild(deleteButton)}const picker=document.createElement("div");picker.className="reaction-picker";["👍","❤️","😂","😮","😢","👏"].forEach(reaction=>{const button=document.createElement("button");button.type="button";button.textContent=reaction;button.addEventListener("click",async event=>{event.stopPropagation();await addReaction(message.id,reaction);picker.style.display="none";menu.style.display="none"});picker.appendChild(button)});reactionButton.addEventListener("click",event=>{event.stopPropagation();picker.style.display=picker.style.display==="flex"?"none":"flex"});replyButton.addEventListener("click",event=>{event.stopPropagation();startReply(message);menu.style.display="none";picker.style.display="none"});box.appendChild(menu);box.appendChild(picker);box.addEventListener("click",event=>{if(event.target.closest(".message-menu")||event.target.closest(".reaction-picker"))return;document.querySelectorAll(".message-menu").forEach(el=>{if(el!==menu)el.style.display="none"});document.querySelectorAll(".reaction-picker").forEach(el=>{if(el!==picker)el.style.display="none"});menu.style.display=menu.style.display==="block"?"none":"block"});row.appendChild(box);return row}
 async function renderMessages(list,keepBottom=true){if(!list.length){messages.innerHTML='<div class="member-empty">まだメッセージはありません</div>';return}const extras=await fetchMessageExtras(list),fragment=document.createDocumentFragment(),unreadIds=[];list.forEach(message=>{fragment.appendChild(buildMessageElement(message,extras));if(message.sender_id!==currentUsername)unreadIds.push(message.id)});messages.innerHTML="";messages.appendChild(fragment);if(keepBottom)requestAnimationFrame(scrollToBottom);if(unreadIds.length)void markMessagesRead(unreadIds)}
 async function loadMessages(){if(!groupId||loadingMessages)return;loadingMessages=true;const keepBottom=isNearBottom();try{const {data,error}=await supabaseClient.from("group_messages").select("id,group_id,sender_id,content,image_url,created_at,is_deleted,edited_at").eq("group_id",groupId).order("created_at",{ascending:true});if(error){console.error("メッセージ取得エラー:",error);messages.innerHTML='<div class="error">メッセージを読み込めませんでした</div>';return}groupSearchMessages=data||[];await renderMessages(data||[],keepBottom);await loadGroupReadCounts()}catch(error){console.error("高速メッセージ読み込みエラー:",error)}finally{loadingMessages=false}}
