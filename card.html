@@ -136,15 +136,38 @@ const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
 const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-const prizes=[
- {rank:1,name:"1等",icon:"🏆",reward:3650},
- {rank:2,name:"2等",icon:"🥇",reward:600},
- {rank:3,name:"3等",icon:"🥈",reward:240},
- {rank:4,name:"4等",icon:"🎁",reward:24},
- {rank:5,name:"5等",icon:"✨",reward:20},
- {rank:6,name:"6等",icon:"🌟",reward:5},
- {rank:7,name:"7等",icon:"🍀",reward:1}
-];
+let prizes=[];
+
+async function loadPrizes(){
+  const {data,error}=await db.rpc("get_card_draw_prizes");
+  if(error || !Array.isArray(data)){
+    console.warn("card prizes:",error);
+    return;
+  }
+  prizes=data.map(p=>({
+    rank:Number(p.rank),
+    name:String(p.name||(`${Number(p.rank)}等`)),
+    icon:String(p.icon||"🪙"),
+    reward:Number(p.reward_coins||0)
+  }));
+  renderPrizeList();
+}
+
+function renderPrizeList(){
+  const box=document.querySelector(".prizes");
+  if(!box)return;
+  if(!prizes.length){
+    box.innerHTML='<div class="note">現在、有効な景品がありません。</div>';
+    return;
+  }
+  box.innerHTML=prizes.map(p=>
+    '<div class="prize"><div class="prize-icon">'+p.icon+'</div><div class="prize-rank">'+p.rank+'等</div><div class="prize-name">'+escapeHtml(p.name)+'</div><div class="prize-reward">'+Number(p.reward).toLocaleString("ja-JP")+' COIN</div></div>'
+  ).join("");
+}
+
+function escapeHtml(v){
+  return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+}
 
 const cards=[...document.querySelectorAll(".card")];
 const chooseButton=document.getElementById("chooseButton");
@@ -306,6 +329,7 @@ chooseButton.addEventListener("click",async()=>{
 
 (async()=>{
   await loadBalance();
+  await loadPrizes();
   await loadStatus();
   await loadAdminButton();
 })();
