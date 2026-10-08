@@ -362,20 +362,35 @@ async function prepareImageUrls(messages){
  return new Map();
 }
 async function loadChatVideoInto(container,message){
+ return loadChatMediaInto(container,message,"video");
+}
+async function loadChatAudioInto(container,message){
+ return loadChatMediaInto(container,message,"audio");
+}
+async function loadChatMediaInto(container,message,kind){
  if(!container||container.dataset.loading==="1"||container.dataset.loaded==="1")return;
  container.dataset.loading="1";
- const button=container.querySelector("button");if(button){button.disabled=true;button.textContent="⏳ 動画を読み込み中…"}
+ const button=container.querySelector("button");
+ if(button){
+   button.disabled=true;
+   button.textContent=kind==="video"?"⏳ 動画を読み込み中…":"⏳ 音声を読み込み中…";
+ }
  try{
   const {data,error}=await db.storage.from("chat-images").createSignedUrl(mediaPath(message.image_url),3600);
-  if(error||!data?.signedUrl)throw error||new Error("動画URLを取得できませんでした");
+  if(error||!data?.signedUrl)throw error||new Error("メディアURLを取得できませんでした");
   const wrap=document.createElement("div");wrap.className="media-box";
-  const video=document.createElement("video");video.className="chat-video";video.controls=true;video.playsInline=true;video.preload="none";video.src=data.signedUrl;
+  const media=document.createElement(kind);media.className=kind==="video"?"chat-video":"chat-audio";media.controls=true;
+  if(kind==="video")media.playsInline=true;
+  media.preload="none";media.src=data.signedUrl;
   const label=document.createElement("div");label.className="media-duration";label.textContent="⏱️ 読み込み中...";
-  wrap.append(video,label);addMediaDurationLabel(video,label);
+  wrap.append(media,label);addMediaDurationLabel(media,label);
   container.replaceWith(wrap);
  }catch(e){
-  console.error("動画読み込みエラー:",e);container.dataset.loading="";
-  if(button){button.disabled=false;button.textContent="🎥 タップして動画を読み込む"}
+  console.error("メディア読み込みエラー:",e);container.dataset.loading="";
+  if(button){
+    button.disabled=false;
+    button.textContent=kind==="video"?"🎥 タップして動画を読み込む":"🎙️ タップして音声を読み込む";
+  }
  }
 }
 async function loadChatImageInto(container,message){
@@ -489,7 +504,7 @@ function createMessageElement(message,imageUrl,extras={replies:[],reactions:[]})
  const bubble=document.createElement("div");bubble.className="bubble";const chatItem=mine?myChatFrameItem:friendChatFrameItem;loadItemStyleClass(bubble,chatItem,"chat_frame");
  if(message.is_deleted){bubble.classList.add("deleted-message");bubble.textContent="このメッセージは取り消されました"}
  else{
-  if(imageUrl){bubble.appendChild(makeMediaMessage(message,imageUrl,mediaKind(message.image_url)))}
+  if(message.image_url){bubble.appendChild(makeMediaMessage(message,imageUrl||"",mediaKind(message.image_url)))}
   if(message.content){const t=document.createElement("div");t.textContent=message.content;bubble.appendChild(t)}
  }
  const replyRows=extras.replies.filter(r=>String(r.message_id)===String(message.id));
@@ -629,21 +644,22 @@ function addMediaDurationLabel(media,label){
  else media.addEventListener("loadedmetadata",update,{once:true});
 }
 function makeMediaMessage(message,url,kind){
- if(kind==="video"){
-   const holder=document.createElement("div");holder.className="chat-video-lazy";holder.dataset.loading="";holder.style.cssText="display:flex;align-items:center;justify-content:center;min-width:220px;min-height:110px;max-width:320px;border-radius:14px;background:#f1efff;color:#6f61d9;margin-bottom:5px;padding:12px";
-   const button=document.createElement("button");button.type="button";button.textContent="🎥 タップして動画を読み込む";button.style.cssText="border:0;background:#fff;border-radius:10px;padding:10px 12px;color:#6f61d9;font-weight:bold";button.addEventListener("click",e=>{e.stopPropagation();loadChatVideoInto(holder,message)});holder.appendChild(button);
-   return holder;
- }
- if(kind==="audio"){
-   const wrap=document.createElement("div");wrap.className="media-box";
-   const audio=document.createElement("audio");audio.className="chat-audio";audio.controls=true;audio.preload="metadata";audio.src=url;
-   const label=document.createElement("div");label.className="media-duration";label.textContent="⏱️ 読み込み中...";
-   wrap.append(audio,label);addMediaDurationLabel(audio,label);return wrap;
- }
- const holder=document.createElement("div");holder.className="chat-image-lazy";holder.dataset.loading="";holder.style.cssText="display:flex;align-items:center;justify-content:center;min-width:220px;min-height:110px;max-width:220px;border-radius:14px;background:#f1efff;color:#6f61d9;margin-bottom:5px;padding:12px";
- const button=document.createElement("button");button.type="button";button.textContent="🖼️ タップして画像を読み込む";button.style.cssText="border:0;background:#fff;border-radius:10px;padding:10px 12px;color:#6f61d9;font-weight:bold";button.addEventListener("click",e=>{e.stopPropagation();loadChatImageInto(holder,message)});holder.appendChild(button);
- // urlが渡された場合も、画像本体はここでは取得せずタップ式にする。
- return holder
+ const holder=document.createElement("div");
+ holder.className=kind==="video"?"chat-video-lazy":kind==="audio"?"chat-audio-lazy":"chat-image-lazy";
+ holder.dataset.loading="";
+ holder.style.cssText="display:flex;align-items:center;justify-content:center;min-width:220px;min-height:110px;max-width:320px;border-radius:14px;background:#f1efff;color:#6f61d9;margin-bottom:5px;padding:12px";
+ const button=document.createElement("button");
+ button.type="button";
+ button.textContent=kind==="video"?"🎥 タップして動画を読み込む":kind==="audio"?"🎙️ タップして音声を読み込む":"🖼️ タップして画像を読み込む";
+ button.style.cssText="border:0;background:#fff;border-radius:10px;padding:10px 12px;color:#6f61d9;font-weight:bold";
+ button.addEventListener("click",e=>{
+   e.stopPropagation();
+   if(kind==="video")loadChatVideoInto(holder,message);
+   else if(kind==="audio")loadChatAudioInto(holder,message);
+   else loadChatImageInto(holder,message);
+ });
+ holder.appendChild(button);
+ return holder;
 }
 async function compressVideoForUpload(file){
  if(!file||!file.type.startsWith("video/"))return file;
@@ -865,7 +881,10 @@ function startRealtime(){
  realtimeChannel=db.channel("chat-"+currentUsername+"-"+friendId)
  .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},async p=>{
   const m=p.new,isChat=(m.sender_id===currentUsername&&m.receiver_id===friendId)||(m.sender_id===friendId&&m.receiver_id===currentUsername);if(!isChat||m.sender_id===currentUsername)return;
-  await markMessagesAsRead([m]);let u="";if(m.image_url){const {data}=await db.storage.from("chat-images").createSignedUrl(mediaPath(m.image_url),3600);u=data?.signedUrl||""}messagesElement.appendChild(createMessageElement(m,u));scrollToBottom();updateLatestButton();
+  await markMessagesAsRead([m]);
+  // メディアのSigned URLはタップされるまで取得しない。
+  messagesElement.appendChild(createMessageElement(m,""));
+  scrollToBottom();updateLatestButton();
  }).on("postgres_changes",{event:"UPDATE",schema:"public",table:"messages"},async p=>{const m=p.new;if((m.sender_id===currentUsername&&m.receiver_id===friendId)||(m.sender_id===friendId&&m.receiver_id===currentUsername))await loadMessages()})
  .on("postgres_changes",{event:"INSERT",schema:"public",table:"chat_reactions"},async p=>{
   const r=p.new;
