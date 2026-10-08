@@ -205,7 +205,8 @@ async function loadProfile(){
     admin:"admin-frame"
   };
 
-  const frameClass=frameClasses[data.equipped_item_key]||"";
+  const frameClass=frameClasses[data.equipped_item_key]||
+    (/^[A-Za-z0-9_-]+$/.test(String(data.equipped_item_key||"")) ? "frame-"+String(data.equipped_item_key) : "");
   if(frameClass){
     frame.classList.add(frameClass);
   }else if(item?.frame_color){
@@ -238,7 +239,8 @@ async function loadProfile(){
   };
 
   document.body.className="";
-  const bgClass=backgroundClasses[data.equipped_background_key]||"";
+  const bgClass=backgroundClasses[data.equipped_background_key]||
+    (/^[A-Za-z0-9_-]+$/.test(String(data.equipped_background_key||"")) ? "background-"+String(data.equipped_background_key) : "");
   const container=document.querySelector(".container");
   if(container)container.className="container";
   if(bgClass){
@@ -267,7 +269,8 @@ async function loadProfile(){
   }
 
   const nameEl=document.getElementById("name");
-  const nameClass=nameClasses[data.equipped_name_decoration_key]||"";
+  const nameClass=nameClasses[data.equipped_name_decoration_key]||
+    (/^[A-Za-z0-9_-]+$/.test(String(data.equipped_name_decoration_key||"")) ? "name-decoration-"+String(data.equipped_name_decoration_key) : "");
   nameEl.className="name "+nameClass;
   nameEl.textContent=data.name||data.user_id;
   if(data.equipped_name_decoration_key==="admin_name"){
@@ -462,8 +465,65 @@ document.getElementById("giftModal").addEventListener("click",event=>{
   if(event.target.id==="giftModal")closeGiftModal();
 });
 
+
+async function loadSupabaseItemStyles(){
+  try{
+    const {data,error}=await db.from("coin_items").select("item_key,item_type,frame_color,style_data");
+    if(error){console.warn("coin_items style load:",error);return}
+
+    const safeKey=k=>String(k||"").replace(/[^a-zA-Z0-9_-]/g,"");
+    const styleMap={
+      frame:k=>k==="admin"?"admin-frame":"frame-"+k,
+      name_decoration:k=>k==="admin_name"?"name-decoration-admin":"name-decoration-"+k,
+      background:k=>k==="admin_bg"?"background-admin":"background-"+k,
+      chat_frame:k=>k==="admin_chat"?"chat-frame-admin":"chat-frame-"+k
+    };
+
+    const rules=[];
+    for(const item of (data||[])){
+      const key=safeKey(item.item_key);
+      if(!key)continue;
+      const type=String(item.item_type||"").toLowerCase();
+      const makeClass=styleMap[type];
+      if(!makeClass)continue;
+
+      const cls=makeClass(key);
+      const style=item.style_data&&typeof item.style_data==="object"?item.style_data:{};
+      const declarations=[];
+
+      for(const [prop,value] of Object.entries(style)){
+        if(value===null||value===undefined||value==="")continue;
+        const cssProp=String(prop).replace(/[A-Z]/g,m=>"-"+m.toLowerCase());
+        declarations.push(`${cssProp}:${String(value)} !important`);
+      }
+
+      if(!declarations.length&&item.frame_color){
+        declarations.push(`background:${String(item.frame_color)} !important`);
+        if(type==="frame"){
+          declarations.push(`border-color:${String(item.frame_color)} !important`);
+        }
+      }
+
+      if(declarations.length)rules.push(`.${cls}{${declarations.join(";")}}`);
+    }
+
+    if(rules.length){
+      let style=document.getElementById("fc-supabase-item-styles");
+      if(!style){
+        style=document.createElement("style");
+        style.id="fc-supabase-item-styles";
+        document.head.appendChild(style);
+      }
+      style.textContent=rules.join("\n");
+    }
+  }catch(error){
+    console.warn("Supabase item style init:",error);
+  }
+}
+
 async function start(){
   try{
+    await loadSupabaseItemStyles();
     await loadProfile();
   }catch(error){
     console.error(error);
