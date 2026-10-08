@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>カードめくり | フレンドチャット</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;background:#f4f6f9;color:#151821}
+body{padding:18px 12px 32px}
+.container{width:min(100%,720px);margin:0 auto}
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.back{border:0;background:#fff;border-radius:14px;padding:10px 14px;font-size:15px;font-weight:700;box-shadow:0 3px 12px rgba(0,0,0,.08);cursor:pointer}
+.title{font-size:22px;font-weight:900;margin:0}
+.balance{margin-left:auto;background:#fff;border-radius:14px;padding:9px 12px;font-weight:800;box-shadow:0 3px 12px rgba(0,0,0,.08);white-space:nowrap}
+.hero{background:linear-gradient(135deg,#ffffff,#f7f8ff);border:1px solid #e3e6ec;border-radius:24px;padding:20px 18px 18px;box-shadow:0 10px 30px rgba(25,35,55,.08)}
+.hero h1{font-size:24px;line-height:1.35;margin:0 0 8px}
+.hero p{margin:0;color:#5e6573;font-weight:650;line-height:1.6}
+.prize-card{margin-top:14px;background:#fff;border:1px solid #e4e6eb;border-radius:20px;padding:16px}
+.prize-card h2{font-size:17px;margin:0 0 12px}
+.prizes{display:grid;gap:8px}
+.prize{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:13px;background:#f7f8fa}
+.prize-icon{width:32px;text-align:center;font-size:25px}
+.prize-rank{width:45px;font-weight:900}
+.prize-name{font-weight:750;flex:1}
+.prize-reward{font-weight:900}
+.note{font-size:12px;color:#737a86;margin-top:10px;line-height:1.5}
+.status{min-height:24px;margin:15px 2px 4px;text-align:center;font-weight:800;color:#555d6b}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.card{position:relative;aspect-ratio:0.72;min-height:220px;border:0;padding:0;background:none;perspective:900px;cursor:pointer}
+.card:disabled{cursor:default}
+.card-inner{position:relative;width:100%;height:100%;transition:transform .72s cubic-bezier(.2,.75,.2,1);transform-style:preserve-3d}
+.card.open .card-inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;border-radius:20px;backface-visibility:hidden;overflow:hidden;box-shadow:0 10px 22px rgba(14,20,32,.18)}
+.back-face{display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#171d2d,#0b1020);border:2px solid #343b4e}
+.back-symbol{width:70px;height:70px;border:4px solid #fff;border-radius:16px;display:grid;place-items:center;color:#fff;font-size:35px;font-weight:900;transform:rotate(45deg)}
+.back-symbol span{transform:rotate(-45deg)}
+.front-face{transform:rotateY(180deg);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:linear-gradient(145deg,#fff,#f0f3ff);border:2px solid #dfe4f2;padding:12px}
+.front-icon{font-size:48px;margin-bottom:8px}
+.front-rank{font-size:19px;font-weight:950}
+.front-reward{font-size:17px;font-weight:900;margin-top:4px}
+.choose{margin-top:16px;width:100%;border:0;border-radius:16px;padding:14px 18px;background:#202638;color:#fff;font-size:17px;font-weight:900;cursor:pointer;box-shadow:0 8px 18px rgba(32,38,56,.22)}
+.choose:disabled{opacity:.5;cursor:default}
+.result{display:none;margin-top:16px;background:#fff;border:1px solid #e2e5ec;border-radius:20px;padding:18px;text-align:center;box-shadow:0 8px 24px rgba(20,25,40,.08)}
+.result.show{display:block;animation:pop .35s ease}
+.result-icon{font-size:55px}
+.result-title{font-size:24px;font-weight:950;margin-top:4px}
+.result-reward{font-size:18px;font-weight:850;margin-top:5px}
+.result-balance{font-size:13px;color:#687080;margin-top:8px}
+.disabled-box{margin-top:14px;padding:14px;border-radius:16px;background:#f0f2f6;color:#656c78;text-align:center;font-weight:750}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+@media(max-width:430px){
+ body{padding:12px 10px 24px}
+ .title{font-size:19px}
+ .balance{font-size:13px;padding:8px 9px}
+ .hero{padding:17px 14px}
+ .hero h1{font-size:21px}
+ .cards{gap:8px}
+ .face{border-radius:16px}
+ .card{min-height:190px}
+ .back-symbol{width:56px;height:56px;font-size:28px}
+ .front-icon{font-size:38px}
+ .front-rank{font-size:16px}
+ .front-reward{font-size:14px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="topbar">
+    <button class="back" type="button" onclick="history.back()">← 戻る</button>
+    <h1 class="title">🃏 カードめくり</h1>
+    <div class="balance">🪙 <span id="balance">---</span></div>
+  </div>
+
+  <section class="hero">
+    <h1>カードを1枚めくって、<br>出た絵柄で景品をゲット！</h1>
+    <p>3枚のカードから好きな1枚を選ぼう。<br>このゲームは1日に何回でも無料で遊べるよ！</p>
+
+    <div class="prize-card">
+      <h2>🎁 景品一覧</h2>
+      <div class="prizes">
+        <div class="prize"><div class="prize-icon">🏆</div><div class="prize-rank">1等</div><div class="prize-name">大当たり</div><div class="prize-reward">3,650 COIN</div></div>
+        <div class="prize"><div class="prize-icon">🥇</div><div class="prize-rank">2等</div><div class="prize-name">スペシャル</div><div class="prize-reward">600 COIN</div></div>
+        <div class="prize"><div class="prize-icon">🥈</div><div class="prize-rank">3等</div><div class="prize-name">ラッキー</div><div class="prize-reward">240 COIN</div></div>
+        <div class="prize"><div class="prize-icon">🎁</div><div class="prize-rank">4等</div><div class="prize-name">プレゼント</div><div class="prize-reward">24 COIN</div></div>
+        <div class="prize"><div class="prize-icon">✨</div><div class="prize-rank">5等</div><div class="prize-name">ボーナス</div><div class="prize-reward">20 COIN</div></div>
+        <div class="prize"><div class="prize-icon">🌟</div><div class="prize-rank">6等</div><div class="prize-name">ミニボーナス</div><div class="prize-reward">5 COIN</div></div>
+        <div class="prize"><div class="prize-icon">🍀</div><div class="prize-rank">7等</div><div class="prize-name">参加賞</div><div class="prize-reward">1 COIN</div></div>
+      </div>
+      <div class="note">※ 景品の抽選とコイン付与はSupabase側で処理します。</div>
+    </div>
+
+    <div id="status" class="status">読み込み中…</div>
+
+    <div class="cards" id="cards">
+      <button class="card" type="button" data-card="0" aria-label="左のカード">
+        <div class="card-inner">
+          <div class="face back-face"><div class="back-symbol"><span>★</span></div></div>
+          <div class="face front-face"></div>
+        </div>
+      </button>
+      <button class="card" type="button" data-card="1" aria-label="中央のカード">
+        <div class="card-inner">
+          <div class="face back-face"><div class="back-symbol"><span>★</span></div></div>
+          <div class="face front-face"></div>
+        </div>
+      </button>
+      <button class="card" type="button" data-card="2" aria-label="右のカード">
+        <div class="card-inner">
+          <div class="face back-face"><div class="back-symbol"><span>★</span></div></div>
+          <div class="face front-face"></div>
+        </div>
+      </button>
+    </div>
+
+    <button id="chooseButton" class="choose" type="button" disabled>🃏 カードを1枚選ぶ</button>
+
+    <div id="result" class="result">
+      <div id="resultIcon" class="result-icon">🎉</div>
+      <div id="resultTitle" class="result-title"></div>
+      <div id="resultReward" class="result-reward"></div>
+      <div id="resultBalance" class="result-balance"></div>
+    </div>
+
+    <div id="doneBox" class="disabled-box" hidden>🎉 もう一度遊ぶなら、カードを選んでね！</div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const prizes=[
+ {rank:1,name:"1等",icon:"🏆",reward:3650},
+ {rank:2,name:"2等",icon:"🥇",reward:600},
+ {rank:3,name:"3等",icon:"🥈",reward:240},
+ {rank:4,name:"4等",icon:"🎁",reward:24},
+ {rank:5,name:"5等",icon:"✨",reward:20},
+ {rank:6,name:"6等",icon:"🌟",reward:5},
+ {rank:7,name:"7等",icon:"🍀",reward:1}
+];
+
+const cards=[...document.querySelectorAll(".card")];
+const chooseButton=document.getElementById("chooseButton");
+const statusEl=document.getElementById("status");
+const balanceEl=document.getElementById("balance");
+const resultEl=document.getElementById("result");
+const doneBox=document.getElementById("doneBox");
+
+let selectedCard=-1;
+let drawing=false;
+let lastResult=null;
+
+function setStatus(text){statusEl.textContent=text}
+
+async function loadBalance(){
+  const {data,error}=await db.rpc("get_my_coins");
+  if(error){balanceEl.textContent="---";return}
+  balanceEl.textContent=Number(data||0).toLocaleString("ja-JP");
+}
+
+async function loadStatus(){
+  const {data,error}=await db.rpc("get_card_draw_status");
+  if(error){
+    setStatus("ログイン状態を確認できませんでした");
+    cards.forEach(c=>c.disabled=true);
+    return;
+  }
+  if(!data?.logged_in){
+    setStatus("ログインしてから遊んでね");
+    cards.forEach(c=>c.disabled=true);
+    return;
+  }
+  if(data.can_draw){
+    setStatus("好きなカードを1枚選んでね！");
+    cards.forEach(c=>c.disabled=false);
+    chooseButton.disabled=true;
+  }else{
+    setStatus("今日はもうカードをめくったよ！");
+    cards.forEach(c=>c.disabled=true);
+    chooseButton.disabled=true;
+    doneBox.hidden=false;
+  }
+}
+
+function renderCardFront(card,prize){
+  const front=card.querySelector(".front-face");
+  front.innerHTML=
+    '<div class="front-icon">'+prize.icon+'</div>'+
+    '<div class="front-rank">'+prize.name+'</div>'+
+    '<div class="front-reward">+'+Number(prize.reward).toLocaleString("ja-JP")+' COIN</div>';
+}
+
+function selectCard(index){
+  if(drawing)return;
+  cards.forEach((c,i)=>c.style.transform=i===index?"translateY(-5px)":"");
+  selectedCard=index;
+  chooseButton.disabled=false;
+  chooseButton.textContent="✨ このカードをめくる";
+}
+
+async function draw(){
+  if(drawing||selectedCard<0)return;
+  drawing=true;
+  chooseButton.disabled=true;
+  cards.forEach(c=>c.disabled=true);
+  setStatus("カードをめくっています…");
+
+  const {data,error}=await db.rpc("draw_card_prize");
+
+  if(error){
+    const msg=String(error.message||"");
+      setStatus(msg||"抽選に失敗しました");
+    drawing=false;
+    await loadBalance();
+    return;
+  }
+
+  lastResult=data;
+  const prize=prizes.find(p=>p.rank===Number(data.rank))||{
+    rank:data.rank,name:data.name,icon:data.icon,reward:data.reward_coins
+  };
+
+  cards.forEach((card,i)=>{
+    renderCardFront(card,prize);
+    card.style.transform="";
+    if(i!==selectedCard){
+      card.style.opacity=".55";
+    }
+  });
+
+  await new Promise(r=>setTimeout(r,180));
+  cards[selectedCard].classList.add("open");
+
+  await new Promise(r=>setTimeout(r,760));
+
+  document.getElementById("resultIcon").textContent=prize.icon;
+  document.getElementById("resultTitle").textContent=prize.name+"！";
+  document.getElementById("resultReward").textContent="+"+Number(prize.reward).toLocaleString("ja-JP")+" COIN";
+  document.getElementById("resultBalance").textContent="現在のコイン："+Number(data.balance||0).toLocaleString("ja-JP")+" COIN";
+  resultEl.classList.add("show");
+  doneBox.hidden=false;
+  setStatus("🎉 景品を獲得したよ！もう一度遊べるよ！");
+  await loadBalance();
+
+  await new Promise(r=>setTimeout(r,350));
+  cards.forEach(card=>{
+    card.classList.remove("open");
+    card.style.opacity="";
+    card.style.transform="";
+    card.disabled=false;
+  });
+  selectedCard=-1;
+  chooseButton.disabled=true;
+  chooseButton.textContent="🃏 カードを1枚選ぶ";
+  drawing=false;
+}
+
+cards.forEach((card,index)=>{
+  card.addEventListener("click",()=>selectCard(index));
+});
+chooseButton.addEventListener("click",draw);
+
+(async()=>{
+  await loadBalance();
+  await loadStatus();
+})();
+</script>
+</body>
+</html>
