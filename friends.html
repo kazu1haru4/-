@@ -155,19 +155,62 @@ async function loadFriends(){
   status.textContent=`${usernames.length}人のフレンド`;
 }
 async function addFriend(){
-  const input=document.getElementById("friendIdInput"),button=document.getElementById("addFriendButton"),target=input.value.trim();
+  const input=document.getElementById("friendIdInput");
+  const button=document.getElementById("addFriendButton");
+  const target=input.value.trim();
+
   if(!target){alert("フレンドのIDを入力してください。");input.focus();return}
   if(target===currentUsername){alert("自分自身はフレンドに追加できません。");return}
-  if(!/^[A-Za-z0-9_]{3,20}$/.test(target)){alert("ユーザーIDは3〜20文字の英数字と「_」で入力してください。");return}
-  button.disabled=true;button.textContent="追加中...";
+  if(!/^[A-Za-z0-9_]{3,20}$/.test(target)){
+    alert("ユーザーIDは3〜20文字の英数字と「_」で入力してください。");
+    return;
+  }
+
+  button.disabled=true;
+  button.textContent="追加中...";
+
   try{
     if(await checkFriendChatBan())return;
-    const {data:profile,error:profileError}=await supabaseClient.from("profiles").select("user_id").eq("user_id",target).maybeSingle();
-    if(profileError)throw profileError;if(!profile){alert("そのIDのユーザーは見つかりません。");return}
-    const {error}=await supabaseClient.rpc("add_friend_by_id",{target_username:target});if(error)throw error;
-    input.value="";alert("🎉 @"+target+" さんをフレンドに追加しました！");await loadFriends();
-  }catch(error){console.error(error);const msg=String(error?.message||error);if(msg.includes("already")||msg.includes("既に")||msg.includes("すでに"))alert("そのユーザーはすでにフレンドです。");else alert("フレンド追加に失敗しました。\n\n"+msg)}
-  finally{button.disabled=false;button.textContent="追加"}
+
+    /* プロフィールを先にSELECTせず、存在確認も含めてRPCに任せる */
+    const {data:sessionData,error:sessionError}=await supabaseClient.auth.getSession();
+    if(sessionError)throw sessionError;
+
+    if(!sessionData?.session){
+      alert("ログイン状態を確認できませんでした。もう一度ログインしてください。");
+      return;
+    }
+
+    const {error}=await supabaseClient.rpc(
+      "add_friend_by_id",
+      {target_username:target}
+    );
+
+    if(error)throw error;
+
+    input.value="";
+    alert("🎉 @"+target+" さんをフレンドに追加しました！");
+    await loadFriends();
+
+  }catch(error){
+    console.error("フレンド追加エラー:",error);
+
+    const msg=String(error?.message||error);
+
+    if(msg.includes("already")||msg.includes("duplicate")||msg.includes("既に")||msg.includes("すでに")){
+      alert("そのユーザーはすでにフレンドです。");
+    }else if(msg.includes("ユーザーIDを入力してください")||msg.includes("そのIDのユーザーは見つかりません")){
+      alert(msg);
+    }else if(msg.includes("ログインが必要です")||msg.includes("JWT")||msg.includes("401")||msg.includes("Unauthorized")){
+      alert("ログイン状態を確認できませんでした。もう一度ログインしてください。");
+    }else{
+      alert("フレンド追加に失敗しました。\n\n"+msg);
+    }
+
+  }finally{
+    button.disabled=false;
+    button.textContent="追加";
+  }
 }
 document.getElementById("addFriendButton").onclick=addFriend;
 document.getElementById("friendIdInput").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();addFriend()}};
