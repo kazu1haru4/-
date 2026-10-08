@@ -203,14 +203,14 @@ let incomingCallId="";
 const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
 const frameMap={sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",heart:"frame-heart",rainbow:"frame-rainbow",flame:"frame-flame",sea:"frame-sea",space:"frame-space",neon:"frame-neon",admin:"admin-frame"};
 const chatFrameMap={chat_sakura:"chat-frame-sakura",chat_star:"chat-frame-star",chat_diamond:"chat-frame-diamond",chat_heart:"chat-frame-heart",chat_rainbow:"chat-frame-rainbow",chat_flame:"chat-frame-flame",chat_sea:"chat-frame-sea",chat_space:"chat-frame-space",chat_neon:"chat-frame-neon",admin_chat:"chat-frame-admin",sakura:"chat-frame-sakura",star:"chat-frame-star",diamond:"chat-frame-diamond",heart:"chat-frame-heart",rainbow:"chat-frame-rainbow",flame:"chat-frame-flame",sea:"chat-frame-sea",space:"chat-frame-space",neon:"chat-frame-neon"};
-function chatFrameClass(key){return chatFrameMap[String(key||"")]||""}
+function chatFrameClass(key){const k=String(key||"");return chatFrameMap[k]||((k&&/^[A-Za-z0-9_-]+$/.test(k))?"chat-frame-"+k:"")}
 const nameMap={nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",nd_neon:"name-decoration-neon",name_sakura:"name-decoration-sakura",admin_name:"name-decoration-admin"};
 let currentUsername="",myAvatarUrl="",friendAvatarUrl="",myItem=null,friendItem=null,myChatFrameKey="",friendChatFrameKey="",myName="",friendName="",myNameClass="",friendNameClass="",realtimeChannel=null,presenceTimer=null,readMessageIds=new Set(),replyTarget=null;
 let typingTimer=null,typingHideTimer=null,typingChannel=null,typingChannelReady=false;
 const ONLINE_LIMIT=60000;
 
-function frameClass(key){return frameMap[String(key||"")]||""}
-function nameClass(key){return nameMap[String(key||"")]||""}
+function frameClass(key){const k=String(key||"");return frameMap[k]||((k&&/^[A-Za-z0-9_-]+$/.test(k))?"frame-"+k:"")}
+function nameClass(key){const k=String(key||"");return nameMap[k]||((k&&/^[A-Za-z0-9_-]+$/.test(k))?"name-decoration-"+k:"")}
 async function loadItem(key){if(!key)return null;const {data,error}=await db.from("coin_items").select("item_key,icon,frame_color,name,item_type").eq("item_key",key).maybeSingle();if(error)console.error("アイテム取得:",error);return data||null}
 function applyFrame(el,item){
  el.className=el.className.split(" ").filter(x=>!x.startsWith("frame-")&&x!=="admin-frame").join(" ");
@@ -1000,5 +1000,48 @@ start();
  }
 })();
 </script>
+
+<script>
+/* Friend Chat: 装飾スタイルをSupabaseのcoin_itemsから読み込む */
+(async()=>{
+  try{
+    const client=db;
+    if(!client)return;
+    const {data,error}=await client.from("coin_items").select("item_key,item_type,frame_color,style_data");
+    if(error){console.warn("coin_items style load:",error);return;}
+    const safeKey=k=>String(k||"").replace(/[^a-zA-Z0-9_-]/g,"");
+    const styleMap={frame:k=>k==="admin"?"admin-frame":"frame-"+k,name_decoration:k=>k==="admin_name"?"name-decoration-admin":"name-decoration-"+k,background:k=>k==="admin_bg"?"background-admin":"background-"+k,chat_frame:k=>k==="admin_chat"?"chat-frame-admin":"chat-frame-"+k};
+    const rules=[];
+    for(const item of (data||[])){
+      const key=safeKey(item.item_key);
+      const type=String(item.item_type||"");
+      const fn=styleMap[type];
+      if(!key||!fn)continue;
+      const cls=safeKey(fn(key));
+      const style=(item.style_data&&typeof item.style_data==="object")?item.style_data:{};
+      const declarations=[];
+      for(const [prop,value] of Object.entries(style)){
+        if(value==null||value==="")continue;
+        const cssProp=String(prop).replace(/[A-Z]/g,m=>"-"+m.toLowerCase());
+        declarations.push(`${cssProp}:${String(value)} !important`);
+      }
+      if(!declarations.length && item.frame_color){
+        if(type==="frame")declarations.push(`background:${item.frame_color} !important`);
+        else if(type==="name_decoration")declarations.push(`color:${item.frame_color} !important`);
+        else if(type==="background")declarations.push(`background:${item.frame_color} !important`);
+        else if(type==="chat_frame")declarations.push(`border-color:${item.frame_color} !important`);
+      }
+      if(declarations.length)rules.push(`.${cls}{${declarations.join(";")}}`);
+    }
+    if(rules.length){
+      const style=document.createElement("style");
+      style.id="fc-supabase-item-styles";
+      style.textContent=rules.join("\n");
+      document.head.appendChild(style);
+    }
+  }catch(e){console.warn("Supabase item style init:",e)}
+})();
+</script>
+
 </body>
 </html>
