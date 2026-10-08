@@ -2,313 +2,439 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>カードめくり | フレンドチャット</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>フレンドコイン</title>
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;background:#f4f6f9;color:#151821}
-body{padding:18px 12px 32px}
-.container{width:min(100%,720px);margin:0 auto}
-.topbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.back{border:0;background:#fff;border-radius:14px;padding:10px 14px;font-size:15px;font-weight:700;box-shadow:0 3px 12px rgba(0,0,0,.08);cursor:pointer}
-.title{font-size:22px;font-weight:900;margin:0}
-.top-actions{margin-left:auto;display:flex;align-items:center;gap:7px}.admin-button{border:0;background:#e7e7e7;color:#555;border-radius:12px;padding:9px 10px;font-size:12px;font-weight:850;cursor:pointer}.balance{background:#fff;border-radius:14px;padding:9px 12px;font-weight:800;box-shadow:0 3px 12px rgba(0,0,0,.08);white-space:nowrap}
-.hero{background:linear-gradient(135deg,#ffffff,#f7f8ff);border:1px solid #e3e6ec;border-radius:24px;padding:20px 18px 18px;box-shadow:0 10px 30px rgba(25,35,55,.08)}
-.hero h1{font-size:24px;line-height:1.35;margin:0 0 8px}
-.hero p{margin:0;color:#5e6573;font-weight:650;line-height:1.6}
-.prize-card{margin-top:14px;background:#fff;border:1px solid #e4e6eb;border-radius:20px;padding:16px}
-.prize-card h2{font-size:17px;margin:0 0 12px}
-.prizes{display:grid;gap:8px}
-.prize{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:13px;background:#f7f8fa}
-.prize-icon{width:32px;text-align:center;font-size:25px}
-.prize-rank{width:45px;font-weight:900}
-.prize-name{font-weight:750;flex:1}
-.prize-reward{font-weight:900}
-.note{font-size:12px;color:#737a86;margin-top:10px;line-height:1.5}
-.status{min-height:24px;margin:15px 2px 4px;text-align:center;font-weight:800;color:#555d6b}
-.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px;width:100%;}
-.card{position:relative;aspect-ratio:0.72;min-height:0;width:100%;border:0;padding:0;background:none;perspective:900px;cursor:pointer}
-.card:disabled{cursor:default}
-.card-inner{position:relative;width:100%;height:100%;transition:transform .72s cubic-bezier(.2,.75,.2,1);transform-style:preserve-3d}
-.card.open .card-inner{transform:rotateY(180deg)}
-.face{position:absolute;inset:0;border-radius:20px;backface-visibility:hidden;overflow:hidden;box-shadow:0 10px 22px rgba(14,20,32,.18)}
-.back-face{display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#171d2d,#0b1020);border:2px solid #343b4e}
-.back-symbol{width:70px;height:70px;border:4px solid #fff;border-radius:16px;display:grid;place-items:center;color:#fff;font-size:35px;font-weight:900;transform:rotate(45deg)}
-.back-symbol span{transform:rotate(-45deg)}
-.front-face{transform:rotateY(180deg);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:linear-gradient(145deg,#fff,#f0f3ff);border:2px solid #dfe4f2;padding:12px}
-.front-icon{font-size:48px;margin-bottom:8px}
-.front-rank{font-size:19px;font-weight:950}
-.front-reward{font-size:17px;font-weight:900;margin-top:4px}
-.choose{margin-top:16px;width:100%;border:0;border-radius:16px;padding:14px 18px;background:#202638;color:#fff;font-size:17px;font-weight:900;cursor:pointer;box-shadow:0 8px 18px rgba(32,38,56,.22)}
-.choose:disabled{opacity:.5;cursor:default}
-.result{display:none;margin-top:16px;background:#fff;border:1px solid #e2e5ec;border-radius:20px;padding:18px;text-align:center;box-shadow:0 8px 24px rgba(20,25,40,.08)}
-.result.show{display:block;animation:pop .35s ease}
-.result-icon{font-size:55px}
-.result-title{font-size:24px;font-weight:950;margin-top:4px}
-.result-reward{font-size:18px;font-weight:850;margin-top:5px}
-.result-balance{font-size:13px;color:#687080;margin-top:8px}
-.disabled-box{margin-top:14px;padding:14px;border-radius:16px;background:#f0f2f6;color:#656c78;text-align:center;font-weight:750}
-@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
-@media(max-width:430px){
- body{padding:12px 10px 24px}
- .title{font-size:19px}
- .balance{font-size:13px;padding:8px 9px}
- .hero{padding:17px 14px}
- .hero h1{font-size:21px}
- .cards{gap:6px}
- .face{border-radius:14px}
- .card{min-width:0}
- .back-symbol{width:56px;height:56px;font-size:28px}
- .front-icon{font-size:38px}
- .front-rank{font-size:16px}
- .front-reward{font-size:14px}
-}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:linear-gradient(135deg,#fff4fb,#eef7ff);color:#333}
+.container{width:min(92%,460px);margin:0 auto;padding:24px 0 40px}
+.header{display:flex;align-items:center;gap:12px;margin-bottom:20px}.back{border:none;background:white;width:42px;height:42px;border-radius:14px;font-size:26px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.08)}.header h1{margin:0;font-size:24px;flex:1}.coin-admin-button{border:none;background:#777;color:white;border-radius:14px;padding:10px 12px;font-size:13px;font-weight:bold;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.balance-card{background:linear-gradient(135deg,#8f7cff,#b49cff);color:white;border-radius:24px;padding:26px;box-shadow:0 10px 25px rgba(143,124,255,.25);margin-bottom:18px}.balance-label{font-size:14px;opacity:.9}.balance{font-size:42px;font-weight:bold;margin-top:5px}.coin{font-size:18px;margin-left:4px}
+.card{background:rgba(255,255,255,.94);border-radius:22px;padding:20px;margin-bottom:16px;box-shadow:0 6px 18px rgba(0,0,0,.07)}.card h2{margin:0 0 8px;font-size:20px}.description{margin:0 0 16px;color:#777;font-size:14px;line-height:1.6}
+.reward-code-box{display:flex;gap:8px}.reward-code-box input{min-width:0;flex:1;border:1px solid #ddd;border-radius:14px;padding:13px;font-size:16px;font-family:inherit;text-transform:uppercase}.reward-code-box button{border:none;border-radius:14px;padding:12px 15px;background:#8f7cff;color:white;font-weight:bold;white-space:nowrap}.reward-message{margin-top:10px;min-height:22px;text-align:center;font-weight:bold}
+.slot{background:#faf9ff;border:2px solid #e8e3ff;border-radius:20px;padding:18px;text-align:center}.slot-machine{display:flex;justify-content:center;gap:10px;margin:10px 0 18px}.reel{width:72px;height:72px;display:flex;justify-content:center;align-items:center;background:white;border-radius:16px;font-size:40px;box-shadow:inset 0 0 0 2px #eee}.result{min-height:26px;margin:10px 0;font-weight:bold}.main-button{width:100%;border:none;border-radius:16px;padding:14px;font-size:16px;font-weight:bold;cursor:pointer;background:#8f7cff;color:white}.main-button:disabled{opacity:.5}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}.action{border:none;background:#f7f5ff;border-radius:18px;padding:18px 10px;cursor:pointer;text-align:center}.action .icon{font-size:30px;margin-bottom:7px}.action strong{display:block;font-size:15px}.action span{display:block;color:#777;font-size:12px;margin-top:4px}
+.shop-details{border-radius:18px;overflow:hidden;margin-bottom:12px}.shop-summary{list-style:none;cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#f8f5ff,#fff4fb);border:2px solid #e8e3ff;border-radius:18px;padding:16px;font-weight:bold}.shop-summary::-webkit-details-marker{display:none}.shop-summary-left{display:flex;align-items:center;gap:10px}.shop-summary-icon{font-size:28px}.shop-summary-text{display:flex;flex-direction:column;gap:3px}.shop-summary-title{font-size:16px}.shop-summary-sub{color:#777;font-size:12px;font-weight:normal}.shop-arrow{font-size:18px;transition:transform .2s}.shop-details[open] .shop-arrow{transform:rotate(180deg)}.shop-content{padding-top:14px}.shop{display:grid;gap:12px}
+.shop-item{background:#faf9ff;border:2px solid #e8e3ff;border-radius:18px;padding:15px;display:flex;align-items:center;gap:12px}.shop-preview{width:58px;height:58px;border-radius:50%;padding:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#ffd0e7}.shop-preview-inner{width:100%;height:100%;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:27px}
+.frame-sakura{background:linear-gradient(135deg,#ff9bc9,#ff5da8,#ffd1e7)!important}.frame-star{background:linear-gradient(135deg,#ffe98a,#f4bf3f,#fff1a8)!important}.frame-diamond{background:linear-gradient(135deg,#a8ecff,#4db9ee,#d4f7ff)!important}.frame-heart{background:linear-gradient(135deg,#ff9bb8,#ff4f81,#ffc4d5)!important}.frame-rainbow{background:conic-gradient(#ff4d4d,#ffb84d,#ffff66,#5cff8d,#4ddcff,#7b6cff,#ff4dd8,#ff4d4d)!important}.frame-flame{background:linear-gradient(135deg,#ff3b1f,#ff8c00,#ffd400)!important}.frame-sea{background:linear-gradient(135deg,#0077ff,#00cfff,#9ff5ff)!important}.frame-space{background:radial-gradient(circle at 20% 20%,#fff 1px,transparent 2px),radial-gradient(circle at 70% 35%,#fff 1px,transparent 2px),radial-gradient(circle at 45% 75%,#fff 1px,transparent 2px),linear-gradient(135deg,#08051c,#25104f,#09031c)!important}.frame-neon{background:linear-gradient(135deg,#00ff88,#00e5ff,#ff00d4)!important}
+.shop-info{flex:1;min-width:0}.shop-name{font-size:15px;font-weight:bold}.shop-price{margin-top:4px;color:#777;font-size:13px}.buy-button{border:none;background:#8f7cff;color:white;border-radius:12px;padding:10px 12px;font-size:13px;font-weight:bold;cursor:pointer;white-space:nowrap}.buy-button:disabled{opacity:.45}.buy-button.owned{background:#e8e5ff;color:#6255c7}
+.chat-frame-preview{width:58px;height:58px;border-radius:18px;padding:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.chat-frame-preview-inner{width:100%;height:100%;border-radius:14px;background:white;display:flex;align-items:center;justify-content:center;font-size:27px}
+.chat-frame-sakura{background:linear-gradient(135deg,#ff9bc9,#ff5da8,#ffd1e7)!important}
+.chat-frame-star{background:linear-gradient(135deg,#ffe98a,#f4bf3f,#fff1a8)!important}
+.chat-frame-diamond{background:linear-gradient(135deg,#a8ecff,#4db9ee,#d4f7ff)!important}
+.chat-frame-heart{background:linear-gradient(135deg,#ff9bb8,#ff4f81,#ffc4d5)!important}
+.chat-frame-rainbow{background:conic-gradient(#ff4d4d,#ffb84d,#ffff66,#5cff8d,#4ddcff,#7b6cff,#ff4dd8,#ff4d4d)!important}
+.chat-frame-flame{background:linear-gradient(135deg,#ff3b1f,#ff8c00,#ffd400)!important}
+.chat-frame-sea{background:linear-gradient(135deg,#0077ff,#00cfff,#9ff5ff)!important}
+.chat-frame-space{background:radial-gradient(circle at 20% 20%,#fff 1px,transparent 2px),radial-gradient(circle at 70% 35%,#fff 1px,transparent 2px),radial-gradient(circle at 45% 75%,#fff 1px,transparent 2px),linear-gradient(135deg,#08051c,#25104f,#09031c)!important}
+.chat-frame-neon{background:linear-gradient(135deg,#00ff88,#00e5ff,#ff00d4)!important}
+.notice{background:#fff8df;border-radius:16px;padding:13px;font-size:13px;color:#735f19;line-height:1.6}.message{text-align:center;margin-top:12px;min-height:22px;font-size:14px;font-weight:bold}
+.daily-missions{display:grid;gap:10px}
+.daily-mission{background:#faf9ff;border:2px solid #e8e3ff;border-radius:18px;padding:14px;display:flex;align-items:center;gap:10px}
+.daily-mission-info{flex:1;min-width:0}
+.daily-mission-title{font-size:14px;font-weight:bold}
+.daily-mission-reward{margin-top:4px;color:#777;font-size:12px}
+.daily-mission-button{border:none;background:#8f7cff;color:white;border-radius:12px;padding:9px 11px;font-size:12px;font-weight:bold;white-space:nowrap;cursor:pointer}
+.daily-mission-button.done{background:#e8e5ff;color:#6255c7}
+.daily-mission-total{margin-top:12px;padding:12px;border-radius:14px;background:#fff8df;color:#735f19;text-align:center;font-size:13px}
+
+@media(max-width:380px){.reward-code-box{flex-direction:column}.reward-code-box button{width:100%}.shop-item{padding:12px}.shop-preview{width:50px;height:50px}.shop-preview-inner{font-size:23px}.buy-button{padding:9px 10px}}
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="topbar">
-    <button class="back" type="button" onclick="history.back()">← 戻る</button>
-    <h1 class="title">🃏 カードめくり</h1>
-    <div class="top-actions">
-      <button id="adminButton" class="admin-button" type="button" hidden>🛡️ 管理</button>
-      <div class="balance">🪙 <span id="balance">---</span></div>
-    </div>
-  </div>
+<div class="header"><button class="back" onclick="history.back()">‹</button><h1>🪙 フレンドコイン</h1><button id="coinAdminButton" class="coin-admin-button" type="button" style="display:none">🛡️ 管理</button></div>
 
-  <section class="hero">
-    <h1>カードを1枚めくって、<br>出た絵柄で景品をゲット！</h1>
-    <p>3枚のカードから好きな1枚を選ぼう。<br>1回100コインで遊べるよ！</p>
+<div class="balance-card"><div class="balance-label">現在のコイン</div><div class="balance"><span id="balance">---</span><span class="coin">COIN</span></div></div>
 
-    <div class="prize-card">
-      <h2>🎁 景品一覧</h2>
-      <div class="prizes">
-        <div class="prize"><div class="prize-icon">🏆</div><div class="prize-rank">1等</div><div class="prize-name">大当たり</div><div class="prize-reward">3,650 COIN</div></div>
-        <div class="prize"><div class="prize-icon">🥇</div><div class="prize-rank">2等</div><div class="prize-name">スペシャル</div><div class="prize-reward">600 COIN</div></div>
-        <div class="prize"><div class="prize-icon">🥈</div><div class="prize-rank">3等</div><div class="prize-name">ラッキー</div><div class="prize-reward">240 COIN</div></div>
-        <div class="prize"><div class="prize-icon">🎁</div><div class="prize-rank">4等</div><div class="prize-name">プレゼント</div><div class="prize-reward">24 COIN</div></div>
-        <div class="prize"><div class="prize-icon">✨</div><div class="prize-rank">5等</div><div class="prize-name">ボーナス</div><div class="prize-reward">20 COIN</div></div>
-        <div class="prize"><div class="prize-icon">🌟</div><div class="prize-rank">6等</div><div class="prize-name">ミニボーナス</div><div class="prize-reward">5 COIN</div></div>
-        <div class="prize"><div class="prize-icon">🍀</div><div class="prize-rank">7等</div><div class="prize-name">参加賞</div><div class="prize-reward">1 COIN</div></div>
-      </div>
-      <div class="note">※ 景品の抽選とコイン付与はSupabase側で処理します。</div>
-    </div>
+<div class="card">
+<h2>🎁 配布コード</h2>
+<p class="description">管理者からもらった配布コードを入力すると、コインやアイテムを受け取れます。</p>
+<div class="reward-code-box"><input id="rewardCodeInput" type="text" maxlength="100" placeholder="配布コード"><button id="redeemRewardCodeButton" onclick="redeemRewardCode()">🎁 受け取る</button></div>
+<div id="rewardCodeMessage" class="reward-message"></div>
+</div>
 
-    <div id="status" class="status">読み込み中…</div>
+<div class="card">
+<h2>🎰 今日の運試し</h2><p class="description">1日1回、無料で運試しできます！</p>
+<div class="slot"><div class="slot-machine"><div class="reel" id="reel1">❓</div><div class="reel" id="reel2">❓</div><div class="reel" id="reel3">❓</div></div><div class="result" id="slotResult">今日の運試しをしてみよう！</div><button class="main-button" id="slotButton" onclick="playSlot()" disabled>🎰 運試しする</button></div>
+</div>
 
-    <div class="cards" id="cards">
-      <button class="card" type="button" data-card="0" aria-label="左のカード">
-        <div class="card-inner">
-          <div class="face back-face"><div class="back-symbol"><span>★</span></div></div>
-          <div class="face front-face"></div>
-        </div>
-      </button>
-      <button class="card" type="button" data-card="1" aria-label="中央のカード">
-        <div class="card-inner">
-          <div class="face back-face"><div class="back-symbol"><span>★</span></div></div>
-          <div class="face front-face"></div>
-        </div>
-      </button>
-      <button class="card" type="button" data-card="2" aria-label="右のカード">
-        <div class="card-inner">
-          <div class="face back-face"><div class="back-symbol"><span>★</span></div></div>
-          <div class="face front-face"></div>
-        </div>
-      </button>
-    </div>
+<div class="card">
+<h2>📋 デイリーミッション</h2>
+<p class="description">毎日5つのミッションに挑戦して、合計60 COINを集めよう！</p>
+<div id="dailyMissionList" class="daily-missions">読み込み中……</div>
+<div class="daily-mission-total">今日の合計報酬：🪙 <strong>60</strong> COIN</div>
+</div>
 
-    <button id="chooseButton" class="choose" type="button">🪙 100コインでゲームをする</button>
+<div class="card" id="bankCard">
+<h2>🏦 コイン銀行</h2>
+<p class="description">コインを預けたり、預けたコインを確認できます。</p>
+<button class="main-button" type="button" onclick="location.href='bank.html'">🏦 銀行を開く</button>
+</div>
 
-    <div id="result" class="result">
-      <div id="resultIcon" class="result-icon">🎉</div>
-      <div id="resultTitle" class="result-title"></div>
-      <div id="resultReward" class="result-reward"></div>
-      <div id="resultBalance" class="result-balance"></div>
-    </div>
+<div class="card" id="shopCard">
 
-    <div id="doneBox" class="disabled-box" hidden>🎉 もう一度遊ぶなら、カードを選んでね！</div>
-  </section>
+<details class="shop-details" id="frameShopDetails">
+<summary class="shop-summary"><div class="shop-summary-left"><div class="shop-summary-icon">🖼️</div><div class="shop-summary-text"><div class="shop-summary-title">フレームショップ</div><div class="shop-summary-sub">プロフィールのフレームを交換</div></div></div><div class="shop-arrow">▼</div></summary>
+<div class="shop-content"><p class="description">集めたコインでプロフィールのフレームを交換できます！</p><div id="frameShop" class="shop">読み込み中……</div></div>
+</details>
+
+<details class="shop-details" id="nameDecorationShopDetails">
+<summary class="shop-summary"><div class="shop-summary-left"><div class="shop-summary-icon">✨</div><div class="shop-summary-text"><div class="shop-summary-title">名前装飾ショップ</div><div class="shop-summary-sub">名前に表示する装飾を交換</div></div></div><div class="shop-arrow">▼</div></summary>
+<div class="shop-content"><p class="description">個別チャット・グループチャット・掲示板・プロフィールなどで表示する名前装飾を交換できます！</p><div id="nameDecorationShop" class="shop">読み込み中……</div></div>
+</details>
+
+<details class="shop-details" id="backgroundShopDetails">
+<summary class="shop-summary"><div class="shop-summary-left"><div class="shop-summary-icon">🎨</div><div class="shop-summary-text"><div class="shop-summary-title">背景ショップ</div><div class="shop-summary-sub">プロフィールの背景を交換</div></div></div><div class="shop-arrow">▼</div></summary>
+<div class="shop-content"><p class="description">自分や友達のプロフィールに表示する背景を交換できます！</p><div id="backgroundShop" class="shop">読み込み中……</div></div>
+</details>
+
+<details class="shop-details" id="chatFrameShopDetails">
+<summary class="shop-summary"><div class="shop-summary-left"><div class="shop-summary-icon">💬</div><div class="shop-summary-text"><div class="shop-summary-title">チャットフレームショップ</div><div class="shop-summary-sub">チャット画面のフレームを交換</div></div></div><div class="shop-arrow">▼</div></summary>
+<div class="shop-content"><p class="description">集めたコインでチャット画面に使えるフレームを交換できます！</p><div id="chatFrameShop" class="shop">読み込み中……</div></div>
+</details>
+
+</div>
+
+<div class="card">
+<h2>🎯 ビンゴをする</h2>
+<p class="description">3×3のマスを開けて、そろったラインを探そう！</p>
+<button class="main-button" type="button" onclick="location.href='bingo.html'">🎯 ビンゴをする</button>
+</div>
+
+<div class="card">
+<h2>🃏 カードめくりをする</h2>
+<p class="description">3枚のカードから1枚を選んで、コインをゲットしよう！</p>
+<button class="main-button" type="button" onclick="location.href='cards.html'">🃏 カードめくりをする</button>
+</div>
+<div class="message" id="message"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="ban-check.js"></script>
 <script>
 const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
 const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
-const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-const prizes=[
- {rank:1,name:"1等",icon:"🏆",reward:3650},
- {rank:2,name:"2等",icon:"🥇",reward:600},
- {rank:3,name:"3等",icon:"🥈",reward:240},
- {rank:4,name:"4等",icon:"🎁",reward:24},
- {rank:5,name:"5等",icon:"✨",reward:20},
- {rank:6,name:"6等",icon:"🌟",reward:5},
- {rank:7,name:"7等",icon:"🍀",reward:1}
-];
+const ADMIN_ITEM_KEYS=new Set(["admin","admin_name","admin_bg","admin_chat"]);
+let isSiteAdmin=false;
 
-const cards=[...document.querySelectorAll(".card")];
-const chooseButton=document.getElementById("chooseButton");
-const statusEl=document.getElementById("status");
-const balanceEl=document.getElementById("balance");
-const resultEl=document.getElementById("result");
-const doneBox=document.getElementById("doneBox");
+let currentUsername="",balance=0,shopItems=[],ownedItems=new Set();
 
-let selectedCard=-1;
-let drawing=false;
-let selecting=false;
-let lastResult=null;
+function getToday(){const now=new Date();return now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0")}
+function updateBalance(){document.getElementById("balance").textContent=balance}
+function showMessage(text){document.getElementById("message").textContent=text}
+function showRewardMessage(text){document.getElementById("rewardCodeMessage").textContent=text}
 
-function setStatus(text){statusEl.textContent=text}
+async function getCurrentUser(){
+ const {data,error}=await supabaseClient.auth.getUser();
+ if(error||!data.user)return false;
+ currentUsername=data.user.user_metadata?.username||"";
 
-async function loadBalance(){
-  const {data,error}=await db.rpc("get_my_coins");
-  if(error){balanceEl.textContent="---";return}
-  balanceEl.textContent=Number(data||0).toLocaleString("ja-JP");
+ // 管理者判定はSupabase側のsite_adminsを基準にする
+ try{
+  const {data:adminData,error:adminError}=await supabaseClient.rpc("is_friendchat_admin");
+  isSiteAdmin=!adminError&&adminData===true;
+ }catch(error){
+  console.warn("admin check:",error);
+  isSiteAdmin=false;
+ }
+
+ const adminButton=document.getElementById("coinAdminButton");
+ if(adminButton){
+  adminButton.style.display=isSiteAdmin?"block":"none";
+  adminButton.onclick=()=>location.href="admin-coin.html";
+ }
+ return !!currentUsername;
 }
 
-async function loadStatus(){
-  const {data,error}=await db.rpc("get_card_draw_status");
-  if(error){
-    setStatus("ログイン状態を確認できませんでした");
-    cards.forEach(c=>c.disabled=true);
-    chooseButton.disabled=true;
-    return;
+
+async function loadDailyMissions(){
+ const box=document.getElementById("dailyMissionList");
+ if(!box||!currentUsername)return;
+ const today=getToday();
+ const {data,error}=await supabaseClient.from("daily_mission_claims")
+  .select("mission_key,reward")
+  .eq("user_id",currentUsername)
+  .eq("claim_date",today);
+ if(error){
+  console.error("daily missions:",error);
+  box.innerHTML="❌ ミッションを読み込めませんでした";
+  return;
+ }
+ const done=new Set((data||[]).map(x=>x.mission_key));
+ const missions=[
+  {key:"messages_5",icon:"💬",title:"メッセージを5回送る",reward:15,action:"chat"},
+  {key:"group_message_1",icon:"👥",title:"グループで1回送信",reward:15,action:"group"},
+  {key:"board_post_1",icon:"📋",title:"掲示板に1回投稿",reward:10,action:"board"},
+  {key:"message_search_1",icon:"🔎",title:"メッセージを1回検索",reward:10,action:"search"},
+  {key:"profile_open_1",icon:"👤",title:"プロフィールを開く",reward:10,action:"profile"}
+ ];
+ box.innerHTML=missions.map(m=>{
+  const isDone=done.has(m.key);
+  const label=isDone?"✅ 達成済み":(m.action==="profile"?"プロフィールへ":"挑戦する");
+  const click=isDone?"":`onclick="dailyMissionAction('${m.action}')"`;
+  return `<div class="daily-mission">
+   <div style="font-size:26px">${m.icon}</div>
+   <div class="daily-mission-info">
+    <div class="daily-mission-title">${m.title}</div>
+    <div class="daily-mission-reward">🪙 ${m.reward} COIN</div>
+   </div>
+   <button class="daily-mission-button ${isDone?"done":""}" ${isDone?"disabled":click}>${label}</button>
+  </div>`;
+ }).join("");
+}
+
+async function claimDailyMission(key){
+ const rewards={messages_5:15,group_message_1:15,board_post_1:10,message_search_1:10,profile_open_1:10};
+ if(!rewards[key]||!currentUsername)return false;
+ const {error}=await supabaseClient.from("daily_mission_claims").insert({
+  user_id:currentUsername,
+  claim_date:getToday(),
+  mission_key:key,
+  reward:rewards[key]
+ });
+ if(error){
+  if(error.code==="23505"){
+   await loadDailyMissions();
+   return false;
   }
-  if(!data?.logged_in){
-    setStatus("ログインしてから遊んでね");
-    cards.forEach(c=>c.disabled=true);
-    chooseButton.disabled=true;
-    return;
+  console.error("daily mission claim:",error);
+  return false;
+ }
+ await loadCoins();
+ await loadDailyMissions();
+ showMessage("🎉 ミッション達成！ コインを獲得しました！");
+ return true;
+}
+
+function dailyMissionAction(action){
+ if(action==="chat") location.href="chat.html?dailyMission=messages_5";
+ else if(action==="group") location.href="group_chat.html?dailyMission=group_message_1";
+ else if(action==="search") location.href="group_chat.html?dailyMission=message_search_1";
+ else if(action==="profile") location.href="profile.html?dailyMission=profile_open_1";
+ else if(action==="board") showMessage("📋 掲示板に1回投稿してから、フレンドコインに戻ってね！");
+}
+
+async function loadCoins(){
+ if(!await getCurrentUser()){document.getElementById("balance").textContent="ログインしてください";return false}
+ const {data,error}=await supabaseClient.from("user_coins").select("coins,last_login_bonus_date").eq("user_id",currentUsername).maybeSingle();
+ if(error){console.error(error);document.getElementById("balance").textContent="エラー";return false}
+ if(!data){
+  const {data:created,error:createError}=await supabaseClient.from("user_coins").insert({user_id:currentUsername,coins:0}).select("coins,last_login_bonus_date").single();
+  if(createError){console.error(createError);document.getElementById("balance").textContent="エラー";return false}
+  balance=Number(created.coins||0);
+ }else balance=Number(data.coins||0);
+ updateBalance();document.getElementById("slotButton").disabled=false;return true;
+}
+
+async function saveCoins(){
+ const {error}=await supabaseClient.from("user_coins").update({coins:balance,updated_at:new Date().toISOString()}).eq("user_id",currentUsername);
+ if(error){console.error(error);return false}return true;
+}
+
+async function redeemRewardCode(){
+ const input=document.getElementById("rewardCodeInput"),button=document.getElementById("redeemRewardCodeButton"),code=input.value.trim().toUpperCase();
+ if(!code){showRewardMessage("❌ 配布コードを入力してください");return}
+ button.disabled=true;showRewardMessage("🎁 受け取っています……");
+ try{
+  const {data,error}=await supabaseClient.rpc("redeem_coin_reward_code",{input_code:code});
+  if(error){showRewardMessage("❌ "+error.message);return}
+  await loadCoins();await loadShop();
+  const rewardCoins=Number(data?.reward_coins||0),rewardItem=data?.reward_item_key,parts=[];
+  if(rewardCoins>0)parts.push(`🪙 ${rewardCoins.toLocaleString()} COIN`);
+  if(rewardItem){const item=shopItems.find(x=>x.item_key===rewardItem);parts.push(`🎁 ${item?.name||"アイテム"}`)}
+  showRewardMessage("🎉 "+(parts.join(" ＋ ")||"報酬")+" を受け取りました！");
+  input.value="";
+ }catch(error){console.error(error);showRewardMessage("❌ 受け取りに失敗しました")}finally{button.disabled=false}
+}
+
+async function claimLoginBonus(){
+ if(!currentUsername&&!await getCurrentUser()){showMessage("❌ ログインしてください");return}
+ const today=getToday();
+ const {data,error}=await supabaseClient.from("user_coins").select("coins,last_login_bonus_date").eq("user_id",currentUsername).maybeSingle();
+ if(error||!data){showMessage("❌ コイン情報を取得できませんでした");return}
+ if(data.last_login_bonus_date===today){showMessage("📅 今日のログインボーナスは受け取り済みだよ！");return}
+ const newCoins=Number(data.coins||0)+10;
+ const {error:updateError}=await supabaseClient.from("user_coins").update({coins:newCoins,last_login_bonus_date:today,updated_at:new Date().toISOString()}).eq("user_id",currentUsername);
+ if(updateError){showMessage("❌ ボーナスの受け取りに失敗しました");return}
+ balance=newCoins;updateBalance();showMessage("🎉 ログインボーナス +10 COIN！");
+}
+
+async function playSlot(){
+ const button=document.getElementById("slotButton"),result=document.getElementById("slotResult"),today=getToday();
+ if(localStorage.getItem("friendCoinSlotDate")===today){result.textContent="今日はもう運試し済みだよ！😊";return}
+ button.disabled=true;result.textContent="運試し中……";
+ const symbols=["🍒","⭐","🍋","💎","🍀","🎁"];let count=0;
+ const animation=setInterval(async()=>{
+  ["reel1","reel2","reel3"].forEach(id=>document.getElementById(id).textContent=symbols[Math.floor(Math.random()*symbols.length)]);
+  count++;
+  if(count>=12){
+   clearInterval(animation);
+   const a=symbols[Math.floor(Math.random()*symbols.length)],b=symbols[Math.floor(Math.random()*symbols.length)],c=symbols[Math.floor(Math.random()*symbols.length)];
+   document.getElementById("reel1").textContent=a;document.getElementById("reel2").textContent=b;document.getElementById("reel3").textContent=c;
+   let reward;
+   if(a===b&&b===c){reward=100;result.textContent="🎉 大当たり！ +100 COIN"}else if(a===b||b===c||a===c){reward=50;result.textContent="✨ 当たり！ +50 COIN"}else{reward=10;result.textContent="🍀 参加賞！ +10 COIN"}
+   balance+=reward;updateBalance();
+   if(!await saveCoins()){balance-=reward;updateBalance();result.textContent="❌ コインの保存に失敗しました";button.disabled=false;return}
+   localStorage.setItem("friendCoinSlotDate",today);button.disabled=false;
   }
-  setStatus("ゲームをするを押してカードを選ぼう！");
-  cards.forEach(c=>c.disabled=true);
-  chooseButton.disabled=false;
-  chooseButton.textContent="🪙 100コインでゲームをする";
+ },100);
 }
 
-async function loadAdminButton(){
-  const button=document.getElementById("adminButton");
-  if(!button)return;
-  try{
-    const {data,error}=await db.rpc("is_friendchat_admin");
-    if(!error && data===true){
-      button.hidden=false;
-      button.onclick=()=>location.href="admin_card.html";
-    }
-  }catch(e){
-    console.warn("admin check:",e);
-  }
+function getFrameClass(itemKey){
+ const map={sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",space:"frame-space",neon:"frame-neon",rainbow:"frame-rainbow",flame:"frame-flame",sea:"frame-sea",heart:"frame-heart"};
+ return map[itemKey]||"";
 }
 
-function renderCardFront(card,prize){
-  const front=card.querySelector(".front-face");
-  front.innerHTML=
-    '<div class="front-icon">'+prize.icon+'</div>'+
-    '<div class="front-rank">'+prize.name+'</div>'+
-    '<div class="front-reward">+'+Number(prize.reward).toLocaleString("ja-JP")+' COIN</div>';
+async function loadShop(){
+ const {data:items,error:itemError}=await supabaseClient.from("coin_items").select("item_key,name,icon,price,frame_color,item_type,style_data,sale_end_at").order("price",{ascending:true});
+ if(itemError){
+  console.error(itemError);
+  ["frameShop","nameDecorationShop","backgroundShop","chatFrameShop"].forEach(id=>document.getElementById(id).innerHTML="❌ ショップを読み込めませんでした");
+  return;
+ }
+
+ // 管理者限定アイテムはショップに表示しない
+ shopItems=(items||[]).filter(item=>!ADMIN_ITEM_KEYS.has(item.item_key) && (!item.sale_end_at || new Date(item.sale_end_at).getTime()>Date.now()));
+
+ const {data:owned,error:ownedError}=await supabaseClient.from("user_coin_items").select("item_key").eq("user_id",currentUsername);
+ ownedItems=ownedError?new Set() : new Set((owned||[]).map(x=>x.item_key));
+ renderAllShops();
 }
 
-function selectCard(index){
-  if(drawing||!selecting)return;
-  cards.forEach((c,i)=>c.style.transform=i===index?"translateY(-5px)":"");
-  selectedCard=index;
-  chooseButton.disabled=false;
-  chooseButton.textContent="✨ ゲームをする";
+function renderAllShops(){
+ renderShopType("frame","frameShop","現在交換できるフレームはありません。","🖼️");
+ renderShopType("name_decoration","nameDecorationShop","現在交換できる名前装飾はありません。","✨");
+ renderShopType("background","backgroundShop","現在交換できる背景はありません。","🎨");
+ renderChatFrameShop();
 }
 
-async function draw(){
-  if(drawing||selectedCard<0)return;
-  drawing=true;
-  chooseButton.disabled=true;
-  cards.forEach(c=>c.disabled=true);
-  setStatus("カードをめくっています…");
 
-  const {data,error}=await db.rpc("draw_card_prize");
-
-  if(error){
-    const msg=String(error.message||"");
-      setStatus(msg||"抽選に失敗しました");
-    drawing=false;
-    await loadBalance();
-    return;
-  }
-
-  lastResult=data;
-  const prize=prizes.find(p=>p.rank===Number(data.rank))||{
-    rank:data.rank,name:data.name,icon:data.icon,reward:data.reward_coins
-  };
-
-  cards.forEach((card,i)=>{
-    renderCardFront(card,prize);
-    card.style.transform="";
-    if(i!==selectedCard){
-      card.style.opacity=".55";
-    }
-  });
-
-  await new Promise(r=>setTimeout(r,180));
-  cards[selectedCard].classList.add("open");
-
-  await new Promise(r=>setTimeout(r,760));
-
-  document.getElementById("resultIcon").textContent=prize.icon;
-  document.getElementById("resultTitle").textContent=prize.name+"！";
-  document.getElementById("resultReward").textContent="+"+Number(prize.reward).toLocaleString("ja-JP")+" COIN";
-  document.getElementById("resultBalance").textContent="現在のコイン："+Number(data.balance||0).toLocaleString("ja-JP")+" COIN";
-  resultEl.classList.add("show");
-  doneBox.hidden=false;
-  setStatus("🎉 景品を獲得したよ！もう一度遊ぶなら「ゲームをする」を押してね！");
-  await loadBalance();
-
-  await new Promise(r=>setTimeout(r,350));
-  cards.forEach(card=>{
-    card.classList.remove("open");
-    card.style.opacity="";
-    card.style.transform="";
-    card.disabled=false;
-  });
-  selectedCard=-1;
-  selecting=false;
-  chooseButton.disabled=false;
-  chooseButton.textContent="🪙 100コインでゲームをする";
-  drawing=false;
+function getChatFrameClass(itemKey){
+ const map={
+  chat_sakura:"chat-frame-sakura",
+  chat_star:"chat-frame-star",
+  chat_diamond:"chat-frame-diamond",
+  chat_heart:"chat-frame-heart",
+  chat_rainbow:"chat-frame-rainbow",
+  chat_flame:"chat-frame-flame",
+  chat_sea:"chat-frame-sea",
+  chat_space:"chat-frame-space",
+  chat_neon:"chat-frame-neon"
+ };
+ return map[itemKey]||"";
 }
 
-cards.forEach((card,index)=>{
-  card.addEventListener("click",()=>selectCard(index));
-});
-chooseButton.addEventListener("click",async()=>{
-  if(drawing)return;
-  if(!selecting){
-    chooseButton.disabled=true;
-    setStatus("🪙 100コインを使ってゲームを開始しています…");
+function itemStyleString(item){
+ const style=(item&&item.style_data&&typeof item.style_data==="object")?item.style_data:{};
+ const parts=[];
+ for(const [prop,value] of Object.entries(style)){
+  if(value==null||value==="")continue;
+  const cssProp=String(prop).replace(/[A-Z]/g,m=>"-"+m.toLowerCase());
+  parts.push(`${cssProp}:${String(value)} !important`);
+ }
+ return parts.join(";");
+}
 
-    const {data,error}=await db.rpc("start_card_game");
-    if(error){
-      const msg=String(error.message||"");
-      setStatus(msg.includes("コインが足りません")?"コインが足りません":"ゲームを開始できませんでした");
-      chooseButton.disabled=false;
-      await loadBalance();
-      return;
-    }
+function renderChatFrameShop(){
+ const shop=document.getElementById("chatFrameShop");
+ if(!shop)return;
+ const items=shopItems.filter(item=>item.item_type==="chat_frame");
+ if(!items.length){
+  shop.innerHTML="現在交換できるチャットフレームはありません。";
+  return;
+ }
+ shop.innerHTML=items.map(item=>{
+  const owned=ownedItems.has(item.item_key);
+  const frameClass=getChatFrameClass(item.item_key);
+  const styleText=itemStyleString(item);
+  const inlineStyle=styleText?`style="${escapeAttribute(styleText)}"`:frameClass?"":`style="background:${escapeAttribute(item.frame_color||"#ffd0e7")}"`;
+  return `<div class="shop-item">
+   <div class="chat-frame-preview ${frameClass}" ${inlineStyle}>
+    <div class="chat-frame-preview-inner">${escapeHtml(item.icon||"💬")}</div>
+   </div>
+   <div class="shop-info">
+    <div class="shop-name">${escapeHtml(item.name)}</div>
+    <div class="shop-price">🪙 ${Number(item.price).toLocaleString()} COIN</div>
+   </div>
+   ${owned?`<button class="buy-button owned" disabled>交換済み</button>`:`<button class="buy-button" data-buy-chat-frame="${escapeAttribute(item.item_key)}">交換</button>`}
+  </div>`;
+ }).join("");
+ shop.querySelectorAll("[data-buy-chat-frame]").forEach(button=>{
+  button.addEventListener("click",()=>buyItem(button.dataset.buyChatFrame));
+ });
+}
 
-    await loadBalance();
-    selecting=true;
-    selectedCard=-1;
-    cards.forEach(c=>{c.disabled=false;c.style.transform="";c.classList.remove("open");c.style.opacity=""});
-    chooseButton.textContent="🃏 カードを選んでね";
-    chooseButton.disabled=true;
-    setStatus("100コイン使ったよ！好きなカードを1枚選んでね！");
-    return;
-  }
-  if(selectedCard>=0)await draw();
-});
+function renderShopType(type,elementId,emptyText,defaultIcon){
+ const shop=document.getElementById(elementId);
+ const items=shopItems.filter(item=>(item.item_type||"frame")===type);
+ if(!items.length){shop.innerHTML=emptyText;return}
+ shop.innerHTML=items.map(item=>{
+  const owned=ownedItems.has(item.item_key),frameClass=type==="frame"?getFrameClass(item.item_key):"";
+  const styleText=itemStyleString(item);
+  const inlineStyle=styleText?`style="${escapeAttribute(styleText)}"`:frameClass?"":`style="background:${escapeAttribute(item.frame_color||"#ffd0e7")}"`;
+  return `<div class="shop-item">
+   <div class="shop-preview ${frameClass}" ${inlineStyle}>
+    <div class="shop-preview-inner">${escapeHtml(item.icon||defaultIcon)}</div>
+   </div>
+   <div class="shop-info"><div class="shop-name">${escapeHtml(item.name)}</div><div class="shop-price">🪙 ${Number(item.price).toLocaleString()} COIN</div></div>
+   ${owned?`<button class="buy-button owned" disabled>交換済み</button>`:`<button class="buy-button" data-buy-item="${escapeAttribute(item.item_key)}">交換</button>`}
+  </div>`;
+ }).join("");
+ shop.querySelectorAll("[data-buy-item]").forEach(button=>button.addEventListener("click",()=>buyItem(button.dataset.buyItem)));
+}
 
-(async()=>{
-  await loadBalance();
-  await loadStatus();
-  await loadAdminButton();
-})();
+function escapeHtml(value){return String(value??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
+function escapeAttribute(value){return String(value??"").replaceAll("&","&amp;").replaceAll('"',"&quot;").replaceAll("<","&lt;").replaceAll(">","&gt;")}
+
+async function buyItem(itemKey){
+ const item=shopItems.find(x=>x.item_key===itemKey);
+
+ // 管理者限定アイテムはショップから交換できない
+ if(ADMIN_ITEM_KEYS.has(itemKey)){
+  showMessage("❌ このアイテムはショップでは交換できません");
+  return;
+ }
+
+ if(!item){showMessage("❌ アイテムが見つかりません");return}
+ if(item.sale_end_at && new Date(item.sale_end_at).getTime()<=Date.now()){showMessage("🎃 この限定アイテムの販売期間は終了しました");loadShop();return}
+ if(ownedItems.has(itemKey)){showMessage("このアイテムはすでに交換済みだよ！");return}
+ const price=Number(item.price);
+ if(balance<price){showMessage("🪙 コインが足りません！");return}
+ if(!confirm(`${item.icon||"🎁"} ${item.name}を\n${price.toLocaleString()} COINで交換しますか？`))return;
+ renderShopButtonsDisabled();
+ const oldBalance=balance,newBalance=balance-price;
+ const {error:coinError}=await supabaseClient.from("user_coins").update({coins:newBalance,updated_at:new Date().toISOString()}).eq("user_id",currentUsername);
+ if(coinError){renderAllShops();showMessage("❌ コインの更新に失敗しました");return}
+ const {error:itemError}=await supabaseClient.from("user_coin_items").insert({user_id:currentUsername,item_key:itemKey});
+ if(itemError){
+  await supabaseClient.from("user_coins").update({coins:oldBalance,updated_at:new Date().toISOString()}).eq("user_id",currentUsername);
+  renderAllShops();showMessage("❌ 交換に失敗しました。コインは戻しました。");return
+ }
+ balance=newBalance;ownedItems.add(itemKey);updateBalance();renderAllShops();showMessage(`🎉 ${item.icon||"🎁"} ${item.name}を交換しました！`);
+}
+
+function renderShopButtonsDisabled(){document.querySelectorAll(".buy-button:not(.owned)").forEach(button=>button.disabled=true)}
+
+function scrollToShop(){
+ const card=document.getElementById("shopCard");
+ const details=document.getElementById("frameShopDetails");
+ if(details)details.open=true;
+ if(card)setTimeout(()=>card.scrollIntoView({behavior:"smooth",block:"start"}),50);
+}
+
+function showComingSoon(){showMessage("🚧 この機能はこれから追加するよ！")}
+
+async function start(){
+ if(typeof checkFriendChatBan==="function"&&await checkFriendChatBan())return;
+ if(!await loadCoins())return;
+ await loadShop();
+ await loadDailyMissions();
+}
+start();
 </script>
 </body>
 </html>
