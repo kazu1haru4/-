@@ -26,8 +26,8 @@ body{padding:18px 12px 32px}
 .prize-reward{font-weight:900}
 .note{font-size:12px;color:#737a86;margin-top:10px;line-height:1.5}
 .status{min-height:24px;margin:15px 2px 4px;text-align:center;font-weight:800;color:#555d6b}
-.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
-.card{position:relative;aspect-ratio:0.72;min-height:220px;border:0;padding:0;background:none;perspective:900px;cursor:pointer}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px;width:100%;}
+.card{position:relative;aspect-ratio:0.72;min-height:0;width:100%;border:0;padding:0;background:none;perspective:900px;cursor:pointer}
 .card:disabled{cursor:default}
 .card-inner{position:relative;width:100%;height:100%;transition:transform .72s cubic-bezier(.2,.75,.2,1);transform-style:preserve-3d}
 .card.open .card-inner{transform:rotateY(180deg)}
@@ -55,9 +55,9 @@ body{padding:18px 12px 32px}
  .balance{font-size:13px;padding:8px 9px}
  .hero{padding:17px 14px}
  .hero h1{font-size:21px}
- .cards{gap:8px}
- .face{border-radius:16px}
- .card{min-height:190px}
+ .cards{gap:6px}
+ .face{border-radius:14px}
+ .card{min-width:0}
  .back-symbol{width:56px;height:56px;font-size:28px}
  .front-icon{font-size:38px}
  .front-rank{font-size:16px}
@@ -78,7 +78,7 @@ body{padding:18px 12px 32px}
 
   <section class="hero">
     <h1>カードを1枚めくって、<br>出た絵柄で景品をゲット！</h1>
-    <p>3枚のカードから好きな1枚を選ぼう。<br>このゲームは1日に何回でも無料で遊べるよ！</p>
+    <p>3枚のカードから好きな1枚を選ぼう。<br>1回100コインで遊べるよ！</p>
 
     <div class="prize-card">
       <h2>🎁 景品一覧</h2>
@@ -117,7 +117,7 @@ body{padding:18px 12px 32px}
       </button>
     </div>
 
-    <button id="chooseButton" class="choose" type="button">🎮 ゲームをする</button>
+    <button id="chooseButton" class="choose" type="button">🪙 100コインでゲームをする</button>
 
     <div id="result" class="result">
       <div id="resultIcon" class="result-icon">🎉</div>
@@ -183,7 +183,7 @@ async function loadStatus(){
   setStatus("ゲームをするを押してカードを選ぼう！");
   cards.forEach(c=>c.disabled=true);
   chooseButton.disabled=false;
-  chooseButton.textContent="🎮 ゲームをする";
+  chooseButton.textContent="🪙 100コインでゲームをする";
 }
 
 async function loadAdminButton(){
@@ -270,7 +270,7 @@ async function draw(){
   selectedCard=-1;
   selecting=false;
   chooseButton.disabled=false;
-  chooseButton.textContent="🎮 ゲームをする";
+  chooseButton.textContent="🪙 100コインでゲームをする";
   drawing=false;
 }
 
@@ -280,12 +280,25 @@ cards.forEach((card,index)=>{
 chooseButton.addEventListener("click",async()=>{
   if(drawing)return;
   if(!selecting){
+    chooseButton.disabled=true;
+    setStatus("🪙 100コインを使ってゲームを開始しています…");
+
+    const {data,error}=await db.rpc("start_card_game");
+    if(error){
+      const msg=String(error.message||"");
+      setStatus(msg.includes("コインが足りません")?"コインが足りません":"ゲームを開始できませんでした");
+      chooseButton.disabled=false;
+      await loadBalance();
+      return;
+    }
+
+    await loadBalance();
     selecting=true;
     selectedCard=-1;
     cards.forEach(c=>{c.disabled=false;c.style.transform="";c.classList.remove("open");c.style.opacity=""});
     chooseButton.textContent="🃏 カードを選んでね";
     chooseButton.disabled=true;
-    setStatus("好きなカードを1枚選んでね！");
+    setStatus("100コイン使ったよ！好きなカードを1枚選んでね！");
     return;
   }
   if(selectedCard>=0)await draw();
