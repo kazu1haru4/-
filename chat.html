@@ -357,10 +357,14 @@ async function loadReadStatuses(messages){
  if(!error)(data||[]).forEach(x=>readMessageIds.add(x.message_id));
 }
 async function prepareImageUrls(messages){
- // 画像はタップされるまでSigned URLを取得しない。動画・音声だけ従来どおり先に取得する。
- const list=messages.filter(m=>!m.is_deleted&&m.image_url&&mediaKind(m.image_url)!=="image");
+ // 画像も含めてSigned URLを用意する。画像本体はmakeMediaMessageのタップ操作まで読み込まない。
+ const list=messages.filter(m=>!m.is_deleted&&m.image_url);
  if(!list.length)return new Map();
- const out=await Promise.all(list.map(async m=>{const {data,error}=await db.storage.from("chat-images").createSignedUrl(mediaPath(m.image_url),3600);return[m.id,error?"":data?.signedUrl||""]}));return new Map(out);
+ const out=await Promise.all(list.map(async m=>{
+  const {data,error}=await db.storage.from("chat-images").createSignedUrl(mediaPath(m.image_url),3600);
+  return[m.id,error?"":data?.signedUrl||""];
+ }));
+ return new Map(out);
 }
 async function loadChatImageInto(container,message){
  if(!container||container.dataset.loading==="1"||container.dataset.loaded==="1")return;
