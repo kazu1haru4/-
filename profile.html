@@ -361,7 +361,7 @@ function getFrameClass(key){
   sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",
   heart:"frame-heart",rainbow:"frame-rainbow",flame:"frame-flame",
   sea:"frame-sea",neon:"frame-neon",space:"frame-space",admin:"admin-frame"
- }[key]||"";
+ }[key]||((/^[A-Za-z0-9_-]+$/.test(String(key||"")))?`frame-${key}`:"");
 }
 
 function getNameClass(key){
@@ -371,7 +371,7 @@ function getNameClass(key){
   nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",
   nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",
   nd_neon:"name-decoration-neon",admin_name:"name-decoration-admin"
- }[key]||"";
+ }[key]||((/^[A-Za-z0-9_-]+$/.test(String(key||"")))?`name-decoration-${key}`:"");
 }
 
 function getBackgroundClass(key){
@@ -381,7 +381,7 @@ function getBackgroundClass(key){
   bg_rainbow:"background-rainbow",bg_flame:"background-flame",
   bg_sea:"background-sea",bg_space:"background-space",
   bg_neon:"background-neon",admin_bg:"background-admin"
- }[key]||"";
+ }[key]||((/^[A-Za-z0-9_-]+$/.test(String(key||"")))?`background-${key}`:"");
 }
 
 function getChatFrameClass(key){
@@ -391,7 +391,7 @@ function getChatFrameClass(key){
   chat_rainbow:"chat-frame-rainbow",chat_flame:"chat-frame-flame",
   chat_sea:"chat-frame-sea",chat_space:"chat-frame-space",
   chat_neon:"chat-frame-neon",admin_chat:"chat-frame-admin"
- }[key]||"";
+ }[key]||((/^[A-Za-z0-9_-]+$/.test(String(key||"")))?`chat-frame-${key}`:"");
 }
 
 function renderItems(){
@@ -604,11 +604,16 @@ function updatePreview(){
  const container=document.getElementById("profileContainer");
  container.className="container";
 
+ const bgItem=getItem(bgKey);
  const bgClass=getBackgroundClass(bgKey);
 
  if(bgClass){
   document.body.classList.add(bgClass);
   container.classList.add(bgClass);
+ }
+ if(bgItem){
+  applyItemStyle(document.body,bgItem);
+  applyItemStyle(container,bgItem);
  }
 }
 
