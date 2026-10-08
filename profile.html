@@ -312,7 +312,7 @@ function displayAvatar(url){
 async function loadItems(){
  const {data,error}=await supabaseClient
   .from("user_coin_items")
-  .select("item_key,coin_items(item_key,name,icon,frame_color,item_type)")
+  .select("item_key,coin_items(item_key,name,icon,frame_color,item_type,style_data)")
   .eq("user_id",currentUsername);
 
  if(error){
@@ -344,6 +344,16 @@ function normalizeItemType(item){
  if(key.startsWith("nd_")||key==="admin_name")return "name_decoration";
  if(key.startsWith("bg_")||key==="admin_bg")return "background";
  return "frame";
+}
+
+function applyItemStyle(el,item){
+ if(!el||!item)return;
+ const style=(item.style_data&&typeof item.style_data==="object")?item.style_data:{};
+ for(const [prop,value] of Object.entries(style)){
+  if(value===null||value===undefined||value==="")continue;
+  const cssProp=String(prop).replace(/[A-Z]/g,m=>"-"+m.toLowerCase());
+  try{el.style.setProperty(cssProp,String(value),"important")}catch(e){console.warn("アイテムスタイル適用失敗:",cssProp,e)}
+ }
 }
 
 function getFrameClass(key){
@@ -418,19 +428,19 @@ function renderItems(){
   if(type==="frame"){
    const cls=getFrameClass(key);
    typeLabel="フレーム";
-   preview=`<div class="item-preview ${cls}" style="${cls?"":`border:4px solid ${escapeHtml(item.frame_color||"#ffd9ec")};`}">${escapeHtml(item.icon||"🎁")}</div>`;
+   preview=`<div class="item-preview ${cls}" data-item-key="${escapeHtml(key)}" style="${cls?"":`border:4px solid ${escapeHtml(item.frame_color||"#ffd9ec")};`}">${escapeHtml(item.icon||"🎁")}</div>`;
   }else if(type==="name_decoration"){
    const cls=getNameClass(key);
    typeLabel="名前装飾";
-   preview=`<div class="item-preview name-item-preview ${cls}">名前${key==="admin_name"?" 👑":""}</div>`;
+   preview=`<div class="item-preview name-item-preview ${cls}" data-item-key="${escapeHtml(key)}">名前${key==="admin_name"?" 👑":""}</div>`;
   }else if(type==="background"){
    const cls=getBackgroundClass(key);
    typeLabel="プロフィール背景";
-   preview=`<div class="item-preview background-item-preview ${cls}">${escapeHtml(item.icon||"🎨")}</div>`;
+   preview=`<div class="item-preview background-item-preview ${cls}" data-item-key="${escapeHtml(key)}">${escapeHtml(item.icon||"🎨")}</div>`;
   }else{
    const cls=getChatFrameClass(key);
    typeLabel="チャットフレーム";
-   preview=`<div class="chat-frame-item-preview ${cls}"><div class="chat-frame-item-preview-inner">${escapeHtml(item.icon||"💬")}</div></div>`;
+   preview=`<div class="chat-frame-item-preview ${cls}" data-item-key="${escapeHtml(key)}"><div class="chat-frame-item-preview-inner">${escapeHtml(item.icon||"💬")}</div></div>`;
   }
 
   card.innerHTML=`
