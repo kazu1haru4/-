@@ -53,17 +53,17 @@ h1{text-align:center;margin:0 0 20px;font-size:27px;color:#7158cf}
 .background-neon{background:linear-gradient(135deg,#c8ffe7,#b9ffff,#ffd0f8,#d9c8ff)!important}
 .background-admin{background:radial-gradient(circle at 20% 20%,rgba(255,255,255,.8) 0 5px,transparent 6px),linear-gradient(135deg,#fff9cf,#ffd700,#fff2a1,#fffbe1)!important}
 .items-section{margin-bottom:25px}
-.items{display:flex;gap:10px;flex-wrap:wrap}
-.item-card{width:calc(50% - 5px);min-height:125px;border-radius:16px;background:white;border:2px solid #eee;padding:9px;text-align:center}
+.items{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.item-card{width:auto;min-height:0;border-radius:13px;background:white;border:2px solid #eee;padding:7px 5px;text-align:center}
 .item-card.admin-item{border-color:#ffd700;background:linear-gradient(135deg,#fffdf0,#fff8cf);box-shadow:0 3px 12px rgba(255,215,0,.2)}
 .item-icon{position:relative;width:54px;height:54px;margin:0 auto 6px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:29px;background:#fff}
-.item-name{font-size:11px;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.equip-button{width:100%;border:none;border-radius:9px;padding:6px 3px;background:#7658d9;color:white;font-size:11px;font-weight:bold;cursor:pointer}.equip-button.equipped{background:#bbb}
-.unequip-button{width:100%;border:1px solid #ddd;border-radius:9px;padding:6px 3px;background:#fff;color:#777;font-size:11px;font-weight:bold;cursor:pointer;margin-top:5px}.unequip-button:hover{background:#f7f7f7}
-.item-preview{position:relative;width:54px;height:54px;margin:0 auto 6px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:#fff;overflow:hidden}
-.name-item-preview{font-size:17px;font-weight:900;white-space:nowrap}
-.background-item-preview{font-size:25px;width:54px;height:54px;border-radius:14px;border:2px solid #eee}
-.item-type-label{font-size:9px;color:#888;margin:-2px 0 5px}
+.item-name{font-size:10px;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.equip-button{width:100%;border:none;border-radius:8px;padding:5px 2px;background:#7658d9;color:white;font-size:10px;font-weight:bold;cursor:pointer}.equip-button.equipped{background:#bbb}
+.unequip-button{width:100%;border:1px solid #ddd;border-radius:8px;padding:5px 2px;background:#fff;color:#777;font-size:10px;font-weight:bold;cursor:pointer;margin-top:4px}.unequip-button:hover{background:#f7f7f7}
+.item-preview{position:relative;width:46px;height:46px;margin:0 auto 5px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#fff;overflow:hidden}
+.name-item-preview{font-size:14px;font-weight:900;white-space:nowrap}
+.background-item-preview{font-size:21px;width:46px;height:46px;border-radius:12px;border:2px solid #eee}
+.item-type-label{font-size:8px;color:#888;margin:-1px 0 4px}
 .no-items{color:#999;text-align:center;font-size:13px;padding:10px 0;width:100%}
 .image-button{display:block;width:100%;padding:14px;border:none;border-radius:15px;background:#f0eaff;color:#7158cf;font-size:16px;font-weight:bold;cursor:pointer;text-align:center;margin-bottom:24px}
 #imageInput{display:none}
@@ -85,16 +85,16 @@ textarea{min-height:120px;resize:vertical}
 .status-save{width:100%;border:none;border-radius:13px;padding:12px;background:#7658d9;color:white;font-size:14px;font-weight:bold;cursor:pointer;margin-top:12px}
 .status-save:disabled{opacity:.65;cursor:wait}
 .status-current{font-size:12px;color:#777;line-height:1.6;margin-top:10px;white-space:pre-line}
-.item-details{margin-bottom:12px;border-radius:18px;overflow:hidden;background:#faf9ff}
+.item-details{margin-bottom:9px;border-radius:15px;overflow:hidden;background:#faf9ff}
 .item-summary{list-style:none;cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border:2px solid #e8e3ff;border-radius:18px;background:linear-gradient(135deg,#f8f5ff,#fff4fb);font-size:16px;font-weight:bold}
 .item-summary::-webkit-details-marker{display:none}
 .item-details[open] .item-arrow{transform:rotate(180deg)}
 .item-arrow{font-size:17px;transition:transform .2s ease}
-.item-content{padding:12px 10px 10px}
+.item-content{padding:9px 8px 8px}
 
 /* ===== チャットフレーム ===== */
-.chat-frame-item-preview{width:54px;height:54px;margin:0 auto 6px;border-radius:14px;padding:4px;display:flex;align-items:center;justify-content:center;background:#fff}
-.chat-frame-item-preview-inner{width:100%;height:100%;border-radius:10px;background:white;display:flex;align-items:center;justify-content:center;font-size:25px}
+.chat-frame-item-preview{width:46px;height:46px;margin:0 auto 5px;border-radius:12px;padding:3px;display:flex;align-items:center;justify-content:center;background:#fff}
+.chat-frame-item-preview-inner{width:100%;height:100%;border-radius:9px;background:white;display:flex;align-items:center;justify-content:center;font-size:21px}
 .chat-frame-sakura{border:2px solid #ff8fbd!important;box-shadow:0 0 10px rgba(255,105,170,.35)!important}
 .chat-frame-star{border:2px solid #f4bf3f!important;box-shadow:0 0 10px rgba(244,191,63,.4)!important}
 .chat-frame-diamond{border:2px solid #4db9ee!important;box-shadow:0 0 12px rgba(77,185,238,.45)!important}
@@ -351,7 +351,7 @@ function getFrameClass(key){
   sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",
   heart:"frame-heart",rainbow:"frame-rainbow",flame:"frame-flame",
   sea:"frame-sea",neon:"frame-neon",space:"frame-space",admin:"admin-frame"
- }[key]||((key&&/^[A-Za-z0-9_-]+$/.test(key))?"frame-"+key:"");
+ }[key]||"";
 }
 
 function getNameClass(key){
@@ -361,7 +361,7 @@ function getNameClass(key){
   nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",
   nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",
   nd_neon:"name-decoration-neon",admin_name:"name-decoration-admin"
- }[key]||((key&&/^[A-Za-z0-9_-]+$/.test(key))?"name-decoration-"+key:"");
+ }[key]||"";
 }
 
 function getBackgroundClass(key){
@@ -371,7 +371,7 @@ function getBackgroundClass(key){
   bg_rainbow:"background-rainbow",bg_flame:"background-flame",
   bg_sea:"background-sea",bg_space:"background-space",
   bg_neon:"background-neon",admin_bg:"background-admin"
- }[key]||((key&&/^[A-Za-z0-9_-]+$/.test(key))?"background-"+key:"");
+ }[key]||"";
 }
 
 function getChatFrameClass(key){
@@ -381,7 +381,7 @@ function getChatFrameClass(key){
   chat_rainbow:"chat-frame-rainbow",chat_flame:"chat-frame-flame",
   chat_sea:"chat-frame-sea",chat_space:"chat-frame-space",
   chat_neon:"chat-frame-neon",admin_chat:"chat-frame-admin"
- }[key]||((key&&/^[A-Za-z0-9_-]+$/.test(key))?"chat-frame-"+key:"");
+ }[key]||"";
 }
 
 function renderItems(){
@@ -595,14 +595,10 @@ function updatePreview(){
  container.className="container";
 
  const bgClass=getBackgroundClass(bgKey);
- const bgItem=getItem(bgKey);
 
  if(bgClass){
   document.body.classList.add(bgClass);
   container.classList.add(bgClass);
- }else if(bgItem?.frame_color){
-  document.body.style.background=bgItem.frame_color;
-  container.style.background=bgItem.frame_color;
  }
 }
 
@@ -870,48 +866,5 @@ async function init(){
 
 init();
 </script>
-
-<script>
-/* Friend Chat: 装飾スタイルをSupabaseのcoin_itemsから読み込む */
-(async()=>{
-  try{
-    const client=supabaseClient;
-    if(!client)return;
-    const {data,error}=await client.from("coin_items").select("item_key,item_type,frame_color,style_data");
-    if(error){console.warn("coin_items style load:",error);return;}
-    const safeKey=k=>String(k||"").replace(/[^a-zA-Z0-9_-]/g,"");
-    const styleMap={frame:k=>k==="admin"?"admin-frame":"frame-"+k,name_decoration:k=>k==="admin_name"?"name-decoration-admin":"name-decoration-"+k,background:k=>k==="admin_bg"?"background-admin":"background-"+k,chat_frame:k=>k==="admin_chat"?"chat-frame-admin":"chat-frame-"+k};
-    const rules=[];
-    for(const item of (data||[])){
-      const key=safeKey(item.item_key);
-      const type=String(item.item_type||"");
-      const fn=styleMap[type];
-      if(!key||!fn)continue;
-      const cls=safeKey(fn(key));
-      const style=(item.style_data&&typeof item.style_data==="object")?item.style_data:{};
-      const declarations=[];
-      for(const [prop,value] of Object.entries(style)){
-        if(value==null||value==="")continue;
-        const cssProp=String(prop).replace(/[A-Z]/g,m=>"-"+m.toLowerCase());
-        declarations.push(`${cssProp}:${String(value)} !important`);
-      }
-      if(!declarations.length && item.frame_color){
-        if(type==="frame")declarations.push(`background:${item.frame_color} !important`);
-        else if(type==="name_decoration")declarations.push(`color:${item.frame_color} !important`);
-        else if(type==="background")declarations.push(`background:${item.frame_color} !important`);
-        else if(type==="chat_frame")declarations.push(`border-color:${item.frame_color} !important`);
-      }
-      if(declarations.length)rules.push(`.${cls}{${declarations.join(";")}}`);
-    }
-    if(rules.length){
-      const style=document.createElement("style");
-      style.id="fc-supabase-item-styles";
-      style.textContent=rules.join("\n");
-      document.head.appendChild(style);
-    }
-  }catch(e){console.warn("Supabase item style init:",e)}
-})();
-</script>
-
 </body>
 </html>
