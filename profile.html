@@ -351,7 +351,7 @@ function getFrameClass(key){
   sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",
   heart:"frame-heart",rainbow:"frame-rainbow",flame:"frame-flame",
   sea:"frame-sea",neon:"frame-neon",space:"frame-space",admin:"admin-frame"
- }[key]||"";
+ }[key]||((key&&/^[A-Za-z0-9_-]+$/.test(key))?"frame-"+key:"");
 }
 
 function getNameClass(key){
@@ -361,7 +361,7 @@ function getNameClass(key){
   nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",
   nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",
   nd_neon:"name-decoration-neon",admin_name:"name-decoration-admin"
- }[key]||"";
+ }[key]||((key&&/^[A-Za-z0-9_-]+$/.test(key))?"name-decoration-"+key:"");
 }
 
 function getBackgroundClass(key){
@@ -371,7 +371,7 @@ function getBackgroundClass(key){
   bg_rainbow:"background-rainbow",bg_flame:"background-flame",
   bg_sea:"background-sea",bg_space:"background-space",
   bg_neon:"background-neon",admin_bg:"background-admin"
- }[key]||"";
+ }[key]||((key&&/^[A-Za-z0-9_-]+$/.test(key))?"background-"+key:"");
 }
 
 function getChatFrameClass(key){
@@ -381,7 +381,7 @@ function getChatFrameClass(key){
   chat_rainbow:"chat-frame-rainbow",chat_flame:"chat-frame-flame",
   chat_sea:"chat-frame-sea",chat_space:"chat-frame-space",
   chat_neon:"chat-frame-neon",admin_chat:"chat-frame-admin"
- }[key]||"";
+ }[key]||((key&&/^[A-Za-z0-9_-]+$/.test(key))?"chat-frame-"+key:"");
 }
 
 function renderItems(){
@@ -595,10 +595,14 @@ function updatePreview(){
  container.className="container";
 
  const bgClass=getBackgroundClass(bgKey);
+ const bgItem=getItem(bgKey);
 
  if(bgClass){
   document.body.classList.add(bgClass);
   container.classList.add(bgClass);
+ }else if(bgItem?.frame_color){
+  document.body.style.background=bgItem.frame_color;
+  container.style.background=bgItem.frame_color;
  }
 }
 
@@ -866,5 +870,48 @@ async function init(){
 
 init();
 </script>
+
+<script>
+/* Friend Chat: 装飾スタイルをSupabaseのcoin_itemsから読み込む */
+(async()=>{
+  try{
+    const client=supabaseClient;
+    if(!client)return;
+    const {data,error}=await client.from("coin_items").select("item_key,item_type,frame_color,style_data");
+    if(error){console.warn("coin_items style load:",error);return;}
+    const safeKey=k=>String(k||"").replace(/[^a-zA-Z0-9_-]/g,"");
+    const styleMap={frame:k=>k==="admin"?"admin-frame":"frame-"+k,name_decoration:k=>k==="admin_name"?"name-decoration-admin":"name-decoration-"+k,background:k=>k==="admin_bg"?"background-admin":"background-"+k,chat_frame:k=>k==="admin_chat"?"chat-frame-admin":"chat-frame-"+k};
+    const rules=[];
+    for(const item of (data||[])){
+      const key=safeKey(item.item_key);
+      const type=String(item.item_type||"");
+      const fn=styleMap[type];
+      if(!key||!fn)continue;
+      const cls=safeKey(fn(key));
+      const style=(item.style_data&&typeof item.style_data==="object")?item.style_data:{};
+      const declarations=[];
+      for(const [prop,value] of Object.entries(style)){
+        if(value==null||value==="")continue;
+        const cssProp=String(prop).replace(/[A-Z]/g,m=>"-"+m.toLowerCase());
+        declarations.push(`${cssProp}:${String(value)} !important`);
+      }
+      if(!declarations.length && item.frame_color){
+        if(type==="frame")declarations.push(`background:${item.frame_color} !important`);
+        else if(type==="name_decoration")declarations.push(`color:${item.frame_color} !important`);
+        else if(type==="background")declarations.push(`background:${item.frame_color} !important`);
+        else if(type==="chat_frame")declarations.push(`border-color:${item.frame_color} !important`);
+      }
+      if(declarations.length)rules.push(`.${cls}{${declarations.join(";")}}`);
+    }
+    if(rules.length){
+      const style=document.createElement("style");
+      style.id="fc-supabase-item-styles";
+      style.textContent=rules.join("\n");
+      document.head.appendChild(style);
+    }
+  }catch(e){console.warn("Supabase item style init:",e)}
+})();
+</script>
+
 </body>
 </html>
