@@ -284,7 +284,7 @@ function getFrameClass(itemKey){
 }
 
 async function loadShop(){
- const {data:items,error:itemError}=await supabaseClient.from("coin_items").select("item_key,name,icon,price,frame_color,item_type,sale_end_at").order("price",{ascending:true});
+ const {data:items,error:itemError}=await supabaseClient.from("coin_items").select("item_key,name,icon,price,frame_color,item_type,style_data,sale_end_at").order("price",{ascending:true});
  if(itemError){
   console.error(itemError);
   ["frameShop","nameDecorationShop","backgroundShop","chatFrameShop"].forEach(id=>document.getElementById(id).innerHTML="❌ ショップを読み込めませんでした");
@@ -322,6 +322,17 @@ function getChatFrameClass(itemKey){
  return map[itemKey]||"";
 }
 
+function itemStyleString(item){
+ const style=(item&&item.style_data&&typeof item.style_data==="object")?item.style_data:{};
+ const parts=[];
+ for(const [prop,value] of Object.entries(style)){
+  if(value==null||value==="")continue;
+  const cssProp=String(prop).replace(/[A-Z]/g,m=>"-"+m.toLowerCase());
+  parts.push(`${cssProp}:${String(value)} !important`);
+ }
+ return parts.join(";");
+}
+
 function renderChatFrameShop(){
  const shop=document.getElementById("chatFrameShop");
  if(!shop)return;
@@ -333,7 +344,8 @@ function renderChatFrameShop(){
  shop.innerHTML=items.map(item=>{
   const owned=ownedItems.has(item.item_key);
   const frameClass=getChatFrameClass(item.item_key);
-  const inlineStyle=frameClass?"":`style="background:${escapeAttribute(item.frame_color||"#ffd0e7")}"`;
+  const styleText=itemStyleString(item);
+  const inlineStyle=styleText?`style="${escapeAttribute(styleText)}"`:frameClass?"":`style="background:${escapeAttribute(item.frame_color||"#ffd0e7")}"`;
   return `<div class="shop-item">
    <div class="chat-frame-preview ${frameClass}" ${inlineStyle}>
     <div class="chat-frame-preview-inner">${escapeHtml(item.icon||"💬")}</div>
@@ -356,7 +368,8 @@ function renderShopType(type,elementId,emptyText,defaultIcon){
  if(!items.length){shop.innerHTML=emptyText;return}
  shop.innerHTML=items.map(item=>{
   const owned=ownedItems.has(item.item_key),frameClass=type==="frame"?getFrameClass(item.item_key):"";
-  const inlineStyle=frameClass?"":`style="background:${escapeAttribute(item.frame_color||"#ffd0e7")}"`;
+  const styleText=itemStyleString(item);
+  const inlineStyle=styleText?`style="${escapeAttribute(styleText)}"`:frameClass?"":`style="background:${escapeAttribute(item.frame_color||"#ffd0e7")}"`;
   return `<div class="shop-item">
    <div class="shop-preview ${frameClass}" ${inlineStyle}>
     <div class="shop-preview-inner">${escapeHtml(item.icon||defaultIcon)}</div>
