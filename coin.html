@@ -347,12 +347,13 @@ function renderChatFrameShop(){
  shop.innerHTML=items.map(item=>{
   const owned=ownedItems.has(item.item_key);
   const color=item.frame_color||"#ffd0e7";
-  const styleText=itemStyleString(item);
-  // チャットフレームは内側を白く保ち、外側に実際の色を見せる
-  const outerStyle=`background:${escapeAttribute(color)};box-shadow:0 0 0 2px ${escapeAttribute(color)},0 0 12px ${escapeAttribute(color)}`;
+  const frameStyle=(item&&item.style_data&&typeof item.style_data==="object")?item.style_data:{};
+  const gradient=frameStyle.background||`linear-gradient(135deg,${color},#ffffff,${color})`;
+  // チャットフレームも単色ではなくグラデーションと発光を見せる
+  const outerStyle=`background:${escapeAttribute(gradient)};box-shadow:0 0 0 2px ${escapeAttribute(color)},0 0 12px ${escapeAttribute(color)}`;
   return `<div class="shop-item">
    <div class="chat-frame-preview" style="${outerStyle}">
-    <div class="chat-frame-preview-inner" style="border:2px solid ${escapeAttribute(color)};box-shadow:inset 0 0 8px ${escapeAttribute(color)}">${escapeHtml(item.icon||"💬")}</div>
+    <div class="chat-frame-preview-inner" style="border:2px solid ${escapeAttribute(color)};box-shadow:inset 0 0 8px ${escapeAttribute(color)};background:${escapeAttribute(gradient)}">${escapeHtml(item.icon||"💬")}</div>
    </div>
    <div class="shop-info">
     <div class="shop-name">${escapeHtml(item.name)}</div>
@@ -374,12 +375,13 @@ function renderShopType(type,elementId,emptyText,defaultIcon){
   const style=(item&&item.style_data&&typeof item.style_data==="object")?item.style_data:{};
   let previewClass="shop-preview", previewContent=escapeHtml(item.icon||defaultIcon), previewStyle="";
   if(type==="name_decoration"){
-   // アイコンではなく実際の文字色・発光をサンプル表示
+   // フレームと同じ多色グラデーションを文字にも表示する
    const textColor=style.color||color;
    const shadow=style.textShadow||`0 0 8px ${textColor},0 0 16px ${textColor}`;
+   const gradient=style.background||`linear-gradient(135deg,${textColor},#ffffff,${textColor})`;
    previewClass+=" name-decoration-preview";
-   previewStyle=`background:linear-gradient(135deg,#fff,#f8f5ff);border:2px solid ${escapeAttribute(textColor)}`;
-   previewContent=`<span style="color:${escapeAttribute(textColor)};text-shadow:${escapeAttribute(shadow)};font-weight:900">Aa</span>`;
+   previewStyle=`background:${escapeAttribute(gradient)};border:2px solid ${escapeAttribute(textColor)};box-shadow:0 0 12px ${escapeAttribute(textColor)}`;
+   previewContent=`<span style="background:${escapeAttribute(gradient)};-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:${escapeAttribute(shadow)};font-weight:900">Aa</span>`;
   }else if(type==="background"){
    // 背景は内側の白い円をなくし、背景そのものを見せる
    previewClass+=" background-preview";
