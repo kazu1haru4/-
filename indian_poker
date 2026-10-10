@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>インディアンポーカー | フレンドチャット</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Yu Gothic",sans-serif;background:linear-gradient(145deg,#f4f0ff,#fff5fb);color:#25243a;min-height:100vh;padding:16px}.wrap{width:min(100%,620px);margin:auto}.top{display:flex;align-items:center;gap:10px;margin-bottom:14px}.back,.small{border:0;border-radius:12px;padding:10px 13px;background:#fff;box-shadow:0 3px 12px #24204412;font-weight:800;cursor:pointer}.title{font-size:22px;font-weight:900;margin:0;flex:1}.balance{white-space:nowrap;font-weight:900;color:#6655cb;background:#fff;border-radius:12px;padding:10px 12px}.hero,.panel{background:#fff;border-radius:22px;padding:18px;margin-bottom:13px;box-shadow:0 8px 25px #28204a0d}.hero{background:linear-gradient(135deg,#7a63e8,#b37ce8);color:#fff}.hero h2{margin:0 0 7px;font-size:23px}.hero p{margin:0;line-height:1.65;font-size:14px;opacity:.95}.fee{font-weight:900;font-size:20px;margin-top:12px}.row{display:flex;gap:8px}.row>*{min-width:0}.input{width:100%;border:1px solid #e0dced;border-radius:13px;padding:13px;font-size:16px;outline-color:#8c75ed}.btn{border:0;border-radius:14px;padding:13px 15px;background:#7964e7;color:#fff;font-weight:900;font-size:15px;cursor:pointer}.btn:disabled{opacity:.45;cursor:default}.btn.secondary{background:#f0edfb;color:#6552c9}.btn.danger{background:#fff0f1;color:#c9435b}.btn.full{width:100%;margin-top:9px}.note,.status{font-size:13px;line-height:1.6;color:#777;margin-top:10px}.status{min-height:23px;text-align:center;font-weight:800;color:#6655cb}.hidden{display:none!important}.room-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.code{font-size:24px;font-weight:950;letter-spacing:4px;color:#6655cb}.pot{font-weight:900;color:#a06b00;background:#fff6d8;padding:8px 10px;border-radius:12px}.players{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:13px}.player{border:1px solid #e7e3f1;border-radius:16px;padding:12px;min-width:0}.player.me{border:2px solid #9b87f1;background:#faf8ff}.player-name{font-weight:900;overflow-wrap:anywhere}.player-state{font-size:12px;color:#777;margin-top:4px}.playing-card{height:88px;width:62px;border-radius:11px;background:linear-gradient(145deg,#393064,#765fbd);border:3px solid #fff;box-shadow:0 3px 9px #17102d25;display:grid;place-items:center;color:#fff;font-size:25px;font-weight:900;margin:9px auto 3px}.playing-card.revealed{background:#fff;color:#25243a;border-color:#e4dfef}.playing-card.red{color:#d64261}.action-area{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}.action-area .btn{padding:15px 8px}.foot{font-size:11px;text-align:center;color:#999;padding:5px}@media(max-width:380px){body{padding:10px}.title{font-size:18px}.balance{font-size:12px;padding:9px}.panel,.hero{padding:14px}.players{gap:7px}.player{padding:9px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <header class="top"><button class="back" onclick="location.href='cards.html'">‹ 戻る</button><h1 class="title">🃏 インディアンポーカー</h1><div class="balance">🪙 <span id="balance">---</span></div></header>
+ <section class="hero"><h2>相手を見て、自分を読む。</h2><p>相手のカードは見えるけど、自分のカードは見えない！ 勝負するか、降りるかを決めよう。</p><div class="fee">参加費 1,000 COIN / 人</div></section>
+ <section id="lobby" class="panel">
+  <h2 style="margin:0 0 8px">🎮 ルーム</h2><p class="note" style="margin:0 0 13px">2〜6人で対戦。ルームを作った人が開始できます。参加コードを友達に共有してね。</p>
+  <button id="createBtn" class="btn full">＋ ルームを作成（1,000 COIN）</button>
+  <div style="text-align:center;color:#aaa;font-weight:800;margin:14px 0">または</div>
+  <div class="row"><input id="joinCode" class="input" maxlength="6" placeholder="6桁の参加コード" autocapitalize="characters"><button id="joinBtn" class="btn">参加する</button></div>
+  <div id="lobbyMessage" class="status" aria-live="polite"></div>
+ </section>
+ <section id="room" class="panel hidden">
+  <div class="room-head"><div><div style="font-size:12px;color:#888;font-weight:800">参加コード</div><div id="roomCode" class="code">------</div></div><button id="copyBtn" class="small">コードをコピー</button></div>
+  <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:8px"><strong id="roomStatus">参加者を待っています</strong><div class="pot">🏆 <span id="pot">0</span> COIN</div></div>
+  <div id="players" class="players"></div>
+  <div id="waitingActions"><button id="startBtn" class="btn full hidden">ゲーム開始</button><button id="leaveBtn" class="btn danger full">開始前に退出して返金</button></div>
+  <div id="chooseArea" class="hidden"><p id="chooseText" class="note" style="text-align:center">相手のカードを見て、選択してください。</p><div class="action-area"><button id="callBtn" class="btn">⚔️ 勝負する</button><button id="foldBtn" class="btn secondary">🏳️ 降りる</button></div></div>
+  <button id="backLobbyBtn" class="btn secondary full hidden">ロビーに戻る</button>
+  <div id="roomMessage" class="status" aria-live="polite"></div>
+ </section>
+ <div class="foot">勝敗・参加費・報酬はSupabase側で処理されます。</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
+const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let username="",roomId=null,roomChannel=null,pollTimer=null,lastStatus="",lastRevision=-1,leaving=false;
+const $=id=>document.getElementById(id);
+function msg(text,where="lobbyMessage"){ $(where).textContent=text||""; }
+function rankName(n){return ({11:"J",12:"Q",13:"K",14:"A"})[n]||String(n||"");}
+function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function init(){
+ const {data,error}=await db.auth.getUser();
+ if(error||!data.user){msg("ログインしてください。フレンドチャットにログインしてから開いてね。");$('createBtn').disabled=true;$('joinBtn').disabled=true;return;}
+ username=data.user.user_metadata?.username||"";
+ if(!username){msg("ユーザーIDを取得できませんでした。いったん再ログインしてください。");return;}
+ await refreshBalance();
+ const params=new URLSearchParams(location.search);const rid=params.get('room');if(rid) await enterRoom(rid);
+}
+async function refreshBalance(){const {data,error}=await db.from('user_coins').select('coins').eq('user_id',username).maybeSingle();if(!error&&data)$('balance').textContent=Number(data.coins||0).toLocaleString();}
+async function rpc(name,args={}){const {data,error}=await db.rpc(name,args);if(error)throw error;return data;}
+function errorText(e){let s=e?.message||"処理に失敗しました";s=s.replace(/^.*?ERROR:\s*/i,'');return s;}
+$('createBtn').onclick=async()=>{ $('createBtn').disabled=true;msg('ルームを作成しています…');try{const r=await rpc('indian_poker_create_room');$('balance').textContent=Number(r.coins).toLocaleString();await enterRoom(r.room_id);}catch(e){msg('❌ '+errorText(e));}finally{$('createBtn').disabled=false;}};
+$('joinBtn').onclick=async()=>{const code=$('joinCode').value.trim().toUpperCase();if(!/^[A-F0-9]{6}$/.test(code)){msg('6桁の参加コードを入力してください');return;}$('joinBtn').disabled=true;msg('参加しています…');try{const r=await rpc('indian_poker_join_room',{input_code:code});$('balance').textContent=Number(r.coins).toLocaleString();await enterRoom(r.room_id);}catch(e){msg('❌ '+errorText(e));}finally{$('joinBtn').disabled=false;}};
+$('copyBtn').onclick=async()=>{try{await navigator.clipboard.writeText($('roomCode').textContent);msg('参加コードをコピーしました','roomMessage');}catch{msg('コードを長押ししてコピーしてね','roomMessage');}};
+$('startBtn').onclick=async()=>{ $('startBtn').disabled=true;try{await rpc('indian_poker_start',{input_room_id:roomId});await loadState();}catch(e){msg('❌ '+errorText(e),'roomMessage');}finally{$('startBtn').disabled=false;}};
+$('leaveBtn').onclick=async()=>{if(!confirm('退出して参加費1,000 COINを返金しますか？'))return;try{await rpc('indian_poker_leave_waiting',{input_room_id:roomId});await refreshBalance();cleanupRoom();msg('退出して参加費を返金しました');}catch(e){msg('❌ '+errorText(e),'roomMessage');}};
+$('callBtn').onclick=()=>choose('call');$('foldBtn').onclick=()=>choose('fold');
+$('backLobbyBtn').onclick=()=>{cleanupRoom();$('lobby').classList.remove('hidden');$('room').classList.add('hidden');history.replaceState({},'',location.pathname);refreshBalance();};
+async function choose(action){$('callBtn').disabled=true;$('foldBtn').disabled=true;try{const r=await rpc('indian_poker_choose',{input_room_id:roomId,input_action:action});msg(r.finished?(r.cancelled?'全員が降りたため参加費が返金されました':'結果が確定しました！'):'選択を受け付けました。ほかの人の選択を待っています…','roomMessage');await loadState();await refreshBalance();}catch(e){msg('❌ '+errorText(e),'roomMessage');}finally{await loadState();}}
+async function enterRoom(id){cleanupRoom(false);roomId=id;$('lobby').classList.add('hidden');$('room').classList.remove('hidden');history.replaceState({},'',location.pathname+'?room='+encodeURIComponent(id));await loadState();roomChannel=db.channel('indian-poker-room-'+id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'indian_poker_rooms',filter:'id=eq.'+id},()=>loadState()).subscribe();pollTimer=setInterval(loadState,2200);}
+function cleanupRoom(showLobby=true){if(roomChannel){db.removeChannel(roomChannel);roomChannel=null;}if(pollTimer){clearInterval(pollTimer);pollTimer=null;}roomId=null;lastStatus='';lastRevision=-1;if(showLobby){$('room').classList.add('hidden');$('lobby').classList.remove('hidden');}}
+async function loadState(){if(!roomId||leaving)return;try{const s=await rpc('indian_poker_state',{input_room_id:roomId});renderState(s);if(s.status==='finished'||s.status==='cancelled'){await refreshBalance();}}catch(e){msg('❌ '+errorText(e),'roomMessage');}}
+function renderState(s){$('roomCode').textContent=s.room_code;$('pot').textContent=Number(s.pot||0).toLocaleString();$('startBtn').classList.toggle('hidden',!(s.status==='waiting'&&s.is_host&&s.players.length>=2));$('startBtn').disabled=s.players.length<2;
+ let statusText=s.status==='waiting'?'参加者を待っています（2〜6人）':s.status==='active'?'対戦中':s.status==='finished'?'🏆 結果発表！':s.status==='cancelled'?'ゲームはキャンセルされました':'終了';$('roomStatus').textContent=statusText;
+ $('waitingActions').classList.toggle('hidden',s.status!=='waiting');$('chooseArea').classList.toggle('hidden',s.status!=='active'||s.my_action!==null);$('backLobbyBtn').classList.toggle('hidden',!['finished','cancelled'].includes(s.status));
+ $('players').innerHTML=s.players.map(p=>{const showCard=p.card_rank!==null&&p.card_rank!==undefined;const suit=p.card_suit||'';const red=suit==='♥'||suit==='♦';const card=showCard?rankName(p.card_rank)+suit:'🂠';const action=p.action==='call'?'⚔️ 勝負':p.action==='fold'?'🏳️ 降りた':'選択待ち';const state=s.status==='finished'?(p.payout>0?'🏆 '+Number(p.payout).toLocaleString()+' COIN獲得':p.action==='fold'?'今回は降りました':'結果確定'):s.status==='cancelled'?'参加費返金':action;return `<div class="player ${p.is_me?'me':''}"><div class="player-name">${escapeHtml(p.user_id)}${p.is_me?'（あなた）':''}${p.user_id===s.host_user_id?' 👑':''}</div><div class="playing-card ${showCard?'revealed':''} ${red?'red':''}">${escapeHtml(card)}</div><div class="player-state" style="text-align:center">${escapeHtml(state)}</div></div>`;}).join('');
+ if(s.status==='active'&&s.my_action!==null){$('chooseText').textContent='選択済み：'+(s.my_action==='call'?'勝負':'降りる')+'。ほかの人の選択を待っています。';}else if(s.status==='active'){$('chooseText').textContent='相手のカードを見て、勝負するか降りるか選んでね。';}
+ if(s.status==='finished'){const winners=s.players.filter(p=>p.payout>0);msg(winners.length===1?'🏆 '+winners[0].user_id+' さんの勝利！': '🏆 同点！ '+winners.map(p=>p.user_id).join('・')+' が報酬を分配しました','roomMessage');}else if(s.status==='cancelled'){msg('全員が降りたか、作成者が退出したため参加費は返金されました。','roomMessage');}
+ lastStatus=s.status;lastRevision=s.revision;
+}
+init();
+</script>
+</body>
+</html>
