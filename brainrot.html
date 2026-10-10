@@ -199,12 +199,11 @@ function renderEncyclopedia(){
  const query=($('encyclopediaSearch').value||'').trim().toLocaleLowerCase('ja');
  const filter=$('encyclopediaRarityFilter').value;
  const filtered=encyclopediaCatalog.filter(c=>(!query||String(c.name||'').toLocaleLowerCase('ja').includes(query))&&(!filter||encyclopediaRarityLabel(c.rarity)===filter));
- filtered.sort((a,b)=>encyclopediaRarityRank(a.rarity)-encyclopediaRarityRank(b.rarity)||String(a.name||'').localeCompare(String(b.name||''),'ja'));
+ // 稼ぎ（CASH/分）が多いキャラクターから順に表示。同額なら名前順。
+ filtered.sort((a,b)=>Number(b.income_per_minute||0)-Number(a.income_per_minute||0)||String(a.name||'').localeCompare(String(b.name||''),'ja'));
  $('encyclopediaCount').textContent=`${filtered.length}体表示中 / 登録 ${encyclopediaCatalog.length}体`;
  if(!filtered.length){host.innerHTML='<div class="encyclopediaEmpty">該当するキャラクターがいないよ。</div>';return;}
- const groups=new Map();
- for(const c of filtered){const label=encyclopediaRarityLabel(c.rarity);if(!groups.has(label))groups.set(label,[]);groups.get(label).push(c);}
- host.innerHTML=[...groups.entries()].map(([rarity,items])=>`<section class="encyclopediaGroup"><div class="encyclopediaRarity">${esc(rarity)} <span class="hint">（${items.length}体）</span></div><div class="grid">${items.map(c=>`<article class="char"><div class="art">${esc(c.emoji||'🧠')}</div><h3>${esc(c.name)}</h3><span class="rarity ${esc(encyclopediaRarityLabel(c.rarity))}">${esc(encyclopediaRarityLabel(c.rarity))}</span><div class="income">💵 ${fmtBig(c.income_per_minute||0)} CASH / 分</div>${c.is_fuse_only?'<div class="hint">🧬 フューズ専用</div>':''}</article>`).join('')}</div></section>`).join('');
+ host.innerHTML=`<div class="grid">${filtered.map((c,i)=>`<article class="char"><div class="art">${esc(c.emoji||'🧠')}</div><h3>${i+1}. ${esc(c.name)}</h3><span class="rarity ${esc(encyclopediaRarityLabel(c.rarity))}">${esc(encyclopediaRarityLabel(c.rarity))}</span><div class="income">💵 ${fmtBig(c.income_per_minute||0)} CASH / 分</div>${c.is_fuse_only?'<div class="hint">🧬 フューズ専用</div>':''}</article>`).join('')}</div>`;
 }
 async function openEncyclopedia(){
  const overlay=$('encyclopediaOverlay');overlay.classList.add('show');overlay.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
