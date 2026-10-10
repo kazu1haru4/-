@@ -46,6 +46,26 @@
 .liveFixedNotice h3{font-size:16px;margin:0 0 7px}.liveFixedNotice p{margin:0;white-space:pre-wrap;line-height:1.5}.liveFixedNotice .livePollChoices{margin-top:10px}.liveFixedNotice .livePollChoice{padding:10px 8px}.liveFixedClose{float:right;margin:-4px -4px 4px 8px;padding:4px 8px;border-radius:8px;background:#ffffff18;color:inherit}
 @keyframes liveNoticeIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.liveFixedNotice{animation:none}}
+
+
+/* メイン機能を固定モーダルで開く */
+.featureModalOverlay{position:fixed;inset:0;z-index:100010;display:none;align-items:center;justify-content:center;padding:calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom));background:rgba(5,5,16,.86);backdrop-filter:blur(7px)}
+.featureModalOverlay.show{display:flex}
+.featureModalDialog{display:flex;flex-direction:column;width:min(100%,760px);max-height:100%;min-height:0;border:1px solid #5b527d;border-radius:20px;background:linear-gradient(145deg,#242344,#141426);box-shadow:0 18px 55px #000b;overflow:hidden}
+.featureModalHead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);background:#242344;flex:0 0 auto}
+.featureModalHead h2{font-size:19px;margin:0;overflow-wrap:anywhere}
+.featureModalClose{background:#393954;color:#fff;border:1px solid #555574;padding:9px 12px;flex:0 0 auto}
+.featureModalBody{padding:12px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;min-height:0}
+.featureModalBody>.panel{margin:0!important;border:0!important;border-radius:0!important;padding:0!important;background:transparent!important}
+.featureModalBody>.panel>.sectionhead{display:none!important}
+.featureModalBody>.panel>p:first-of-type{margin-top:0}
+.modalLauncher{display:flex;align-items:center;justify-content:space-between;gap:7px;width:100%;min-height:54px;padding:12px;border:1px solid #51406f;border-radius:14px;background:linear-gradient(135deg,#29234b,#153744);color:var(--text);font:inherit;font-weight:900;text-align:left;cursor:pointer}
+.modalLauncher:after{content:'↗';color:var(--cyan);font-size:18px;flex-shrink:0}
+.modalLauncher:active{transform:scale(.99)}
+#leaderboardModalLauncher{margin-top:14px}
+body.featureModalOpen{overflow:hidden}
+@media(max-width:420px){.featureModalHead{padding:10px}.featureModalHead h2{font-size:16px}.featureModalBody{padding:10px}.modalLauncher{min-height:50px;padding:10px 8px;font-size:12px}}
+
 </style>
 </head>
 <body><div id="liveFixedNoticeStack" aria-live="polite" aria-atomic="false"></div><main class="wrap">
@@ -286,41 +306,58 @@ function closeEncyclopedia(){const overlay=$('encyclopediaOverlay');overlay.clas
 
 setInterval(()=>{if(!document.hidden&&$('game')&&!$('game').hidden)loadFuse();},15000);
 $('refresh').addEventListener('click',load);
-makeMainSectionFoldable('eventPanel','🧬 イベント情報');
-makeMainSectionFoldable('progressPanel','🔧 ゲーム設定');
-makeMainSectionFoldable('stealPanel','🕵️ キャラを奪う');
-makeMainSectionFoldable('encyclopediaEntry','📚 図鑑');
-makeMainSectionFoldable('fusePanel','🧬 ヒューズ');
-const leaderboardPanel=[...document.querySelectorAll('#game > section.panel')].find(el=>el.querySelector('#leaderboard'));
-if(leaderboardPanel && !leaderboardPanel.dataset.foldWrapped){
- leaderboardPanel.id='leaderboardPanel';
- makeMainSectionFoldable('leaderboardPanel','🏆 ランキング');
-}
-// メイン画面を「イベント→ショップ→ベース→2列機能→ランキング」の順に配置。
-// ショップとベースは従来どおり単独表示、各機能のID・イベント処理は維持する。
+// 画面の並びを整理：イベント → ショップ → ベース → 2列機能 → ランキング
 const gameRoot=$('game');
-const featureGrid=document.createElement('div');
-featureGrid.id='mainFeatureGrid';
-featureGrid.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:18px;align-items:start';
-const featureDetails=[
- $('progressPanel')?.closest('details.foldSection'),
- $('stealPanel')?.closest('details.foldSection'),
- $('fusePanel')?.closest('details.foldSection'),
- $('encyclopediaEntry')?.closest('details.foldSection')
-].filter(Boolean);
-featureDetails.forEach(el=>featureGrid.appendChild(el));
-const shopPanel=$('shopPanel');
-const baseDetails=$('baseInventoryDetails');
-const eventDetails=$('eventPanel')?.closest('details.foldSection');
-const rankingDetails=$('leaderboardPanel')?.closest('details.foldSection');
-if(eventDetails)gameRoot.insertBefore(eventDetails,shopPanel);
-if(baseDetails)gameRoot.insertBefore(baseDetails,featureGrid.nextSibling);
-if(shopPanel && baseDetails)shopPanel.after(baseDetails);
-if(baseDetails)baseDetails.after(featureGrid);
-if(rankingDetails)featureGrid.after(rankingDetails);
-const featureGridStyle=document.createElement('style');
-featureGridStyle.textContent='@media(max-width:420px){#mainFeatureGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}#mainFeatureGrid>.foldSection summary{padding:11px 8px;font-size:13px}#mainFeatureGrid>.foldSection .panel{padding:10px}}';
-document.head.appendChild(featureGridStyle);
+const leaderboardPanel=[...gameRoot.querySelectorAll(':scope > section.panel')].find(el=>el.querySelector('#leaderboard'));
+if(leaderboardPanel)leaderboardPanel.id='leaderboardPanel';
+const featureRowOne=document.createElement('div');
+featureRowOne.className='mainFeatureRow';
+featureRowOne.id='mainFeatureRowOne';
+const featureRowTwo=document.createElement('div');
+featureRowTwo.className='mainFeatureRow';
+featureRowTwo.id='mainFeatureRowTwo';
+const eventPanel=$('eventPanel'), shopPanel=$('shopPanel'), baseDetails=$('baseInventoryDetails');
+const progressPanel=$('progressPanel'), stealPanel=$('stealPanel'), fusePanel=$('fusePanel'), encyclopediaEntry=$('encyclopediaEntry');
+if(eventPanel)gameRoot.appendChild(eventPanel);
+if(shopPanel)gameRoot.appendChild(shopPanel);
+if(baseDetails)gameRoot.appendChild(baseDetails);
+if(progressPanel)featureRowOne.appendChild(progressPanel);
+if(stealPanel)featureRowOne.appendChild(stealPanel);
+if(featureRowOne.children.length)gameRoot.appendChild(featureRowOne);
+if(fusePanel)featureRowTwo.appendChild(fusePanel);
+if(encyclopediaEntry)featureRowTwo.appendChild(encyclopediaEntry);
+if(featureRowTwo.children.length)gameRoot.appendChild(featureRowTwo);
+if(leaderboardPanel)gameRoot.appendChild(leaderboardPanel);
+const layoutStyle=document.createElement('style');
+layoutStyle.textContent='.mainFeatureRow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px;align-items:start}.mainFeatureRow>.foldSection{min-width:0;margin-top:0!important}.mainFeatureRow>.foldSection>section.panel{height:100%}@media(max-width:420px){.mainFeatureRow{gap:7px}.mainFeatureRow .foldSection summary{padding:10px 8px;font-size:12px}.mainFeatureRow .foldContent{padding:0 8px 10px}.mainFeatureRow .panel p{font-size:12px}}';
+document.head.appendChild(layoutStyle);
+makeMainSectionFoldable('eventPanel','🧬 イベント情報');
+function makeFeatureModal(id,title,launcherId){
+ const section=$(id); if(!section || section.dataset.modalWrapped==='1') return;
+ const launcher=document.createElement('button');launcher.type='button';launcher.className='modalLauncher';launcher.textContent=title;
+ if(launcherId)launcher.id=launcherId;
+ const placeholder=document.createComment('modal placeholder: '+id);
+ section.parentNode.insertBefore(placeholder,section);
+ section.remove();
+ const overlay=document.createElement('div');overlay.className='featureModalOverlay';overlay.setAttribute('aria-hidden','true');
+ const dialog=document.createElement('section');dialog.className='featureModalDialog';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+ const head=document.createElement('div');head.className='featureModalHead';
+ const heading=document.createElement('h2');heading.textContent=title;
+ const close=document.createElement('button');close.type='button';close.className='featureModalClose';close.textContent='✕ 閉じる';
+ const body=document.createElement('div');body.className='featureModalBody';
+ head.append(heading,close);dialog.append(head,body);overlay.append(dialog);document.body.append(overlay);body.append(section);
+ section.style.marginTop='0';section.dataset.modalWrapped='1';
+ function shut(){overlay.classList.remove('show');overlay.setAttribute('aria-hidden','true');document.body.classList.remove('featureModalOpen');launcher.focus();}
+ launcher.addEventListener('click',()=>{overlay.classList.add('show');overlay.setAttribute('aria-hidden','false');document.body.classList.add('featureModalOpen');close.focus();});
+ close.addEventListener('click',shut);overlay.addEventListener('click',e=>{if(e.target===overlay)shut();});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&overlay.classList.contains('show'))shut();});
+ placeholder.parentNode.insertBefore(launcher,placeholder);placeholder.remove();
+}
+makeFeatureModal('progressPanel','🔧 ゲーム設定');
+makeFeatureModal('stealPanel','🕵️ キャラを奪う');
+makeFeatureModal('fusePanel','🧬 ヒューズ');
+makeFeatureModal('encyclopediaEntry','📚 図鑑');
+if(leaderboardPanel)makeFeatureModal('leaderboardPanel','🏆 ランキング','leaderboardModalLauncher');
 load().then(()=>{heartbeat();pollIncoming();presenceTimer=setInterval(heartbeat,30000);incomingTimer=setInterval(pollIncoming,5000);});window.addEventListener('focus',()=>{heartbeat();pollIncoming();if(!$('game').hidden){loadShop();loadEventState();}});document.addEventListener('visibilitychange',()=>{if(!document.hidden){heartbeat();pollIncoming();if(!$('game').hidden){loadShop();loadEventState();}}});
 // フレンドロット専用：二択投票・文字だけの管理者発表
 let livePollChannel=null,livePollCurrent=null,livePollUser=null,livePollAdmin=false,liveSeenPollId=null,liveSeenAnnouncementIds=new Set(),livePollNoticeTimer=null,liveAnnouncementsInitialized=false;
