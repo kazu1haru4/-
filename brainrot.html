@@ -110,7 +110,7 @@ body.featureModalOpen{overflow:hidden}
 <section class="panel" id="shopPanel" style="margin-top:18px"><div class="sectionhead" style="margin-top:0"><h2>🛒 キャラクターショップ</h2><span class="hint">30秒ごとに入れ替わる！</span></div><p>ランダムで登場するキャラクターをBrainrot Cashで購入しよう！表示中のキャラは、入れ替わるまで購入できるよ。</p><div id="shopStock" class="shopCard"><div class="shopArt">🎲</div><div class="shopInfo"><h3>キャラを選んでいるよ…</h3><div class="hint">読み込み中</div></div></div><div class="hint" id="shopCountdown" style="margin-top:10px">次の入れ替わりまで -- 秒</div><div class="hint" id="shopLuckStatus" style="margin-top:6px" aria-live="polite">🍀 ラック状態を確認中…</div></section>
 
 
-<details class="foldSection" id="baseInventoryDetails" style="margin-top:18px"><summary><span>🏠 ベース</span><span class="hint" id="baseInventoryCount">所持数を読み込み中…</span></summary><div class="foldContent"><p>ベースにいるキャラクター。時間がたつと収入が貯まるよ。</p><div id="inventory" class="grid"></div><div class="bottom"><button id="claimAll">🪙 収入をまとめて受け取る</button><button id="refresh" class="secondary">↻ 更新</button></div></div></details>
+<section class="panel" id="baseInventoryDetails" style="margin-top:18px"><div class="sectionhead" style="margin-top:0"><h2>🏠 ベース</h2><span class="hint" id="baseInventoryCount">所持数を読み込み中…</span></div><p>ベースにいるキャラクター。時間がたつと収入が貯まるよ。</p><div id="inventory" class="grid"></div><div class="bottom"><button id="claimAll">🪙 収入をまとめて受け取る</button><button id="refresh" class="secondary">↻ 更新</button></div></section>
 <section class="panel" style="margin-top:24px" id="stealPanel">
  <div class="sectionhead" style="margin-top:0"><h2>🕵️ 友達のキャラを奪う</h2></div>
  <p>オンライン中のフレンドにだけ挑戦できるよ！相手には防衛ミニゲームが届き、制限時間内にクリアすると盗み失敗。相手の最後の1体は奪えません。成功後の挑戦は30分に1回まで。</p>
@@ -126,7 +126,7 @@ body.featureModalOpen{overflow:hidden}
 <section class="panel" style="margin-top:24px"><div class="sectionhead" style="margin-top:0"><h2>🏆 コレクションランキング</h2></div><p>集めたキャラの数と収入でランキング！表示名ではなくユーザーIDで表示されるよ。</p><div id="leaderboard"><div class="hint">読み込み中…</div></div></section>
 
 <section class="panel" id="fusePanel" style="margin-top:18px"><div class="sectionhead" style="margin-top:0"><h2>🧬 フューズマシン</h2><span class="hint">素材は4体必要</span></div><p>初代ヒューズに登場した17体だけが合成結果に出るよ。仲間を4体選んで合成しよう。開始すると選んだ4体は消費されるよ。完成までの時間は結果のレア度で変わるよ。</p><div class="hint" id="fuseSelectionCount">0 / 4体選択中</div><div id="fuseChoices" class="fuseGrid"><div class="hint">仲間を読み込み中…</div></div><button id="fuseStartButton" disabled>🧬 4体を合成する</button><div id="fuseStatus" class="toast" role="status" aria-live="polite" style="display:block">合成するキャラクターを4体選んでね。</div><div id="fuseJobs"></div></section>
-<div class="bottom"><button class="secondary" onclick="location.href='cards.html'">← カードゲーム一覧へ</button></div>
+<div class="bottom" id="cardsBackBottom" style="margin-top:28px;margin-bottom:8px"><button class="secondary" style="width:100%" onclick="location.href='cards.html'">← カードゲーム一覧へ</button></div>
 </div><footer>フレンドチャットのオリジナルゲーム · Brainrot Cashは通常のフレンドコインと別管理</footer>
 </main>
 <script>
@@ -331,7 +331,6 @@ if(leaderboardPanel)gameRoot.appendChild(leaderboardPanel);
 const layoutStyle=document.createElement('style');
 layoutStyle.textContent='.mainFeatureRow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px;align-items:start}.mainFeatureRow>.foldSection{min-width:0;margin-top:0!important}.mainFeatureRow>.foldSection>section.panel{height:100%}@media(max-width:420px){.mainFeatureRow{gap:7px}.mainFeatureRow .foldSection summary{padding:10px 8px;font-size:12px}.mainFeatureRow .foldContent{padding:0 8px 10px}.mainFeatureRow .panel p{font-size:12px}}';
 document.head.appendChild(layoutStyle);
-makeMainSectionFoldable('eventPanel','🧬 イベント情報');
 function makeFeatureModal(id,title,launcherId){
  const section=$(id); if(!section || section.dataset.modalWrapped==='1') return;
  const launcher=document.createElement('button');launcher.type='button';launcher.className='modalLauncher';launcher.textContent=title;
