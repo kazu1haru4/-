@@ -306,7 +306,7 @@ function renderEncyclopedia(){
 let encyclopediaReturnFocus=null;
 async function openEncyclopedia(){
  encyclopediaReturnFocus=document.activeElement;
- const overlay=$('encyclopediaOverlay');overlay.style.display='flex';overlay.style.pointerEvents='auto';overlay.classList.add('show');overlay.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
+ const overlay=$('encyclopediaOverlay');overlay.classList.add('show');overlay.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
  if(!encyclopediaCatalog.length){
   $('encyclopediaList').innerHTML='<div class="encyclopediaEmpty">読み込み中…</div>';
   try{
@@ -320,7 +320,7 @@ async function openEncyclopedia(){
  renderEncyclopedia();
  $('closeEncyclopedia').focus();
 }
-function closeEncyclopedia(){const overlay=$('encyclopediaOverlay');if(!overlay)return;overlay.classList.remove('show');overlay.setAttribute('aria-hidden','true');overlay.style.display='none';overlay.style.pointerEvents='none';document.body.style.overflow='';document.body.classList.remove('featureModalOpen');if(encyclopediaReturnFocus&&encyclopediaReturnFocus.isConnected&&typeof encyclopediaReturnFocus.focus==='function'){try{encyclopediaReturnFocus.focus({preventScroll:true});}catch(_){encyclopediaReturnFocus.focus();}}}
+function closeEncyclopedia(){const overlay=$('encyclopediaOverlay');overlay.classList.remove('show');overlay.setAttribute('aria-hidden','true');document.body.style.overflow='';if(encyclopediaReturnFocus&&encyclopediaReturnFocus.isConnected&&typeof encyclopediaReturnFocus.focus==='function')encyclopediaReturnFocus.focus();}
 
 setInterval(()=>{if(!document.hidden&&$('game')&&!$('game').hidden)loadFuse();},15000);
 $('refresh').addEventListener('click',load);
@@ -423,11 +423,10 @@ $('liveAnnouncementPost').addEventListener('click',async()=>{const status=$('liv
 </div>
 <script>
 $('openEncyclopedia').addEventListener('click',openEncyclopedia);
-$('closeEncyclopedia').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeEncyclopedia();});
+$('closeEncyclopedia').addEventListener('click',closeEncyclopedia);
 $('encyclopediaSearch').addEventListener('input',renderEncyclopedia);
 $('encyclopediaRarityFilter').addEventListener('change',renderEncyclopedia);
 $('encyclopediaOverlay').addEventListener('click',e=>{if(e.target===$('encyclopediaOverlay'))closeEncyclopedia();});
-$('encyclopediaOverlay').addEventListener('click',e=>{if(e.target.closest('#closeEncyclopedia')){e.preventDefault();e.stopPropagation();closeEncyclopedia();}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('encyclopediaOverlay').classList.contains('show'))closeEncyclopedia();});
 </script>
 
