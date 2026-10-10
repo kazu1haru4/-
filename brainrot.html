@@ -70,6 +70,23 @@ body.featureModalOpen{overflow:hidden}
 #distributionBanner{position:fixed;left:12px;right:12px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:9995;display:none;text-align:center;padding:13px 15px;border:1px solid #ffd56b;border-radius:15px;background:linear-gradient(110deg,#4b2e75,#773f87,#4b2e75);color:#fff5c9;font-weight:1000;font-size:clamp(15px,4vw,20px);box-shadow:0 0 22px #b879ff66,0 8px 24px #0009;text-shadow:0 2px 4px #000;pointer-events:none}
 #distributionBanner.show{display:block;animation:luckBannerIn .35s ease-out both}
 #distributionBanner small{display:block;font-size:12px;font-weight:700;margin-top:3px;color:#f3e6ff}
+
+/* トレード画面：図鑑と同じ固定モーダル。ページ全体ではなく中身だけスクロール */
+#tradeOverlay{position:fixed;inset:0;z-index:100020;display:none;align-items:center;justify-content:center;padding:calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom));background:#080815ef;overscroll-behavior:contain}
+#tradeOverlay.show{display:flex}
+.tradeModal{display:flex;flex-direction:column;box-sizing:border-box;width:min(100%,680px);height:min(90dvh,850px);max-height:calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom));min-height:0;overflow:hidden;background:linear-gradient(145deg,#242344,#141426);border:1px solid #5b527d;border-radius:20px;box-shadow:0 16px 50px #000b}
+.tradeHead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;flex:0 0 auto;background:#242344;border-bottom:1px solid var(--line)}
+.tradeHead h2{margin:0;font-size:20px}.tradeClose{background:#393954;color:#fff;border:1px solid #555574;padding:9px 12px}
+.tradeBody{padding:12px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;min-height:0;flex:1}
+.tradeBlock{border:1px solid var(--line);background:#19192f;border-radius:14px;padding:12px;margin-bottom:12px}
+.tradeBlock h3{margin:0 0 8px;font-size:15px}.tradeInput{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:#111126;color:var(--text);font:inherit}
+.tradePickGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.tradePick{display:flex;align-items:center;gap:8px;text-align:left;min-width:0;padding:8px;border:1px solid var(--line);border-radius:11px;background:#20203b;color:var(--text)}
+.tradePick.selected{border:2px solid var(--cyan);background:#173a4a}.tradePick .art{width:42px;height:42px;flex:0 0 42px;margin:0;font-size:25px}.tradePick .art img{max-height:40px}.tradePickInfo{min-width:0;overflow-wrap:anywhere}.tradePickInfo strong{display:block;font-size:12px}.tradePickInfo small{display:block;color:var(--muted);font-size:10px;margin-top:3px}
+.tradeAction{width:100%;margin-top:8px}.tradeItem{padding:10px;border:1px solid var(--line);border-radius:11px;background:#20203b;margin-top:8px;overflow-wrap:anywhere}.tradeItem p{margin:5px 0;color:var(--muted);font-size:12px}.tradeItemActions{display:flex;gap:7px;flex-wrap:wrap}.tradeItemActions button{flex:1;min-width:100px;padding:9px}.tradeStatus{font-size:12px;color:var(--muted);white-space:pre-wrap;margin-top:8px}
+@media(max-width:420px){.tradeHead{padding:10px}.tradeHead h2{font-size:17px}.tradeBody{padding:9px}.tradePickGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.tradePick{padding:6px;gap:6px}.tradePick .art{width:34px;height:34px;flex-basis:34px}.tradePickInfo strong{font-size:11px}}
+body.tradeModalOpen{overflow:hidden}
+
 </style>
 </head>
 <body><div id="liveFixedNoticeStack" aria-live="polite" aria-atomic="false"></div><main class="wrap">
@@ -497,6 +514,158 @@ $('encyclopediaOverlay')?.addEventListener('click',e=>{
  if(e.target===$('encyclopediaOverlay') || e.target.closest('#closeEncyclopedia'))closeEncyclopedia();
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('encyclopediaOverlay')?.classList.contains('show'))closeEncyclopedia();});
+</script>
+
+
+<div id="tradeOverlay" aria-hidden="true">
+ <section class="tradeModal" role="dialog" aria-modal="true" aria-labelledby="tradeTitle">
+  <header class="tradeHead"><h2 id="tradeTitle">🤝 キャラクタートレード</h2><button type="button" id="tradeClose" class="tradeClose">✕ 閉じる</button></header>
+  <div class="tradeBody">
+   <div class="tradeBlock">
+    <h3>① 相手を指定して、渡すキャラを選ぶ</h3>
+    <p class="hint" style="margin:0 0 9px">最大10体まで選べるよ。相手も最大10体を選ぶと、両方の交換がまとめて実行されるよ。</p>
+    <label class="hint" for="tradeTargetUser">相手のユーザーID</label>
+    <input id="tradeTargetUser" class="tradeInput" maxlength="100" autocomplete="off" placeholder="友達のユーザーID" style="margin:5px 0 10px">
+    <div class="tradeStatus" id="tradeOwnCount">選択中：0 / 10体</div>
+    <div class="tradePickGrid" id="tradeOwnInventory"><div class="hint">所持キャラを読み込み中…</div></div>
+    <button id="tradeCreateButton" class="tradeAction">📨 トレードを申し込む</button>
+    <div id="tradeCreateStatus" class="tradeStatus" role="status"></div>
+   </div>
+   <div class="tradeBlock">
+    <h3>② 申請中・進行中のトレード</h3>
+    <p class="hint" style="margin:0 0 8px">相手からの申請は、交換に出すキャラを選んで承認してね。お互いが確認すると交換が確定するよ。</p>
+    <button id="tradeRefreshButton" class="secondary" style="width:100%">↻ トレード一覧を更新</button>
+    <div id="tradeList"><div class="hint" style="margin-top:10px">トレードを読み込み中…</div></div>
+   </div>
+   <p class="hint">※交換はBrainrot Cashを使わず、選んだキャラクターだけが移動するよ。確定前ならキャンセルできるよ。</p>
+  </div>
+ </section>
+</div>
+<script>
+(() => {
+ const tradeOverlay=$('tradeOverlay');
+ if(!tradeOverlay || tradeOverlay.dataset.ready==='1') return;
+ tradeOverlay.dataset.ready='1';
+ let tradeSelected=new Set(), tradeCatalog=[];
+ let tradeBusy=false, tradeReturnFocus=null;
+ const tradeStatus=(id,msg,error=false)=>{const el=$(id);if(el){el.textContent=msg||'';el.style.color=error?'#ffd1df':'#aaffdf';}};
+ const tradeEsc=esc;
+ function renderTradeInventory(){
+  const host=$('tradeOwnInventory'); if(!host)return;
+  const inventory=state?.inventory||[];
+  tradeSelected=new Set([...tradeSelected].filter(id=>inventory.some(c=>String(c.id)===id)));
+  $('tradeOwnCount').textContent=`選択中：${tradeSelected.size} / 10体`;
+  if(!inventory.length){host.innerHTML='<div class="hint">ベースにキャラクターがいないよ。</div>';return;}
+  host.innerHTML=inventory.map(c=>{
+   const id=String(c.id),selected=tradeSelected.has(id);
+   return `<button type="button" class="tradePick ${selected?'selected':''}" data-trade-own="${tradeEsc(id)}" aria-pressed="${selected}"><span class="art">${characterArt(c)}</span><span class="tradePickInfo"><strong>${tradeEsc(c.name)}</strong><small>${tradeEsc(c.rarity)}${c.mutation?' · '+tradeEsc(c.mutation):''}${c.trait?' · '+tradeEsc(c.trait):''}</small></span></button>`;
+  }).join('');
+  host.querySelectorAll('[data-trade-own]').forEach(b=>b.addEventListener('click',()=>{
+   const id=b.dataset.tradeOwn;
+   if(tradeSelected.has(id))tradeSelected.delete(id);
+   else if(tradeSelected.size<10)tradeSelected.add(id);
+   else {tradeStatus('tradeCreateStatus','選べるのは最大10体までだよ。',true);return;}
+   tradeStatus('tradeCreateStatus','');renderTradeInventory();
+  }));
+ }
+ function openTrade(){
+  tradeReturnFocus=document.activeElement;
+  tradeOverlay.classList.add('show');tradeOverlay.setAttribute('aria-hidden','false');document.body.classList.add('tradeModalOpen');
+  renderTradeInventory();loadTradeList();
+  $('tradeClose').focus();
+ }
+ function closeTrade(){
+  tradeOverlay.classList.remove('show');tradeOverlay.setAttribute('aria-hidden','true');document.body.classList.remove('tradeModalOpen');
+  if(tradeReturnFocus?.isConnected)tradeReturnFocus.focus();
+ }
+ async function loadTradeList(){
+  const host=$('tradeList');if(!host)return;
+  if(!state?.user_id){host.innerHTML='<div class="hint">ログイン状態を確認できないよ。</div>';return;}
+  host.innerHTML='<div class="hint" style="margin-top:10px">トレードを読み込み中…</div>';
+  try{
+   const uid=String(state.user_id);
+   const {data,error}=await db.from('brainrot_trades').select('*').or(`proposer_user_id.eq.${uid},recipient_user_id.eq.${uid}`).order('created_at',{ascending:false}).limit(30);
+   if(error)throw error;
+   const items=data||[];
+   if(!items.length){host.innerHTML='<div class="hint" style="margin-top:10px">トレードはまだないよ。</div>';return;}
+   host.innerHTML=items.map(t=>{
+    const proposer=String(t.proposer_user_id)===uid,other=proposer?t.recipient_user_id:t.proposer_user_id;
+    const mine=proposer?(t.proposer_inventory_ids||[]):(t.recipient_inventory_ids||[]);
+    const theirs=proposer?(t.recipient_inventory_ids||[]):(t.proposer_inventory_ids||[]);
+    const pending=t.status==='pending';
+    const incoming=!proposer&&pending&&!t.recipient_confirmed;
+    const needConfirm=pending && ((proposer&&!t.proposer_confirmed)||(!proposer&&!t.recipient_confirmed));
+    const status=t.status==='completed'?'✅ 交換完了':t.status==='cancelled'?'キャンセル済み':incoming?'相手からの申請・交換キャラ選択待ち':needConfirm?'確認待ち':'相手の確認待ち';
+    const ids=arr=>arr.length?`${arr.length}体`:'0体（キャラなし）';
+    let controls='';
+    if(incoming){
+      controls=`<div class="tradeStatus">あなたが渡すキャラを選んでから承認してね（最大10体）。</div><div class="tradePickGrid" data-trade-recipient-picks="${tradeEsc(t.id)}"></div><div class="tradeItemActions" style="margin-top:8px"><button data-trade-accept="${tradeEsc(t.id)}">🤝 選んだキャラで承認</button><button class="secondary" data-trade-cancel="${tradeEsc(t.id)}">拒否する</button></div>`;
+    }else if(pending){
+      controls=`<div class="tradeItemActions">${needConfirm?`<button data-trade-confirm="${tradeEsc(t.id)}">✅ この交換を確認</button>`:''}<button class="secondary" data-trade-cancel="${tradeEsc(t.id)}">✖ キャンセル</button></div>`;
+    }
+    return `<article class="tradeItem"><strong>${proposer?'📨 自分から申請':'📩 相手から申請'}：${tradeEsc(other)}</strong><p>状態：${status}</p><p>自分が出す：${ids(mine)} ／ 相手が出す：${ids(theirs)}</p><p class="hint">作成：${tradeEsc(new Date(t.created_at).toLocaleString('ja-JP'))}</p>${controls}</article>`;
+   }).join('');
+   for(const t of items){
+    const proposer=String(t.proposer_user_id)===uid;
+    if(!proposer&&t.status==='pending'&&!t.recipient_confirmed){
+     const hostPick=host.querySelector(`[data-trade-recipient-picks="${CSS.escape(String(t.id))}"]`);
+     if(hostPick){
+      const inv=state?.inventory||[];
+      hostPick.innerHTML=inv.length?inv.map(c=>`<button type="button" class="tradePick" data-trade-rec-pick="${tradeEsc(t.id)}" data-inventory-id="${tradeEsc(c.id)}"><span class="art">${characterArt(c)}</span><span class="tradePickInfo"><strong>${tradeEsc(c.name)}</strong><small>${tradeEsc(c.rarity)}</small></span></button>`).join(''):'<div class="hint">交換に出せるキャラがいないよ。</div>';
+      hostPick.querySelectorAll('[data-trade-rec-pick]').forEach(b=>b.addEventListener('click',()=>{
+       const tid=b.dataset.tradeRecPick;
+       const selected=new Set((hostPick.dataset.selected||'').split(',').filter(Boolean));
+       const id=b.dataset.inventoryId;
+       if(selected.has(id))selected.delete(id);
+       else if(selected.size<10)selected.add(id);
+       else {tradeStatus('tradeCreateStatus','選べるのは最大10体までだよ。',true);return;}
+       hostPick.dataset.selected=[...selected].join(',');
+       hostPick.querySelectorAll('[data-trade-rec-pick]').forEach(x=>x.classList.toggle('selected',selected.has(x.dataset.inventoryId)));
+      }));
+     }
+    }
+   }
+   host.querySelectorAll('[data-trade-accept]').forEach(b=>b.addEventListener('click',async()=>{
+    const tid=b.dataset.tradeAccept,picks=host.querySelector(`[data-trade-recipient-picks="${CSS.escape(tid)}"]`);
+    const ids=(picks?.dataset.selected||'').split(',').filter(Boolean);
+    if(ids.length<1||ids.length>10){tradeStatus('tradeCreateStatus','交換に出すキャラを1〜10体選んでね。',true);return;}
+    b.disabled=true;
+    try{const {data,error}=await db.rpc('brainrot_trade_respond',{input_trade_id:tid,input_inventory_ids:ids,input_accept:true});if(error)throw error;if(!data?.ok)throw new Error(data?.message||'承認できなかったよ');tradeStatus('tradeCreateStatus','承認したよ！相手の確認を待ってね。');await loadTradeList();}
+    catch(e){tradeStatus('tradeCreateStatus','承認エラー：'+(e.message||String(e)),true);b.disabled=false;}
+   }));
+   host.querySelectorAll('[data-trade-confirm]').forEach(b=>b.addEventListener('click',async()=>{
+    if(!confirm('選ばれたキャラクターの交換を確認するよ。両者の確認がそろうと交換が確定するよ。続ける？'))return;
+    b.disabled=true;
+    try{const {data,error}=await db.rpc('brainrot_trade_confirm',{input_trade_id:b.dataset.tradeConfirm});if(error)throw error;if(!data?.ok)throw new Error(data?.message||'確認できなかったよ');tradeStatus('tradeCreateStatus',data?.status==='completed'?'🎉 トレード成立！キャラクターを交換したよ。':'確認を送ったよ。相手の確認を待ってね。');await load();renderTradeInventory();await loadTradeList();}
+    catch(e){tradeStatus('tradeCreateStatus','確認エラー：'+(e.message||String(e)),true);b.disabled=false;}
+   }));
+   host.querySelectorAll('[data-trade-cancel]').forEach(b=>b.addEventListener('click',async()=>{
+    if(!confirm('このトレードを拒否・キャンセルする？'))return;b.disabled=true;
+    try{const {data,error}=await db.rpc('brainrot_trade_cancel',{input_trade_id:b.dataset.tradeCancel});if(error)throw error;if(data?.ok===false)throw new Error(data?.message||'キャンセルできなかったよ');tradeStatus('tradeCreateStatus','トレードをキャンセルしたよ。');await loadTradeList();}
+    catch(e){tradeStatus('tradeCreateStatus','キャンセルエラー：'+(e.message||String(e)),true);b.disabled=false;}
+   }));
+  }catch(e){host.innerHTML=`<div class="hint" style="margin-top:10px">トレード一覧を読み込めなかったよ：${tradeEsc(e.message||String(e))}</div>`;}
+ }
+ $('tradeCreateButton').addEventListener('click',async()=>{
+  if(tradeBusy)return;
+  const target=$('tradeTargetUser').value.trim(),ids=[...tradeSelected];
+  if(!target){tradeStatus('tradeCreateStatus','相手のユーザーIDを入力してね。',true);return;}
+  if(target===String(state?.user_id||'')){tradeStatus('tradeCreateStatus','自分自身には申請できないよ。',true);return;}
+  if(ids.length<1||ids.length>10){tradeStatus('tradeCreateStatus','渡すキャラを1〜10体選んでね。',true);return;}
+  if(!confirm(`${target} にキャラクタートレードを申請するよ。選択した ${ids.length}体を渡す候補にするよ。申請する？`))return;
+  tradeBusy=true;const b=$('tradeCreateButton');b.disabled=true;
+  try{const {data,error}=await db.rpc('brainrot_trade_create',{input_target_user_id:target,input_inventory_ids:ids});if(error)throw error;if(!data?.ok)throw new Error(data?.message||'申請できなかったよ');tradeSelected.clear();tradeStatus('tradeCreateStatus','📨 トレードを申請したよ！相手の返事を待とう。');renderTradeInventory();await loadTradeList();}
+  catch(e){tradeStatus('tradeCreateStatus','申請エラー：'+(e.message||String(e)),true);}
+  finally{tradeBusy=false;b.disabled=false;}
+ });
+ $('tradeRefreshButton').addEventListener('click',loadTradeList);
+ $('tradeClose').addEventListener('click',closeTrade);
+ tradeOverlay.addEventListener('click',e=>{if(e.target===tradeOverlay)closeTrade();});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&tradeOverlay.classList.contains('show'))closeTrade();});
+ const launcher=document.createElement('button');launcher.type='button';launcher.className='modalLauncher';launcher.textContent='🤝 トレード';launcher.addEventListener('click',openTrade);
+ if($('mainFeatureRowTwo'))$('mainFeatureRowTwo').appendChild(launcher);
+ else if($('game'))$('game').appendChild(launcher);
+})();
 </script>
 
 </body></html>
