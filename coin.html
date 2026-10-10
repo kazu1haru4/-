@@ -236,7 +236,14 @@ async function saveCoins(){
 }
 
 async function redeemRewardCode(){
- const input=document.getElementById("rewardCodeInput"),button=document.getElementById("redeemRewardCodeButton"),code=input.value.trim().toUpperCase();
+ const input=document.getElementById("rewardCodeInput"),button=document.getElementById("redeemRewardCodeButton");
+ // 配布コード欄で専用キーワードを入力して受け取りボタンを押すとブレインロットを開く
+ const shortcut=input.value.trim().toLocaleLowerCase("ja");
+ if(shortcut==="brainrot"||shortcut==="ブレインロット"){
+  location.href="brainrot.html";
+  return;
+ }
+ const code=input.value.trim().toUpperCase();
  if(!code){showRewardMessage("❌ 配布コードを入力してください");return}
  button.disabled=true;showRewardMessage("🎁 受け取っています……");
  try{
@@ -250,6 +257,13 @@ async function redeemRewardCode(){
   input.value="";
  }catch(error){console.error(error);showRewardMessage("❌ 受け取りに失敗しました")}finally{button.disabled=false}
 }
+
+document.getElementById("rewardCodeInput").addEventListener("keydown",event=>{
+ if(event.key==="Enter"){
+  event.preventDefault();
+  redeemRewardCode();
+ }
+});
 
 async function claimLoginBonus(){
  if(!currentUsername&&!await getCurrentUser()){showMessage("❌ ログインしてください");return}
