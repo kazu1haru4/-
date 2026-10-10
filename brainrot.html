@@ -678,8 +678,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('encyclopediaOver
  const ritualLauncher=document.createElement('button');ritualLauncher.type='button';ritualLauncher.className='modalLauncher';ritualLauncher.textContent='🐱 儀式';ritualLauncher.style.background='linear-gradient(110deg,#d9a3ff,#ffb8df)';
  const ritualPanel=$('migatitoRitualPanel');
  let ritualOverlay=null;
- function openRitual(){if(!ritualOverlay)return;ritualOverlay.classList.add('show');ritualOverlay.setAttribute('aria-hidden','false');document.body.classList.add('tradeModalOpen');renderMigatitoRitual();$('migatitoRitualClose').focus();}
- function closeRitual(){if(!ritualOverlay)return;ritualOverlay.classList.remove('show');ritualOverlay.setAttribute('aria-hidden','true');document.body.classList.remove('tradeModalOpen');ritualLauncher.focus();}
+ function openRitual(){if(!ritualOverlay){setMigatitoRitualStatus('儀式画面を開けなかったよ。ページを再読み込みしてね。',true);return;}ritualOverlay.style.display='flex';ritualOverlay.classList.add('show');ritualOverlay.setAttribute('aria-hidden','false');document.body.classList.add('tradeModalOpen');renderMigatitoRitual();const closeButton=$('migatitoRitualClose');if(closeButton)closeButton.focus();}
+ function closeRitual(){if(!ritualOverlay)return;ritualOverlay.classList.remove('show');ritualOverlay.style.display='none';ritualOverlay.setAttribute('aria-hidden','true');document.body.classList.remove('tradeModalOpen');ritualLauncher.focus();}
  ritualLauncher.addEventListener('click',openRitual);
  if(ritualPanel){
   ritualOverlay=document.createElement('div');ritualOverlay.id='migatitoRitualOverlay';ritualOverlay.setAttribute('aria-hidden','true');
