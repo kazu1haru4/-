@@ -371,7 +371,20 @@ function makeFeatureModal(id,title,launcherId){
 makeFeatureModal('progressPanel','🔧 ゲーム設定');
 makeFeatureModal('stealPanel','🕵️ キャラを奪う');
 makeFeatureModal('fusePanel','🧬 ヒューズ');
-makeFeatureModal('encyclopediaEntry','📚 図鑑');
+// 📚 図鑑は中間メニューを挟まず、押したら図鑑本体を直接開く。
+const encyclopediaLauncher=document.createElement('button');
+encyclopediaLauncher.type='button';
+encyclopediaLauncher.className='modalLauncher';
+encyclopediaLauncher.textContent='📚 図鑑';
+encyclopediaLauncher.addEventListener('click',openEncyclopedia);
+if(encyclopediaEntry)encyclopediaEntry.remove();
+if(featureRowTwo && featureRowTwo.parentNode){
+ const encyclopediaDirectRow=document.createElement('div');
+ encyclopediaDirectRow.className='mainFeatureRow';
+ encyclopediaDirectRow.style.gridTemplateColumns='1fr';
+ encyclopediaDirectRow.appendChild(encyclopediaLauncher);
+ featureRowTwo.parentNode.insertBefore(encyclopediaDirectRow,featureRowTwo.nextSibling);
+}
 if(leaderboardPanel)makeFeatureModal('leaderboardPanel','🏆 ランキング','leaderboardModalLauncher');
 // すべての並べ替え・モーダル化が終わった後に、一覧へ戻るボタンをゲーム画面の最下部へ移動
 const cardsBackBottom=$('cardsBackBottom');if(cardsBackBottom)gameRoot.appendChild(cardsBackBottom);
