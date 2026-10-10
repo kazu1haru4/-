@@ -222,12 +222,6 @@ async function openEncyclopedia(){
  $('closeEncyclopedia').focus();
 }
 function closeEncyclopedia(){const overlay=$('encyclopediaOverlay');overlay.classList.remove('show');overlay.setAttribute('aria-hidden','true');document.body.style.overflow='';$('openEncyclopedia').focus();}
-$('openEncyclopedia').addEventListener('click',openEncyclopedia);
-$('closeEncyclopedia').addEventListener('click',closeEncyclopedia);
-$('encyclopediaSearch').addEventListener('input',renderEncyclopedia);
-$('encyclopediaRarityFilter').addEventListener('change',renderEncyclopedia);
-$('encyclopediaOverlay').addEventListener('click',e=>{if(e.target===$('encyclopediaOverlay'))closeEncyclopedia();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('encyclopediaOverlay').classList.contains('show'))closeEncyclopedia();});
 
 setInterval(()=>{if(!document.hidden&&$('game')&&!$('game').hidden)loadFuse();},15000);
 $('refresh').addEventListener('click',load);load().then(()=>{heartbeat();pollIncoming();presenceTimer=setInterval(heartbeat,30000);incomingTimer=setInterval(pollIncoming,5000);});window.addEventListener('focus',()=>{heartbeat();pollIncoming();if(!$('game').hidden){loadShop();loadEventState();}});document.addEventListener('visibilitychange',()=>{if(!document.hidden){heartbeat();pollIncoming();if(!$('game').hidden){loadShop();loadEventState();}}});
@@ -241,5 +235,13 @@ $('refresh').addEventListener('click',load);load().then(()=>{heartbeat();pollInc
   <div id="encyclopediaList"><div class="encyclopediaEmpty">キャラクターを読み込み中…</div></div>
  </section>
 </div>
+<script>
+$('openEncyclopedia').addEventListener('click',openEncyclopedia);
+$('closeEncyclopedia').addEventListener('click',closeEncyclopedia);
+$('encyclopediaSearch').addEventListener('input',renderEncyclopedia);
+$('encyclopediaRarityFilter').addEventListener('change',renderEncyclopedia);
+$('encyclopediaOverlay').addEventListener('click',e=>{if(e.target===$('encyclopediaOverlay'))closeEncyclopedia();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('encyclopediaOverlay').classList.contains('show'))closeEncyclopedia();});
+</script>
 
 </body></html>
