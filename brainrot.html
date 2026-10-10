@@ -675,8 +675,26 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('encyclopediaOver
  tradeOverlay.addEventListener('click',e=>{if(e.target===tradeOverlay)closeTrade();});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&tradeOverlay.classList.contains('show'))closeTrade();});
  const launcher=document.createElement('button');launcher.type='button';launcher.className='modalLauncher';launcher.textContent='🤝 トレード';launcher.addEventListener('click',openTrade);
- if($('mainFeatureRowTwo'))$('mainFeatureRowTwo').appendChild(launcher);
- else if($('game'))$('game').appendChild(launcher);
+ const ritualLauncher=document.createElement('button');ritualLauncher.type='button';ritualLauncher.className='modalLauncher';ritualLauncher.textContent='🐱 儀式';ritualLauncher.style.background='linear-gradient(110deg,#d9a3ff,#ffb8df)';
+ const ritualPanel=$('migatitoRitualPanel');
+ let ritualOverlay=null;
+ function openRitual(){if(!ritualOverlay)return;ritualOverlay.classList.add('show');ritualOverlay.setAttribute('aria-hidden','false');document.body.classList.add('tradeModalOpen');renderMigatitoRitual();$('migatitoRitualClose').focus();}
+ function closeRitual(){if(!ritualOverlay)return;ritualOverlay.classList.remove('show');ritualOverlay.setAttribute('aria-hidden','true');document.body.classList.remove('tradeModalOpen');ritualLauncher.focus();}
+ ritualLauncher.addEventListener('click',openRitual);
+ if(ritualPanel){
+  ritualOverlay=document.createElement('div');ritualOverlay.id='migatitoRitualOverlay';ritualOverlay.setAttribute('aria-hidden','true');
+  ritualOverlay.style.cssText='position:fixed;inset:0;z-index:100030;display:none;align-items:center;justify-content:center;padding:calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom));background:#080815ef;overscroll-behavior:contain;';
+  const modal=document.createElement('section');modal.style.cssText='box-sizing:border-box;width:min(100%,680px);max-height:calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:linear-gradient(145deg,#242344,#141426);border:1px solid #9b78c9;border-radius:20px;padding:12px;';
+  const head=document.createElement('div');head.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;';
+  const title=document.createElement('strong');title.textContent='🐱 猫の儀式';title.style.fontSize='19px';
+  const close=document.createElement('button');close.type='button';close.id='migatitoRitualClose';close.className='secondary';close.textContent='✕ 閉じる';close.style.padding='9px 12px';
+  head.append(title,close);modal.appendChild(head);ritualPanel.style.marginTop='0';ritualPanel.style.border='0';ritualPanel.style.padding='0';modal.appendChild(ritualPanel);ritualOverlay.appendChild(modal);document.body.appendChild(ritualOverlay);
+  close.addEventListener('click',closeRitual);ritualOverlay.addEventListener('click',e=>{if(e.target===ritualOverlay)closeRitual();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ritualOverlay.classList.contains('show'))closeRitual();});
+  const style=document.createElement('style');style.textContent='#migatitoRitualOverlay.show{display:flex}#migatitoRitualOverlay #migatitoRitualPanel{background:transparent!important}';document.head.appendChild(style);
+ }
+ if($('mainFeatureRowTwo')){$('mainFeatureRowTwo').append(launcher,ritualLauncher);}
+ else if($('game')){$('game').append(launcher,ritualLauncher);}
 })();
 </script>
 
