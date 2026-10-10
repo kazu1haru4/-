@@ -107,7 +107,7 @@ body.featureModalOpen{overflow:hidden}
 <div class="foldDivider"></div>
 <details class="foldSection" id="baseDetails"><summary><span>🔒 ベースロック</span><span class="hint" id="baseLockStatus">状態確認中…</span></summary><div class="foldContent"><p>基地を10分間ロックして、その間は盗みチャレンジからキャラクターを守るよ。</p><button id="baseLockButton" class="secondary">🔒 基地をロック（10分）</button></div></details>
 </section>
-<section class="panel" id="shopPanel" style="margin-top:18px"><div class="sectionhead" style="margin-top:0"><h2>🛒 キャラクターショップ</h2><span class="hint">30秒ごとに入れ替わる！</span></div><p>ランダムで登場するキャラクターをBrainrot Cashで購入しよう！表示中のキャラは、入れ替わるまで購入できるよ。</p><div id="shopStock" class="shopCard"><div class="shopArt">🎲</div><div class="shopInfo"><h3>キャラを選んでいるよ…</h3><div class="hint">読み込み中</div></div></div><div class="hint" id="shopCountdown" style="margin-top:10px">次の入れ替わりまで -- 秒</div><div class="hint" id="shopLuckStatus" style="margin-top:6px" aria-live="polite">🍀 ラック状態を確認中…</div></section>
+<section class="panel" id="shopPanel" style="margin-top:18px"><div class="sectionhead" style="margin-top:0"><h2>🛒 キャラクターショップ</h2><span class="hint">30秒ごとに入れ替わる！</span></div><div id="shopStock" class="shopCard"><div class="shopArt">🎲</div><div class="shopInfo"><h3>キャラを選んでいるよ…</h3><div class="hint">読み込み中</div></div></div><div class="hint" id="shopCountdown" style="margin-top:10px">次の入れ替わりまで -- 秒</div><div class="hint" id="shopLuckStatus" style="margin-top:6px" aria-live="polite">🍀 ラック状態を確認中…</div></section>
 
 
 <section class="panel" id="baseInventoryDetails" style="margin-top:18px"><div class="sectionhead" style="margin-top:0"><h2>🏠 ベース</h2><span class="hint" id="baseInventoryCount">所持数を読み込み中…</span></div><p>ベースにいるキャラクター。時間がたつと収入が貯まるよ。</p><div id="inventory" class="grid"></div><div class="bottom"><button id="claimAll">🪙 収入をまとめて受け取る</button><button id="refresh" class="secondary">↻ 更新</button></div></section>
@@ -357,6 +357,8 @@ makeFeatureModal('stealPanel','🕵️ キャラを奪う');
 makeFeatureModal('fusePanel','🧬 ヒューズ');
 makeFeatureModal('encyclopediaEntry','📚 図鑑');
 if(leaderboardPanel)makeFeatureModal('leaderboardPanel','🏆 ランキング','leaderboardModalLauncher');
+// すべての並べ替え・モーダル化が終わった後に、一覧へ戻るボタンをゲーム画面の最下部へ移動
+const cardsBackBottom=$('cardsBackBottom');if(cardsBackBottom)gameRoot.appendChild(cardsBackBottom);
 load().then(()=>{heartbeat();pollIncoming();presenceTimer=setInterval(heartbeat,30000);incomingTimer=setInterval(pollIncoming,5000);});window.addEventListener('focus',()=>{heartbeat();pollIncoming();if(!$('game').hidden){loadShop();loadEventState();}});document.addEventListener('visibilitychange',()=>{if(!document.hidden){heartbeat();pollIncoming();if(!$('game').hidden){loadShop();loadEventState();}}});
 // フレンドロット専用：二択投票・文字だけの管理者発表
 let livePollChannel=null,livePollCurrent=null,livePollUser=null,livePollAdmin=false,liveSeenPollId=null,liveSeenAnnouncementIds=new Set(),livePollNoticeTimer=null,liveAnnouncementsInitialized=false;
