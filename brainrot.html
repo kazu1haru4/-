@@ -287,15 +287,40 @@ function closeEncyclopedia(){const overlay=$('encyclopediaOverlay');overlay.clas
 setInterval(()=>{if(!document.hidden&&$('game')&&!$('game').hidden)loadFuse();},15000);
 $('refresh').addEventListener('click',load);
 makeMainSectionFoldable('eventPanel','🧬 イベント情報');
-makeMainSectionFoldable('progressPanel','🔧 ゲーム設定・リバース');
-makeMainSectionFoldable('stealPanel','🕵️ 友達のキャラを奪う');
-makeMainSectionFoldable('encyclopediaEntry','📚 キャラクター図鑑');
-makeMainSectionFoldable('fusePanel','🧬 フューズマシン');
+makeMainSectionFoldable('progressPanel','🔧 ゲーム設定');
+makeMainSectionFoldable('stealPanel','🕵️ キャラを奪う');
+makeMainSectionFoldable('encyclopediaEntry','📚 図鑑');
+makeMainSectionFoldable('fusePanel','🧬 ヒューズ');
 const leaderboardPanel=[...document.querySelectorAll('#game > section.panel')].find(el=>el.querySelector('#leaderboard'));
 if(leaderboardPanel && !leaderboardPanel.dataset.foldWrapped){
  leaderboardPanel.id='leaderboardPanel';
- makeMainSectionFoldable('leaderboardPanel','🏆 コレクションランキング');
+ makeMainSectionFoldable('leaderboardPanel','🏆 ランキング');
 }
+// メイン画面を「イベント→ショップ→ベース→2列機能→ランキング」の順に配置。
+// ショップとベースは従来どおり単独表示、各機能のID・イベント処理は維持する。
+const gameRoot=$('game');
+const featureGrid=document.createElement('div');
+featureGrid.id='mainFeatureGrid';
+featureGrid.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:18px;align-items:start';
+const featureDetails=[
+ $('progressPanel')?.closest('details.foldSection'),
+ $('stealPanel')?.closest('details.foldSection'),
+ $('fusePanel')?.closest('details.foldSection'),
+ $('encyclopediaEntry')?.closest('details.foldSection')
+].filter(Boolean);
+featureDetails.forEach(el=>featureGrid.appendChild(el));
+const shopPanel=$('shopPanel');
+const baseDetails=$('baseInventoryDetails');
+const eventDetails=$('eventPanel')?.closest('details.foldSection');
+const rankingDetails=$('leaderboardPanel')?.closest('details.foldSection');
+if(eventDetails)gameRoot.insertBefore(eventDetails,shopPanel);
+if(baseDetails)gameRoot.insertBefore(baseDetails,featureGrid.nextSibling);
+if(shopPanel && baseDetails)shopPanel.after(baseDetails);
+if(baseDetails)baseDetails.after(featureGrid);
+if(rankingDetails)featureGrid.after(rankingDetails);
+const featureGridStyle=document.createElement('style');
+featureGridStyle.textContent='@media(max-width:420px){#mainFeatureGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}#mainFeatureGrid>.foldSection summary{padding:11px 8px;font-size:13px}#mainFeatureGrid>.foldSection .panel{padding:10px}}';
+document.head.appendChild(featureGridStyle);
 load().then(()=>{heartbeat();pollIncoming();presenceTimer=setInterval(heartbeat,30000);incomingTimer=setInterval(pollIncoming,5000);});window.addEventListener('focus',()=>{heartbeat();pollIncoming();if(!$('game').hidden){loadShop();loadEventState();}});document.addEventListener('visibilitychange',()=>{if(!document.hidden){heartbeat();pollIncoming();if(!$('game').hidden){loadShop();loadEventState();}}});
 // フレンドロット専用：二択投票・文字だけの管理者発表
 let livePollChannel=null,livePollCurrent=null,livePollUser=null,livePollAdmin=false,liveSeenPollId=null,liveSeenAnnouncementIds=new Set(),livePollNoticeTimer=null,liveAnnouncementsInitialized=false;
