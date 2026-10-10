@@ -288,7 +288,15 @@ function renderEncyclopedia(){
  const query=($('encyclopediaSearch').value||'').trim().toLocaleLowerCase('ja');
  const filter=$('encyclopediaRarityFilter').value;
  const filtered=encyclopediaCatalog.filter(c=>(!query||String(c.name||'').toLocaleLowerCase('ja').includes(query))&&(!filter||encyclopediaRarityLabel(c.rarity)===filter));
- filtered.sort((a,b)=>encyclopediaRarityRank(a.rarity)-encyclopediaRarityRank(b.rarity)||String(a.name||'').localeCompare(String(b.name||''),'ja'));
+ // レア度ごとの順序を維持し、同じレア度内は1分あたりの収入が高い順。
+  filtered.sort((a,b)=>{
+    const rarityDiff=encyclopediaRarityRank(a.rarity)-encyclopediaRarityRank(b.rarity);
+    if(rarityDiff)return rarityDiff;
+    const incomeA=BigInt(String(a.income_per_minute||0));
+    const incomeB=BigInt(String(b.income_per_minute||0));
+    if(incomeA!==incomeB)return incomeA>incomeB?-1:1;
+    return String(a.name||'').localeCompare(String(b.name||''),'ja');
+  });
  $('encyclopediaCount').textContent=`${filtered.length}体表示中 / 登録 ${encyclopediaCatalog.length}体`;
  if(!filtered.length){host.innerHTML='<div class="encyclopediaEmpty">該当するキャラクターがいないよ。</div>';return;}
  const groups=new Map();
