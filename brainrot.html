@@ -535,7 +535,7 @@ async function openEncyclopedia(){
    const {data,error}=await db.from('brainrot_catalog').select('id,name,rarity,emoji,income_per_minute,is_fuse_only').order('name');
    if(error)throw error;
    // エメラルド限定キャラは通常の図鑑には表示しない（管理者機能・所持データは変更しない）
-   const encyclopediaHiddenIds=new Set(['emerald_elephant','emerald_headless_knight','emerald_meowl','og_lucky_block']);
+   const encyclopediaHiddenIds=new Set(['emerald_elephant','emerald_headless_knight','emerald_meowl','emerald_tawashi','og_lucky_block']);
    encyclopediaCatalog=(data||[]).filter(c=>!encyclopediaHiddenIds.has(String(c.id||'').toLowerCase()));
    const rarities=[...new Set([...encyclopediaCatalog.map(c=>encyclopediaRarityLabel(c.rarity)),'シークレット','GOAT','OG'])].sort((a,b)=>{const ai=encyclopediaRarityOrder.indexOf(a),bi=encyclopediaRarityOrder.indexOf(b);return (ai<0?99:ai)-(bi<0?99:bi);});
    $('encyclopediaRarityFilter').innerHTML='<option value="">すべてのレア度</option>'+rarities.map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join('');
