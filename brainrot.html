@@ -91,6 +91,12 @@ body.featureModalOpen{overflow:hidden}
 @media(max-width:420px){.tradeHead{padding:10px}.tradeHead h2{font-size:17px}.tradeBody{padding:9px}.tradePickGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.tradePick{padding:6px;gap:6px}.tradePick .art{width:34px;height:34px;flex-basis:34px}.tradePickInfo strong{font-size:11px}}
 body.tradeModalOpen{overflow:hidden}
 
+/* 属性欄の trait に「猫」または「猫属性」があるキャラだけ外枠をピンクにする */
+#inventory > .char.catTraitCard,
+#shopStock .shopCard.catTraitCard,
+#shopStock .shopLane.catTraitCard {
+  border: 2px solid #ff72c9 !important;
+}
 </style>
 </head>
 <body><div id="liveFixedNoticeStack" aria-live="polite" aria-atomic="false"></div><main class="wrap">
@@ -180,7 +186,7 @@ const characterImageUrls=new Map();
 async function loadCharacterImageUrls(){try{const {data,error}=await db.from('brainrot_catalog').select('id,name,image_url');if(error)throw error;characterImageUrls.clear();for(const c of (data||[])){const url=String(c.image_url||'').trim();if(url){characterImageUrls.set(String(c.id||'').toLowerCase(),url);characterImageUrls.set(String(c.name||'').toLowerCase(),url);}}}catch(e){console.warn('キャラクター画像URLの読み込みに失敗:',e);}}
 function characterArt(c, className='characterImage'){const id=String(c?.id||'').toLowerCase(),name=String(c?.name||'');let src=characterImageUrls.get(id)||characterImageUrls.get(name.toLowerCase())||'',alt=name||'キャラクター';if(!src&& (id==='og_meowl'||name==='ミャオル')){src='https://res.cloudinary.com/pb1afeoh/image/upload/f_auto,q_auto/meowl';alt='ミャオル';}else if(!src&&/headless|horseman|ヘッドレス|ホースマン|首なし騎士|首なし/i.test(id+' '+name)){src='https://res.cloudinary.com/pb1afeoh/image/upload/v1791636343/2DE05438-6FBB-452D-B93D-01984FCE5F65.png';alt='ヘッドレスホースマン';}else if(!src&&/strawberry.?elephant|ストロベリーエレファント|ストロベリー.?エレファント|strawberry elephant/i.test(id+' '+name)){src='https://res.cloudinary.com/pb1afeoh/image/upload/v1791638620/9199F507-7B2F-4676-BD28-25F1A5E04C21.png';alt='ストロベリーエレファント';}if(!src)return esc(c?.emoji||'🐱');const fallback=String(c?.emoji||'🐱').replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;');return `<img class="${className}" src="${esc(src)}" alt="${esc(alt)}" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.replaceWith(document.createTextNode('${fallback}'))">`;}
 
-function hasCatTrait(c){return String(c?.trait||'').split(',').some(v=>v.trim()==='猫');}
+function hasCatTrait(c){const traits=String(c?.trait??'').trim();return traits.split(/[,、・，\s]+/).some(v=>v.trim()==='猫'||v.trim()==='猫属性')||/(^|[,、・，\s])猫属性?(?=$|[,、・，\s])/.test(traits); }
 function isCatTheme(c){return hasCatTrait(c);}
 function catArt(c, className='characterImage'){return `<div class=\"catTraitArt\">${characterArt(c,className)}</div>`;}
 
