@@ -29,7 +29,7 @@
 .liveSpawnOverlay{position:fixed;inset:0;z-index:100050;display:none;align-items:center;justify-content:center;padding:calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom));background:#070713ee}
 .liveSpawnOverlay.show{display:flex}
 .liveSpawnModal{width:min(100%,720px);max-height:calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom));overflow:auto;background:linear-gradient(145deg,#202344,#151527);border:1px solid #68e7ff;border-radius:20px;padding:14px;box-shadow:0 0 35px #68e7ff22}
-.liveSpawnHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}.liveSpawnHead h2{margin:0 0 5px;font-size:22px}.liveSpawnHead p{margin:0;color:var(--muted);font-size:12px;line-height:1.5}.liveSpawnList{display:grid;gap:9px;margin-top:10px}.liveSpawnItem{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;align-items:center;padding:11px;border:1px solid #3e6681;border-radius:14px;background:linear-gradient(110deg,#172e43,#25203f)}.liveSpawnEmoji{display:grid;place-items:center;width:50px;height:50px;border-radius:12px;background:#11182b;font-size:29px}.liveSpawnName{font-weight:1000;overflow-wrap:anywhere}.liveSpawnMeta{font-size:12px;color:#bceeff;line-height:1.6;overflow-wrap:anywhere}.liveSpawnIncome{font-weight:1000;color:var(--gold)}
+.liveSpawnHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}.liveSpawnHead h2{margin:0 0 5px;font-size:22px}.liveSpawnHead p{margin:0;color:var(--muted);font-size:12px;line-height:1.5}.liveSpawnList{display:grid;gap:9px;margin-top:10px}.liveSpawnItem{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;align-items:center;padding:11px;border:1px solid #3e6681;border-radius:14px;background:linear-gradient(110deg,#172e43,#25203f)}.liveSpawnEmoji{display:grid;place-items:center;width:50px;height:50px;border-radius:12px;background:#11182b;overflow:hidden;font-size:29px}.liveSpawnCharacterImage{display:block;width:46px;height:46px;max-width:100%;max-height:100%;object-fit:contain}.liveSpawnName{font-weight:1000;overflow-wrap:anywhere}.liveSpawnMeta{font-size:12px;color:#bceeff;line-height:1.6;overflow-wrap:anywhere}.liveSpawnIncome{font-weight:1000;color:var(--gold)}
 
 /* キャラクター図鑑 */
 #encyclopediaOverlay{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;padding:calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));background:#080815ef;overflow:auto;overscroll-behavior:contain}
@@ -801,8 +801,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('encyclopediaOver
     liveSpawnList.innerHTML=filtered.map(e=>{
      const dt=e.bought_at?new Date(e.bought_at):null;
      const when=dt&&!Number.isNaN(dt.getTime())?dt.toLocaleString('ja-JP',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}):'時刻不明';
-     const emoji=esc(e.character_emoji||'🧠');
-     return `<article class="liveSpawnItem"><div class="liveSpawnEmoji">${emoji}</div><div><div class="liveSpawnName">${esc(e.character_name||e.character_id)}</div><div class="liveSpawnMeta">👤 購入者：${esc(e.buyer_id||'ユーザー')}<br><span class="liveSpawnIncome">💵 ${esc(fmtBig(e.income_per_minute))} CASH / 分</span><br>🕒 ${esc(when)}</div></div></article>`;
+     const art=characterArt({id:e.character_id,name:e.character_name,emoji:e.character_emoji},'liveSpawnCharacterImage');
+     return `<article class="liveSpawnItem"><div class="liveSpawnEmoji">${art}</div><div><div class="liveSpawnName">${esc(e.character_name||e.character_id)}</div><div class="liveSpawnMeta">👤 購入者：${esc(e.buyer_id||'ユーザー')}<br><span class="liveSpawnIncome">💵 ${esc(fmtBig(e.income_per_minute))} CASH / 分</span><br>🕒 ${esc(when)}</div></div></article>`;
     }).join('');
    }
    const newest=filtered[0]?.id;
