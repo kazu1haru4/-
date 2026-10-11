@@ -808,6 +808,23 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('encyclopediaOver
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&tradeOverlay.classList.contains('show'))closeTrade();});
  const launcher=document.createElement('button');launcher.type='button';launcher.className='modalLauncher';launcher.textContent='🤝 トレード';launcher.addEventListener('click',openTrade);
  const ritualLauncher=document.createElement('button');ritualLauncher.type='button';ritualLauncher.className='modalLauncher';ritualLauncher.textContent='🐱 儀式';ritualLauncher.style.background='linear-gradient(110deg,#d9a3ff,#ffb8df)';ritualLauncher.style.gridColumn='1 / -1';
+ const craftLauncher=document.createElement('button');craftLauncher.type='button';craftLauncher.className='modalLauncher';craftLauncher.textContent='🛠️ クラフト';craftLauncher.style.background='linear-gradient(110deg,#8de5ff,#a9ffcf)';
+ let craftOverlay=null;
+ function openCraft(){if(!craftOverlay)return;craftOverlay.style.display='flex';craftOverlay.classList.add('show');craftOverlay.setAttribute('aria-hidden','false');document.body.classList.add('tradeModalOpen');const closeButton=$('craftClose');if(closeButton)closeButton.focus();}
+ function closeCraft(){if(!craftOverlay)return;craftOverlay.classList.remove('show');craftOverlay.style.display='none';craftOverlay.setAttribute('aria-hidden','true');document.body.classList.remove('tradeModalOpen');craftLauncher.focus();}
+ craftLauncher.addEventListener('click',openCraft);
+ craftOverlay=document.createElement('div');craftOverlay.id='craftOverlay';craftOverlay.setAttribute('aria-hidden','true');craftOverlay.style.cssText='position:fixed;inset:0;z-index:100031;display:none;align-items:center;justify-content:center;padding:calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom));background:#080815ef;overscroll-behavior:contain;';
+ const craftModal=document.createElement('section');craftModal.style.cssText='box-sizing:border-box;width:min(100%,900px);max-height:calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:linear-gradient(145deg,#183344,#141426);border:1px solid #71d9e8;border-radius:20px;padding:12px;';
+ const craftHead=document.createElement('div');craftHead.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;';
+ const craftTitle=document.createElement('strong');craftTitle.textContent='🛠️ クラフト';craftTitle.style.fontSize='19px';
+ const craftClose=document.createElement('button');craftClose.type='button';craftClose.id='craftClose';craftClose.className='secondary';craftClose.textContent='✕ 閉じる';craftClose.style.padding='9px 12px';
+ craftHead.append(craftTitle,craftClose);
+ const craftBody=document.createElement('div');craftBody.className='panel';craftBody.style.cssText='margin:0;background:#101a2b;border:1px solid #31536b;';
+ craftBody.innerHTML='<h2 style="margin-top:0">素材を組み合わせて作ろう！</h2><p>ここは儀式とは別のクラフト専用画面だよ。</p><p class="hint">クラフトのレシピや作成処理はまだ設定されていないよ。既存の儀式・ヒューズの処理は使わず、別機能として追加できるよ。</p>';
+ craftModal.append(craftHead,craftBody);craftOverlay.appendChild(craftModal);document.body.appendChild(craftOverlay);
+ craftClose.addEventListener('click',closeCraft);craftOverlay.addEventListener('click',e=>{if(e.target===craftOverlay)closeCraft();});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&craftOverlay.classList.contains('show'))closeCraft();});
+ const craftStyle=document.createElement('style');craftStyle.textContent='#craftOverlay.show{display:flex}#craftOverlay .panel{padding:16px}';document.head.appendChild(craftStyle);
  const ritualPanel=$('migatitoRitualPanel');
  let ritualOverlay=null;
  function openRitual(){if(!ritualOverlay){setMigatitoRitualStatus('儀式画面を開けなかったよ。ページを再読み込みしてね。',true);return;}ritualOverlay.style.display='flex';ritualOverlay.classList.add('show');ritualOverlay.setAttribute('aria-hidden','false');document.body.classList.add('tradeModalOpen');renderMigatitoRitual();renderAllLosOgRituals();const closeButton=$('migatitoRitualClose');if(closeButton)closeButton.focus();}
@@ -825,8 +842,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('encyclopediaOver
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ritualOverlay.classList.contains('show'))closeRitual();});
   const style=document.createElement('style');style.textContent='#migatitoRitualOverlay.show{display:flex}#migatitoRitualOverlay #migatitoRitualPanel{background:transparent!important}';document.head.appendChild(style);
  }
- if($('mainFeatureRowTwo')){$('mainFeatureRowTwo').append(launcher,ritualLauncher);}
- else if($('game')){$('game').append(launcher,ritualLauncher);}
+ if($('mainFeatureRowTwo')){$('mainFeatureRowTwo').append(launcher,craftLauncher,ritualLauncher);}
+ else if($('game')){$('game').append(launcher,craftLauncher,ritualLauncher);}
 
  // ライブスポーン：Supabaseの購入イベントを5秒ごとに取得
  const liveSpawnOverlay=$('liveSpawnOverlay');
