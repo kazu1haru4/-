@@ -952,14 +952,16 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('encyclopediaOver
    if(error)throw error;
    const events=Array.isArray(data?.events)?data.events:[];
    const liveCutoff=Date.now()-5*60*1000;
-   const filtered=events.filter(e=>{try{const boughtAt=Date.parse(e.bought_at||'');return BigInt(String(e.income_per_minute||0))>50000000n&&Number.isFinite(boughtAt)&&boughtAt>liveCutoff;}catch(_){return false;}});
+   const filtered=events.filter(e=>{try{const boughtAt=Date.parse(e.bought_at||'');const isOgBlock=String(e.character_id||'')==='og_lucky_block';return (isOgBlock||BigInt(String(e.income_per_minute||0))>50000000n)&&Number.isFinite(boughtAt)&&boughtAt>liveCutoff;}catch(_){return false;}});
    if(!filtered.length){liveSpawnList.innerHTML='<div class="loading">まだ50M超えの購入はないよ。誰かが購入するとここに表示されるよ！</div>';}
    else{
     liveSpawnList.innerHTML=filtered.map(e=>{
      const dt=e.bought_at?new Date(e.bought_at):null;
      const when=dt&&!Number.isNaN(dt.getTime())?dt.toLocaleString('ja-JP',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}):'時刻不明';
-     const art=characterArt({id:e.character_id,name:e.character_name,emoji:e.character_emoji},'liveSpawnCharacterImage');
-     return `<article class="liveSpawnItem"><div class="liveSpawnEmoji">${art}</div><div><div class="liveSpawnName">${esc(e.character_name||e.character_id)}</div><div class="liveSpawnMeta">👤 購入者：${esc(e.buyer_id||'ユーザー')}<br><span class="liveSpawnIncome">💵 ${esc(fmtBig(e.income_per_minute))} CASH / 分</span><br>🕒 ${esc(when)}</div></div></article>`;
+     const isOgBlock=String(e.character_id||'')==='og_lucky_block';
+     const art=isOgBlock?'<span style="font-size:35px;filter:drop-shadow(0 0 8px #ffcf5b)">🌈❔</span>':characterArt({id:e.character_id,name:e.character_name,emoji:e.character_emoji},'liveSpawnCharacterImage');
+     const valueLabel=isOgBlock?`🛒 OGラッキーブロック購入 · ${esc(fmtBig(e.income_per_minute))} CASH`:`💵 ${esc(fmtBig(e.income_per_minute))} CASH / 分`;
+     return `<article class="liveSpawnItem ${isOgBlock?'ogLuckyBlockLiveSpawn':''}"><div class="liveSpawnEmoji">${art}</div><div><div class="liveSpawnName">${esc(e.character_name||e.character_id)}</div><div class="liveSpawnMeta">👤 購入者：${esc(e.buyer_id||'ユーザー')}<br><span class="liveSpawnIncome">${valueLabel}</span><br>🕒 ${esc(when)}</div></div></article>`;
     }).join('');
    }
    const newest=filtered[0]?.id;
