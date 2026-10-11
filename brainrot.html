@@ -795,7 +795,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('encyclopediaOver
    const {data,error}=await db.rpc('brainrot_live_spawn_events');
    if(error)throw error;
    const events=Array.isArray(data?.events)?data.events:[];
-   const filtered=events.filter(e=>{try{return BigInt(String(e.income_per_minute||0))>50000000n;}catch(_){return false;}});
+   const liveCutoff=Date.now()-5*60*1000;
+   const filtered=events.filter(e=>{try{const boughtAt=Date.parse(e.bought_at||'');return BigInt(String(e.income_per_minute||0))>50000000n&&Number.isFinite(boughtAt)&&boughtAt>liveCutoff;}catch(_){return false;}});
    if(!filtered.length){liveSpawnList.innerHTML='<div class="loading">まだ50M超えの購入はないよ。誰かが購入するとここに表示されるよ！</div>';}
    else{
     liveSpawnList.innerHTML=filtered.map(e=>{
@@ -806,7 +807,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('encyclopediaOver
     }).join('');
    }
    const newest=filtered[0]?.id;
-   liveSpawnStatus.textContent=`50M超えの購入：${filtered.length}件（最新50件以内）${newest?' ・ 自動更新中':''}`;
+   liveSpawnStatus.textContent=`50M超えの購入：${filtered.length}件（直近5分以内）${newest?' ・ 自動更新中':''}`;
    liveSpawnLastIds=new Set(filtered.map(e=>String(e.id)));
   }catch(e){liveSpawnStatus.textContent='読み込みに失敗したよ。Supabaseの設定を確認してね。';liveSpawnList.innerHTML=`<div class="loading">${esc(e.message||String(e))}</div>`;}
   finally{liveSpawnLoading=false;}
