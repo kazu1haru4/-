@@ -22,6 +22,15 @@
 /* Snap:全員共通の短い演出 */
 .snapOverlay{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center;padding:20px;background:radial-gradient(circle at center,#54112cdd 0,#100817f5 62%,#05040afc);overflow:hidden}.snapOverlay.show{display:flex;animation:snapBackdrop .45s ease-out both}.snapAura{font-size:clamp(90px,24vw,190px);line-height:1;filter:drop-shadow(0 0 24px #ff234f);animation:snapEntrance 2.6s cubic-bezier(.2,.8,.2,1) both}.snapTitle{font-size:clamp(28px,8vw,54px);font-weight:1000;color:#fff;text-shadow:0 0 18px #ff275d,0 3px 0 #6b1132}.snapSubtitle{font-weight:800;color:#ffd7e3;font-size:15px}.snapOverlay.snapPop .snapAura{animation:snapPop .45s ease-out both}.snapOverlay.snapPop:after{content:'💥  ⚡  💥';position:absolute;font-size:clamp(30px,10vw,70px);animation:snapFlash .5s ease-out both}@keyframes snapBackdrop{from{opacity:0}to{opacity:1}}@keyframes snapEntrance{0%{transform:translateY(100vh) scale(.2);opacity:0}40%{transform:translateY(0) scale(1.2);opacity:1}70%{transform:scale(1.05)}100%{transform:scale(1)}}@keyframes snapPop{0%{transform:scale(1)}45%{transform:scale(1.55) rotate(-8deg)}100%{transform:scale(.9);opacity:.4}}@keyframes snapFlash{0%{opacity:0;transform:scale(.2)}35%{opacity:1;transform:scale(1.3)}100%{opacity:0;transform:scale(2)}}
 
+
+/* ライブスポーン：ベース直下の横長ボタンと購入通知画面 */
+.liveSpawnOpen{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:100%;margin-top:10px;padding:15px 12px;border:1px solid #68e7ff;border-radius:16px;background:linear-gradient(100deg,#143d58,#38225c 55%,#174b54);color:#f7fbff;font-size:clamp(17px,4.5vw,22px);box-shadow:0 0 18px #68e7ff22}
+.liveSpawnOpen span{font-size:11px;color:#c9f6ff;font-weight:700}
+.liveSpawnOverlay{position:fixed;inset:0;z-index:100050;display:none;align-items:center;justify-content:center;padding:calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom));background:#070713ee}
+.liveSpawnOverlay.show{display:flex}
+.liveSpawnModal{width:min(100%,720px);max-height:calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom));overflow:auto;background:linear-gradient(145deg,#202344,#151527);border:1px solid #68e7ff;border-radius:20px;padding:14px;box-shadow:0 0 35px #68e7ff22}
+.liveSpawnHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}.liveSpawnHead h2{margin:0 0 5px;font-size:22px}.liveSpawnHead p{margin:0;color:var(--muted);font-size:12px;line-height:1.5}.liveSpawnList{display:grid;gap:9px;margin-top:10px}.liveSpawnItem{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;align-items:center;padding:11px;border:1px solid #3e6681;border-radius:14px;background:linear-gradient(110deg,#172e43,#25203f)}.liveSpawnEmoji{display:grid;place-items:center;width:50px;height:50px;border-radius:12px;background:#11182b;font-size:29px}.liveSpawnName{font-weight:1000;overflow-wrap:anywhere}.liveSpawnMeta{font-size:12px;color:#bceeff;line-height:1.6;overflow-wrap:anywhere}.liveSpawnIncome{font-weight:1000;color:var(--gold)}
+
 /* キャラクター図鑑 */
 #encyclopediaOverlay{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;padding:calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));background:#080815ef;overflow:auto;overscroll-behavior:contain}
 #encyclopediaOverlay.show{display:flex}
@@ -153,6 +162,14 @@ body.tradeModalOpen{overflow:hidden}
 
 
 <details class="panel foldSection" id="baseInventoryDetails" style="margin-top:18px;padding:0"><summary><span>🏠 ベース</span><span class="hint" id="baseInventoryCount">所持数を読み込み中…</span></summary><div class="foldContent"><p>ベースにいるキャラクター。時間がたつと収入が貯まるよ。</p><div id="inventory" class="grid"></div><div class="bottom"><button id="starterRescue" class="adminButton" hidden>🆘 0 CASH救済キャラクターを受け取る</button><button id="claimAll">🪙 収入をまとめて受け取る</button><button id="refresh" class="secondary">↻ 更新</button></div></div></details>
+<button type="button" id="liveSpawnOpen" class="liveSpawnOpen">📡 ライブスポーン <span>50M超えの購入をリアルタイム表示</span></button>
+<div id="liveSpawnOverlay" class="liveSpawnOverlay" aria-hidden="true">
+ <section class="liveSpawnModal" role="dialog" aria-modal="true" aria-labelledby="liveSpawnTitle">
+  <div class="liveSpawnHead"><div><h2 id="liveSpawnTitle">📡 ライブスポーン</h2><p>誰かが収入50M超えのキャラを購入するとここに表示されるよ！</p></div><button type="button" id="liveSpawnClose" class="secondary">✕ 閉じる</button></div>
+  <div id="liveSpawnStatus" class="hint" aria-live="polite">購入履歴を読み込み中…</div>
+  <div id="liveSpawnList" class="liveSpawnList"><div class="loading">読み込み中…</div></div>
+ </section>
+</div>
 <section class="panel" style="margin-top:24px" id="stealPanel">
  <div class="sectionhead" style="margin-top:0"><h2>🕵️ 友達のキャラを奪う</h2></div>
  <p>オンライン中のフレンドにだけ挑戦できるよ！相手には防衛ミニゲームが届き、制限時間内にクリアすると盗み失敗。相手の最後の1体は奪えません。成功後の挑戦は30分に1回まで。</p>
@@ -764,6 +781,43 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('encyclopediaOver
  }
  if($('mainFeatureRowTwo')){$('mainFeatureRowTwo').append(launcher,ritualLauncher);}
  else if($('game')){$('game').append(launcher,ritualLauncher);}
+
+ // ライブスポーン：Supabaseの購入イベントを5秒ごとに取得
+ const liveSpawnOverlay=$('liveSpawnOverlay');
+ const liveSpawnList=$('liveSpawnList');
+ const liveSpawnStatus=$('liveSpawnStatus');
+ let liveSpawnOpen=false, liveSpawnLoading=false, liveSpawnLastIds=new Set();
+ function closeLiveSpawn(){liveSpawnOpen=false;liveSpawnOverlay?.classList.remove('show');liveSpawnOverlay?.setAttribute('aria-hidden','true');document.body.classList.remove('tradeModalOpen');$('liveSpawnOpen')?.focus();}
+ async function loadLiveSpawnEvents(){
+  if(liveSpawnLoading||document.hidden)return;
+  liveSpawnLoading=true;
+  try{
+   const {data,error}=await db.rpc('brainrot_live_spawn_events');
+   if(error)throw error;
+   const events=Array.isArray(data?.events)?data.events:[];
+   const filtered=events.filter(e=>{try{return BigInt(String(e.income_per_minute||0))>50000000n;}catch(_){return false;}});
+   if(!filtered.length){liveSpawnList.innerHTML='<div class="loading">まだ50M超えの購入はないよ。誰かが購入するとここに表示されるよ！</div>';}
+   else{
+    liveSpawnList.innerHTML=filtered.map(e=>{
+     const dt=e.bought_at?new Date(e.bought_at):null;
+     const when=dt&&!Number.isNaN(dt.getTime())?dt.toLocaleString('ja-JP',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}):'時刻不明';
+     const emoji=esc(e.character_emoji||'🧠');
+     return `<article class="liveSpawnItem"><div class="liveSpawnEmoji">${emoji}</div><div><div class="liveSpawnName">${esc(e.character_name||e.character_id)}</div><div class="liveSpawnMeta">👤 購入者：${esc(e.buyer_id||'ユーザー')}<br><span class="liveSpawnIncome">💵 ${esc(fmtBig(e.income_per_minute))} CASH / 分</span><br>🕒 ${esc(when)}</div></div></article>`;
+    }).join('');
+   }
+   const newest=filtered[0]?.id;
+   liveSpawnStatus.textContent=`50M超えの購入：${filtered.length}件（最新50件以内）${newest?' ・ 自動更新中':''}`;
+   liveSpawnLastIds=new Set(filtered.map(e=>String(e.id)));
+  }catch(e){liveSpawnStatus.textContent='読み込みに失敗したよ。Supabaseの設定を確認してね。';liveSpawnList.innerHTML=`<div class="loading">${esc(e.message||String(e))}</div>`;}
+  finally{liveSpawnLoading=false;}
+ }
+ $('liveSpawnOpen')?.addEventListener('click',()=>{liveSpawnOpen=true;liveSpawnOverlay.classList.add('show');liveSpawnOverlay.setAttribute('aria-hidden','false');document.body.classList.add('tradeModalOpen');loadLiveSpawnEvents();});
+ $('liveSpawnClose')?.addEventListener('click',closeLiveSpawn);
+ liveSpawnOverlay?.addEventListener('click',e=>{if(e.target===liveSpawnOverlay)closeLiveSpawn();});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&liveSpawnOverlay?.classList.contains('show'))closeLiveSpawn();});
+ loadLiveSpawnEvents();
+ setInterval(()=>{if(liveSpawnOpen)loadLiveSpawnEvents();},5000);
+
 })();
 </script>
 
