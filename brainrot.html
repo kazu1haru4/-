@@ -172,10 +172,13 @@ body.tradeModalOpen{overflow:hidden}
 </div>
 <section class="panel" style="margin-top:24px" id="stealPanel">
  <div class="sectionhead" style="margin-top:0"><h2>🕵️ 友達のキャラを奪う</h2></div>
- <p>オンライン中のフレンドにだけ挑戦できるよ！相手には防衛ミニゲームが届き、制限時間内にクリアすると盗み失敗。相手の最後の1体は奪えません。成功後の挑戦は30分に1回まで。</p>
+ <p>オンライン中のフレンドのベースを読み込み、盗みたいキャラを選んで挑戦できるよ！相手が防衛ミニゲームをクリアすると失敗。最後の1体とエメラルド3体は奪えません。挑戦は30分に1回まで。</p>
  <label for="targetUser" class="hint">相手のユーザーID</label>
- <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:7px"><input id="targetUser" maxlength="100" autocomplete="off" placeholder="友達のユーザーID" style="flex:1;min-width:180px;padding:12px;border-radius:12px;border:1px solid var(--line);background:#111126;color:var(--text);font:inherit"><button id="stealButton">キャラを奪う！</button></div>
- <div id="stealStatus" role="status" aria-live="polite" style="margin-top:10px;padding:10px 12px;border-radius:12px;background:#111126;border:1px solid var(--line);min-height:42px">相手のユーザーIDを入力して「キャラを奪う！」を押してね。</div><div class="hint" style="margin-top:8px">※ゲーム内のキャラクター移動だよ。通貨は消費しません。</div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:7px"><input id="targetUser" maxlength="100" autocomplete="off" placeholder="友達のユーザーID" style="flex:1;min-width:180px;padding:12px;border-radius:12px;border:1px solid var(--line);background:#111126;color:var(--text);font:inherit"><button id="loadStealBaseButton" type="button">🏠 ベースを読み込む</button></div>
+ <div id="stealBaseStatus" class="hint" role="status" style="margin-top:8px">相手のIDを入力してベースを読み込んでね。</div>
+ <div id="stealBaseCharacters" class="grid" style="margin-top:10px"></div>
+ <button id="stealButton" type="button" disabled style="width:100%;margin-top:10px">選んだキャラに挑戦！</button>
+ <div id="stealStatus" role="status" aria-live="polite" style="margin-top:10px;padding:10px 12px;border-radius:12px;background:#111126;border:1px solid var(--line);min-height:42px">相手のベースを読み込んでキャラを選んでね。</div><div class="hint" style="margin-top:8px">※ゲーム内のキャラクター移動だよ。通貨は消費しません。</div>
 </section>
 <section class="panel" id="encyclopediaEntry" style="margin-top:24px">
  <div class="sectionhead" style="margin-top:0"><h2>📚 キャラクター図鑑</h2><span class="hint">全キャラクターを確認</span></div>
@@ -303,7 +306,23 @@ async function resolveAttackerRequest(requestId,waitSeconds){
  const timer=setTimeout(async()=>{attackerChecks.delete(requestId);try{const {data,error}=await db.rpc('brainrot_resolve_steal',{input_request_id:requestId});if(error)throw error;if(data.ok){const c=data.character;notify(`🥷 ${c.emoji} ${c.name}（${c.rarity}）を仲間にしたよ！ +${fmtBig(c.income_per_minute)} CASH/分`);await load();}else if(data.reason==='defended'){notify('🛡️ 相手がミニゲームをクリア！盗み失敗！',true);}else if(data.reason==='waiting'){resolveAttackerRequest(requestId,Number(data.wait_seconds||1));}else{notify(data.message||'今回は盗めなかったよ。',true);}}catch(e){notify('結果の確認に失敗：'+e.message,true);}},Math.max(1,Number(waitSeconds||25))*1000+250);
  attackerChecks.set(requestId,timer);
 }
-$('stealButton').addEventListener('click',async()=>{const b=$('stealButton');const target=$('targetUser').value.trim();if(!target){setStealStatus('先に相手のユーザーIDを入力してね！',true);notify('相手のユーザーIDを入力してね！',true);return;}b.disabled=true;b.textContent='確認中…';setStealStatus('フレンド関係・オンライン状態を確認中…');try{const {data,error}=await db.rpc('brainrot_request_steal',{input_target_user_id:target});if(error)throw error;if(!data.ok){const mins=Math.ceil(Number(data.wait_seconds||0)/60);const msg=data.reason==='cooldown'?`次の挑戦まであと約${mins}分待ってね！`:'今回は挑戦できなかったよ。';setStealStatus(msg,true);notify(msg,true);return;}const msg=`${target} に防衛ミニゲームを送ったよ！25秒待って結果を確認するね。`;setStealStatus(msg);notify(msg);resolveAttackerRequest(data.request_id,Number(data.wait_seconds||25));}catch(e){const msg='挑戦できなかったよ：'+(e.message||String(e));setStealStatus(msg,true);notify(msg,true);}finally{b.disabled=false;b.textContent='キャラを奪う！';}});
+let stealBaseTarget='', selectedStealInventoryId='';
+async function loadStealBase(){
+ const target=$('targetUser').value.trim(),button=$('loadStealBaseButton'),host=$('stealBaseCharacters'),status=$('stealBaseStatus');
+ if(!target){status.textContent='先に相手のユーザーIDを入力してね。';return;}
+ button.disabled=true;button.textContent='読み込み中…';status.textContent='フレンド関係・オンライン状態・基地ロックを確認中…';host.innerHTML='';selectedStealInventoryId='';stealBaseTarget='';$('stealButton').disabled=true;
+ try{
+  const {data,error}=await db.rpc('brainrot_preview_steal_base',{input_target_user_id:target});if(error)throw error;if(!data?.ok)throw new Error(data?.message||'ベースを読み込めませんでした');
+  stealBaseTarget=target;const chars=data.characters||[];
+  status.textContent=`${target} のベース：全${Number(data.total_count||0)}体 / 選択可能 ${chars.length}体。盗みたいキャラを選んでね。`;
+  if(!chars.length){host.innerHTML='<div class="hint">選べるキャラがいないよ（保護対象のみ、またはベースが空です）。</div>';return;}
+  host.innerHTML=chars.map(c=>`<article class="char" style="cursor:pointer;border:2px solid var(--line)" data-steal-inventory="${esc(c.inventory_id)}"><div class="art">${characterArt({id:c.character_id,name:c.name,emoji:c.emoji})}</div><h3>${esc(c.name||c.character_id)}</h3><span class="rarity ${esc(c.rarity||'')} ">${esc(c.rarity||'')}</span><div class="income">${fmtBig(c.income_per_minute||0)} CASH/分</div>${c.mutation&&c.mutation!=='なし'?`<div class="hint">🧬 ${esc(c.mutation)}</div>`:''}${c.trait&&c.trait!=='なし'?`<div class="hint">✨ ${esc(c.trait)}</div>`:''}<button type="button" class="secondary" data-select-steal="${esc(c.inventory_id)}" style="width:100%;margin-top:8px">このキャラを選ぶ</button></article>`).join('');
+  host.querySelectorAll('[data-select-steal]').forEach(btn=>btn.addEventListener('click',()=>{selectedStealInventoryId=btn.dataset.selectSteal;host.querySelectorAll('[data-steal-inventory]').forEach(card=>{const active=card.dataset.stealInventory===selectedStealInventoryId;card.style.borderColor=active?'#7ef0b1':'var(--line)';card.style.boxShadow=active?'0 0 0 2px #7ef0b155':'none';const choose=card.querySelector('[data-select-steal]');if(choose)choose.textContent=active?'✓ 選択中':'このキャラを選ぶ';});$('stealButton').disabled=false;setStealStatus(`「${btn.closest('[data-steal-inventory]').querySelector('h3')?.textContent||'選んだキャラ'}」を選択中。挑戦ボタンで開始できるよ。`);}));
+ }catch(e){status.textContent='ベース読み込みエラー：'+(e.message||String(e));host.innerHTML='';}finally{button.disabled=false;button.textContent='🏠 ベースを読み込む';}
+}
+$('loadStealBaseButton').addEventListener('click',loadStealBase);
+$('targetUser').addEventListener('change',()=>{selectedStealInventoryId='';stealBaseTarget='';$('stealBaseCharacters').innerHTML='';$('stealBaseStatus').textContent='相手が変わったよ。ベースを読み込み直してね。';$('stealButton').disabled=true;});
+$('stealButton').addEventListener('click',async()=>{const b=$('stealButton');const target=$('targetUser').value.trim();if(!target||target!==stealBaseTarget||!selectedStealInventoryId){setStealStatus('相手のベースを読み込み、盗みたいキャラを選んでね！',true);return;}b.disabled=true;b.textContent='挑戦中…';setStealStatus('選んだキャラへの挑戦を送信中…');try{const {data,error}=await db.rpc('brainrot_request_steal',{input_target_user_id:target,input_target_inventory_id:selectedStealInventoryId});if(error)throw error;if(!data.ok){const mins=Math.ceil(Number(data.wait_seconds||0)/60);const msg=data.reason==='cooldown'?`次の挑戦まであと約${mins}分待ってね！`:data.message||'今回は挑戦できなかったよ。';setStealStatus(msg,true);notify(msg,true);return;}const msg=`${target} に選んだキャラへの防衛ミニゲームを送ったよ！25秒待って結果を確認するね。`;setStealStatus(msg);notify(msg);resolveAttackerRequest(data.request_id,Number(data.wait_seconds||25));}catch(e){const msg='挑戦できなかったよ：'+(e.message||String(e));setStealStatus(msg,true);notify(msg,true);}finally{b.disabled=!selectedStealInventoryId;b.textContent='選んだキャラに挑戦！';}});
 
 const eventMusic = new Audio('montagem miaw.mp3');
 eventMusic.loop = true;
@@ -476,9 +495,7 @@ async function openEncyclopedia(){
   try{
    const {data,error}=await db.from('brainrot_catalog').select('id,name,rarity,emoji,income_per_minute,is_fuse_only').order('name');
    if(error)throw error;
-   // 管理者専用のエメラルドOGは図鑑には表示しない（管理者スポーン用のカタログ登録は維持）。
-   const encyclopediaHiddenIds=new Set(['emerald_elephant','emerald_meowl','emerald_headless_knight']);
-   encyclopediaCatalog=(data||[]).filter(c=>!encyclopediaHiddenIds.has(String(c.id||'').toLowerCase()));
+   encyclopediaCatalog=data||[];
    const rarities=[...new Set(encyclopediaCatalog.map(c=>encyclopediaRarityLabel(c.rarity)))].sort((a,b)=>{const ai=encyclopediaRarityOrder.indexOf(a),bi=encyclopediaRarityOrder.indexOf(b);return (ai<0?99:ai)-(bi<0?99:bi);});
    $('encyclopediaRarityFilter').innerHTML='<option value="">すべてのレア度</option>'+rarities.map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join('');
   }catch(e){$('encyclopediaList').innerHTML=`<div class="encyclopediaEmpty">図鑑を読み込めなかったよ：${esc(e.message||String(e))}</div>`;return;}
