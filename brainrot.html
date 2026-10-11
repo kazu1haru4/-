@@ -304,29 +304,46 @@ async function loadLuckyBlock(){
   ]);
   if(secretError)throw secretError;
   if(ogError)throw ogError;
-  for(const id of ['baseLuckyBlockCard','baseOgLuckyBlockCard'])$(id)?.remove();
+  grid.querySelectorAll('[data-lucky-block-card]').forEach(card=>card.remove());
   const qty=Math.max(0,Number(secret?.quantity||0));
-  const card=document.createElement('article');
-  card.className='char';card.id='baseLuckyBlockCard';
-  card.innerHTML=`<div class="art">${characterArt({id:'secret_lucky_block',name:'シークレット・ラッキーブロック',emoji:'🎁'})}</div><h3>シークレット・ラッキーブロック</h3><span class="rarity シークレット">シークレット</span><div class="income">🎁 所持数：${qty}個</div><div class="mutationTrait compactTraits"><div class="traitLine">🧬 <b>変異</b>：なし</div><div class="traitLine">✨ <b>属性</b>：なし</div></div><div class="pending">${qty>0?'開封するとランダムなキャラを獲得':'ショップで購入すると、ここから開封できるよ'}</div><button id="openSecretLuckyBlock" class="sellButton" ${qty>0?'':'disabled'}>🎁 開封する</button><div id="luckyBlockStatus" class="hint" role="status" style="margin-top:8px"></div>`;
-  grid.appendChild(card);
-  $('openSecretLuckyBlock').addEventListener('click',openSecretLuckyBlock);
   const ogQty=Math.max(0,Number(og?.quantity||0));
-  const ogCard=document.createElement('article');
-  ogCard.className='char';ogCard.id='baseOgLuckyBlockCard';
-  ogCard.innerHTML=`<div class="art">${characterArt({id:'og_lucky_block',name:'OGラッキーブロック',emoji:'🌈',image_url:'https://res.cloudinary.com/pb1afeoh/image/upload/v1791738967/C21F75FB-532F-45C6-97C2-DF4B4D53A613.png'})}</div><h3>OGラッキーブロック</h3><span class="rarity OG">OG</span><div class="income">🪽 所持数：${ogQty}個</div><div class="pending">${ogQty>0?'ミャオル40%・ストロベリーエレファント30%・首なし騎士20%・聖なるたわし10%':'ショップで購入すると、ここから開封できるよ'}</div><button id="openOgLuckyBlock" class="sellButton" ${ogQty>0?'':'disabled'}>🪽 開封する</button><div id="ogLuckyBlockOpenStatus" class="hint" role="status" style="margin-top:8px"></div>`;
-  grid.appendChild(ogCard);
-  $('openOgLuckyBlock').addEventListener('click',openOgLuckyBlock);
+  // ブロックは所持数をまとめた1枚にせず、1個につき独立したカードとしてベースに表示する。
+  for(let i=0;i<qty;i++){
+   const card=document.createElement('article');card.className='char';card.dataset.luckyBlockCard='secret';
+   card.innerHTML=`<div class="art">${characterArt({id:'secret_lucky_block',name:'シークレット・ラッキーブロック',emoji:'🎁'})}</div><h3>シークレット・ラッキーブロック</h3><span class="rarity シークレット">シークレット</span><div class="income">🎁 所持：1個</div><div class="mutationTrait compactTraits"><div class="traitLine">🧬 <b>変異</b>：なし</div><div class="traitLine">✨ <b>属性</b>：なし</div></div><div class="pending">開封するとランダムなキャラを獲得</div><button class="sellButton" data-open-secret-block>🎁 開封する</button><div class="hint" data-block-status role="status" style="margin-top:8px"></div>`;
+   grid.appendChild(card);
+   card.querySelector('[data-open-secret-block]').addEventListener('click',()=>openSecretLuckyBlock(card));
+  }
+  for(let i=0;i<ogQty;i++){
+   const card=document.createElement('article');card.className='char';card.dataset.luckyBlockCard='og';
+   card.innerHTML=`<div class="art">${characterArt({id:'og_lucky_block',name:'OGラッキーブロック',emoji:'🌈',image_url:'https://res.cloudinary.com/pb1afeoh/image/upload/v1791738967/C21F75FB-532F-45C6-97C2-DF4B4D53A613.png'})}</div><h3>OGラッキーブロック</h3><span class="rarity OG">OG</span><div class="income">🪽 所持：1個</div><div class="pending">ミャオル40%・ストロベリーエレファント30%・首なし騎士20%・聖なるたわし10%</div><button class="sellButton" data-open-og-block>🪽 開封する</button><div class="hint" data-block-status role="status" style="margin-top:8px"></div>`;
+   grid.appendChild(card);
+   card.querySelector('[data-open-og-block]').addEventListener('click',()=>openOgLuckyBlock(card));
+  }
  }catch(e){
   console.error('ラッキーブロックの読み込みに失敗:',e);
-  // 状態取得に失敗してもベースからラッキーブロックの存在を確認できるようにカードは残す
-  for(const id of ['baseLuckyBlockCard','baseOgLuckyBlockCard'])$(id)?.remove();
-  const card=document.createElement('article');card.className='char';card.id='baseLuckyBlockCard';
-  card.innerHTML=`<h3>🎁 シークレット・ラッキーブロック</h3><div class="pending">所持数を読み込めなかったよ。再読み込みしてね。</div><div class="hint">${esc(e.message||String(e))}</div>`;grid.appendChild(card);
+  grid.querySelectorAll('[data-lucky-block-card]').forEach(card=>card.remove());
+  const card=document.createElement('article');card.className='char';card.dataset.luckyBlockCard='error';
+  card.innerHTML=`<h3>🎁 ラッキーブロック</h3><div class="pending">所持数を読み込めなかったよ。再読み込みしてね。</div><div class="hint">${esc(e.message||String(e))}</div>`;grid.appendChild(card);
  }
 }
-async function openOgLuckyBlock(){const b=$('openOgLuckyBlock'),status=$('ogLuckyBlockOpenStatus');if(!b||b.disabled)return;if(!confirm('OGラッキーブロックを開封するよ。キャラクターを1体獲得する？'))return;b.disabled=true;b.textContent='✨ 開封中…';if(status)status.textContent='ブロックを開封中…';try{await new Promise(resolve=>setTimeout(resolve,1200));const {data,error}=await db.rpc('brainrot_open_og_lucky_block');if(error)throw error;if(!data?.ok)throw new Error(data?.message||'開封できなかったよ');const c=data.character||{};await load();await loadLuckyBlock();const refreshedStatus=$('ogLuckyBlockOpenStatus');if(refreshedStatus)refreshedStatus.textContent=`🎉 ${c.emoji||'🧠'} ${c.name||'キャラクター'} を獲得！ ${fmtBig(c.income_per_minute||0)} CASH/分`;notify(`🎉 OGラッキーブロックから ${c.emoji||'🧠'} ${c.name||'キャラクター'} を獲得！`);}catch(e){const refreshedStatus=$('ogLuckyBlockOpenStatus');if(refreshedStatus)refreshedStatus.textContent='開封エラー：'+(e.message||String(e));notify('開封エラー：'+(e.message||String(e)),true);}finally{await loadLuckyBlock();const current=$('openOgLuckyBlock');if(current){current.disabled=false;current.textContent='🪽 開封する';}}}
-async function openSecretLuckyBlock(){const b=$('openSecretLuckyBlock');if(!b||b.disabled)return;b.disabled=true;b.textContent='✨ 開封中…';try{const {data,error}=await db.rpc('brainrot_open_secret_lucky_block');if(error)throw error;if(!data?.ok)throw new Error(data?.message||'開封できなかったよ');const c=data.character||{};await load();await loadLuckyBlock();const refreshedStatus=$('luckyBlockStatus');if(refreshedStatus)refreshedStatus.textContent=`🎉 ${c.emoji||'🧠'} ${c.name||'キャラクター'} を獲得！ ${fmtBig(c.income_per_minute||0)} CASH/分`;notify(`🎉 ラッキーブロックから ${c.emoji||'🧠'} ${c.name||'キャラクター'} を獲得！`);}catch(e){const status=$('luckyBlockStatus');if(status)status.textContent='開封エラー：'+(e.message||String(e));notify('開封エラー：'+(e.message||String(e)),true);}finally{await loadLuckyBlock();const current=$('openSecretLuckyBlock');if(current){current.disabled=false;current.textContent='🎁 開封する';}}}
+async function openOgLuckyBlock(card){
+ const b=card?.querySelector('[data-open-og-block]'),status=card?.querySelector('[data-block-status]');
+ if(!b||b.disabled)return;
+ if(!confirm('OGラッキーブロックを開封するよ。キャラクターを1体獲得する？'))return;
+ b.disabled=true;b.textContent='✨ 開封中…';if(status)status.textContent='ブロックを開封中…';
+ try{await new Promise(resolve=>setTimeout(resolve,1200));const {data,error}=await db.rpc('brainrot_open_og_lucky_block');if(error)throw error;if(!data?.ok)throw new Error(data?.message||'開封できなかったよ');const c=data.character||{};notify(`🎉 OGラッキーブロックから ${c.emoji||'🧠'} ${c.name||'キャラクター'} を獲得！`);await load();}
+ catch(e){if(status)status.textContent='開封エラー：'+(e.message||String(e));notify('開封エラー：'+(e.message||String(e)),true);}
+ finally{await loadLuckyBlock();}
+}
+async function openSecretLuckyBlock(card){
+ const b=card?.querySelector('[data-open-secret-block]'),status=card?.querySelector('[data-block-status]');
+ if(!b||b.disabled)return;
+ b.disabled=true;b.textContent='✨ 開封中…';if(status)status.textContent='ブロックを開封中…';
+ try{const {data,error}=await db.rpc('brainrot_open_secret_lucky_block');if(error)throw error;if(!data?.ok)throw new Error(data?.message||'開封できなかったよ');const c=data.character||{};notify(`🎉 ラッキーブロックから ${c.emoji||'🧠'} ${c.name||'キャラクター'} を獲得！`);await load();}
+ catch(e){if(status)status.textContent='開封エラー：'+(e.message||String(e));notify('開封エラー：'+(e.message||String(e)),true);}
+ finally{await loadLuckyBlock();}
+}
 let activeDefenseId=null, defenseRounds=0, defenseTargetEmoji='', defenseDeadline=0, defenseTimer=null, incomingTimer=null, presenceTimer=null, attackerChecks=new Map();
 const defenseEmojis=['🧇','🍌','🐧','☁️','🐙','🌌','🍕','🦄'];
 function stopDefenseTimer(){if(defenseTimer){clearInterval(defenseTimer);defenseTimer=null;}}
