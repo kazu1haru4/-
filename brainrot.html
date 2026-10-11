@@ -354,17 +354,25 @@ const eventMusic = new Audio('montagem miaw.mp3');
 eventMusic.loop = true;
 eventMusic.preload = 'auto';
 let eventMusicEnabled = false;
+function isCatAttributeMusicEvent(){
+ const data=eventStateData||{};
+ // 曲を流すのは「猫」属性イベントだけ。別属性イベントや変異イベントでは再生しない。
+ const manualCat=!!data.manual_trait_active && String(data.manual_trait_value||'').trim()==='猫';
+ const snapCat=!!data.snap_active && String(data.snap_trait||'').split(',').map(v=>v.trim()).includes('猫');
+ const regularCat=!!traitEventActive && String(data.trait_event_title||data.trait_value||'').includes('猫');
+ return manualCat || snapCat || regularCat;
+}
 function syncEventMusic(){
- const active = !!(traitEventActive || eventStateData?.snap_active);
+ const active = isCatAttributeMusicEvent();
  const toggle = $('eventMusicToggle'), status = $('eventMusicStatus');
  if(toggle) toggle.textContent = eventMusicEnabled ? '🔇 曲を無効にする' : '🔊 曲を有効にする';
- if(!eventMusicEnabled){ eventMusic.pause(); if(status)status.textContent=active?'効果イベント中！曲を有効にすると再生するよ。':'効果イベント開催中に曲が流れるよ。'; return; }
+ if(!eventMusicEnabled){ eventMusic.pause(); if(status)status.textContent=active?'猫属性イベント中！曲を有効にすると再生するよ。':'猫属性イベント中だけ曲が流れるよ。'; return; }
  if(active){
-   if(status)status.textContent='🎵 効果イベント中！montagem miaw を再生中';
+   if(status)status.textContent='🎵 猫属性イベント中！montagem miaw を再生中';
    if(eventMusic.paused) eventMusic.play().catch(()=>{if(status)status.textContent='再生できない場合は、もう一度「曲を有効にする」を押してね。';});
- }else{ eventMusic.pause(); eventMusic.currentTime=0;  }
+ }else{ eventMusic.pause(); eventMusic.currentTime=0; }
 }
-$('eventMusicToggle')?.addEventListener('click',()=>{eventMusicEnabled=!eventMusicEnabled;syncEventMusic();if(eventMusicEnabled && (traitEventActive || eventStateData?.snap_active))eventMusic.play().catch(()=>{});});
+$('eventMusicToggle')?.addEventListener('click',()=>{eventMusicEnabled=!eventMusicEnabled;syncEventMusic();if(eventMusicEnabled && isCatAttributeMusicEvent())eventMusic.play().catch(()=>{});});
 let eventTimer=null,eventRefreshCounter=0,mutationSecondsLeft=0,traitSecondsLeft=0,mutationEventActive=false,traitEventActive=false,eventStateData=null,lastSnapEventId=null,snapOverlayTimer=null;
 function playSnapAnimation(eventId){if(!eventId||eventId===lastSnapEventId)return;lastSnapEventId=eventId;const overlay=$('snapOverlay'),aura=$('snapAura');if(!overlay)return;overlay.classList.remove('show','snapPop');void overlay.offsetWidth;overlay.classList.add('show');if(snapOverlayTimer)clearTimeout(snapOverlayTimer);setTimeout(()=>{overlay.classList.add('snapPop');},2100);snapOverlayTimer=setTimeout(()=>{overlay.classList.remove('show','snapPop');},3900);}
 async function loadEventState(){try{const {data,error}=await db.rpc('brainrot_event_state');if(error)throw error;eventStateData=data;mutationEventActive=!!data.mutation_active;traitEventActive=!!data.trait_event_active;mutationSecondsLeft=Number(data.mutation_seconds_remaining||0);traitSecondsLeft=Number(data.trait_event_seconds_remaining||0);if(data.snap_active&&data.snap_event_id)playSnapAnimation(data.snap_event_id);renderEventState();syncEventMusic();}catch(e){if($('mutationEventName'))$('mutationEventName').textContent='イベント情報を取得できません';if($('mutationEventTimer'))$('mutationEventTimer').textContent='';if($('traitEventName'))$('traitEventName').textContent='イベント情報を取得できません';if($('traitEventTimer'))$('traitEventTimer').textContent='';console.warn('event state failed',e);}}
