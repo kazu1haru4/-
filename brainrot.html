@@ -320,18 +320,10 @@ async function loadLuckyBlock(){
   if(ogError)throw ogError;
   // 再読み込みのたびに前回のブロックカードを消して、重複表示を防ぐ。
   grid.querySelectorAll('[data-lucky-block-card],[id^="baseLuckyBlock-"],[id^="baseLuckyBlockQty-"]').forEach(card=>card.remove());
-  // brainrot_state がブロック行を inventory から除外する場合があるため、
-  // ブロック所持行は brainrot_inventory から直接取得する。
-  const userId=String(state?.user_id||'');
-  let inventoryRows=[];
-  if(userId){
-   const {data:rows,error:rowsError}=await db.from('brainrot_inventory')
-    .select('id,character_id')
-    .eq('user_id',userId)
-    .in('character_id',['secret_lucky_block','og_lucky_block']);
-   if(rowsError)throw rowsError;
-   inventoryRows=Array.isArray(rows)?rows:[];
-  }
+  // RLSで直接テーブルを読まず、ログイン中ユーザー自身のブロックだけを返すSECURITY DEFINER RPCを使う。
+  const {data:blockList,error:blockListError}=await db.rpc('brainrot_lucky_block_inventory_list');
+  if(blockListError)throw blockListError;
+  const inventoryRows=Array.isArray(blockList?.items)?blockList.items:[];
   const secretItems=inventoryRows.filter(c=>String(c.character_id||'').toLowerCase()==='secret_lucky_block');
   const ogItems=inventoryRows.filter(c=>String(c.character_id||'').toLowerCase()==='og_lucky_block');
   const secretExtra=Math.max(0,Number(secret?.quantity||0)-secretItems.length);
