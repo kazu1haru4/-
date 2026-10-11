@@ -294,6 +294,20 @@ if(shopTick)clearInterval(shopTick);shopTick=setInterval(async()=>{if(document.h
 async function sellCharacter(inventoryId,name,price){if(!inventoryId)return;if(!confirm(`${name} を売却するよ。\n売却価格：${fmtBig(price)} CASH\n売却するとキャラクターは戻せないよ。\n売却する？`))return;const buttons=[...document.querySelectorAll('[data-sell-id]')];buttons.forEach(b=>b.disabled=true);try{const {data,error}=await db.rpc('brainrot_sell_character',{input_inventory_id:inventoryId});if(error)throw error;if(!data?.ok){notify(data?.message||'売却できなかったよ。',true);return;}const total=BigInt(String(data.sale_coins||0))+BigInt(String(data.claimed_income||0));notify(`💰 ${data.emoji||''} ${data.name||name} を売却！ +${fmtBig(data.sale_coins||0)} CASH（未受取収入 ${fmtBig(data.claimed_income||0)} CASHも受取）`);await load();}catch(e){notify('売却エラー：'+(e.message||String(e)),true);}finally{document.querySelectorAll('[data-sell-id]').forEach(b=>{b.disabled=false;});}}
 $('claimAll').addEventListener('click',async()=>{const b=$('claimAll');b.disabled=true;try{const {data,error}=await db.rpc('brainrot_claim_income');if(error)throw error;notify(`💵 ${fmtBig(data.claimed||0)} CASH受け取ったよ！`);await load();}catch(e){notify('受け取りエラー：'+e.message,true);}finally{b.disabled=false;}});
 $('starterRescue').addEventListener('click',async()=>{const b=$('starterRescue');b.disabled=true;try{const {data,error}=await db.rpc('brainrot_claim_starter');if(error)throw error;if(!data?.ok){notify(data?.message||'救済キャラクターを受け取れなかったよ。',true);return;}notify(data.message||'救済キャラクターを受け取ったよ！');await load();}catch(e){notify('救済エラー：'+(e.message||String(e)),true);}finally{b.disabled=false;}});
+async function openInventoryLuckyBlock(inventoryId,button){
+ if(!inventoryId||!button||button.disabled)return;
+ if(!confirm('ラッキーブロックを開封してキャラクターを1体獲得する？'))return;
+ button.disabled=true;
+ try{
+  const {data,error}=await db.rpc('brainrot_open_inventory_lucky_block',{input_inventory_id:inventoryId});
+  if(error)throw error;
+  if(!data?.ok)throw new Error(data?.message||'開封できなかったよ');
+  const c=data.character||{};
+  notify(`🎉 ${c.emoji||'🧠'} ${c.name||'キャラクター'} を獲得！`);
+  await load();
+ }catch(e){notify('開封エラー：'+(e.message||String(e)),true);}
+ finally{await loadLuckyBlock();}
+}
 async function loadLuckyBlock(){
  const grid=$('inventory');
  if(!grid)return;
@@ -304,25 +318,33 @@ async function loadLuckyBlock(){
   ]);
   if(secretError)throw secretError;
   if(ogError)throw ogError;
-  grid.querySelectorAll('[data-lucky-block-card]').forEach(card=>card.remove());
-  const qty=Math.max(0,Number(secret?.quantity||0));
-  const ogQty=Math.max(0,Number(og?.quantity||0));
-  // ブロックは所持数をまとめた1枚にせず、1個につき独立したカードとしてベースに表示する。
-  for(let i=0;i<qty;i++){
-   const card=document.createElement('article');card.className='char';card.dataset.luckyBlockCard='secret';
-   card.innerHTML=`<div class="art">${characterArt({id:'secret_lucky_block',name:'シークレット・ラッキーブロック',emoji:'🎁'})}</div><h3>シークレット・ラッキーブロック</h3><span class="rarity シークレット">シークレット</span><div class="income">🎁 所持：1個</div><div class="mutationTrait compactTraits"><div class="traitLine">🧬 <b>変異</b>：なし</div><div class="traitLine">✨ <b>属性</b>：なし</div></div><div class="pending">開封するとランダムなキャラを獲得</div><button class="sellButton" data-open-secret-block>🎁 開封する</button><div class="hint" data-block-status role="status" style="margin-top:8px"></div>`;
+  // 再読み込みのたびに前回のブロックカードを消して、重複表示を防ぐ。
+  grid.querySelectorAll('[data-lucky-block-card],[id^="baseLuckyBlock-"],[id^="baseLuckyBlockQty-"]').forEach(card=>card.remove());
+  const items=(state?.inventory||[]).filter(c=>['secret_lucky_block','og_lucky_block'].includes(String(c.character_id||c.characterId||c.catalog_id||'').toLowerCase()));
+  const secretItems=items.filter(c=>String(c.character_id||c.characterId||c.catalog_id||'').toLowerCase()==='secret_lucky_block');
+  const ogItems=items.filter(c=>String(c.character_id||c.characterId||c.catalog_id||'').toLowerCase()==='og_lucky_block');
+  const secretExtra=Math.max(0,Number(secret?.quantity||0)-secretItems.length);
+  const ogExtra=Math.max(0,Number(og?.quantity||0)-ogItems.length);
+  const makeCard=(type,index,item=null)=>{
+   const isOg=type==='og';
+   const name=isOg?'OGラッキーブロック':'シークレット・ラッキーブロック';
+   const rarity=isOg?'OG':'シークレット';
+   const emoji=isOg?'🌈':'🎁';
+   const card=document.createElement('article');card.className='char';card.dataset.luckyBlockCard=type;
+   card.id=item?`baseLuckyBlock-${type}-${index}`:`baseLuckyBlockQty-${type}-${index}`;
+   card.innerHTML=`<div class="art">${characterArt({id:isOg?'og_lucky_block':'secret_lucky_block',name,emoji,image_url:isOg?'https://res.cloudinary.com/pb1afeoh/image/upload/v1791738967/C21F75FB-532F-45C6-97C2-DF4B4D53A613.png':undefined})}</div><h3>${name}</h3><span class="rarity ${rarity}">${rarity}</span><div class="income">🎁 ラッキーブロック 1個</div><div class="mutationTrait compactTraits"><div class="traitLine">🧬 <b>変異</b>：なし</div><div class="traitLine">✨ <b>属性</b>：なし</div></div><div class="pending">${isOg?'ミャオル40%・ストロベリーエレファント30%・首なし騎士20%・聖なるたわし10%':'開封するとランダムなキャラを獲得'}</div><button class="sellButton" ${item?`data-open-inventory-block="${esc(item.id)}"`:`data-open-quantity-block="${type}"`}>${emoji} 開封する</button><div class="hint" data-block-status role="status" style="margin-top:8px"></div>`;
    grid.appendChild(card);
-   card.querySelector('[data-open-secret-block]').addEventListener('click',()=>openSecretLuckyBlock(card));
-  }
-  for(let i=0;i<ogQty;i++){
-   const card=document.createElement('article');card.className='char';card.dataset.luckyBlockCard='og';
-   card.innerHTML=`<div class="art">${characterArt({id:'og_lucky_block',name:'OGラッキーブロック',emoji:'🌈',image_url:'https://res.cloudinary.com/pb1afeoh/image/upload/v1791738967/C21F75FB-532F-45C6-97C2-DF4B4D53A613.png'})}</div><h3>OGラッキーブロック</h3><span class="rarity OG">OG</span><div class="income">🪽 所持：1個</div><div class="pending">ミャオル40%・ストロベリーエレファント30%・首なし騎士20%・聖なるたわし10%</div><button class="sellButton" data-open-og-block>🪽 開封する</button><div class="hint" data-block-status role="status" style="margin-top:8px"></div>`;
-   grid.appendChild(card);
-   card.querySelector('[data-open-og-block]').addEventListener('click',()=>openOgLuckyBlock(card));
-  }
+   const button=card.querySelector('button');
+   if(item)button.addEventListener('click',()=>openInventoryLuckyBlock(item.id,button));
+   else button.addEventListener('click',()=>isOg?openOgLuckyBlock(card):openSecretLuckyBlock(card));
+  };
+  secretItems.forEach((item,i)=>makeCard('secret',i,item));
+  ogItems.forEach((item,i)=>makeCard('og',i,item));
+  for(let i=0;i<secretExtra;i++)makeCard('secret',secretItems.length+i);
+  for(let i=0;i<ogExtra;i++)makeCard('og',ogItems.length+i);
  }catch(e){
   console.error('ラッキーブロックの読み込みに失敗:',e);
-  grid.querySelectorAll('[data-lucky-block-card]').forEach(card=>card.remove());
+  grid.querySelectorAll('[data-lucky-block-card],[id^="baseLuckyBlock-"],[id^="baseLuckyBlockQty-"]').forEach(card=>card.remove());
   const card=document.createElement('article');card.className='char';card.dataset.luckyBlockCard='error';
   card.innerHTML=`<h3>🎁 ラッキーブロック</h3><div class="pending">所持数を読み込めなかったよ。再読み込みしてね。</div><div class="hint">${esc(e.message||String(e))}</div>`;grid.appendChild(card);
  }
