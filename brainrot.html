@@ -282,8 +282,15 @@ function checkShopRaritySpawnSounds(){
    if(newcomers.length)candidates=newcomers;
   }
   const rank={'シークレット':1,'SECRET':1,'GOAT':2,'ゴート':2,'OG':3};
-  candidates=[...candidates].sort((a,b)=>(rank[String(b.character.rarity||'')]||0)-(rank[String(a.character.rarity||'')]||0));
-  if(candidates.length)playRaritySpawnSound(candidates[0].character);
+  // SECRETは収入が50M/分を超えるキャラだけ音の候補にする（収入値そのものは変更しない）。
+  const soundCandidates=candidates.filter(item=>{
+   const rarity=String(item.character.rarity||'').trim();
+   if(rarity!=='シークレット'&&rarity!=='SECRET')return true;
+   try{return BigInt(String(item.character.income_per_minute||0).replace(/[ ,\s]/g,''))>50000000n;}catch(_){return false;}
+  });
+  soundCandidates.sort((a,b)=>(rank[String(b.character.rarity||'')]||0)-(rank[String(a.character.rarity||'')]||0));
+  // 同時に複数の音対象キャラが出た場合は最上位レア度の音を1回だけ再生。
+  if(soundCandidates.length)playRaritySpawnSound(soundCandidates[0].character);
  }
  lastShopRareSoundKey=key;
  lastShopRareSoundSeconds=Number.isFinite(seconds)?seconds:null;
