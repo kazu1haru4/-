@@ -92,6 +92,8 @@ async function isFriendChatAdmin(){
   return data===true;
 }
 const ADMIN_ITEM_KEY="admin";
+// 管理者用の装飾表示で参照するユーザーID一覧
+const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
 let currentUsername="",presenceTimer=null;
 
 async function getCurrentUser(){
