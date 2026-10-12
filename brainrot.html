@@ -145,12 +145,11 @@ body.tradeModalOpen{overflow:hidden}
 <details class="foldSection" id="luckDebugDetails" style="margin-top:12px;border-color:#ffcf5b;background:linear-gradient(120deg,#3b321b,#202b35)">
  <summary>🧪 ラック抽選デバッグ（結果を先読み）</summary>
  <div class="foldContent">
-  <p class="hint">選んだラック倍率で、登録済みキャラクターから抽選をシミュレーションするよ。購入・CASH消費・ベース追加・ショップ在庫の変更は一切しないよ。※本番サーバー側の抽選確率を直接呼び出す機能ではなく、レア度別の仮想確率によるテストです。</p>
+  <p class="hint">本番と同じSupabase側の抽選関数で結果をテストするよ。購入・CASH消費・ベース追加・ショップ在庫の変更はしないよ。</p>
   <div class="adminFields">
    <div><label for="luckDebugMultiplier">🍀 テストするラック</label><select id="luckDebugMultiplier"><option value="1">通常（×1）</option><option value="2">×2</option><option value="4">×4</option><option value="8">×8</option><option value="12">×12</option><option value="15">×15</option><option value="20">×20</option><option value="25">×25</option><option value="30">×30</option><option value="35">×35</option><option value="40">×40</option><option value="45">×45</option><option value="50" selected>×50</option><option value="100">×100</option><option value="1000">×1000</option><option value="9999">×9999</option></select></div>
    <div><label for="luckDebugCount">🎲 抽選回数</label><select id="luckDebugCount"><option value="10" selected>10回</option><option value="50">50回</option><option value="100">100回</option></select></div>
   </div>
-  <label style="display:flex;align-items:center;gap:8px;margin-top:10px"><input id="luckDebugForceOg" type="checkbox" style="width:auto;min-width:18px"> 🌈 OG出現確認モード（デバッグ結果にOGを1体入れる・確率検証用ではない）</label>
   <button id="luckDebugStart" style="margin-top:12px;width:100%;background:linear-gradient(110deg,#ffd56b,#ff9f43)">🧪 デバッグ抽選スタート</button>
   <div id="luckDebugStatus" class="hint" role="status" style="margin-top:9px">開始するとSupabaseのキャラクター図鑑を読み込んで結果を表示するよ。</div>
   <div id="luckDebugResults" style="margin-top:10px"></div>
@@ -547,12 +546,31 @@ $('distributeAllButton').addEventListener('click',async()=>{
 });
 
 async function refreshAdminDistributionCharacters(){const grantSelect=$('adminCharacter'),randomSelect=$('randomDistributionCharacter');if(!grantSelect||!randomSelect)return;const previousGrant=grantSelect.value,previousRandom=randomSelect.value;grantSelect.innerHTML='<option value="">Supabaseから読み込み中…</option>';randomSelect.innerHTML='<option value="">Supabaseから読み込み中…</option>';try{const {data,error}=await db.from('brainrot_catalog').select('id,name,rarity,emoji,income_per_minute');if(error)throw error;const toAdminIncome=value=>{const raw=String(value??'0').replace(/[ ,\s]/g,'').trim();if(/^\d+$/.test(raw)){try{return BigInt(raw);}catch(_){return 0n;}}const n=Number(raw);return Number.isFinite(n)?n:0;};const catalog=(data||[]).slice().sort((a,b)=>{const ia=toAdminIncome(a.income_per_minute),ib=toAdminIncome(b.income_per_minute);if(ia!==ib)return ia>ib?-1:1;return String(a.name||a.id||'').localeCompare(String(b.name||b.id||''),'ja');});const options='<option value="">キャラクターを選択</option>'+catalog.map(c=>`<option value="${esc(c.id)}">${esc(c.emoji||'🧠')} ${esc(c.name||c.id)}（${esc(c.rarity||'レア度未設定')} · 💵 ${esc(fmtBig(c.income_per_minute||0))} CASH/分）</option>`).join('');grantSelect.innerHTML=options;randomSelect.innerHTML=options;if(catalog.some(c=>String(c.id)===previousGrant))grantSelect.value=previousGrant;if(catalog.some(c=>String(c.id)===previousRandom))randomSelect.value=previousRandom;grantSelect.dataset.loaded='1';randomSelect.dataset.loaded='1';const status=$('randomDistributionStatus');if(status)status.textContent=`Supabaseから${catalog.length}体の登録キャラクターを読み込んだよ（収入が多い順・CASH/分表示）。`; }catch(e){grantSelect.innerHTML='<option value="">読み込み失敗（管理パネルを開き直してね）</option>';randomSelect.innerHTML='<option value="">読み込み失敗（管理パネルを開き直してね）</option>';grantSelect.dataset.loaded='';randomSelect.dataset.loaded='';const status=$('randomDistributionStatus');if(status)status.textContent='キャラクター一覧の読み込みエラー：'+(e.message||String(e));const grantStatus=$('adminStatus');if(grantStatus){grantStatus.textContent='キャラクター一覧の読み込みエラー：'+(e.message||String(e));grantStatus.className='toast error';grantStatus.style.display='block';}}}
-// 管理者専用：ラック抽選デバッグ。DBへの書き込み・本番ショップRPCは呼ばない。
-let luckDebugCatalog=[];
-function luckDebugTier(rarity){const r=String(rarity||'').trim().toLowerCase();if(['og'].includes(r))return 8;if(['goat','ゴート'].includes(r))return 7;if(r.includes('secret')||r.includes('シークレット'))return 6;if(r.includes('brainrot god')||r.includes('ブレインロット神')||r.includes('god'))return 5;if(r.includes('mythic')||r.includes('ミシック'))return 4;if(r.includes('legend')||r.includes('レジェンド'))return 3;if(r.includes('epic')||r.includes('エピック'))return 2;if(r.includes('rare')||r.includes('レア'))return 1;return 0;}
-function luckDebugBaseWeight(tier){return [6000,2500,1000,350,120,25,4,0.4,0.000001][tier]||1;}
-function luckDebugPick(catalog,multiplier){const weighted=catalog.map(c=>{const tier=luckDebugTier(c.rarity);const boost=Math.pow(Math.max(1,multiplier),tier/2);return {c,w:luckDebugBaseWeight(tier)*boost};}).filter(x=>x.w>0);let total=weighted.reduce((n,x)=>n+x.w,0);let roll=Math.random()*total;for(const x of weighted){roll-=x.w;if(roll<=0)return x.c;}return weighted[weighted.length-1]?.c||null;}
-async function runLuckDebug(){const button=$('luckDebugStart'),status=$('luckDebugStatus'),host=$('luckDebugResults');if(!button||button.disabled)return;const multiplier=Number($('luckDebugMultiplier').value||1),count=Number($('luckDebugCount').value||10),forceOg=!!$('luckDebugForceOg')?.checked;button.disabled=true;status.textContent='Supabaseからキャラクター図鑑を読み込み中…';host.innerHTML='';try{const {data,error}=await db.from('brainrot_catalog').select('id,name,rarity,emoji,income_per_minute,is_fuse_only').order('name');if(error)throw error;luckDebugCatalog=(data||[]).filter(c=>c&&c.name&&!['secret_lucky_block','og_lucky_block'].includes(String(c.id||'').toLowerCase()));if(!luckDebugCatalog.length)throw new Error('抽選できるキャラクターが見つからないよ。');const ogCharacters=luckDebugCatalog.filter(c=>luckDebugTier(c.rarity)===8);if(forceOg&&!ogCharacters.length)throw new Error('図鑑にレア度OGのキャラクターが見つからないよ。brainrot_catalogのrarityを確認してね。');const results=Array.from({length:count},()=>luckDebugPick(luckDebugCatalog,multiplier)).filter(Boolean);if(forceOg&&results.length)results[Math.floor(Math.random()*results.length)]=ogCharacters[Math.floor(Math.random()*ogCharacters.length)];const summary={};for(const c of results){const rarity=String(c.rarity||'その他');summary[rarity]=(summary[rarity]||0)+1;}host.innerHTML='<div class="panel" style="padding:12px;margin-bottom:10px"><strong>🍀 ×'+multiplier+' ／ '+results.length+'回の仮想抽選結果</strong><div class="hint" style="margin-top:5px">登録キャラ '+luckDebugCatalog.length+'体から抽選。'+(forceOg?'OG出現確認モード：結果のうち1体をOGに置き換えているよ。これは表示確認用で確率検証ではないよ。':'結果はシミュレーションで、本番の当選保証ではないよ。')+'</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'+Object.entries(summary).map(([r,n])=>'<span class="rarity '+esc(r)+'" style="display:inline-block;padding:5px 8px;border-radius:8px">'+esc(r)+'：'+n+'回</span>').join('')+'</div></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px">'+results.map((c,i)=>'<div class="panel" style="padding:10px;margin:0"><div style="font-size:12px;color:var(--muted)">#'+(i+1)+'</div><div style="font-size:27px;margin:4px 0">'+esc(c.emoji||'🧠')+'</div><strong>'+esc(c.name)+'</strong><div style="margin-top:6px"><span class="rarity '+esc(c.rarity||'')+'">'+esc(c.rarity||'その他')+'</span></div></div>').join('')+'</div>';status.textContent='完了！ 本番データの変更はしていないよ。';}catch(e){status.textContent='デバッグエラー：'+(e.message||String(e));}finally{button.disabled=false;}}
+// 管理者専用：本番と同じSupabase抽選関数を使ったラック確率デバッグ。
+// 抽選関数はキャラクターを返すだけで、購入・CASH消費・在庫更新は行わない。
+async function runLuckDebug(){
+ const button=$('luckDebugStart'),status=$('luckDebugStatus'),host=$('luckDebugResults');
+ if(!button||button.disabled)return;
+ const multiplier=Number($('luckDebugMultiplier').value||1),count=Number($('luckDebugCount').value||10);
+ button.disabled=true;status.textContent='本番と同じSupabase抽選関数でテスト中…';host.innerHTML='';
+ try{
+  const [{data,error},{data:catalogData,error:catalogError}]=await Promise.all([
+   db.rpc('brainrot_admin_debug_shop_draws',{input_multiplier:multiplier,input_count:count}),
+   db.from('brainrot_catalog').select('id,name,rarity,emoji,income_per_minute,is_shop_available')
+  ]);
+  if(error)throw error;if(catalogError)throw catalogError;
+  const results=Array.isArray(data)?data:[];
+  if(!results.length)throw new Error('抽選結果が空だったよ。');
+  const catalogByName=new Map((catalogData||[]).map(c=>[String(c.name||''),c]));
+  const summary={};
+  for(const c of results){const rarity=String(c.rarity||'その他');summary[rarity]=(summary[rarity]||0)+1;}
+  const raritySummary=Object.entries(summary).map(([r,n])=>`<span class="rarity ${esc(r)}" style="display:inline-block;padding:5px 8px;border-radius:8px">${esc(r)}：${n}回（${(n/results.length*100).toFixed(1)}%）</span>`).join('');
+  const cards=results.map((c,i)=>{const catalog=catalogByName.get(String(c.name||''))||{};return `<div class="panel" style="padding:10px;margin:0"><div style="font-size:12px;color:var(--muted)">#${Number(c.draw||i+1)}</div><div style="font-size:27px;margin:4px 0">${esc(catalog.emoji||'🧠')}</div><strong>${esc(c.name||'抽選失敗')}</strong><div style="margin-top:6px"><span class="rarity ${esc(c.rarity||'')}">${esc(c.rarity||'その他')}</span></div></div>`;}).join('');
+  host.innerHTML=`<div class="panel" style="padding:12px;margin-bottom:10px"><strong>🍀 ×${multiplier} ／ ${results.length}回の抽選結果</strong><div class="hint" style="margin-top:5px">Supabase本番抽選関数の結果。下の割合は今回の試行結果で、理論上の当選確率そのものではないよ。</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${raritySummary}</div></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px">${cards}</div>`;
+  status.textContent='完了！本番と同じ抽選処理を使い、購入やCASH消費はしていないよ。';
+ }catch(e){status.textContent='デバッグエラー：'+(e.message||String(e));}
+ finally{button.disabled=false;}
+}
 $('luckDebugStart')?.addEventListener('click',runLuckDebug);
 
 $('adminToggle').addEventListener('click',()=>{const panel=$('adminPanel');panel.hidden=!panel.hidden;if(!panel.hidden){refreshShopBoostAdminState();refreshFuseAutoSkipState();refreshAdminDistributionCharacters();}});
