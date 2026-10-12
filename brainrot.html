@@ -562,10 +562,24 @@ async function runLuckDebug(){
   const results=Array.isArray(data)?data:[];
   if(!results.length)throw new Error('抽選結果が空だったよ。');
   const catalogByName=new Map((catalogData||[]).map(c=>[String(c.name||''),c]));
+  // 図鑑と同じレア度順を使い、結果カードは高レアから表示する（抽選番号は保持）。
+  const debugRarityOrder=['コモン','アンコモン','レア','エピック','レジェンダリー','レジェンド','神話','ブレインロット神','ブレインロット・ゴッド','シークレット','GOAT','ゴート','OG'];
+  const debugRarityAliases={'ノーマル':'コモン','レジェンド':'レジェンダリー','ブレインロット・ゴッド':'ブレインロット神','ゴート':'GOAT'};
+  const debugRarityRank=rarity=>{const label=debugRarityAliases[String(rarity||'')]||String(rarity||'その他');const idx=debugRarityOrder.indexOf(label);return idx<0?-1:idx;};
+  const debugIncomeValue=value=>{const raw=String(value??'0').replace(/[ ,\s]/g,'').trim();if(/^\d+$/.test(raw)){try{return BigInt(raw);}catch(_){return 0n;}}const n=Number(raw);return Number.isFinite(n)?BigInt(Math.trunc(n)):0n;};
+  // レア度の高い順。同じレア度ならCASH/分の高いキャラを先に表示する。
+  const raritySortedResults=results.slice().sort((a,b)=>{
+   const rarityDiff=debugRarityRank(b.rarity)-debugRarityRank(a.rarity);
+   if(rarityDiff!==0)return rarityDiff;
+   const ca=catalogByName.get(String(a.name||''))||{},cb=catalogByName.get(String(b.name||''))||{};
+   const ia=debugIncomeValue(ca.income_per_minute),ib=debugIncomeValue(cb.income_per_minute);
+   if(ia!==ib)return ia>ib?-1:1;
+   return String(a.name||'').localeCompare(String(b.name||''),'ja');
+  });
   const summary={};
   for(const c of results){const rarity=String(c.rarity||'その他');summary[rarity]=(summary[rarity]||0)+1;}
-  const raritySummary=Object.entries(summary).map(([r,n])=>`<span class="rarity ${esc(r)}" style="display:inline-block;padding:5px 8px;border-radius:8px">${esc(r)}：${n}回（${(n/results.length*100).toFixed(1)}%）</span>`).join('');
-  const cards=results.map((c,i)=>{const catalog=catalogByName.get(String(c.name||''))||{};return `<div class="panel" style="padding:10px;margin:0"><div style="font-size:12px;color:var(--muted)">#${Number(c.draw||i+1)}</div><div style="font-size:27px;margin:4px 0">${esc(catalog.emoji||'🧠')}</div><strong>${esc(c.name||'抽選失敗')}</strong><div style="margin-top:6px"><span class="rarity ${esc(c.rarity||'')}">${esc(c.rarity||'その他')}</span></div></div>`;}).join('');
+  const raritySummary=Object.entries(summary).sort((a,b)=>debugRarityRank(b[0])-debugRarityRank(a[0])).map(([r,n])=>`<span class="rarity ${esc(r)}" style="display:inline-block;padding:5px 8px;border-radius:8px">${esc(r)}：${n}回（${(n/results.length*100).toFixed(1)}%）</span>`).join('');
+  const cards=raritySortedResults.map((c,i)=>{const catalog=catalogByName.get(String(c.name||''))||{};return `<div class="panel" style="padding:10px;margin:0"><div style="font-size:12px;color:var(--muted)">抽選 #${Number(c.draw||i+1)}</div><div style="font-size:27px;margin:4px 0">${esc(catalog.emoji||'🧠')}</div><strong>${esc(c.name||'抽選失敗')}</strong><div style="margin-top:6px"><span class="rarity ${esc(c.rarity||'')}">${esc(c.rarity||'その他')}</span></div><div class="hint" style="margin-top:5px">💵 ${esc(fmtBig(catalog.income_per_minute||0))} CASH/分</div></div>`;}).join('');
   host.innerHTML=`<div class="panel" style="padding:12px;margin-bottom:10px"><strong>🍀 ×${multiplier} ／ ${results.length}回の抽選結果</strong><div class="hint" style="margin-top:5px">Supabase本番抽選関数の結果。下の割合は今回の試行結果で、理論上の当選確率そのものではないよ。</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${raritySummary}</div></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px">${cards}</div>`;
   status.textContent='完了！本番と同じ抽選処理を使い、購入やCASH消費はしていないよ。';
  }catch(e){status.textContent='デバッグエラー：'+(e.message||String(e));}
