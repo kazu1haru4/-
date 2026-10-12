@@ -248,6 +248,7 @@ const raritySpawnAudio={
 };
 Object.values(raritySpawnAudio).forEach(a=>{a.preload='auto';a.volume=0.8;});
 let lastShopRareSoundKey='';
+let lastShopRareSoundSeconds=null;
 let gameSoundEnabled=localStorage.getItem('brainrot_game_sound_enabled')!=='false';
 let rarityAudioUnlocked=false;
 function unlockRaritySpawnAudio(){
@@ -269,13 +270,23 @@ function playRaritySpawnSound(character){
 function checkShopRaritySpawnSounds(){
  const rare=shopCharacters.filter(item=>item.character&&['シークレット','SECRET','GOAT','ゴート','OG'].includes(String(item.character.rarity||'').trim()));
  const key=JSON.stringify([threeLaneActive,rare.map(item=>[item.slot,String(item.character.id||item.character.name||''),String(item.character.rarity||'')])]);
- if(!lastShopRareSoundKey){lastShopRareSoundKey=key;return;}
- if(key!==lastShopRareSoundKey){
-  const oldIds=new Set();try{const old=JSON.parse(lastShopRareSoundKey);(old[1]||[]).forEach(x=>oldIds.add(String(x[0])+':'+String(x[1])+':'+String(x[2])));}catch(_){}
-  const newcomers=rare.filter(item=>!oldIds.has(String(item.slot)+':'+String(item.character.id||item.character.name||'')+':'+String(item.character.rarity||'')));
-  if(newcomers.length){const rank={'シークレット':1,'SECRET':1,'GOAT':2,'ゴート':2,'OG':3};newcomers.sort((a,b)=>(rank[String(b.character.rarity||'')]||0)-(rank[String(a.character.rarity||'')]||0));playRaritySpawnSound(newcomers[0].character);}
-  lastShopRareSoundKey=key;
+ const seconds=Number(shopSeconds);
+ const shopRefreshed=lastShopRareSoundSeconds!==null&&Number.isFinite(seconds)&&seconds>lastShopRareSoundSeconds+3;
+ if(!lastShopRareSoundKey){lastShopRareSoundKey=key;lastShopRareSoundSeconds=Number.isFinite(seconds)?seconds:null;return;}
+ const changed=key!==lastShopRareSoundKey;
+ if(rare.length&&(changed||shopRefreshed)){
+  let candidates=rare;
+  if(changed){
+   const oldIds=new Set();try{const old=JSON.parse(lastShopRareSoundKey);(old[1]||[]).forEach(x=>oldIds.add(String(x[0])+':'+String(x[1])+':'+String(x[2])));}catch(_){}
+   const newcomers=rare.filter(item=>!oldIds.has(String(item.slot)+':'+String(item.character.id||item.character.name||'')+':'+String(item.character.rarity||'')));
+   if(newcomers.length)candidates=newcomers;
+  }
+  const rank={'シークレット':1,'SECRET':1,'GOAT':2,'ゴート':2,'OG':3};
+  candidates=[...candidates].sort((a,b)=>(rank[String(b.character.rarity||'')]||0)-(rank[String(a.character.rarity||'')]||0));
+  if(candidates.length)playRaritySpawnSound(candidates[0].character);
  }
+ lastShopRareSoundKey=key;
+ lastShopRareSoundSeconds=Number.isFinite(seconds)?seconds:null;
 }
 const fuseSelected=new Set();let fuseBusy=false;let fuseCatalog=[];const fuseRarityTiers={'ノーマル':1,'レア':2,'エピック':3,'レジェンド':4,'神話':5,'ブレインロット・ゴッド':6,'シークレット':7,'GOAT':8,'ゴート':8,'OG':9};const fuseTierNames={1:'ノーマル',2:'レア',3:'エピック',4:'レジェンド',5:'神話',6:'ブレインロット・ゴッド',7:'シークレット',8:'GOAT',9:'OG'};
 // ショップ状態はサーバーの30秒ローテーションに合わせて必要な時だけ同期する。
