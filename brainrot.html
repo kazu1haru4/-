@@ -249,7 +249,8 @@ const raritySpawnAudio={
 Object.values(raritySpawnAudio).forEach(a=>{a.preload='auto';a.volume=0.8;});
 let lastShopRareSoundKey='';
 let lastShopRareSoundSeconds=null;
-let gameSoundEnabled=localStorage.getItem('brainrot_game_sound_enabled')!=='false';
+// 初回アクセスは音OFF。端末のlocalStorageに保存した選択は次回以降も維持する。
+let gameSoundEnabled=localStorage.getItem('brainrot_game_sound_enabled')==='true';
 let rarityAudioUnlocked=false;
 function unlockRaritySpawnAudio(){
  if(rarityAudioUnlocked)return;
