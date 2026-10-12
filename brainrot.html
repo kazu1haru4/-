@@ -425,7 +425,7 @@ async function loadLuckyBlock(){
  }
 }
 async function openOgLuckyBlock(card){
- const b=card?.querySelector('[data-open-og-block]'),status=card?.querySelector('[data-block-status]');
+ const b=card?.querySelector('[data-open-og-block], [data-open-quantity-block="og"]'),status=card?.querySelector('[data-block-status]');
  if(!b||b.disabled)return;
  if(!confirm('OGラッキーブロックを開封するよ。キャラクターを1体獲得する？'))return;
  b.disabled=true;b.textContent='✨ 開封中…';if(status)status.textContent='ブロックを開封中…';
@@ -434,7 +434,7 @@ async function openOgLuckyBlock(card){
  finally{await loadLuckyBlock();}
 }
 async function openSecretLuckyBlock(card){
- const b=card?.querySelector('[data-open-secret-block]'),status=card?.querySelector('[data-block-status]');
+ const b=card?.querySelector('[data-open-secret-block], [data-open-quantity-block="secret"]'),status=card?.querySelector('[data-block-status]');
  if(!b||b.disabled)return;
  b.disabled=true;b.textContent='✨ 開封中…';if(status)status.textContent='ブロックを開封中…';
  try{const {data,error}=await db.rpc('brainrot_open_secret_lucky_block');if(error)throw error;if(!data?.ok)throw new Error(data?.message||'開封できなかったよ');const c=data.character||{};notify(`🎉 ラッキーブロックから ${c.emoji||'🧠'} ${c.name||'キャラクター'} を獲得！`);await load();}
