@@ -108,6 +108,15 @@ body.tradeModalOpen{overflow:hidden}
 }
 
 
+
+/* ジェムショップはボタンから全画面で開く */
+#gemShopPanel{display:none!important}
+#gemShopPanel.gemShopFullscreen{display:block!important;position:fixed!important;inset:0!important;z-index:100000!important;width:100vw!important;height:100dvh!important;max-height:100dvh!important;overflow-y:auto!important;overflow-x:hidden!important;box-sizing:border-box!important;margin:0!important;border-radius:0!important;padding:16px!important;background:linear-gradient(145deg,#211b3e,#101827)!important;border:0!important}
+#gemShopPanel .gemShopCloseRow{display:flex;justify-content:flex-end;position:sticky;top:-16px;z-index:2;margin:-16px -16px 12px;padding:12px 16px;background:rgba(16,24,39,.96);backdrop-filter:blur(8px)}
+#gemShopPanel .gemShopCloseButton{border:1px solid #9b8be0;background:#382d60;color:#fff;border-radius:12px;padding:10px 16px;font-weight:900;font-size:15px;cursor:pointer}
+#openGemShopButton{display:block;width:100%;margin:12px 0 18px;padding:15px 16px;border:1px solid #8c75e8;border-radius:15px;background:linear-gradient(120deg,#493487,#20294d);color:#fff;font-size:17px;font-weight:900;box-shadow:0 5px 18px #0004;cursor:pointer}
+#openGemShopButton:active,#gemShopPanel .gemShopCloseButton:active{transform:scale(.99)}
+@media(min-width:700px){#gemShopPanel.gemShopFullscreen{padding:24px!important}#gemShopPanel.gemShopFullscreen .grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style>
 </head>
 <body><div id="liveFixedNoticeStack" aria-live="polite" aria-atomic="false"></div><main class="wrap">
@@ -800,6 +809,23 @@ if(eventPanel)gameRoot.appendChild(eventPanel);
 if(shopPanel)gameRoot.appendChild(shopPanel);
 const gemShopPanel=$('gemShopPanel');if(gemShopPanel)gameRoot.appendChild(gemShopPanel);
 if(baseDetails)gameRoot.appendChild(baseDetails);
+// ベースの直下にジェムショップを開くボタンを配置
+const openGemShopButton=document.createElement('button');
+openGemShopButton.type='button';openGemShopButton.id='openGemShopButton';
+openGemShopButton.innerHTML='💎 ジェムショップを開く';
+openGemShopButton.setAttribute('aria-controls','gemShopPanel');
+openGemShopButton.setAttribute('aria-expanded','false');
+if(baseDetails&&baseDetails.parentNode)baseDetails.parentNode.insertBefore(openGemShopButton,baseDetails.nextSibling);
+else gameRoot.appendChild(openGemShopButton);
+if(gemShopPanel){
+  const closeRow=document.createElement('div');closeRow.className='gemShopCloseRow';
+  const closeButton=document.createElement('button');closeButton.type='button';closeButton.className='gemShopCloseButton';closeButton.textContent='✕ 閉じる';
+  closeRow.appendChild(closeButton);gemShopPanel.insertBefore(closeRow,gemShopPanel.firstChild);
+  const closeGemShop=()=>{gemShopPanel.classList.remove('gemShopFullscreen');openGemShopButton.setAttribute('aria-expanded','false');document.body.style.overflow='';openGemShopButton.focus({preventScroll:true});};
+  openGemShopButton.addEventListener('click',()=>{gemShopPanel.classList.add('gemShopFullscreen');openGemShopButton.setAttribute('aria-expanded','true');document.body.style.overflow='hidden';if(typeof loadGemShop==='function')loadGemShop();});
+  closeButton.addEventListener('click',closeGemShop);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&gemShopPanel.classList.contains('gemShopFullscreen'))closeGemShop();});
+}
 if(progressPanel)featureRowOne.appendChild(progressPanel);
 if(stealPanel)featureRowOne.appendChild(stealPanel);
 if(featureRowOne.children.length)gameRoot.appendChild(featureRowOne);
