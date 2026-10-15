@@ -1130,7 +1130,22 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('encyclopediaOver
  $('craftStartButton').addEventListener('click',startCraft);
  
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&craftOverlay.classList.contains('show'))closeCraft();});
- const craftStyle=document.createElement('style');craftStyle.textContent='#craftOverlay.show{display:flex}#craftOverlay .panel{padding:16px}#craftOverlay .modalLauncher{background:linear-gradient(135deg,#29234b,#153744)!important}#craftOverlay .ritualFold{border-color:#3f7187}#craftOverlay .ritualFold>summary{background:#142536}@media(max-width:520px){#craftRecipe{grid-template-columns:1fr!important}}';document.head.appendChild(craftStyle);
+ // ロスカネローニ系の儀式を既存の儀式画面に追加（既存機能は維持）
+for(const r of [
+ {title:'🐉🔥 ロスカネローニドラゴーニ',key:'losCannelloniDragononi',source:'secret_dragon_cannelloni',target:'los_cannelloni_dragononi',name:'ロスカネローニドラゴーニ',emoji:'🐉🔥',empty:'ドラゴンカネローニを2体集めてね。'},
+ {title:'🐉🐉 ロスヒドラカネローニ',key:'losHydraCannelloni',source:'fuse_hydra_dragon_cannelloni',target:'los_hydra_cannelloni',name:'ロスヒドラカネローニ',emoji:'🐉🐉',empty:'ヒドラ・ドラゴン・カンネローニを2体集めてね。'}
+]){
+ const details=document.createElement('details');details.className='ritualFold';
+ const summary=document.createElement('summary');summary.textContent=r.title+'（素材2体・GOAT）';details.appendChild(summary);
+ const body=document.createElement('div');body.className='ritualFoldBody';
+ const desc=document.createElement('p');desc.textContent=r.empty+' 儀式成功後、専用ショップに出現するよ。収入は素材キャラクターの2倍！';body.appendChild(desc);
+ for(const suffix of ['Choices','Count','Status','Button']){const el=document.createElement(suffix==='Choices'||suffix==='Status'?'div':suffix==='Button'?'button':'div');el.id=r.key+'Ritual'+suffix;if(suffix==='Button'){el.type='button';el.textContent='🔮 儀式を開始';el.style.width='100%';el.style.marginTop='8px';}else if(suffix==='Count'){el.textContent='0 / 2体選択中';el.className='hint';}else if(suffix==='Status'){el.className='toast';el.style.display='block';el.textContent='素材を2体用意してね。';}else{el.className='fuseGrid';el.style.margin='12px 0';}body.appendChild(el);}
+ details.appendChild(body);craftBody.appendChild(details);
+ losOgRituals.push({key:r.key,source:r.source,target:r.target,name:r.name,count:r.key+'RitualCount',choices:r.key+'RitualChoices',button:r.key+'RitualButton',status:r.key+'RitualStatus',emoji:r.emoji,empty:r.empty});
+ losOgRitualSelected[r.key]=new Set();losOgRitualBusy[r.key]=false;
+ $(r.key+'RitualButton').addEventListener('click',()=>startLosOgRitual(losOgRituals.find(x=>x.key===r.key)));
+}
+const craftStyle=document.createElement('style');craftStyle.textContent='#craftOverlay.show{display:flex}#craftOverlay .panel{padding:16px}#craftOverlay .modalLauncher{background:linear-gradient(135deg,#29234b,#153744)!important}#craftOverlay .ritualFold{border-color:#3f7187}#craftOverlay .ritualFold>summary{background:#142536}@media(max-width:520px){#craftRecipe{grid-template-columns:1fr!important}}';document.head.appendChild(craftStyle);
  const ritualPanel=$('migatitoRitualPanel');
  let ritualOverlay=null;
  function openRitual(){if(!ritualOverlay){setMigatitoRitualStatus('儀式画面を開けなかったよ。ページを再読み込みしてね。',true);return;}ritualOverlay.style.display='flex';ritualOverlay.classList.add('show');ritualOverlay.setAttribute('aria-hidden','false');document.body.classList.add('tradeModalOpen');renderMigatitoRitual();renderAllLosOgRituals();const closeButton=$('migatitoRitualClose');if(closeButton)closeButton.focus();}
