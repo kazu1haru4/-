@@ -250,7 +250,7 @@ body.tradeModalOpen{overflow:hidden}
 .eventIconCard strong{font-size:12px}
 .eventIconCard span{font-size:11px;color:#c8c3e5;white-space:nowrap}
 .eventPanelActions{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.eventDetailsContent{margin-top:10px;padding:10px;border-radius:10px;background:#17172d;line-height:1.65;overflow-wrap:anywhere}
+.eventDetailsContent{margin-top:10px;padding:10px;border-radius:10px;background:#17172d;line-height:1.65;overflow-wrap:anywhere}.eventDetailMutation{padding:4px 2px 10px;margin-bottom:8px;border-bottom:1px solid #45405f}.eventTraitHeading{font-weight:900;margin:4px 0 9px}.eventTraitGrid{display:flex;gap:10px;overflow-x:auto;padding:4px 0 8px;scrollbar-width:thin}.eventTraitItem{flex:0 0 76px;min-width:76px;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 4px;border:1px solid #5a547c;border-radius:12px;background:linear-gradient(145deg,#252446,#173443);text-align:center}.eventTraitItem .traitEmoji{font-size:30px;line-height:1.2}.eventTraitItem strong{font-size:11px}.eventTraitItem small{font-size:11px;color:#c8c3e5;white-space:nowrap}
 </style>
 <p class="hint">儀式ごとに開閉できるよ。使いたい儀式の見出しを押してね。</p>
 <details class="ritualFold"><summary>🔮 ミガティトの儀式 <span class="hint">素材2体</span></summary><div class="ritualFoldBody"><p>ミガティトを2体消費すると、ロス・ミガティトが専用ショップに出現するよ。</p><div class="hint" id="migatitoRitualCount">0 / 2体選択中</div><div id="migatitoRitualChoices" class="fuseGrid"><div class="hint">所持キャラを読み込み中…</div></div><button id="migatitoRitualButton" disabled style="width:100%;background:linear-gradient(110deg,#d9a3ff,#ffb8df)">🔮 ミガティト2体で儀式</button><div id="migatitoRitualStatus" class="toast" role="status" aria-live="polite" style="display:block">ミガティトを2体集めると儀式できるよ。</div></div></details>
@@ -597,6 +597,7 @@ syncGameSoundToggle();
 let eventTimer=null,eventRefreshCounter=0,mutationSecondsLeft=0,traitSecondsLeft=0,mutationEventActive=false,traitEventActive=false,eventStateData=null,lastSnapEventId=null,snapOverlayTimer=null;
 function playSnapAnimation(eventId){if(!eventId||eventId===lastSnapEventId)return;lastSnapEventId=eventId;const overlay=$('snapOverlay'),aura=$('snapAura');if(!overlay)return;overlay.classList.remove('show','snapPop');void overlay.offsetWidth;overlay.classList.add('show');if(snapOverlayTimer)clearTimeout(snapOverlayTimer);setTimeout(()=>{overlay.classList.add('snapPop');},2100);snapOverlayTimer=setTimeout(()=>{overlay.classList.remove('show','snapPop');},3900);}
 async function loadEventState(){try{const {data,error}=await db.rpc('brainrot_event_state');if(error)throw error;eventStateData=data;mutationEventActive=!!data.mutation_active;traitEventActive=!!data.trait_event_active;mutationSecondsLeft=Number(data.mutation_seconds_remaining||0);traitSecondsLeft=Number(data.trait_event_seconds_remaining||0);if(data.snap_active&&data.snap_event_id)playSnapAnimation(data.snap_event_id);renderEventState();syncEventMusic();}catch(e){if($('mutationEventName'))$('mutationEventName').textContent='イベント情報を取得できません';if($('mutationEventTimer'))$('mutationEventTimer').textContent='';if($('traitEventName'))$('traitEventName').textContent='イベント情報を取得できません';if($('traitEventTimer'))$('traitEventTimer').textContent='';console.warn('event state failed',e);}}
+function escapeHtml(value){return String(value??'').replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));}
 function formatTimeLeft(sec){sec=Math.max(0,Number(sec)||0);const m=Math.floor(sec/60),s=sec%60;return m+'分'+String(s).padStart(2,'0')+'秒';}
 function renderEventState(){
  const data=eventStateData||{};
@@ -621,8 +622,11 @@ function renderEventState(){
  const details=$('eventDetailsContent');
  if(details){
    const mutationText=mutationEventActive?`🧬 変異イベント：${mutationName}（残り ${formatTimeLeft(mutationSecondsLeft)}）`:`🧬 変異イベント：開催していません${nextStart?'。次回 '+nextStart+'（日本時間）':''}`;
-   const traitText=traitEventActive?`✨ 属性イベント：${traitUnique.join('・')}（残り ${formatTimeLeft(traitSecondsLeft)}）`:'✨ 属性イベント：開催していません';
-   details.textContent=[mutationText,traitText].join('　／　');
+   const traitEmoji={'炎':'🔥','氷':'❄️','雷':'⚡','毒':'☠️','王族':'👑','風':'🌪️','光':'✨','闇':'🌑','自然':'🌿','虚空':'🌀','時空':'⌛','猫':'🐱','ストロベリー':'🍓','首なし騎士':'⚔️','たわし':'🧹'};
+   const activeTraits=traitEventActive?traitUnique:[];
+   const timeLabel=String(Math.floor(Math.max(0,traitSecondsLeft)/60)).padStart(2,'0')+':'+String(Math.max(0,traitSecondsLeft)%60).padStart(2,'0');
+   const traitCards=activeTraits.map(name=>`<div class="eventTraitItem"><div class="traitEmoji">${traitEmoji[name]||'✨'}</div><strong>${escapeHtml(name)}</strong><small>${timeLabel}</small></div>`).join('');
+   details.innerHTML=`<div class="eventDetailMutation">${escapeHtml(mutationText)}</div><div class="eventTraitHeading">✨ 属性イベント</div>${traitCards?`<div class="eventTraitGrid">${traitCards}</div>`:'<div class="hint">属性イベントは開催していません</div>'}`;
  }
  const summary=$('eventSummaryTitle');if(summary)summary.textContent=(mutationEventActive||traitEventActive)?'🎉 イベント開催中！':'イベント開催状況';
 }
