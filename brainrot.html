@@ -186,7 +186,6 @@ body.tradeModalOpen{overflow:hidden}
 <div class="eventIconStrip" id="eventIconStrip">
  <div class="eventIconCard" id="mutationIconCard"><div class="eventIcon">🧬</div><strong>変異</strong><span id="mutationIconTimer">確認中…</span></div>
  <div class="eventIconCard" id="traitIconCard"><div class="eventIcon">✨</div><strong>属性</strong><span id="traitIconTimer">確認中…</span></div>
- <div class="eventIconCard" id="snapIconCard" hidden><div class="eventIcon">💥</div><strong>Snap</strong><span id="snapIconTimer">開催中</span></div>
 </div>
 <div class="eventPanelActions"><strong id="eventSummaryTitle">イベント状況</strong><button type="button" id="eventDetailsButton" class="secondary">詳細</button></div>
 <div id="eventDetailsContent" hidden class="eventDetailsContent"></div>
@@ -619,15 +618,13 @@ function renderEventState(){
  const setCard=(id,active,timer)=>{const el=$(id);if(!el)return;el.classList.toggle('active',!!active);const t=el.querySelector('span');if(t)t.textContent=timer;};
  setCard('mutationIconCard',mutationEventActive,mutationEventActive?formatTimeLeft(mutationSecondsLeft):(nextStart||'待機中'));
  setCard('traitIconCard',traitEventActive,traitEventActive?formatTimeLeft(traitSecondsLeft):'開催なし');
- const snapCard=$('snapIconCard');if(snapCard){snapCard.hidden=!snapActive;setCard('snapIconCard',snapActive,snapActive?'開催中':'');}
  const details=$('eventDetailsContent');
  if(details){
    const mutationText=mutationEventActive?`🧬 変異イベント：${mutationName}（残り ${formatTimeLeft(mutationSecondsLeft)}）`:`🧬 変異イベント：開催していません${nextStart?'。次回 '+nextStart+'（日本時間）':''}`;
    const traitText=traitEventActive?`✨ 属性イベント：${traitUnique.join('・')}（残り ${formatTimeLeft(traitSecondsLeft)}）`:'✨ 属性イベント：開催していません';
-   const snapText=snapActive?`💥 Snap開催中：変異 ${data.snap_mutation||'ランダム'}／属性 ${snapTraits.length?snapTraits.join('・'):'ランダム'}`:'';
-   details.textContent=[mutationText,traitText,snapText].filter(Boolean).join('　／　');
+   details.textContent=[mutationText,traitText].join('　／　');
  }
- const summary=$('eventSummaryTitle');if(summary)summary.textContent=(mutationEventActive||traitEventActive||snapActive)?'🎉 イベント開催中！':'イベント開催状況';
+ const summary=$('eventSummaryTitle');if(summary)summary.textContent=(mutationEventActive||traitEventActive)?'🎉 イベント開催中！':'イベント開催状況';
 }
 const eventDetailsButton=$('eventDetailsButton');
 if(eventDetailsButton)eventDetailsButton.addEventListener('click',()=>{const panel=$('eventDetailsContent');if(!panel)return;panel.hidden=!panel.hidden;eventDetailsButton.textContent=panel.hidden?'詳細':'閉じる';});
