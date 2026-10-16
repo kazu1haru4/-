@@ -183,7 +183,7 @@ body.tradeModalOpen{overflow:hidden}
 <div id="notice" class="toast"></div><section id="defensePanel" class="defense" hidden><div class="defenseTopline"><span>🚨 キャラが盗まれそう！</span><span class="defenseCountdownLabel">25秒以内に守ろう</span></div><h2 style="margin:8px 0 6px">🛡️ 防衛ミニゲーム</h2><p id="defenseIntro">友達からキャラを狙われているよ！制限時間内にお題の絵文字を5回当てて守ろう！</p><div id="defenseCharacter" class="defenseCharacter"><div class="defenseCharacterArt">🧠</div><div><div class="hint">狙われているキャラクター</div><strong id="defenseCharacterName">確認中…</strong><div class="hint" id="defenseCharacterDetails">このキャラを守ろう！</div></div></div><div class="defenseTarget" id="defenseTarget">🎯</div><div class="hint" id="defenseProgress">0 / 5 回成功</div><div class="defenseBar"><span id="defenseTimerBar"></span></div><div class="defenseChoices" id="defenseChoices"></div></section><div id="loading" class="loading">ゲームデータを読み込み中…</div>
 <div id="game" hidden>
 <section class="eventPanel" id="eventPanel">
-<div class="eventIconStrip" id="eventIconStrip">
+<div class="eventIconStrip" id="eventIconStrip" hidden>
  <div class="eventIconCard" id="mutationIconCard"><div class="eventIcon">🧬</div><strong>変異</strong><span id="mutationIconTimer">確認中…</span></div>
  <div class="eventIconCard" id="traitIconCard"><div class="eventIcon">✨</div><strong>属性</strong><span id="traitIconTimer">確認中…</span></div>
 </div>
@@ -242,7 +242,7 @@ body.tradeModalOpen{overflow:hidden}
 <section class="panel" id="fusePanel" style="margin-top:18px"><div class="sectionhead" style="margin-top:0"><h2>🧬 フューズマシン</h2><span class="hint">素材は4体必要</span></div><p>初代ヒューズに登場した17体だけが合成結果に出るよ。仲間を4体選んで合成しよう。開始すると選んだ4体は消費されるよ。完成までの時間は結果のレア度で変わるよ。</p><div class="hint" id="fuseSelectionCount">0 / 4体選択中</div><div id="fuseChoices" class="fuseGrid"><div class="hint">仲間を読み込み中…</div></div><section class="foldSection" id="fuseOddsDetails" style="margin:10px 0 12px"><details open><summary>🎲 合成結果の確率</summary><div class="foldContent"><p class="hint" id="fuseOddsSummary">素材を4体選ぶと今回の候補と確率が表示されるよ。</p><div id="fuseOddsList" class="fuseOddsList"><div class="hint">先にキャラクターを4体選んでね。</div></div></div></details></section><button id="fuseStartButton" disabled>🧬 4体を合成する</button><div id="fuseStatus" class="toast" role="status" aria-live="polite" style="display:block">合成するキャラクターを4体選んでね。</div><div id="fuseJobs"></div></section>
 <section class="panel" id="migatitoRitualPanel" style="margin-top:18px;border-color:#9b78c9;background:linear-gradient(145deg,#302044,#19192f)">
 <style>.ritualFold{margin:10px 0;border:1px solid #65517c;border-radius:13px;background:#171426;overflow:hidden}.ritualFold>summary{cursor:pointer;list-style:none;padding:13px 14px;font-weight:800;display:flex;align-items:center;justify-content:space-between;gap:10px}.ritualFold>summary::-webkit-details-marker{display:none}.ritualFold>summary:after{content:'＋';font-size:18px;opacity:.8}.ritualFold[open]>summary:after{content:'−'}.ritualFoldBody{padding:0 13px 14px}.ritualFoldBody>p:first-child{margin-top:0}.ritualFold .ritualExtra{margin:0!important;padding:0!important;border:0!important} 
-.eventIconStrip{display:flex;gap:10px;overflow-x:auto;padding:4px 0 12px;scrollbar-width:thin}
+.eventIconStrip[hidden]{display:none!important}.eventIconStrip{display:flex;gap:10px;overflow-x:auto;padding:4px 0 12px;scrollbar-width:thin}
 .eventIconCard{flex:0 0 76px;min-width:76px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 5px;border:1px solid #5a547c;border-radius:13px;background:linear-gradient(145deg,#252446,#173443);text-align:center}
 .eventIconCard[hidden]{display:none}
 .eventIconCard.active{border-color:#68e7ff;box-shadow:0 0 13px #68e7ff55}
@@ -627,7 +627,7 @@ function renderEventState(){
  const summary=$('eventSummaryTitle');if(summary)summary.textContent=(mutationEventActive||traitEventActive)?'🎉 イベント開催中！':'イベント開催状況';
 }
 const eventDetailsButton=$('eventDetailsButton');
-if(eventDetailsButton)eventDetailsButton.addEventListener('click',()=>{const panel=$('eventDetailsContent');if(!panel)return;panel.hidden=!panel.hidden;eventDetailsButton.textContent=panel.hidden?'詳細':'閉じる';});
+if(eventDetailsButton)eventDetailsButton.addEventListener('click',()=>{const panel=$('eventDetailsContent');const strip=$('eventIconStrip');if(!panel||!strip)return;const opening=strip.hidden;strip.hidden=!opening;panel.hidden=!opening;eventDetailsButton.textContent=opening?'閉じる':'詳細';});
 
 if(eventTimer)clearInterval(eventTimer);eventTimer=setInterval(()=>{if($('game').hidden)return;mutationSecondsLeft=Math.max(0,mutationSecondsLeft-1);if(traitEventActive)traitSecondsLeft=Math.max(0,traitSecondsLeft-1);eventRefreshCounter++;renderEventState();syncEventMusic();if(mutationSecondsLeft<=0|| (traitEventActive&&traitSecondsLeft<=0)||eventRefreshCounter>=5){eventRefreshCounter=0;loadEventState();}},1000);
 
