@@ -243,6 +243,14 @@ async function redeemRewardCode(){
   location.href="brainrot.html";
   return;
  }
+ if(shortcut==="3dフレンドロット"){
+  location.href="https://kazu1haru4.github.io/friendlot3d/auth.html";
+  return;
+ }
+ if(shortcut==="ブロウルアリーナ"){
+  location.href="https://kazu1haru4.github.io/brawl-arena/index.html";
+  return;
+ }
  const code=input.value.trim().toUpperCase();
  if(!code){showRewardMessage("❌ 配布コードを入力してください");return}
  button.disabled=true;showRewardMessage("🎁 受け取っています……");
