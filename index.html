@@ -166,6 +166,23 @@
 
     <div id="message"></div>
 
+    <details class="note" style="margin-top:18px;text-align:left;background:#f8f7ff;border-radius:14px;padding:12px">
+      <summary style="cursor:pointer;font-weight:bold">🔐 パスワードを忘れた場合</summary>
+      <p style="font-size:13px">登録時の復旧コードがある場合は、ユーザーID・復旧コード・新しいパスワードを入力してください。</p>
+      <label for="recoveryUserId">ユーザーID</label><input id="recoveryUserId" type="text" maxlength="20" placeholder="ユーザーID">
+      <label for="recoveryCode">復旧コード</label><input id="recoveryCode" type="text" maxlength="32" placeholder="登録時に保存したコード" autocapitalize="characters">
+      <label for="recoveryNewPassword">新しいパスワード</label><input id="recoveryNewPassword" type="password" minlength="6" placeholder="6文字以上">
+      <button type="button" onclick="recoverWithCode()" style="width:100%;margin-top:8px">復旧コードで変更</button>
+      <hr style="border:0;border-top:1px solid #ddd;margin:16px 0">
+      <p style="font-size:13px">復旧コードもない場合は管理者に申請できます。申請が承認されたら、管理者から受け取った承認コードでパスワードを変更してください。</p>
+      <label for="recoveryRequestMessage">管理者へのメッセージ（任意）</label><input id="recoveryRequestMessage" type="text" maxlength="500" placeholder="本人確認に必要な情報など">
+      <button type="button" onclick="requestPasswordRecovery()" style="width:100%;margin-top:8px">管理者に復旧を申請</button>
+      <label for="recoveryApprovalToken" style="margin-top:14px">承認コード</label><input id="recoveryApprovalToken" type="text" maxlength="64" placeholder="管理者から受け取ったコード" autocapitalize="characters">
+      <label for="recoveryTokenNewPassword">新しいパスワード</label><input id="recoveryTokenNewPassword" type="password" minlength="6" placeholder="6文字以上">
+      <button type="button" onclick="recoverWithApprovalToken()" style="width:100%;margin-top:8px">承認コードで変更</button>
+      <div id="recoveryMessage" style="white-space:pre-wrap;font-size:13px;margin-top:10px"></div>
+    </details>
+
     <div class="note">
       ユーザーIDは3〜20文字の英数字と「_」が使えます。<br>
       パスワードは6文字以上にしてね。
@@ -330,6 +347,9 @@
 
         message.textContent =
           "登録成功！🎉 ログインしてね。";
+        if (data.recovery_code) {
+          alert("🔐 大切な復旧コードです。\n\n" + data.recovery_code + "\n\n必ずコピーして安全な場所に保存してください。今後このコードは再表示できません。紛失した場合は管理者への申請が必要です。");
+        }
 
       }
 
@@ -344,6 +364,55 @@
 
     }
 
+
+    async function callRecovery(body) {
+      const { data, error } = await supabaseClient.functions.invoke("password-recovery", { body });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || "処理できませんでした。");
+      return data;
+    }
+
+    async function recoverWithCode() {
+      const box = document.getElementById("recoveryMessage");
+      const username = document.getElementById("recoveryUserId").value.trim();
+      const recoveryCode = document.getElementById("recoveryCode").value.trim();
+      const newPassword = document.getElementById("recoveryNewPassword").value;
+      if (!username || !recoveryCode || newPassword.length < 6) { box.textContent = "ユーザーID・復旧コード・6文字以上の新しいパスワードを入力してください。"; return; }
+      box.textContent = "復旧処理中...";
+      try {
+        const data = await callRecovery({ action: "recover_code", username, recoveryCode, newPassword });
+        box.textContent = data.message || "パスワードを変更しました。";
+        document.getElementById("recoveryCode").value = "";
+        document.getElementById("recoveryNewPassword").value = "";
+        if (data.recovery_code) alert("新しい復旧コードです。必ず保存してください。\n\n" + data.recovery_code);
+      } catch (e) { box.textContent = "❌ " + (e.message || "復旧に失敗しました。"); }
+    }
+
+    async function requestPasswordRecovery() {
+      const box = document.getElementById("recoveryMessage");
+      const username = document.getElementById("recoveryUserId").value.trim() || document.getElementById("userId").value.trim();
+      const message = document.getElementById("recoveryRequestMessage").value.trim();
+      if (!username) { box.textContent = "申請するユーザーIDを入力してください。"; return; }
+      box.textContent = "申請中...";
+      try { const data = await callRecovery({ action: "request", username, message }); box.textContent = data.message || "申請を送信しました。"; }
+      catch (e) { box.textContent = "❌ 申請に失敗しました。時間をおいて再度お試しください。"; }
+    }
+
+    async function recoverWithApprovalToken() {
+      const box = document.getElementById("recoveryMessage");
+      const username = document.getElementById("recoveryUserId").value.trim() || document.getElementById("userId").value.trim();
+      const token = document.getElementById("recoveryApprovalToken").value.trim();
+      const newPassword = document.getElementById("recoveryTokenNewPassword").value;
+      if (!username || !token || newPassword.length < 6) { box.textContent = "ユーザーID・承認コード・6文字以上の新しいパスワードを入力してください。"; return; }
+      box.textContent = "パスワード変更中...";
+      try {
+        const data = await callRecovery({ action: "recover_token", username, token, newPassword });
+        box.textContent = data.message || "パスワードを変更しました。";
+        document.getElementById("recoveryApprovalToken").value = "";
+        document.getElementById("recoveryTokenNewPassword").value = "";
+        if (data.recovery_code) alert("新しい復旧コードです。必ず保存してください。\n\n" + data.recovery_code);
+      } catch (e) { box.textContent = "❌ " + (e.message || "パスワード変更に失敗しました。"); }
+    }
 
     /* =========================
        ログイン

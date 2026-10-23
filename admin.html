@@ -129,6 +129,13 @@ textarea{min-height:100px;resize:vertical}.form-row{margin-bottom:12px}.form-row
 
 
 <details class="panel collapsible-panel">
+<summary>🔐 パスワード復旧申請</summary>
+<div class="hint" style="margin-bottom:12px">復旧コードをなくしたユーザーからの申請を確認します。承認すると48時間有効の承認コードが一度だけ表示されます。本人確認後、安全な方法で本人へ伝えてください。</div>
+<div class="toolbar"><select id="recoveryStatusFilter"><option value="all">すべて</option><option value="pending">未対応</option><option value="approved">承認済み</option><option value="rejected">却下</option><option value="completed">完了</option></select><button id="refreshRecoveryRequests" type="button">🔄 更新</button></div>
+<div id="recoveryRequestsLoading" class="loading">申請を読み込んでいません。</div><div id="recoveryRequestsList"></div>
+</details>
+
+<details class="panel collapsible-panel">
 <summary>🛡️ 副管理者管理</summary>
 <div class="hint" style="margin-bottom:12px">
 副管理者1〜5を個別に任命・解任できます。各副管理者が管理できるユーザーもここで設定できます。
@@ -907,8 +914,37 @@ async function toggleMaintenance(){const {data}=await supabaseClient.from("site_
 async function loadOperationLogs(){const box=document.getElementById("operationLogsList"),q=(document.getElementById("operationLogSearch").value||"").trim();box.className="loading";box.textContent="読み込み中...";let query=supabaseClient.from("admin_operation_logs").select("id,admin_id,action,created_at,metadata").order("created_at",{ascending:false}).limit(100);if(q)query=query.or(`admin_id.ilike.%${q}%,action.ilike.%${q}%`);const {data,error}=await query;if(error){box.textContent="❌ "+error.message;return}box.className="";box.innerHTML=data?.length?data.map(r=>`<div class="log-row"><b>${escapeHtml(r.action)}</b><div class="muted">${escapeHtml(r.admin_id)} / ${escapeHtml(formatDate(r.created_at))}</div></div>`).join(""):"操作ログはありません。"}
 async function logOperation(action,metadata={}){try{await supabaseClient.from("admin_operation_logs").insert({admin_id:currentUsername,action,metadata})}catch(e){console.warn("操作ログ保存失敗",e)}}
 
+async function loadRecoveryRequests(){
+ const loading=document.getElementById("recoveryRequestsLoading"),list=document.getElementById("recoveryRequestsList");
+ if(!loading||!list)return;loading.classList.remove("hidden");loading.textContent="🔄 申請を読み込んでいます...";list.innerHTML="";
+ try{
+  const {data,error}=await supabaseClient.functions.invoke("password-recovery",{body:{action:"admin_list"}});
+  if(error)throw error;if(!data?.ok)throw new Error(data?.error||"申請を取得できませんでした。");
+  const filter=document.getElementById("recoveryStatusFilter")?.value||"all";
+  const rows=(data.requests||[]).filter(r=>filter==="all"||r.status===filter);
+  loading.classList.add("hidden");
+  if(!rows.length){list.innerHTML='<div class="empty">該当する申請はありません。</div>';return;}
+  const labels={pending:"未対応",approved:"承認済み",rejected:"却下",completed:"完了"};
+  list.innerHTML=rows.map(r=>`<div class="report-row"><div><span class="tag ${r.status==="pending"?"open":"done"}">${labels[r.status]||escapeHtml(r.status)}</span> <b>ID：${escapeHtml(r.user_id)}</b></div><div style="margin-top:6px;white-space:pre-wrap">${escapeHtml(r.message||"申請メッセージなし")}</div><div class="muted" style="margin-top:6px">申請：${escapeHtml(formatDate(r.created_at))}${r.reviewed_at?`<br>対応：${escapeHtml(formatDate(r.reviewed_at))} / ${escapeHtml(r.reviewed_by||"管理者")}`:""}${r.completed_at?`<br>復旧完了：${escapeHtml(formatDate(r.completed_at))}`:""}</div>${r.status==="pending"?`<div class="actions"><button class="success small" data-recovery-approve="${Number(r.id)}" type="button">✅ 承認</button><button class="danger small" data-recovery-reject="${Number(r.id)}" type="button">❌ 却下</button></div>`:""}</div>`).join("");
+  list.querySelectorAll("[data-recovery-approve]").forEach(b=>b.onclick=()=>decideRecoveryRequest(Number(b.dataset.recoveryApprove),"approved"));
+  list.querySelectorAll("[data-recovery-reject]").forEach(b=>b.onclick=()=>decideRecoveryRequest(Number(b.dataset.recoveryReject),"rejected"));
+ }catch(error){loading.classList.remove("hidden");loading.textContent="❌ 復旧申請の読み込みに失敗しました：\n"+(error.message||error);}
+}
+async function decideRecoveryRequest(id,decision){
+ const isApprove=decision==="approved";
+ if(!confirm(isApprove?"申請を承認しますか？\n本人確認を行ってから承認してください。":"この復旧申請を却下しますか？"))return;
+ try{
+  const {data,error}=await supabaseClient.functions.invoke("password-recovery",{body:{action:"admin_decide",id,decision}});
+  if(error)throw error;if(!data?.ok)throw new Error(data?.error||"処理できませんでした。");
+  await logOperation(`パスワード復旧申請 #${id}（${data.username}）を${isApprove?"承認":"却下"}しました。`,{request_id:id,target_username:data.username});
+  if(isApprove&&data.token){alert(`✅ 申請を承認しました。\n\n対象ID：${data.username}\n承認コード（本人に一度だけ伝えてください）：\n${data.token}\n\n有効期限：${formatDate(data.expires_at)}\n\nこのコードは再表示できません。安全な方法で本人に伝えてください。`);}
+  else alert("申請を却下しました。");
+  await loadRecoveryRequests();
+ }catch(error){alert("❌ 申請処理に失敗しました。\n\n"+(error.message||error));}
+}
+
 function setupButtons(){
- document.getElementById("saveAnnouncementButton")?.addEventListener("click",saveAnnouncement);document.getElementById("cancelAnnouncementEditButton")?.addEventListener("click",resetAnnouncementForm);
+ document.getElementById("refreshRecoveryRequests")?.addEventListener("click",loadRecoveryRequests);document.getElementById("recoveryStatusFilter")?.addEventListener("change",loadRecoveryRequests);document.getElementById("saveAnnouncementButton")?.addEventListener("click",saveAnnouncement);document.getElementById("cancelAnnouncementEditButton")?.addEventListener("click",resetAnnouncementForm);
  document.getElementById("confirmCoinButton").addEventListener("click",saveUserCoins);document.getElementById("cancelCoinButton").addEventListener("click",closeCoinModal);document.getElementById("coinModal").addEventListener("click",e=>{if(e.target.id==="coinModal")closeCoinModal()});
  document.getElementById("confirmBanButton").addEventListener("click",banUser);document.getElementById("cancelBanButton").addEventListener("click",closeBanModal);document.getElementById("saveEditButton").addEventListener("click",saveBoardEdit);document.getElementById("cancelEditButton").addEventListener("click",closeEditModal);document.getElementById("createRewardCodeButton").addEventListener("click",createRewardCode);document.getElementById("createEventButton").addEventListener("click",createEvent);
  document.getElementById("banModal").addEventListener("click",e=>{if(e.target.id==="banModal")closeBanModal()});document.getElementById("editModal").addEventListener("click",e=>{if(e.target.id==="editModal")closeEditModal()});
@@ -926,7 +962,7 @@ async function init(){
  try{
   setStatus("🔄 Supabaseを起動しています...","info");createSupabaseClient();setStatus("🔄 ログイン状態を確認しています...","info");const loggedIn=await checkLogin();if(!loggedIn)return;const banned=await checkBan();if(banned)return;
   setStatus("✅ 管理者としてログインしています。読み込みを開始します。","success");
-  await loadAnnouncements();await loadSiteStats();await loadFrameList();await loadNameDecorationList();await loadBackgroundList();await loadChatFrameList();await loadUsers();await loadSubAdminManagement();await loadAdvancedStats();await loadCoinHistory();await loadReports();await loadMaintenance();await loadOperationLogs();await loadBoardMessages();await loadItems();await loadRewardCodes();await loadEvents();
+  await loadAnnouncements();await loadRecoveryRequests();await loadSiteStats();await loadFrameList();await loadNameDecorationList();await loadBackgroundList();await loadChatFrameList();await loadUsers();await loadSubAdminManagement();await loadAdvancedStats();await loadCoinHistory();await loadReports();await loadMaintenance();await loadOperationLogs();await loadBoardMessages();await loadItems();await loadRewardCodes();await loadEvents();
   setStatus("✅ 管理者パネルの読み込みが完了しました！","success");
  }catch(error){console.error("管理者パネルエラー:",error);setStatus("❌ エラーが発生しました\n\n"+(error.message||error),"error")}
 }
