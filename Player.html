@@ -104,10 +104,21 @@ footer{text-align:center;padding:8px 20px 24px;color:#777;font-size:12px}
   let currentIndex = -1;
   let player = null;
   let apiReady = false;
+  let apiScriptLoaded = false;
   let pendingVideoId = null;
   let volume = 70;
 
   function status(message) { $('status').textContent = message; }
+  let apiLoadTimer = setTimeout(() => {
+    if (!apiReady) {
+      status('YouTubeプレイヤーの準備がタイムアウトしました。APIファイル取得後の初期化で止まっている可能性があります。');
+    }
+  }, 12000);
+  window.addEventListener('error', event => {
+    if (event.message && event.message.includes('YT')) {
+      status('YouTubeプレイヤーの初期化に失敗しました。ページを再読み込みしてください。');
+    }
+  });
   function extractVideoId(raw) {
     try {
       const url = new URL(raw.trim());
@@ -261,13 +272,17 @@ footer{text-align:center;padding:8px 20px 24px;color:#777;font-size:12px}
     if (event.data === YT.PlayerState.PAUSED) status('一時停止中。');
   }
   window.onYouTubeIframeAPIReady = function() {
+    apiScriptLoaded = true;
+    status('YouTube APIを読み込みました。プレイヤーを準備しています…');
+    try {
     player = new YT.Player('player', {
       videoId: pendingVideoId || undefined,
       playerVars: { playsinline: 1, rel: 0, enablejsapi: 1 },
       events: {
         onReady: () => {
-          apiReady = true; player.setVolume(volume);
+          apiReady = true; clearTimeout(apiLoadTimer); player.setVolume(volume);
           if (pendingVideoId) { player.loadVideoById(pendingVideoId); pendingVideoId = null; }
+          else status('準備完了。プレイリストから動画を選んでください。');
           else status('準備完了。YouTubeのURLを追加してください。');
         },
         onStateChange: onPlayerStateChange,
@@ -277,6 +292,10 @@ footer{text-align:center;padding:8px 20px 24px;color:#777;font-size:12px}
         }
       }
     });
+    } catch (error) {
+      console.error('YouTube player initialization failed:', error);
+      status('プレイヤーの初期化に失敗しました。ページを再読み込みしてください。');
+    }
   };
   $('addBtn').addEventListener('click', addTrack);
   $('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTrack(); });
