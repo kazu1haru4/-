@@ -29,7 +29,7 @@
 #summonOverlay.rainbow .summon-flash{animation:flashBurst .8s ease-out .1s}
 @keyframes overlayIn{from{opacity:0}to{opacity:1}}@keyframes titlePulse{from{transform:scale(.97)}to{transform:scale(1.04)}}@keyframes orbPulse{from{transform:scale(.9) rotate(0)}to{transform:scale(1.08) rotate(12deg)}}@keyframes spinRing{to{transform:rotate(360deg)}}@keyframes rainbowText{to{background-position:300% 0}}@keyframes flashBurst{0%{opacity:0}12%{opacity:.8}100%{opacity:0}}
 @media(prefers-reduced-motion:reduce){.summon-title,.summon-orb,.summon-orb:before,.summon-orb:after,.summon-flash{animation-duration:2s!important}}
-</style></head><body><main class="wrap"><div class="top"><button class="btn" onclick="history.back()">← 戻る</button><h1>🎟️ フレンドガチャ</h1><button id="adminLink" class="btn" hidden onclick="location.href='admin-gacha.html'">⚙️ 管理</button><button class="btn" onclick="location.href='gacha-exchange.html'">🎫 チケット交換</button></div><section class="panel"><div class="muted">現在のフレンドコイン</div><div id="coins" class="balance">読み込み中…</div><div id="status" class="status" style="margin-top:12px">ガチャを読み込み中…</div></section><section class="panel"><h2>ガチャ一覧</h2><p class="muted">ガチャごとの料金・合計ガチャ可能回数・景品内容を確認してね。</p><div id="gachas" class="grid">読み込み中…</div></section><section id="selectedPanel" class="panel" hidden><div class="row" style="justify-content:space-between"><button id="backList" class="btn secondary">← ガチャ一覧に戻る</button><h2 id="selectedTitle">選択したガチャ</h2></div><button id="spin" class="btn gachaSpinTop">🎰 ガチャをする</button><div class="gachaSummary"><div class="gachaStat"><div class="statLabel">1回の料金</div><div id="summaryCost" class="statValue">— COIN</div></div><div class="gachaStat"><div class="statLabel">合計回数</div><div id="summaryTotal" class="statValue">— 回</div></div><div class="gachaStat"><div class="statLabel">残り回数</div><div id="summaryRemaining" class="statValue">— 回</div></div></div><div id="spinStatus" class="muted" style="text-align:center"></div><div id="selectedCost" class="muted"></div><div id="selectedPrizes" class="grid" style="margin-top:12px"></div><div id="result" class="status" style="margin-top:14px">抽選結果がここに表示されます。</div></section><p class="muted small">抽選・コイン消費・チケット付与はSupabase側で処理されます。</p></main>
+</style></head><body><main class="wrap"><div class="top"><button class="btn" onclick="history.back()">← 戻る</button><h1>🎟️ フレンドガチャ</h1><button id="adminLink" class="btn" hidden onclick="location.href='admin-gacha.html'">⚙️ 管理</button><button class="btn" onclick="location.href='gacha-exchange.html'">🎫 チケット交換</button></div><section class="panel"><div class="muted">現在のフレンドコイン</div><div id="coins" class="balance">読み込み中…</div><div id="status" class="status" style="margin-top:12px">ガチャを読み込み中…</div></section><section class="panel"><h2>ガチャ一覧</h2><p class="muted">ガチャごとの料金・合計ガチャ可能回数・景品内容を確認してね。</p><div id="gachas" class="grid">読み込み中…</div></section><section id="selectedPanel" class="panel" hidden><div class="row" style="justify-content:space-between"><button id="backList" class="btn secondary">← ガチャ一覧に戻る</button><h2 id="selectedTitle">選択したガチャ</h2></div><button id="spin" class="btn gachaSpinTop">🎰 ガチャをする</button><button id="spinTen" class="btn gachaSpinTop" style="background:linear-gradient(90deg,#f59e0b,#ef4444);margin-top:0">🎉 10連ガチャ（10回分）</button><div class="gachaSummary"><div class="gachaStat"><div class="statLabel">1回の料金</div><div id="summaryCost" class="statValue">— COIN</div></div><div class="gachaStat"><div class="statLabel">合計回数</div><div id="summaryTotal" class="statValue">— 回</div></div><div class="gachaStat"><div class="statLabel">残り回数</div><div id="summaryRemaining" class="statValue">— 回</div></div></div><div id="spinStatus" class="muted" style="text-align:center"></div><div id="selectedCost" class="muted"></div><div id="selectedPrizes" class="grid" style="margin-top:12px"></div><div id="result" class="status" style="margin-top:14px">抽選結果がここに表示されます。</div></section><p class="muted small">抽選・コイン消費・チケット付与はSupabase側で処理されます。</p></main>
 <div id="spinOverlay" hidden aria-live="polite"><div class="spinTitle">🎰 抽選中…</div><div id="spinOrb" class="spinOrb">🎁</div><div class="spinSub">どの景品が当たるかな？</div></div>
 <div id="resultOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="fullResultTitle"><section class="resultCard"><div class="resultKicker">GACHA RESULT</div><div id="fullResultEmoji" class="resultEmoji">🎁</div><h2 id="fullResultTitle" class="resultName">抽選結果</h2><div id="fullResultDetails" class="resultDetails"></div><button id="resultClose" class="btn resultClose">結果を閉じる</button></section></div>
 <div id="summonOverlay" role="dialog" aria-modal="true" aria-label="ガチャ演出"><div class="summon-flash"></div><div class="summon-content"><div id="summonTitle" class="summon-title">召喚中…</div><div class="summon-orb"></div><div id="summonSub" class="summon-sub">運命の結果は…？</div><button id="summonSkip" class="summon-skip" type="button">演出をスキップ ›</button></div></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
@@ -70,7 +70,74 @@ function playSummon(result){
  });
 }
 
+
+function showFullscreenMultiResult(results, errorMessage=''){
+ stopSpinAnimation();
+ const overlay=$('resultOverlay');
+ $('fullResultEmoji').textContent='🎉';
+ $('fullResultTitle').textContent=`10連ガチャ結果（${results.length}/10回）`;
+ const cards=results.map((d,i)=>{
+  const grade=Number(d.display_grade||0);
+  const label=grade>0?`${grade}等`:(d.rarity||'景品');
+  return `<div class="resultDetail"><b>${i+1}. ${esc(d.emoji||'🎁')} ${esc(d.name||d.character_id||'景品')}</b><div class="muted small">${esc(label)} ・ チケット +${Number(d.ticket_reward||0).toLocaleString()}枚</div></div>`;
+ }).join('');
+ const extra=errorMessage?`<div class="resultDetail"><b>途中で停止しました</b><div class="muted small">${esc(errorMessage)}</div></div>`:'';
+ const last=results[results.length-1]||{};
+ $('fullResultDetails').innerHTML=cards+extra+
+  `<div class="resultDetail"><div class="muted small">ガチャ</div><b>${esc(last.gacha_title||selected?.title||'—')}</b></div>`+
+  `<div class="resultDetail"><div class="muted small">抽選後コイン残高</div><b>${Number(last.coins_remaining||0).toLocaleString()} COIN</b></div>`+
+  `<div class="resultDetail"><div class="muted small">残りガチャ可能回数</div><b>${Number(last.spins_remaining??0).toLocaleString()} / ${Number(last.total_spin_limit??0).toLocaleString()} 回</b></div>`;
+ overlay.hidden=false;
+ $('resultClose').focus();
+}
+async function spinTen(){
+ if(!selected||busy)return;
+ const cost=Number(selected.spin_cost||0),total=cost*10;
+ const remainingText=$('summaryRemaining').textContent;
+ const remainingMatch=remainingText.match(/[\d,]+/);
+ const remaining=remainingMatch?Number(remainingMatch[0].replace(/,/g,'')):null;
+ if(remaining!==null&&remaining<10){alert(`残り回数が足りません（残り ${remaining} 回）`);return}
+ if(Number($('coins').textContent.replace(/[^\d]/g,''))<total){alert(`コインが足りません。10連には ${total.toLocaleString()} COIN 必要です。`);return}
+ if(!confirm(`「${selected.title}」を10連します。合計 ${total.toLocaleString()} COIN（1回 ${cost.toLocaleString()} COIN）を消費します。よろしいですか？`))return;
+ const gachaId=selected.id;
+ busy=true;$('spin').disabled=true;$('spinTen').disabled=true;
+ $('spinStatus').textContent='10連ガチャ抽選中…';
+ startSpinAnimation();
+ const results=[];let errorMessage='';
+ try{
+  for(let i=0;i<10;i++){
+   const {data,error}=await db.rpc('friend_gacha_spin',{p_gacha_id:gachaId});
+   if(error){errorMessage=error.message;break}
+   if(!data){errorMessage='抽選結果を受け取れませんでした';break}
+   results.push(data);
+  }
+ }catch(e){errorMessage=e?.message||String(e)}
+ stopSpinAnimation();
+ if(results.length){
+  // 10件の中で最も上位の結果（OG優先、次に等級の小さい景品）を演出に使う
+  const best=[...results].sort((a,b)=>{
+   const og=d=>/(^|\b)og(\b|$)/i.test(String(d.rarity||''))||/(^|\b)og(\b|$)/i.test(String(d.name||''));
+   if(og(a)!==og(b))return og(a)?-1:1;
+   const ga=Number(a.display_grade||99),gb=Number(b.display_grade||99);
+   return ga-gb;
+  })[0];
+  await playSummon(best);
+  showFullscreenMultiResult(results,errorMessage);
+  $('result').innerHTML=`🎉 <b>10連結果：${results.length}/10回</b><br>`+results.map((d,i)=>`${i+1}. ${esc(d.emoji||'🎁')} ${esc(d.name||d.character_id)}（${Number(d.ticket_reward||0)}枚）`).join('<br>')+(errorMessage?`<br>❌ ${esc(errorMessage)}`:'');
+ }else{
+  showFullscreenResult({},errorMessage||'抽選できませんでした');
+  $('result').textContent='❌ '+(errorMessage||'抽選できませんでした');
+ }
+ $('spinStatus').textContent='';
+ busy=false;
+ await refreshBalance();
+ await selectGacha(gachaId);
+}
+
 function closeFullscreenResult(){$('resultOverlay').hidden=true}
 $('resultClose').onclick=closeFullscreenResult;$('resultOverlay').addEventListener('click',e=>{if(e.target===$('resultOverlay'))closeFullscreenResult()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('resultOverlay').hidden)closeFullscreenResult()});
-$('backList').onclick=()=>{$('selectedPanel').hidden=true;selected=null};$('spin').onclick=async()=>{if(!selected||busy)return;const cost=Number(selected.spin_cost);if(!confirm(`「${selected.title}」を1回回します。${cost.toLocaleString()} COINを消費しますか？`))return;busy=true;$('spin').disabled=true;$('spinStatus').textContent='抽選中…';startSpinAnimation();const startedAt=Date.now();const {data,error}=await db.rpc('friend_gacha_spin',{p_gacha_id:selected.id});await new Promise(resolve=>setTimeout(resolve,Math.max(0,1300-(Date.now()-startedAt))));if(error){stopSpinAnimation();$('result').textContent='❌ '+error.message;showFullscreenResult({},error.message)}else{stopSpinAnimation();await playSummon(data);$('result').innerHTML=`🎉 <b>${esc(data.emoji||'🎁')} ${esc(data.name||data.character_id)}</b><br>ガチャ：${esc(data.gacha_title||selected.title)}<br>レア度：${esc(data.rarity||'未設定')}<br>🎟️ ${esc(data.prize_type==='character'?(data.name||data.character_id)+'交換チケット':'交換チケット')} +${Number(data.ticket_reward)}枚<br>残りガチャ可能回数：${Number(data.spins_remaining??0)} / ${Number(data.total_spin_limit??0)}回<br>🪙 抽選後コイン残高：${Number(data.coins_remaining).toLocaleString()} COIN`;showFullscreenResult(data)}$('spinStatus').textContent='';busy=false;await refreshBalance();await selectGacha(selected.id)};init().catch(e=>$('status').textContent='エラー：'+e.message);
+$('backList').onclick=()=>{$('selectedPanel').hidden=true;selected=null};
+$('spin').onclick=async()=>{if(!selected||busy)return;const cost=Number(selected.spin_cost);if(!confirm(`「${selected.title}」を1回回します。${cost.toLocaleString()} COINを消費しますか？`))return;const gachaId=selected.id;busy=true;$('spin').disabled=true;$('spinTen').disabled=true;$('spinStatus').textContent='抽選中…';startSpinAnimation();const startedAt=Date.now();const {data,error}=await db.rpc('friend_gacha_spin',{p_gacha_id:gachaId});await new Promise(resolve=>setTimeout(resolve,Math.max(0,1300-(Date.now()-startedAt))));if(error){stopSpinAnimation();$('result').textContent='❌ '+error.message;showFullscreenResult({},error.message)}else{stopSpinAnimation();await playSummon(data);$('result').innerHTML=`🎉 <b>${esc(data.emoji||'🎁')} ${esc(data.name||data.character_id)}</b><br>ガチャ：${esc(data.gacha_title||selected.title)}<br>レア度：${esc(data.rarity||'未設定')}<br>🎟️ ${esc(data.prize_type==='character'?(data.name||data.character_id)+'交換チケット':'交換チケット')} +${Number(data.ticket_reward)}枚<br>残りガチャ可能回数：${Number(data.spins_remaining??0)} / ${Number(data.total_spin_limit??0)}回<br>🪙 抽選後コイン残高：${Number(data.coins_remaining).toLocaleString()} COIN`;showFullscreenResult(data)}$('spinStatus').textContent='';busy=false;await refreshBalance();await selectGacha(gachaId)};
+$('spinTen').onclick=spinTen;
+init().catch(e=>$('status').textContent='エラー：'+e.message);
 </script></body></html>
