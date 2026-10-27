@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101010">
+<title>YouTube Player</title>
+<style>
+:root{color-scheme:dark;--bg:#101010;--panel:#1b1b1b;--panel2:#242424;--line:#333;--text:#f5f5f5;--muted:#aaa;--red:#ff3434}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;position:sticky;top:0;background:#101010ed;backdrop-filter:blur(12px);z-index:5}
+.logo{width:40px;height:40px;background:var(--red);border-radius:12px;display:grid;place-items:center;font-size:22px}
+h1{font-size:20px;margin:0} .sub{font-size:12px;color:var(--muted);margin-top:2px}
+main{width:min(1100px,100%);margin:0 auto;padding:20px;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr);gap:18px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;min-width:0}
+.player-wrap{aspect-ratio:16/9;background:#050505;border-radius:12px;overflow:hidden;display:grid;place-items:center}
+#player{width:100%;height:100%}
+.placeholder{color:var(--muted);text-align:center;padding:24px}
+.placeholder .play{font-size:42px;color:#fff}
+.now{margin:14px 0 10px;font-size:18px;font-weight:700;overflow-wrap:anywhere}
+.controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+button{font:inherit;color:var(--text);background:var(--panel2);border:1px solid #414141;border-radius:10px;padding:10px 13px;cursor:pointer}
+button:hover{border-color:#777}button.primary{background:var(--red);border-color:var(--red);font-weight:700}button:disabled{opacity:.4;cursor:not-allowed}
+input[type=text]{width:100%;min-width:0;background:#111;border:1px solid #414141;color:var(--text);padding:12px;border-radius:10px;font:inherit}
+label{font-size:13px;color:#ddd}
+.addrow{display:flex;gap:8px;margin-top:8px}.addrow input{flex:1}
+.section-title{font-size:16px;margin:0 0 12px}
+.setting{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.setting:last-child{border-bottom:0}
+input[type=checkbox]{accent-color:var(--red);width:18px;height:18px}
+input[type=range]{width:100%;accent-color:var(--red)}
+.volume-head{display:flex;justify-content:space-between;gap:10px;margin-bottom:8px}
+.playlist{display:flex;flex-direction:column;gap:8px;max-height:430px;overflow:auto}
+.track{display:flex;align-items:center;gap:8px;padding:10px;background:#141414;border:1px solid var(--line);border-radius:10px}
+.track.active{border-color:var(--red);background:#281515}
+.track-main{flex:1;min-width:0;cursor:pointer}
+.track-title{font-size:14px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.track-id{font-size:11px;color:var(--muted);margin-top:3px}
+.track button{padding:7px 9px}
+.small{font-size:12px;color:var(--muted);line-height:1.6}
+.empty{padding:20px 10px;text-align:center;color:var(--muted);font-size:13px}
+.status{font-size:12px;color:var(--muted);margin-top:10px;min-height:18px}
+footer{text-align:center;padding:8px 20px 24px;color:#777;font-size:12px}
+@media(max-width:760px){main{grid-template-columns:1fr;padding:12px;gap:12px}header{padding:14px}.panel{padding:13px}.now{font-size:16px}.playlist{max-height:350px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo" aria-hidden="true">▶</div>
+  <div><h1>YouTube Player</h1><div class="sub">リンクを登録して、自分だけのプレイリストを作ろう</div></div>
+</header>
+<main>
+  <section class="panel">
+    <div class="player-wrap" id="playerWrap">
+      <div class="placeholder" id="placeholder"><div class="play">▶</div><div>プレイリストから動画を選ぶか、URLを追加してください</div></div>
+      <div id="player" hidden></div>
+    </div>
+    <div class="now" id="nowTitle">未再生</div>
+    <div class="controls">
+      <button id="prevBtn" aria-label="前の動画">⏮ 前へ</button>
+      <button class="primary" id="playBtn">▶ 再生</button>
+      <button id="nextBtn" aria-label="次の動画">次へ ⏭</button>
+    </div>
+    <div class="status" id="status" role="status">YouTubeのURLを追加して始めましょう。</div>
+    <p class="small">動画の再生にはYouTubeの埋め込みプレイヤーを使用します。投稿者の設定や動画側の制限によっては、埋め込み再生できない場合があります。</p>
+  </section>
+  <aside class="panel">
+    <h2 class="section-title">プレイヤー設定</h2>
+    <div class="setting">
+      <div><label for="loopToggle">ループ再生</label><div class="small">現在の動画を繰り返す</div></div>
+      <input type="checkbox" id="loopToggle">
+    </div>
+    <div class="setting">
+      <div><label for="autoNextToggle">動画終了後に次へ</label><div class="small">プレイリストの次の動画を再生</div></div>
+      <input type="checkbox" id="autoNextToggle" checked>
+    </div>
+    <div class="setting" style="display:block">
+      <div class="volume-head"><label for="volume">音量</label><span id="volumeValue">70%</span></div>
+      <input id="volume" type="range" min="0" max="100" value="70">
+    </div>
+    <div class="setting" style="display:block">
+      <h2 class="section-title">動画を追加</h2>
+      <label for="urlInput">YouTubeのURL</label>
+      <div class="addrow"><input id="urlInput" type="text" placeholder="https://youtu.be/..." autocomplete="off"><button class="primary" id="addBtn">追加</button></div>
+      <div class="small" style="margin-top:7px">youtube.com/watch、youtu.be、ShortsのURLに対応</div>
+    </div>
+    <div class="setting">
+      <div><label>プレイリスト</label><div class="small" id="trackCount">0本の動画</div></div>
+      <button id="clearBtn">全削除</button>
+    </div>
+    <div class="playlist" id="playlist"><div class="empty">まだ動画がありません</div></div>
+    <p class="small">プレイリストと設定は、このブラウザの端末内に保存されます。別の端末やブラウザとは自動同期されません。</p>
+  </aside>
+</main>
+<footer>GitHub Pagesで動作するシングルHTMLアプリ</footer>
+
+<script>
+(() => {
+  const STORAGE_KEY = 'yt-player-playlist-v1';
+  const SETTINGS_KEY = 'yt-player-settings-v1';
+  const $ = id => document.getElementById(id);
+  let tracks = [];
+  let currentIndex = -1;
+  let player = null;
+  let apiReady = false;
+  let pendingVideoId = null;
+  let volume = 70;
+
+  function status(message) { $('status').textContent = message; }
+  function extractVideoId(raw) {
+    try {
+      const url = new URL(raw.trim());
+      const host = url.hostname.toLowerCase().replace(/^www\./, '').replace(/^m\./, '');
+      if (host === 'youtu.be') return url.pathname.split('/').filter(Boolean)[0] || null;
+      if (host === 'youtube.com' || host === 'music.youtube.com' || host === 'youtube-nocookie.com') {
+        if (url.pathname === '/watch') return url.searchParams.get('v');
+        const parts = url.pathname.split('/').filter(Boolean);
+        if (['embed', 'shorts', 'live', 'v'].includes(parts[0])) return parts[1] || null;
+      }
+    } catch (_) {}
+    return null;
+  }
+  function safeTitle(track) { return track.title || `YouTube動画 (${track.id})`; }
+  function saveTracks() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tracks)); }
+    catch (_) { status('保存できませんでした。ブラウザの保存領域を確認してください。'); }
+  }
+  function saveSettings() {
+    const settings = { loop: $('loopToggle').checked, autoNext: $('autoNextToggle').checked, volume };
+    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (_) {}
+  }
+  function loadData() {
+    try {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      if (Array.isArray(data)) tracks = data.filter(x => x && typeof x.id === 'string' && /^[\w-]{11}$/.test(x.id)).slice(0, 200);
+    } catch (_) { tracks = []; }
+    try {
+      const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+      $('loopToggle').checked = !!s.loop;
+      $('autoNextToggle').checked = s.autoNext !== false;
+      volume = Number.isFinite(s.volume) ? Math.max(0, Math.min(100, s.volume)) : 70;
+    } catch (_) {}
+    $('volume').value = volume;
+    $('volumeValue').textContent = volume + '%';
+    renderPlaylist();
+  }
+  function renderPlaylist() {
+    const root = $('playlist');
+    root.replaceChildren();
+    $('trackCount').textContent = `${tracks.length}本の動画`;
+    if (!tracks.length) {
+      const empty = document.createElement('div');
+      empty.className = 'empty'; empty.textContent = 'まだ動画がありません'; root.append(empty); return;
+    }
+    tracks.forEach((track, index) => {
+      const row = document.createElement('div');
+      row.className = 'track' + (index === currentIndex ? ' active' : '');
+      const main = document.createElement('div'); main.className = 'track-main'; main.tabIndex = 0; main.setAttribute('role', 'button');
+      const title = document.createElement('div'); title.className = 'track-title'; title.textContent = safeTitle(track);
+      const id = document.createElement('div'); id.className = 'track-id'; id.textContent = `YouTube · ${track.id}`;
+      main.append(title, id);
+      main.addEventListener('click', () => playTrack(index));
+      main.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); playTrack(index); } });
+      const up = document.createElement('button'); up.textContent = '↑'; up.title = '上へ'; up.disabled = index === 0;
+      up.addEventListener('click', () => moveTrack(index, -1));
+      const down = document.createElement('button'); down.textContent = '↓'; down.title = '下へ'; down.disabled = index === tracks.length - 1;
+      down.addEventListener('click', () => moveTrack(index, 1));
+      const remove = document.createElement('button'); remove.textContent = '✕'; remove.title = '削除'; remove.setAttribute('aria-label', `${safeTitle(track)}を削除`);
+      remove.addEventListener('click', () => removeTrack(index));
+      row.append(main, up, down, remove); root.append(row);
+    });
+  }
+  function addTrack() {
+    const raw = $('urlInput').value.trim();
+    const id = extractVideoId(raw);
+    if (!id || !/^[\w-]{11}$/.test(id)) { status('有効なYouTube動画URLを入力してください。'); return; }
+    const found = tracks.findIndex(t => t.id === id);
+    if (found !== -1) {
+      $('urlInput').value = '';
+      status('この動画はすでにプレイリストにあります。');
+      playTrack(found);
+      return;
+    }
+    tracks.push({ id, title: '' });
+    saveTracks(); renderPlaylist(); $('urlInput').value = '';
+    status('動画を追加しました。再生を開始します。');
+    playTrack(tracks.length - 1);
+    fetchTitle(id);
+  }
+  async function fetchTitle(id) {
+    // YouTube oEmbed endpoint may be unavailable in some browsers or environments; playback does not depend on it.
+    try {
+      const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent('https://www.youtube.com/watch?v=' + id)}&format=json`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const track = tracks.find(t => t.id === id);
+      if (track && data.title) { track.title = data.title; saveTracks(); renderPlaylist(); if (currentIndex >= 0 && tracks[currentIndex]?.id === id) $('nowTitle').textContent = data.title; }
+    } catch (_) {}
+  }
+  function playTrack(index) {
+    if (index < 0 || index >= tracks.length) return;
+    currentIndex = index;
+    const track = tracks[index];
+    $('placeholder').hidden = true; $('player').hidden = false;
+    $('nowTitle').textContent = safeTitle(track);
+    renderPlaylist();
+    if (player && apiReady) {
+      player.loadVideoById(track.id);
+      player.setVolume(volume);
+      status('再生中。');
+    } else {
+      pendingVideoId = track.id;
+      status('プレイヤーを読み込み中…');
+    }
+  }
+  function moveTrack(index, delta) {
+    const target = index + delta;
+    if (target < 0 || target >= tracks.length) return;
+    const [item] = tracks.splice(index, 1); tracks.splice(target, 0, item);
+    if (currentIndex === index) currentIndex = target;
+    else if (index < currentIndex && target >= currentIndex) currentIndex--;
+    else if (index > currentIndex && target <= currentIndex) currentIndex++;
+    saveTracks(); renderPlaylist();
+  }
+  function removeTrack(index) {
+    const wasCurrent = index === currentIndex;
+    tracks.splice(index, 1);
+    if (index < currentIndex) currentIndex--;
+    else if (wasCurrent) currentIndex = -1;
+    saveTracks(); renderPlaylist();
+    if (wasCurrent) {
+      if (tracks.length) playTrack(Math.min(index, tracks.length - 1));
+      else {
+        if (player && apiReady) player.stopVideo();
+        $('player').hidden = true; $('placeholder').hidden = false; $('nowTitle').textContent = '未再生';
+        status('プレイリストが空になりました。');
+      }
+    }
+  }
+  function nextTrack() {
+    if (!tracks.length) return;
+    if (currentIndex < tracks.length - 1) playTrack(currentIndex + 1);
+    else if ($('loopToggle').checked) playTrack(0);
+    else status('プレイリストの最後の動画です。');
+  }
+  function previousTrack() {
+    if (!tracks.length) return;
+    if (currentIndex > 0) playTrack(currentIndex - 1);
+    else if ($('loopToggle').checked) playTrack(tracks.length - 1);
+    else playTrack(0);
+  }
+  function onPlayerStateChange(event) {
+    if (event.data === YT.PlayerState.ENDED) {
+      if ($('loopToggle').checked && currentIndex >= 0) player.seekTo(0, true), player.playVideo();
+      else if ($('autoNextToggle').checked && currentIndex < tracks.length - 1) nextTrack();
+      else if ($('autoNextToggle').checked && $('loopToggle').checked && tracks.length) playTrack(0);
+      else status('動画が終了しました。');
+    }
+    if (event.data === YT.PlayerState.PLAYING) status('再生中。');
+    if (event.data === YT.PlayerState.PAUSED) status('一時停止中。');
+  }
+  window.onYouTubeIframeAPIReady = function() {
+    player = new YT.Player('player', {
+      videoId: pendingVideoId || undefined,
+      playerVars: { playsinline: 1, rel: 0, enablejsapi: 1 },
+      events: {
+        onReady: () => {
+          apiReady = true; player.setVolume(volume);
+          if (pendingVideoId) { player.loadVideoById(pendingVideoId); pendingVideoId = null; }
+        },
+        onStateChange: onPlayerStateChange,
+        onError: event => {
+          const messages = {2:'動画IDが正しくないようです。',5:'この動画は埋め込み再生できません。',100:'動画が削除されたか、非公開です。',101:'投稿者が埋め込み再生を許可していません。',150:'投稿者が埋め込み再生を許可していません。'};
+          status(messages[event.data] || '動画を再生できませんでした。別の動画をお試しください。');
+        }
+      }
+    });
+  };
+  $('addBtn').addEventListener('click', addTrack);
+  $('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTrack(); });
+  $('prevBtn').addEventListener('click', previousTrack);
+  $('nextBtn').addEventListener('click', nextTrack);
+  $('playBtn').addEventListener('click', () => {
+    if (currentIndex < 0) { if (tracks.length) playTrack(0); else status('先にYouTubeのURLを追加してください。'); return; }
+    if (player && apiReady) {
+      const state = player.getPlayerState();
+      if (state === YT.PlayerState.PLAYING) player.pauseVideo(); else player.playVideo();
+    } else playTrack(currentIndex);
+  });
+  $('loopToggle').addEventListener('change', saveSettings);
+  $('autoNextToggle').addEventListener('change', saveSettings);
+  $('volume').addEventListener('input', e => {
+    volume = Number(e.target.value); $('volumeValue').textContent = volume + '%';
+    if (player && apiReady) player.setVolume(volume);
+    saveSettings();
+  });
+  $('clearBtn').addEventListener('click', () => {
+    if (!tracks.length) return;
+    if (!confirm('プレイリストの動画をすべて削除しますか？')) return;
+    tracks = []; currentIndex = -1; saveTracks(); renderPlaylist();
+    if (player && apiReady) player.stopVideo();
+    $('player').hidden = true; $('placeholder').hidden = false; $('nowTitle').textContent = '未再生';
+    status('プレイリストを削除しました。');
+  });
+  loadData();
+  const script = document.createElement('script');
+  script.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(script);
+})();
+</script>
+</body>
+</html>
