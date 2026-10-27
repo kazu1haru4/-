@@ -16,6 +16,14 @@
 #summonOverlay.rainbow{background:radial-gradient(circle,#3e1767 0%,#140720 60%,#020106 100%)}
 #summonOverlay.rainbow .summon-title{background:linear-gradient(90deg,#ff6262,#ffd166,#8cff9b,#71d5ff,#d6a2ff,#ff83c8);background-size:300% 100%;color:transparent;background-clip:text;-webkit-background-clip:text;animation:rainbowText .9s linear infinite}
 #summonOverlay.rainbow .summon-orb{background:conic-gradient(#ff5252,#ffd452,#7cff8a,#5be0ff,#a78bfa,#ff5cb8,#ff5252);box-shadow:0 0 50px #fff,0 0 120px #bc7aff;animation:orbPulse .4s ease-in-out infinite alternate}
+#summonOverlay.second{background:radial-gradient(circle,#164e8a 0%,#101a3f 52%,#050713 100%)}
+#summonOverlay.second .summon-title{color:#c8f2ff;text-shadow:0 0 12px #38bdf8,0 0 38px #2563eb}
+#summonOverlay.second .summon-orb{background:radial-gradient(circle,#fff 0%,#c9f5ff 10%,#38bdf8 30%,#2563eb 50%,transparent 72%);box-shadow:0 0 40px #38bdf8,0 0 95px #2563eb}
+#summonOverlay.second .summon-orb:before{border-color:#b9f3ff transparent #60a5fa #fff}
+#summonOverlay.third{background:radial-gradient(circle,#14532d 0%,#102a28 52%,#050b0a 100%)}
+#summonOverlay.third .summon-title{color:#c8ffd8;text-shadow:0 0 12px #4ade80,0 0 38px #16a34a}
+#summonOverlay.third .summon-orb{background:radial-gradient(circle,#fff 0%,#d7ffe4 10%,#4ade80 30%,#16a34a 50%,transparent 72%);box-shadow:0 0 35px #4ade80,0 0 85px #16a34a}
+#summonOverlay.third .summon-orb:before{border-color:#bbf7d0 transparent #4ade80 #fff}
 .summon-skip{margin-top:20px;background:#ffffff18;border:1px solid #ffffff70;color:white;border-radius:999px;padding:12px 22px;font-weight:900}
 .summon-flash{position:absolute;inset:0;pointer-events:none;background:#fff;opacity:0;z-index:1;animation:flashBurst 1s ease-out .2s}
 #summonOverlay.rainbow .summon-flash{animation:flashBurst .8s ease-out .1s}
@@ -45,17 +53,20 @@ function playSummon(result){
   // OGは等級に関係なくOG専用の虹色演出。1等の通常景品は金色演出にする。
   const isOG=!isMiss&&!isCoin&&(/(^|\\b)og(\\b|$)/i.test(rarity)||/(^|\\b)og(\\b|$)/i.test(name));
   const isRainbow=isOG;
-  const isHot=!isMiss&&!isCoin&&!isOG&&(/god|神話|エピック|epic|レジェンド|legendary|secret|シークレット/i.test(rarity)||grade===1||(grade>1&&grade<=3));
-  o.className='show'+(isOG?' rainbow':isHot?' hot':'');
-  $('summonTitle').textContent=isMiss?'まさかの…！？':isCoin?'COIN GET！':isOG?'🌈✨ OG 降臨 ✨🌈':isHot?(grade===1?'👑 1等 JACKPOT！':'⚡ 激アツ演出！'):'召喚中…';
-  $('summonSub').textContent=isMiss?'結果を確認しよう':isCoin?'コインが集まっていく…':isOG?'選ばれし究極のレア！':isHot?(grade===1?'金色の大当たり！':'期待していいかも…？'):'運命の結果は…？';
+  const isFirst=!isMiss&&!isCoin&&!isOG&&grade===1;
+  const isSecond=!isMiss&&!isCoin&&!isOG&&grade===2;
+  const isThird=!isMiss&&!isCoin&&!isOG&&grade===3;
+  const isHot=!isMiss&&!isCoin&&!isOG&&!isFirst&&!isSecond&&!isThird&&(/god|神話|エピック|epic|レジェンド|legendary|secret|シークレット/i.test(rarity));
+  o.className='show'+(isOG?' rainbow':isFirst?' hot':isSecond?' second':isThird?' third':isHot?' hot':'');
+  $('summonTitle').textContent=isMiss?'まさかの…！？':isCoin?'COIN GET！':isOG?'🌈✨ OG 降臨 ✨🌈':isFirst?'👑 1等 JACKPOT！':isSecond?'💎 2等 SUPER RARE！':isThird?'🌿 3等 RARE HIT！':isHot?'⚡ 激アツ演出！':'召喚中…';
+  $('summonSub').textContent=isMiss?'結果を確認しよう':isCoin?'コインが集まっていく…':isOG?'選ばれし究極のレア！':isFirst?'金色の大当たり！':isSecond?'青白いエネルギーが集結！':isThird?'緑の光が弾ける！':isHot?'期待していいかも…？':'運命の結果は…？';
   let done=false;
   const finish=()=>{if(done)return;done=true;o.className='';o.removeEventListener('click',onOverlayClick);$('summonSkip').removeEventListener('click',finish);summonResolve=null;resolve()};
   const onOverlayClick=e=>{if(e.target===o)finish()};
   summonResolve=finish;
   $('summonSkip').addEventListener('click',finish);
   o.addEventListener('click',onOverlayClick);
-  setTimeout(finish,isRainbow?2600:isHot?1900:1250);
+  setTimeout(finish,isRainbow?2600:isFirst?2300:isSecond?1900:isThird?1650:isHot?1750:1250);
  });
 }
 
