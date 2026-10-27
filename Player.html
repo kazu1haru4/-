@@ -113,7 +113,7 @@ footer{text-align:center;padding:8px 20px 24px;color:#777;font-size:12px}
   let apiLoadTimer = null;
   window.addEventListener('error', event => {
     if (event.message && event.message.includes('YT')) {
-      status('YouTubeプレイヤーの初期化に失敗しました。ページを再読み込みしてください。');
+      status('YouTube側のエラー: ' + event.message + '（Safariの設定や埋め込み制限を確認してください）');
     }
   });
   function extractVideoId(raw) {
@@ -294,7 +294,7 @@ footer{text-align:center;padding:8px 20px 24px;color:#777;font-size:12px}
     });
     } catch (error) {
       console.error('YouTube player initialization failed:', error);
-      status('プレイヤーの初期化に失敗しました。ページを再読み込みしてください。');
+      status('プレイヤーの初期化エラー: ' + (error && error.message ? error.message : String(error)));
     }
   };
   $('addBtn').addEventListener('click', addTrack);
