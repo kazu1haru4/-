@@ -281,9 +281,12 @@ footer{text-align:center;padding:8px 20px 24px;color:#777;font-size:12px}
       events: {
         onReady: () => {
           apiReady = true; clearTimeout(apiLoadTimer); player.setVolume(volume);
-          if (pendingVideoId) { player.loadVideoById(pendingVideoId); pendingVideoId = null; }
-          else status('準備完了。プレイリストから動画を選んでください。');
-          else status('準備完了。YouTubeのURLを追加してください。');
+          if (pendingVideoId) {
+            player.loadVideoById(pendingVideoId);
+            pendingVideoId = null;
+          } else {
+            status(tracks.length ? '準備完了。プレイリストから動画を選んでください。' : '準備完了。YouTubeのURLを追加してください。');
+          }
         },
         onStateChange: onPlayerStateChange,
         onError: event => {
