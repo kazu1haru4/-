@@ -34,6 +34,9 @@
 <div id="resultOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="fullResultTitle"><section class="resultCard"><div class="resultKicker">GACHA RESULT</div><div id="fullResultEmoji" class="resultEmoji">🎁</div><h2 id="fullResultTitle" class="resultName">抽選結果</h2><div id="fullResultDetails" class="resultDetails"></div><button id="resultClose" class="btn resultClose">結果を閉じる</button></section></div>
 <div id="summonOverlay" role="dialog" aria-modal="true" aria-label="ガチャ結果"><div class="summon-flash"></div><div class="summon-content"><div id="summonTitle" class="summon-title">召喚中…</div><div class="summon-orb"></div><div id="summonSub" class="summon-sub">運命の結果は…？</div><button id="summonSkip" class="summon-skip" type="button">スキップ ›</button></div></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
 const SUPABASE_URL='https://yxonmqdyekwenyzekjwj.supabase.co',SUPABASE_KEY='sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ';const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY),$=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));let user=null,gachas=[],selected=null,busy=false,prizeGradeMap=new Map(),prizeRarityMap=new Map();
+function resultGrade(d){const name=String(d?.name||'');const id=String(d?.character_id||'');return Number(d?.display_grade||prizeGradeMap.get(name)||prizeGradeMap.get(id)||0)}
+function resultRarity(d){const name=String(d?.name||'');const id=String(d?.character_id||'');return String(d?.rarity||prizeRarityMap.get(name)||prizeRarityMap.get(id)||'')}
+function isOGResult(d){return /(^|\b)og(\b|$)/i.test(resultRarity(d))||/(^|\b)og(\b|$)/i.test(String(d?.name||''))}
 async function init(){const u=await db.auth.getUser();user=u.data?.user;if(!user){$('status').textContent='ログインが必要です。Friend Chatにログインしてから開いてね。';return}const a=await db.rpc('is_friendchat_admin');$('adminLink').hidden=!(a.data===true);await refreshBalance();const g=await db.from('friend_gachas').select('id,title,spin_cost,enabled,sort_order,total_spin_limit').eq('enabled',true).order('sort_order').order('id');if(g.error){$('status').textContent='ガチャ一覧の読み込みに失敗：'+g.error.message;return}gachas=g.data||[];renderGachas();$('status').textContent=gachas.length?'詳細を押すと、景品一覧とガチャ操作が全画面で表示されます。':'現在公開中のガチャはありません。'}
 async function refreshBalance(){const c=await db.from('user_coins').select('coins').eq('user_id',user.user_metadata?.username||'').maybeSingle();$('coins').textContent=c.error?'取得エラー':Number(c.data?.coins||0).toLocaleString()+' COIN'}
 function renderGachas(){$('gachas').innerHTML=gachas.map(g=>`<article class="item"><h3>${esc(g.title)}</h3><div class="muted">1回 ${Number(g.spin_cost).toLocaleString()} COIN</div><div class="muted small" data-usage-card="${g.id}">合計回数を確認中…</div><button class="btn" data-gacha="${g.id}" style="margin-top:12px">詳細</button></article>`).join('')||'公開中のガチャがありません。';document.querySelectorAll('[data-gacha]').forEach(b=>b.onclick=()=>selectGacha(Number(b.dataset.gacha)))}
@@ -46,8 +49,8 @@ function playSummon(result){
   const o=$('summonOverlay');
   const type=String(result.prize_type||'character').toLowerCase();
   const name=String(result.name||result.character_id||'');
-  const rarity=String(result.rarity||prizeRarityMap.get(name)||'').toLowerCase();
-  const grade=Number(result.display_grade||prizeGradeMap.get(name)||prizeGradeMap.get(String(result.character_id||''))||0);
+  const rarity=resultRarity(result).toLowerCase();
+  const grade=resultGrade(result);
   const isMiss=type==='miss'||/ハズレ|はずれ|miss/i.test(name);
   const isCoin=type==='coins'||type==='coin';
   // OGは等級に関係なくOG専用の虹色演出。1等の通常景品は金色演出にする。
@@ -74,13 +77,12 @@ function playSummon(result){
 function showFullscreenMultiResult(results, errorMessage=''){
  stopSpinAnimation();
  const overlay=$('resultOverlay');
- const isOG=d=>/\bog\b/i.test(String(d.rarity||''))||/\bog\b/i.test(String(d.name||''));
- const best=[...results].sort((a,b)=>{if(isOG(a)!==isOG(b))return isOG(a)?-1:1;const ga=Number(a.display_grade||0),gb=Number(b.display_grade||0);if(ga&&gb&&ga!==gb)return ga-gb;return 0})[0]||{};
+ const best=[...results].sort((a,b)=>{if(isOGResult(a)!==isOGResult(b))return isOGResult(a)?-1:1;const ga=resultGrade(a)||99,gb=resultGrade(b)||99;return ga-gb})[0]||{};
  $('fullResultEmoji').textContent=best.emoji||'🎉';
  $('fullResultTitle').textContent=`10連ガチャ結果（${results.length}/10回）${best.name?' — 最高レア：'+best.name:''}`;
  const cards=results.map((d,i)=>{
-  const grade=Number(d.display_grade||0);
-  const label=grade>0?`${grade}等`:(d.rarity||'景品');
+  const grade=resultGrade(d);
+  const label=grade>0?`${grade}等`:(resultRarity(d)||'景品');
   return `<div class="resultDetail"><b>${i+1}. ${esc(d.emoji||'🎁')} ${esc(d.name||d.character_id||'景品')}</b><div class="muted small">${esc(label)} ・ チケット +${Number(d.ticket_reward||0).toLocaleString()}枚</div></div>`;
  }).join('');
  const extra=errorMessage?`<div class="resultDetail"><b>途中で停止しました</b><div class="muted small">${esc(errorMessage)}</div></div>`:'';
@@ -180,14 +182,12 @@ $('spinTen').onclick=async()=>{
   stopSpinAnimation();
   if(results.length){
    // Prefer OG, then lowest grade number, and use a consistent rarity score as fallback.
-   const isOG=d=>/(^|\b)og(\b|$)/i.test(String(d.rarity||''))||/(^|\b)og(\b|$)/i.test(String(d.name||''));
+   // RPC結果に display_grade が含まれない場合も、景品一覧から等級を補完して判定する。
    const best=[...results].sort((a,b)=>{
-    if(isOG(a)!==isOG(b))return isOG(a)?-1:1;
-    const gradeA=Number(a.display_grade||0),gradeB=Number(b.display_grade||0);
-    if(gradeA&&gradeB&&gradeA!==gradeB)return gradeA-gradeB;
-    if(gradeA&&!gradeB)return -1;
-    if(gradeB&&!gradeA)return 1;
-    const score=d=>/og/i.test(String(d.rarity||''))?100:/goat/i.test(String(d.rarity||''))?90:/secret|シークレット/i.test(String(d.rarity||''))?80:/legendary|レジェンド|伝説/i.test(String(d.rarity||''))?70:0;
+    if(isOGResult(a)!==isOGResult(b))return isOGResult(a)?-1:1;
+    const gradeA=resultGrade(a)||99,gradeB=resultGrade(b)||99;
+    if(gradeA!==gradeB)return gradeA-gradeB;
+    const score=d=>/goat/i.test(resultRarity(d))?90:/secret|シークレット/i.test(resultRarity(d))?80:/legendary|レジェンド|伝説/i.test(resultRarity(d))?70:0;
     return score(b)-score(a);
    })[0];
    await playSummon(best);
