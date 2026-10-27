@@ -79,6 +79,7 @@ async function exchangeCharacter(i){
     try{await loadTickets()}catch{}
   }
 }
+window.exchangeCharacter=exchangeCharacter;
 async function init(){
   try{
     $('status').textContent='ログイン状態を確認中…';
