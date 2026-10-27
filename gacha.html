@@ -74,8 +74,10 @@ function playSummon(result){
 function showFullscreenMultiResult(results, errorMessage=''){
  stopSpinAnimation();
  const overlay=$('resultOverlay');
- $('fullResultEmoji').textContent='🎉';
- $('fullResultTitle').textContent=`10連ガチャ結果（${results.length}/10回）`;
+ const isOG=d=>/(^|\\b)og(\\b|$)/i.test(String(d.rarity||''))||/(^|\\b)og(\\b|$)/i.test(String(d.name||''));
+ const best=[...results].sort((a,b)=>{if(isOG(a)!==isOG(b))return isOG(a)?-1:1;const ga=Number(a.display_grade||0),gb=Number(b.display_grade||0);if(ga&&gb&&ga!==gb)return ga-gb;return 0})[0]||{};
+ $('fullResultEmoji').textContent=best.emoji||'🎉';
+ $('fullResultTitle').textContent=`10連ガチャ結果（${results.length}/10回）${best.name?' — 最高レア：'+best.name:''}`;
  const cards=results.map((d,i)=>{
   const grade=Number(d.display_grade||0);
   const label=grade>0?`${grade}等`:(d.rarity||'景品');
@@ -137,7 +139,74 @@ async function spinTen(){
 function closeFullscreenResult(){$('resultOverlay').hidden=true}
 $('resultClose').onclick=closeFullscreenResult;$('resultOverlay').addEventListener('click',e=>{if(e.target===$('resultOverlay'))closeFullscreenResult()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('resultOverlay').hidden)closeFullscreenResult()});
 $('backList').onclick=()=>{$('selectedPanel').hidden=true;selected=null};
-$('spin').onclick=async()=>{if(!selected||busy)return;const cost=Number(selected.spin_cost);if(!confirm(`「${selected.title}」を1回回します。${cost.toLocaleString()} COINを消費しますか？`))return;const gachaId=selected.id;busy=true;$('spin').disabled=true;$('spinTen').disabled=true;$('spinStatus').textContent='抽選中…';startSpinAnimation();const startedAt=Date.now();const {data,error}=await db.rpc('friend_gacha_spin',{p_gacha_id:gachaId});await new Promise(resolve=>setTimeout(resolve,Math.max(0,1300-(Date.now()-startedAt))));if(error){stopSpinAnimation();$('result').textContent='❌ '+error.message;showFullscreenResult({},error.message)}else{stopSpinAnimation();await playSummon(data);$('result').innerHTML=`🎉 <b>${esc(data.emoji||'🎁')} ${esc(data.name||data.character_id)}</b><br>ガチャ：${esc(data.gacha_title||selected.title)}<br>レア度：${esc(data.rarity||'未設定')}<br>🎟️ ${esc(data.prize_type==='character'?(data.name||data.character_id)+'交換チケット':'交換チケット')} +${Number(data.ticket_reward)}枚<br>残りガチャ可能回数：${Number(data.spins_remaining??0)} / ${Number(data.total_spin_limit??0)}回<br>🪙 抽選後コイン残高：${Number(data.coins_remaining).toLocaleString()} COIN`;showFullscreenResult(data)}$('spinStatus').textContent='';busy=false;await refreshBalance();await selectGacha(gachaId)};
-$('spinTen').onclick=spinTen;
+$('spin').onclick=async()=>{
+ if(!selected||busy)return;
+ const gachaId=selected.id,cost=Number(selected.spin_cost);
+ if(!confirm(`「${selected.title}」を1回回します。${cost.toLocaleString()} COINを消費しますか？`))return;
+ busy=true;$('spin').disabled=true;$('spinTen').disabled=true;$('spinStatus').textContent='抽選中…';startSpinAnimation();
+ try{
+  const startedAt=Date.now();
+  const {data,error}=await db.rpc('friend_gacha_spin',{p_gacha_id:gachaId});
+  await new Promise(resolve=>setTimeout(resolve,Math.max(0,1300-(Date.now()-startedAt))));
+  if(error){$('result').textContent='❌ '+error.message;showFullscreenResult({},error.message)}
+  else{
+   await playSummon(data);
+   $('result').innerHTML=`🎉 <b>${esc(data.emoji||'🎁')} ${esc(data.name||data.character_id)}</b><br>ガチャ：${esc(data.gacha_title||selected?.title||'ガチャ')}<br>レア度：${esc(data.rarity||'未設定')}<br>🎟️ ${esc(data.prize_type==='character'?(data.name||data.character_id)+'交換チケット':'交換チケット')} +${Number(data.ticket_reward||0)}枚<br>残りガチャ可能回数：${Number(data.spins_remaining??0)} / ${Number(data.total_spin_limit??0)}回<br>🪙 抽選後コイン残高：${Number(data.coins_remaining||0).toLocaleString()} COIN`;
+   showFullscreenResult(data);
+  }
+ }catch(e){stopSpinAnimation();$('result').textContent='❌ '+(e?.message||String(e));showFullscreenResult({},e?.message||String(e))}
+ finally{stopSpinAnimation();$('spinStatus').textContent='';busy=false;await refreshBalance();if(selected?.id===gachaId)await selectGacha(gachaId);else{$('spin').disabled=false;$('spinTen').disabled=false}}
+};
+$('spinTen').onclick=async()=>{
+ if(!selected||busy)return;
+ const gachaId=selected.id,cost=Number(selected.spin_cost||0),total=cost*10;
+ const remainingMatch=$('summaryRemaining').textContent.match(/[\d,]+/);
+ const remaining=remainingMatch?Number(remainingMatch[0].replace(/,/g,'')):null;
+ if(remaining!==null&&remaining<10){alert(`残り回数が足りません（残り ${remaining} 回）`);return}
+ const coinText=$('coins').textContent;
+ const coinMatch=coinText.replace(/,/g,'').match(/\d+/);
+ if(coinMatch&&Number(coinMatch[0])<total){alert(`コインが足りません。10連には ${total.toLocaleString()} COIN 必要です。`);return}
+ if(!confirm(`「${selected.title}」を10連します。合計 ${total.toLocaleString()} COIN（1回 ${cost.toLocaleString()} COIN）を消費します。よろしいですか？`))return;
+ busy=true;$('spin').disabled=true;$('spinTen').disabled=true;$('spinStatus').textContent='10連ガチャ抽選中…';startSpinAnimation();
+ const results=[];let errorMessage='';
+ try{
+  for(let i=0;i<10;i++){
+   $('spinStatus').textContent=`10連ガチャ抽選中… ${i+1}/10`;
+   const {data,error}=await db.rpc('friend_gacha_spin',{p_gacha_id:gachaId});
+   if(error){errorMessage=error.message;break}
+   if(!data){errorMessage='抽選結果を受け取れませんでした';break}
+   results.push(data);
+  }
+  stopSpinAnimation();
+  if(results.length){
+   // Prefer OG, then lowest grade number, and use a consistent rarity score as fallback.
+   const isOG=d=>/(^|\b)og(\b|$)/i.test(String(d.rarity||''))||/(^|\b)og(\b|$)/i.test(String(d.name||''));
+   const best=[...results].sort((a,b)=>{
+    if(isOG(a)!==isOG(b))return isOG(a)?-1:1;
+    const gradeA=Number(a.display_grade||0),gradeB=Number(b.display_grade||0);
+    if(gradeA&&gradeB&&gradeA!==gradeB)return gradeA-gradeB;
+    if(gradeA&&!gradeB)return -1;
+    if(gradeB&&!gradeA)return 1;
+    const score=d=>/og/i.test(String(d.rarity||''))?100:/goat/i.test(String(d.rarity||''))?90:/secret|シークレット/i.test(String(d.rarity||''))?80:/legendary|レジェンド|伝説/i.test(String(d.rarity||''))?70:0;
+    return score(b)-score(a);
+   })[0];
+   await playSummon(best);
+   showFullscreenMultiResult(results,errorMessage);
+   $('result').innerHTML=`🎉 <b>10連結果：${results.length}/10回</b><br>`+results.map((d,i)=>`${i+1}. ${esc(d.emoji||'🎁')} ${esc(d.name||d.character_id)}（${Number(d.ticket_reward||0)}枚）`).join('<br>')+(errorMessage?`<br>❌ ${esc(errorMessage)}`:'');
+  }else{
+   showFullscreenResult({},errorMessage||'抽選できませんでした');
+   $('result').textContent='❌ '+(errorMessage||'抽選できませんでした');
+  }
+ }catch(e){
+  stopSpinAnimation();errorMessage=e?.message||String(e);
+  if(results.length){showFullscreenMultiResult(results,errorMessage);$('result').textContent=`⚠️ ${results.length}/10回まで完了：${errorMessage}`}
+  else{showFullscreenResult({},errorMessage);$('result').textContent='❌ '+errorMessage}
+ }finally{
+  stopSpinAnimation();$('spinStatus').textContent='';busy=false;
+  await refreshBalance();
+  if(selected?.id===gachaId)await selectGacha(gachaId);
+  else{$('spin').disabled=false;$('spinTen').disabled=false}
+ }
+};
 init().catch(e=>$('status').textContent='エラー：'+e.message);
 </script></body></html>
