@@ -272,8 +272,10 @@ footer{text-align:center;padding:8px 20px 24px;color:#777;font-size:12px}
     apiScriptLoaded = true;
     status('YouTube APIを読み込みました。プレイヤーを準備しています…');
     try {
+    // 初期化時に動画IDを渡さない。保存済みリストを読み込んだだけの状態で
+    // undefined が videoId として渡されると Invalid video id になる環境がある。
+    // 実際の動画は onReady 後に pendingVideoId がある場合だけ読み込む。
     player = new YT.Player('player', {
-      videoId: pendingVideoId || undefined,
       playerVars: { playsinline: 1, rel: 0, enablejsapi: 1 },
       events: {
         onReady: () => {
