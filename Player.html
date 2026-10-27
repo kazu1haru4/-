@@ -93,22 +93,40 @@ footer{text-align:center;padding:8px 20px 24px;color:#777;font-size:12px}
       <div class="addrow"><input id="urlInput" type="text" placeholder="https://youtu.be/..." autocomplete="off"><button class="primary" id="addBtn">追加</button></div>
       <div class="small" style="margin-top:7px">youtube.com/watch、youtu.be、ShortsのURLに対応</div>
     </div>
+    <div class="setting" style="display:block">
+      <label for="playlistSelect">プレイリスト</label>
+      <div class="addrow">
+        <select id="playlistSelect" style="flex:1;min-width:0;background:#111;border:1px solid #414141;color:var(--text);padding:12px;border-radius:10px;font:inherit"></select>
+        <button id="newPlaylistBtn" type="button">＋作成</button>
+      </div>
+      <div class="addrow">
+        <button id="renamePlaylistBtn" type="button">名前変更</button>
+        <button id="deletePlaylistBtn" type="button">このリストを削除</button>
+      </div>
+      <div class="small" id="trackCount">0本の動画</div>
+      <div class="small" id="cloudStatus">ログイン状態を確認中…</div>
+    </div>
     <div class="setting">
-      <div><label>プレイリスト</label><div class="small" id="trackCount">0本の動画</div></div>
-      <button id="clearBtn">全削除</button>
+      <div><label>動画</label><div class="small" id="trackCountLegacy" hidden></div></div>
+      <button id="clearBtn">動画を全削除</button>
     </div>
     <div class="playlist" id="playlist"><div class="empty">まだ動画がありません</div></div>
-    <p class="small">プレイリストと設定は、このブラウザの端末内に保存されます。別の端末やブラウザとは自動同期されません。</p>
+    <p class="small" id="storageNote">ログイン中はプレイリストをフレンドチャットのアカウントに保存します。未ログインの場合はこの端末に保存します。</p>
   </aside>
 </main>
 <footer>GitHub Pagesで動作するシングルHTMLアプリ</footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (() => {
   const STORAGE_KEY = 'yt-player-playlist-v1';
   const SETTINGS_KEY = 'yt-player-settings-v1';
+  const SUPABASE_URL = 'https://yxonmqdyekwenyzekjwj.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ';
   const $ = id => document.getElementById(id);
   let tracks = [];
+  let playlists = [{ id: 'default', name: 'マイプレイリスト', tracks: [] }];
+  let activePlaylistId = 'default';
   let currentIndex = -1;
   let player = null;
   let apiReady = false;
@@ -116,8 +134,15 @@ footer{text-align:center;padding:8px 20px 24px;color:#777;font-size:12px}
   let apiScriptDownloaded = false;
   let pendingVideoId = null;
   let volume = 70;
+  let cloudClient = null;
+  let cloudUser = null;
+  let cloudReady = false;
+  let saveTimer = null;
+  let isCloudLoading = false;
+  let suppressCloudSave = false;
 
   function status(message) { $('status').textContent = message; }
+  function cloudStatus(message) { $('cloudStatus').textContent = message; }
   let apiLoadTimer = null;
   window.addEventListener('error', event => {
     if (event.message && event.message.includes('YT')) {
@@ -138,28 +163,164 @@ footer{text-align:center;padding:8px 20px 24px;color:#777;font-size:12px}
     return null;
   }
   function safeTitle(track) { return track.title || `YouTube動画 (${track.id})`; }
+  function normalizePlaylists(list) {
+    if (!Array.isArray(list)) return [{ id: 'default', name: 'マイプレイリスト', tracks: [] }];
+    const out = [];
+    for (const item of list.slice(0, 100)) {
+      if (!item || typeof item.id !== 'string' || typeof item.name !== 'string' || !Array.isArray(item.tracks)) continue;
+      const cleanTracks = item.tracks.filter(t => t && typeof t.id === 'string' && /^[\w-]{11}$/.test(t.id))
+        .slice(0, 200).map(t => ({ id: t.id, title: typeof t.title === 'string' ? t.title.slice(0, 300) : '' }));
+      out.push({ id: item.id.slice(0, 80), name: item.name.trim().slice(0, 80) || 'プレイリスト', tracks: cleanTracks });
+    }
+    return out.length ? out : [{ id: 'default', name: 'マイプレイリスト', tracks: [] }];
+  }
+  function getActivePlaylist() {
+    return playlists.find(p => p.id === activePlaylistId) || playlists[0];
+  }
+  function syncActiveTracks() {
+    const current = getActivePlaylist();
+    if (current) current.tracks = tracks.map(t => ({ id: t.id, title: t.title || '' }));
+  }
+  function renderPlaylistSelect() {
+    const select = $('playlistSelect');
+    select.replaceChildren();
+    playlists.forEach(pl => {
+      const opt = document.createElement('option');
+      opt.value = pl.id; opt.textContent = pl.name;
+      opt.selected = pl.id === activePlaylistId;
+      select.append(opt);
+    });
+    $('deletePlaylistBtn').disabled = playlists.length <= 1;
+  }
+  function setActivePlaylist(id) {
+    syncActiveTracks();
+    activePlaylistId = id;
+    const selected = getActivePlaylist();
+    tracks = selected ? selected.tracks.map(t => ({...t})) : [];
+    currentIndex = -1;
+    if (player && apiReady) { try { player.stopVideo(); } catch (_) {} }
+    $('player').hidden = true; $('placeholder').hidden = false; $('nowTitle').textContent = '未再生';
+    renderPlaylistSelect(); renderPlaylist(); scheduleCloudSave(); saveTracks();
+    status(`「${selected?.name || 'プレイリスト'}」に切り替えました。`);
+  }
   function saveTracks() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tracks)); }
-    catch (_) { status('保存できませんでした。ブラウザの保存領域を確認してください。'); }
+    syncActiveTracks();
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(playlists)); }
+    catch (_) { status('端末内への保存に失敗しました。'); }
+    if (cloudUser && cloudReady && !suppressCloudSave) scheduleCloudSave();
   }
   function saveSettings() {
     const settings = { loop: $('loopToggle').checked, autoNext: $('autoNextToggle').checked, volume };
     try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (_) {}
   }
-  function loadData() {
+  function loadLocalData() {
     try {
       const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-      if (Array.isArray(data)) tracks = data.filter(x => x && typeof x.id === 'string' && /^[\w-]{11}$/.test(x.id)).slice(0, 200);
-    } catch (_) { tracks = []; }
+      if (Array.isArray(data) && data.length && data.some(x => x && typeof x === 'object' && Array.isArray(x.tracks))) {
+        playlists = normalizePlaylists(data);
+      } else if (Array.isArray(data)) {
+        // Migrate the old single-list format into the first playlist.
+        playlists = [{ id: 'default', name: 'マイプレイリスト', tracks: data.filter(x => x && typeof x.id === 'string' && /^[\w-]{11}$/.test(x.id)).slice(0,200) }];
+      }
+    } catch (_) {}
+    activePlaylistId = playlists[0]?.id || 'default';
+    tracks = (getActivePlaylist()?.tracks || []).map(t => ({...t}));
     try {
-      const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
-      $('loopToggle').checked = !!s.loop;
-      $('autoNextToggle').checked = s.autoNext !== false;
-      volume = Number.isFinite(s.volume) ? Math.max(0, Math.min(100, s.volume)) : 70;
+      const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+      $('loopToggle').checked = !!settings.loop;
+      $('autoNextToggle').checked = settings.autoNext !== false;
+      volume = Number.isFinite(settings.volume) ? Math.max(0, Math.min(100, settings.volume)) : 70;
     } catch (_) {}
     $('volume').value = volume;
     $('volumeValue').textContent = volume + '%';
-    renderPlaylist();
+    renderPlaylistSelect(); renderPlaylist();
+  }
+  function scheduleCloudSave() {
+    if (!cloudUser || !cloudReady || suppressCloudSave) return;
+    clearTimeout(saveTimer);
+    cloudStatus('変更を保存中…');
+    saveTimer = setTimeout(saveCloudPlaylists, 700);
+  }
+  async function saveCloudPlaylists() {
+    if (!cloudUser || !cloudReady || suppressCloudSave) return;
+    syncActiveTracks();
+    const payload = normalizePlaylists(playlists);
+    const { error } = await cloudClient.from('youtube_playlists').upsert({
+      user_id: cloudUser.id,
+      playlists: payload,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id' });
+    if (error) {
+      console.error('Playlist cloud save failed:', error);
+      cloudStatus('クラウド保存に失敗。端末内には保存済みです。');
+      status('クラウド保存エラー: ' + error.message);
+      return;
+    }
+    playlists = payload;
+    cloudStatus('☁ フレンドチャットのアカウントに保存済み');
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(playlists)); } catch (_) {}
+  }
+  async function initCloudSync() {
+    try {
+      if (!window.supabase?.createClient) throw new Error('Supabaseライブラリを読み込めませんでした');
+      cloudClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+      });
+      const { data, error } = await cloudClient.auth.getSession();
+      if (error) throw error;
+      cloudUser = data?.session?.user || null;
+      if (!cloudUser) {
+        cloudStatus('フレンドチャットにログインするとクラウド同期できます');
+        return;
+      }
+      await loadCloudPlaylists();
+      cloudClient.auth.onAuthStateChange((_event, session) => {
+        const nextUser = session?.user || null;
+        if (nextUser?.id !== cloudUser?.id) {
+          cloudUser = nextUser;
+          cloudReady = false;
+          if (cloudUser) loadCloudPlaylists();
+          else cloudStatus('ログアウト中。端末内保存を使用します');
+        }
+      });
+    } catch (error) {
+      console.error('Cloud playlist sync init failed:', error);
+      cloudStatus('クラウド同期を開始できませんでした。端末内保存を使用します');
+    }
+  }
+  async function loadCloudPlaylists() {
+    if (!cloudUser) return;
+    isCloudLoading = true; cloudReady = false;
+    cloudStatus('クラウドからプレイリストを読み込み中…');
+    const uid = cloudUser.id;
+    const { data, error } = await cloudClient.from('youtube_playlists')
+      .select('playlists').eq('user_id', uid).maybeSingle();
+    if (error) {
+      console.error('Playlist cloud load failed:', error);
+      cloudStatus('クラウド読込に失敗。端末内のリストを使用します');
+      isCloudLoading = false; return;
+    }
+    if (cloudUser?.id !== uid) { isCloudLoading = false; return; }
+    if (data?.playlists) {
+      playlists = normalizePlaylists(data.playlists);
+    } else {
+      // Migrate the current device's lists to the signed-in account on first use.
+      playlists = normalizePlaylists(playlists);
+      const { error: insertError } = await cloudClient.from('youtube_playlists').insert({ user_id: uid, playlists });
+      if (insertError && insertError.code !== '23505') {
+        console.error('Initial playlist cloud save failed:', insertError);
+        cloudStatus('初回保存に失敗。通信状態を確認してください');
+        isCloudLoading = false; return;
+      }
+    }
+    activePlaylistId = playlists[0]?.id || 'default';
+    tracks = getActivePlaylist().tracks.map(t => ({...t}));
+    suppressCloudSave = true;
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(playlists)); } catch (_) {}
+    suppressCloudSave = false;
+    currentIndex = -1; renderPlaylistSelect(); renderPlaylist();
+    cloudReady = true; isCloudLoading = false;
+    cloudStatus('☁ フレンドチャットのアカウントに同期済み');
   }
   function renderPlaylist() {
     const root = $('playlist');
@@ -229,6 +390,39 @@ footer{text-align:center;padding:8px 20px 24px;color:#777;font-size:12px}
       pendingVideoId = track.id;
       status('プレイヤーを読み込み中…');
     }
+  }
+  function createPlaylist() {
+    if (playlists.length >= 100) { status('プレイリストは最大100個です。'); return; }
+    const name = prompt('新しいプレイリスト名を入力してください', `プレイリスト ${playlists.length + 1}`);
+    if (name === null) return;
+    const trimmed = name.trim().slice(0, 80);
+    if (!trimmed) { status('プレイリスト名を入力してください。'); return; }
+    syncActiveTracks();
+    const pl = { id: (window.crypto?.randomUUID?.() || `pl-${Date.now()}-${Math.random().toString(36).slice(2)}`), name: trimmed, tracks: [] };
+    playlists.push(pl); activePlaylistId = pl.id; tracks = [];
+    currentIndex = -1; $('player').hidden = true; $('placeholder').hidden = false; $('nowTitle').textContent = '未再生';
+    renderPlaylistSelect(); renderPlaylist(); saveTracks();
+    status(`「${trimmed}」を作成しました。`);
+  }
+  function renamePlaylist() {
+    const pl = getActivePlaylist(); if (!pl) return;
+    const name = prompt('プレイリストの新しい名前', pl.name);
+    if (name === null) return;
+    const trimmed = name.trim().slice(0, 80);
+    if (!trimmed) { status('プレイリスト名を入力してください。'); return; }
+    pl.name = trimmed; renderPlaylistSelect(); saveTracks(); status('プレイリスト名を変更しました。');
+  }
+  function deletePlaylist() {
+    if (playlists.length <= 1) { status('最後の1つは削除できません。'); return; }
+    const pl = getActivePlaylist(); if (!pl) return;
+    if (!confirm(`「${pl.name}」を削除しますか？ この中の動画リストも削除されます。`)) return;
+    const idx = playlists.findIndex(p => p.id === activePlaylistId);
+    playlists.splice(idx, 1);
+    const next = playlists[Math.max(0, idx - 1)]; activePlaylistId = next.id;
+    tracks = next.tracks.map(t => ({...t})); currentIndex = -1;
+    if (player && apiReady) { try { player.stopVideo(); } catch (_) {} }
+    $('player').hidden = true; $('placeholder').hidden = false; $('nowTitle').textContent = '未再生';
+    renderPlaylistSelect(); renderPlaylist(); saveTracks(); status('プレイリストを削除しました。');
   }
   function moveTrack(index, delta) {
     const target = index + delta;
@@ -307,6 +501,10 @@ footer{text-align:center;padding:8px 20px 24px;color:#777;font-size:12px}
       status('プレイヤーの初期化エラー: ' + (error && error.message ? error.message : String(error)));
     }
   };
+  $('playlistSelect').addEventListener('change', e => setActivePlaylist(e.target.value));
+  $('newPlaylistBtn').addEventListener('click', createPlaylist);
+  $('renamePlaylistBtn').addEventListener('click', renamePlaylist);
+  $('deletePlaylistBtn').addEventListener('click', deletePlaylist);
   $('addBtn').addEventListener('click', addTrack);
   $('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTrack(); });
   $('prevBtn').addEventListener('click', previousTrack);
@@ -358,7 +556,8 @@ footer{text-align:center;padding:8px 20px 24px;color:#777;font-size:12px}
     $('player').hidden = true; $('placeholder').hidden = false; $('nowTitle').textContent = '未再生';
     status('プレイリストを削除しました。');
   });
-  loadData();
+  loadLocalData();
+  initCloudSync();
   const script = document.createElement('script');
   script.src = 'https://www.youtube.com/iframe_api';
   script.async = true;
