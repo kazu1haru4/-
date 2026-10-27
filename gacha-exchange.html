@@ -20,8 +20,25 @@
 <section class="panel"><p class="muted">キャラクターごとの専用チケットで交換できます。交換すると、選んだキャラクターのチケットだけが消費されます。</p><div id="status" class="status">読み込み中…</div></section>
 <section class="panel"><h2>所持チケット・交換</h2><div id="tickets" class="list">読み込み中…</div></section>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+function loadSupabaseSDK(urls, callback) {
+  if (window.supabase && window.supabase.createClient) { callback(); return; }
+  if (!urls.length) {
+    document.getElementById('status').textContent = '接続ライブラリの読み込みに失敗しました。通信を確認して再読み込みしてください。';
+    document.getElementById('tickets').textContent = 'Supabaseに接続できません。';
+    return;
+  }
+  const script = document.createElement('script');
+  script.src = urls.shift();
+  script.onload = () => {
+    if (window.supabase && window.supabase.createClient) callback();
+    else loadSupabaseSDK(urls, callback);
+  };
+  script.onerror = () => loadSupabaseSDK(urls, callback);
+  document.head.appendChild(script);
+}
+loadSupabaseSDK(['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', 'https://unpkg.com/@supabase/supabase-js@2'], startApp);
+function startApp() {
 const URL='https://yxonmqdyekwenyzekjwj.supabase.co',KEY='sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ';
 const db=window.supabase.createClient(URL,KEY),$=id=>document.getElementById(id);
 const withTimeout=(promise,label,ms=12000)=>Promise.race([Promise.resolve(promise),new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+'が12秒以内に応答しませんでした。再読み込みしてね。')),ms))]);
@@ -71,4 +88,5 @@ async function init(){
   }catch(e){$('status').textContent='読み込みエラー：'+(e?.message||String(e));$('tickets').textContent='読み込みに失敗しました。'}
 }
 init();
+}
 </script></body></html>
