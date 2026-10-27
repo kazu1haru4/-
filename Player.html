@@ -20,6 +20,10 @@ main{width:min(1100px,100%);margin:0 auto;padding:20px;display:grid;grid-templat
 .placeholder .play{font-size:42px;color:#fff}
 .now{margin:14px 0 10px;font-size:18px;font-weight:700;overflow-wrap:anywhere}
 .controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.player-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.player-wrap:fullscreen{width:100vw;height:100vh;aspect-ratio:auto;border-radius:0;display:flex;align-items:center;justify-content:center}
+.player-wrap:fullscreen #player{width:100%;height:100%}
+.player-wrap:fullscreen iframe{width:100%;height:100%}
 button{font:inherit;color:var(--text);background:var(--panel2);border:1px solid #414141;border-radius:10px;padding:10px 13px;cursor:pointer}
 button:hover{border-color:#777}button.primary{background:var(--red);border-color:var(--red);font-weight:700}button:disabled{opacity:.4;cursor:not-allowed}
 input[type=text]{width:100%;min-width:0;background:#111;border:1px solid #414141;color:var(--text);padding:12px;border-radius:10px;font:inherit}
@@ -55,6 +59,10 @@ footer{text-align:center;padding:8px 20px 24px;color:#777;font-size:12px}
     <div class="player-wrap" id="playerWrap">
       <div class="placeholder" id="placeholder"><div class="play">▶</div><div>プレイリストから動画を選ぶか、URLを追加してください</div></div>
       <div id="player" hidden></div>
+    </div>
+    <div class="player-actions">
+      <button id="fullscreenBtn" type="button">⛶ 全画面表示</button>
+      <button id="pipHelpBtn" type="button">▣ PiPの使い方</button>
     </div>
     <div class="now" id="nowTitle">未再生</div>
     <div class="controls">
@@ -276,7 +284,7 @@ footer{text-align:center;padding:8px 20px 24px;color:#777;font-size:12px}
     // undefined が videoId として渡されると Invalid video id になる環境がある。
     // 実際の動画は onReady 後に pendingVideoId がある場合だけ読み込む。
     player = new YT.Player('player', {
-      playerVars: { playsinline: 1, rel: 0, enablejsapi: 1 },
+      playerVars: { playsinline: 1, rel: 0, enablejsapi: 1, fs: 1 },
       events: {
         onReady: () => {
           apiReady = true; clearTimeout(apiLoadTimer); player.setVolume(volume);
@@ -302,6 +310,31 @@ footer{text-align:center;padding:8px 20px 24px;color:#777;font-size:12px}
   $('addBtn').addEventListener('click', addTrack);
   $('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTrack(); });
   $('prevBtn').addEventListener('click', previousTrack);
+  $('fullscreenBtn').addEventListener('click', async () => {
+    const wrap = $('playerWrap');
+    if (!player || !apiReady || $('player').hidden) {
+      status('先に動画を再生してください。');
+      return;
+    }
+    try {
+      if (document.fullscreenElement || document.webkitFullscreenElement) {
+        if (document.exitFullscreen) await document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      } else if (wrap.requestFullscreen) {
+        await wrap.requestFullscreen();
+      } else if (wrap.webkitRequestFullscreen) {
+        wrap.webkitRequestFullscreen();
+      } else {
+        // Safari/iOSではカスタム全画面が使えない場合があるため、YouTube本体の全画面ボタンを案内。
+        status('この環境では外側の全画面化に対応していません。動画内の⛶ボタンを押してください。');
+      }
+    } catch (error) {
+      status('全画面表示に失敗しました。動画内の⛶ボタンをお試しください。');
+    }
+  });
+  $('pipHelpBtn').addEventListener('click', () => {
+    status('PiPはYouTubeの埋め込み動画からサイト側で直接起動できない場合があります。動画を再生し、YouTubeプレイヤー内のメニューにPiPがあれば選択してください。iPhoneではSafariの対応状況により表示されないことがあります。');
+  });
   $('nextBtn').addEventListener('click', nextTrack);
   $('playBtn').addEventListener('click', () => {
     if (currentIndex < 0) { if (tracks.length) playTrack(0); else status('先にYouTubeのURLを追加してください。'); return; }
