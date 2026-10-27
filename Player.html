@@ -268,6 +268,7 @@ footer{text-align:center;padding:8px 20px 24px;color:#777;font-size:12px}
         onReady: () => {
           apiReady = true; player.setVolume(volume);
           if (pendingVideoId) { player.loadVideoById(pendingVideoId); pendingVideoId = null; }
+          else status('準備完了。YouTubeのURLを追加してください。');
         },
         onStateChange: onPlayerStateChange,
         onError: event => {
@@ -306,7 +307,17 @@ footer{text-align:center;padding:8px 20px 24px;color:#777;font-size:12px}
   loadData();
   const script = document.createElement('script');
   script.src = 'https://www.youtube.com/iframe_api';
+  script.async = true;
+  script.onerror = () => {
+    status('YouTubeプレイヤーを読み込めませんでした。通信を確認し、ページを再読み込みしてください。');
+  };
   document.head.appendChild(script);
+  // If the API callback never arrives (network filter, blocked script, etc.), avoid an endless loading message.
+  window.setTimeout(() => {
+    if (!apiReady && !player) {
+      status('YouTubeの読み込みがタイムアウトしました。通信制限・広告ブロッカー・コンテンツブロッカーを確認して再読み込みしてください。');
+    }
+  }, 15000);
 })();
 </script>
 </body>
