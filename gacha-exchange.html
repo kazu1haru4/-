@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ガチャ交換チケット一覧</title>
+<title>キャラクター交換チケット</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(140deg,#100b2b,#27124b 50%,#101b39);color:#f8f6ff;font-family:system-ui,sans-serif}
 .wrap{width:min(850px,94%);margin:auto;padding:20px 0 60px}h1{font-size:clamp(23px,5vw,32px)}
-.btn{border:0;border-radius:10px;background:#9b7cff;color:white;padding:11px 14px;font-weight:800;cursor:pointer}
+.btn{border:0;border-radius:10px;background:#9b7cff;color:white;padding:11px 14px;font-weight:800;cursor:pointer}.btn:disabled{opacity:.45;cursor:not-allowed}.exchange{border:0;border-radius:10px;background:#27b78b;color:#071b17;padding:10px 14px;font-weight:900;cursor:pointer}.exchange:disabled{opacity:.4;cursor:not-allowed}.details{color:#d9d0ef;font-size:13px;margin-top:5px}
 .panel{background:#ffffff12;border:1px solid #ffffff24;border-radius:16px;padding:16px;margin:14px 0}
 .muted{color:#c7bddf}.balance{font-size:24px;font-weight:900}.list{display:grid;gap:10px}
 .item{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:#ffffff0d;border:1px solid #ffffff20;border-radius:12px;padding:15px}
@@ -16,9 +16,9 @@
 </head>
 <body><main class="wrap">
 <div><button class="btn" onclick="location.href='gacha.html'">← ガチャ一覧へ</button></div>
-<h1>🎫 ガチャ交換チケット一覧</h1>
-<section class="panel"><p class="muted">ガチャごとの交換チケットを表示しています。チケットは対応するガチャ専用です。</p><div id="status" class="status">読み込み中…</div></section>
-<section class="panel"><h2>所持チケット</h2><div id="tickets" class="list">読み込み中…</div></section>
+<h1>🎫 キャラクター交換</h1>
+<section class="panel"><p class="muted">キャラクターごとの専用チケットで交換できます。交換すると、選んだキャラクターのチケットだけが消費されます。</p><div id="status" class="status">読み込み中…</div></section>
+<section class="panel"><h2>所持チケット・交換</h2><div id="tickets" class="list">読み込み中…</div></section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -26,18 +26,49 @@ const URL='https://yxonmqdyekwenyzekjwj.supabase.co',KEY='sb_publishable_IuQ6r_4
 const db=window.supabase.createClient(URL,KEY),$=id=>document.getElementById(id);
 const withTimeout=(promise,label,ms=12000)=>Promise.race([Promise.resolve(promise),new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+'が12秒以内に応答しませんでした。再読み込みしてね。')),ms))]);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-async function init(){
- try{
-  $('status').textContent='ログイン状態を確認中…';
-  const u=await withTimeout(db.auth.getUser(),'ログイン確認');
-  if(!u.data?.user){$('status').textContent='Friend Chatにログインしてから開いてね。';$('tickets').textContent='ログインが必要です。';return}
+let rows=[];
+async function loadTickets(){
   $('status').textContent='チケット一覧を読み込み中…';
   const r=await withTimeout(db.rpc('friend_gacha_my_ticket_list'),'チケット一覧の取得');
-  if(r.error)throw r.error;
-  const rows=r.data||[];
-  $('tickets').innerHTML=rows.map(t=>`<article class="item"><div class="name">🎟️ ${esc(t.ticket_name)}</div><div class="count">${Number(t.balance||0).toLocaleString()} 枚</div></article>`).join('')||'チケットはありません。';
+  if(r.error) throw r.error;
+  rows=r.data||[];
+  $('tickets').innerHTML=rows.map((t,i)=>{
+    const balance=Number(t.balance||0), cost=Number(t.ticket_cost||0), can=cost>0&&balance>=cost;
+    return `<article class="item">
+      <div style="flex:1;min-width:180px">
+        <div class="name">🎟️ ${esc(t.ticket_name)}</div>
+        <div class="details">所持：<strong>${balance.toLocaleString()}枚</strong> ／ 交換必要枚数：${cost.toLocaleString()}枚</div>
+      </div>
+      <button class="exchange" ${can?'':'disabled'} onclick="exchangeCharacter(${i})">このキャラと交換</button>
+    </article>`;
+  }).join('')||'交換できるキャラクターはありません。';
   $('status').textContent='チケット一覧を読み込みました。';
- }catch(e){$('status').textContent='読み込みエラー：'+(e?.message||String(e));$('tickets').textContent='読み込みに失敗しました。'}
+}
+async function exchangeCharacter(i){
+  const t=rows[i]; if(!t) return;
+  const balance=Number(t.balance||0), cost=Number(t.ticket_cost||0);
+  if(balance<cost){$('status').textContent='このキャラクターの交換チケットが足りません。';return;}
+  if(!confirm(`${t.ticket_name.replace(/交換チケット$/,'')}と交換しますか？\n必要チケット：${cost.toLocaleString()}枚\n所持チケット：${balance.toLocaleString()}枚`)) return;
+  const buttons=document.querySelectorAll('.exchange');
+  buttons.forEach(b=>b.disabled=true);
+  $('status').textContent='交換処理中…';
+  try{
+    const r=await withTimeout(db.rpc('friend_gacha_exchange',{p_character_id:t.character_id}),'キャラクター交換');
+    if(r.error) throw r.error;
+    $('status').textContent=`交換成功！ ${r.data?.name||t.ticket_name.replace(/交換チケット$/,'')}を獲得しました。`;
+    await loadTickets();
+  }catch(e){
+    $('status').textContent='交換に失敗しました：'+(e?.message||String(e));
+    try{await loadTickets()}catch{}
+  }
+}
+async function init(){
+  try{
+    $('status').textContent='ログイン状態を確認中…';
+    const u=await withTimeout(db.auth.getUser(),'ログイン確認');
+    if(!u.data?.user){$('status').textContent='Friend Chatにログインしてから開いてね。';$('tickets').textContent='ログインが必要です。';return}
+    await loadTickets();
+  }catch(e){$('status').textContent='読み込みエラー：'+(e?.message||String(e));$('tickets').textContent='読み込みに失敗しました。'}
 }
 init();
 </script></body></html>
