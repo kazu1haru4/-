@@ -105,15 +105,12 @@ footer{text-align:center;padding:8px 20px 24px;color:#777;font-size:12px}
   let player = null;
   let apiReady = false;
   let apiScriptLoaded = false;
+  let apiScriptDownloaded = false;
   let pendingVideoId = null;
   let volume = 70;
 
   function status(message) { $('status').textContent = message; }
-  let apiLoadTimer = setTimeout(() => {
-    if (!apiReady) {
-      status('YouTubeプレイヤーの準備がタイムアウトしました。APIファイル取得後の初期化で止まっている可能性があります。');
-    }
-  }, 12000);
+  let apiLoadTimer = null;
   window.addEventListener('error', event => {
     if (event.message && event.message.includes('YT')) {
       status('YouTubeプレイヤーの初期化に失敗しました。ページを再読み込みしてください。');
@@ -330,16 +327,25 @@ footer{text-align:center;padding:8px 20px 24px;color:#777;font-size:12px}
   const script = document.createElement('script');
   script.src = 'https://www.youtube.com/iframe_api';
   script.async = true;
+  script.onload = () => {
+    apiScriptDownloaded = true;
+    status('YouTubeのAPIファイルを取得しました。プレイヤーを初期化しています…');
+  };
   script.onerror = () => {
-    status('YouTubeプレイヤーを読み込めませんでした。通信を確認し、ページを再読み込みしてください。');
+    status('YouTube APIの取得に失敗しました。Safariのコンテンツブロッカーや通信設定を確認して再読み込みしてください。');
   };
   document.head.appendChild(script);
-  // If the API callback never arrives (network filter, blocked script, etc.), avoid an endless loading message.
-  window.setTimeout(() => {
-    if (!apiReady && !player) {
-      status('YouTubeの読み込みがタイムアウトしました。通信制限・広告ブロッカー・コンテンツブロッカーを確認して再読み込みしてください。');
+  // タイムアウト判定を1つにまとめ、API取得とプレイヤー初期化を区別する。
+  apiLoadTimer = window.setTimeout(() => {
+    if (apiReady) return;
+    if (player) {
+      status('YouTube APIは起動しましたが、プレイヤーの準備が完了しませんでした。埋め込み再生の制限やSafariの設定を確認してください。');
+    } else if (apiScriptDownloaded || apiScriptLoaded) {
+      status('YouTube APIファイルは取得できましたが、初期化コールバックが実行されませんでした。ページを再読み込みし、コンテンツブロッカーを確認してください。');
+    } else {
+      status('YouTube APIを取得できませんでした。通信制限・広告ブロッカー・コンテンツブロッカーを確認して再読み込みしてください。');
     }
-  }, 15000);
+  }, 20000);
 })();
 </script>
 </body>
