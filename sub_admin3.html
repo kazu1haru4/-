@@ -37,7 +37,7 @@ select{width:100%;border:1px solid #d8dde6;border-radius:9px;padding:10px;font-s
 <body>
 
 <header>
-  <div class="title">🛡️ 副管理者3 <span class="badge">BAN管理</span></div>
+  <div class="title">🛡️ 副管理者3 <span class="badge">BAN・グループ管理</span></div>
   <button id="settingsBtn" class="settings-btn">⚙️ 設定</button>
 </header>
 
@@ -49,6 +49,13 @@ select{width:100%;border:1px solid #d8dde6;border-radius:9px;padding:10px;font-s
   <section class="card">
     <h2>👥 管理できるユーザー</h2>
     <div id="assignedUsers"><div class="empty">読み込み中...</div></div>
+  </section>
+
+  <section class="card">
+    <h2>🏘️ 担当グループ管理</h2>
+    <p class="small">管理者がこの副管理者に割り当てたグループだけ操作できます。</p>
+    <div id="managedGroups"><div class="empty">グループを読み込み中...</div></div>
+    <div id="groupDetails" style="margin-top:12px"></div>
   </section>
 
   <!-- 管理者のみ -->
@@ -466,6 +473,38 @@ async function dismissSubAdmin(){
   }
 }
 
+let managedGroups=[];
+async function loadManagedGroups(){
+ const box=document.getElementById("managedGroups"),details=document.getElementById("groupDetails");
+ const {data,error}=await supabaseClient.rpc("sub_admin_list_managed_groups");
+ if(error)throw error;managedGroups=data||[];details.innerHTML="";
+ if(!managedGroups.length){box.innerHTML='<div class="empty">担当グループはありません。管理者に割り当てを依頼してください。</div>';return;}
+ box.innerHTML=managedGroups.map(g=>`<div class="user"><div class="user-name">🏘️ ${esc(g.name||"名前なし")}</div><div class="user-id">グループID: ${g.id} / メンバー: ${g.member_count}人 / メッセージ: ${g.message_count}件</div><div class="setting-row"><button class="primary" data-group-open="${g.id}">管理する</button></div></div>`).join("");
+ box.querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openManagedGroup(Number(b.dataset.groupOpen)));
+}
+async function openManagedGroup(groupId){
+ const g=managedGroups.find(x=>Number(x.id)===groupId);if(!g)return;
+ const box=document.getElementById("groupDetails");box.innerHTML='<div class="empty">グループ情報を読み込み中...</div>';
+ try{
+  const {data:members,error}=await supabaseClient.rpc("sub_admin_group_members",{target_group_id:groupId});if(error)throw error;
+  const {data:messages,error:me}=await supabaseClient.from("group_messages").select("id,sender_id,content,created_at,is_deleted").eq("group_id",groupId).order("created_at",{ascending:false}).limit(30);if(me)throw me;
+  box.innerHTML=`<div class="card"><h2>⚙️ ${esc(g.name||"グループ")}</h2>
+   <label class="small">グループ名</label><input id="groupNameInput" maxlength="80" value="${esc(g.name||"")}" style="width:100%;padding:10px;margin:6px 0;border:1px solid #ddd;border-radius:9px">
+   <button class="primary" id="renameGroupBtn">名前を変更</button>
+   <h2 style="margin-top:18px">👥 メンバー管理（${(members||[]).length}人）</h2>
+   <div class="setting-row"><input id="newGroupMemberId" placeholder="追加するユーザーID" style="min-width:0;flex:1;padding:10px;border:1px solid #ddd;border-radius:9px"><button class="primary" id="addGroupMemberBtn">追加</button></div>
+   <div>${(members||[]).map(m=>`<div class="user"><div class="user-name">${esc(m.user_id)}</div><div class="user-id">権限: ${esc(m.role)}</div><button class="danger" data-member-remove="${esc(m.user_id)}" style="margin-top:8px">メンバー削除</button></div>`).join("")||'<div class="empty">メンバーがいません。</div>'}</div>
+   <h2 style="margin-top:18px">💬 最近のメッセージ（最大30件）</h2>
+   <div>${(messages||[]).map(m=>`<div class="user"><div class="user-id">${esc(m.sender_id||"不明")} · ${esc(new Date(m.created_at).toLocaleString("ja-JP"))}</div><div style="white-space:pre-wrap;margin:8px 0">${esc(m.is_deleted?"（削除済み）":m.content||"（画像メッセージ）")}</div>${m.is_deleted?"":`<button class="danger" data-message-delete="${m.id}">メッセージ削除</button>`}</div>`).join("")||'<div class="empty">メッセージがありません。</div>'}</div>
+   <button class="danger" id="deleteGroupBtn" style="width:100%;margin-top:18px">🗑️ グループ自体を削除</button></div>`;
+  document.getElementById("renameGroupBtn").onclick=async()=>{const name=document.getElementById("groupNameInput").value.trim();if(!name)return toast("グループ名を入力してください");try{const {error}=await supabaseClient.rpc("sub_admin_rename_group",{target_group_id:groupId,new_group_name:name});if(error)throw error;toast("グループ名を変更しました");await loadManagedGroups();}catch(e){toast(e.message||"変更に失敗しました")}};
+  document.getElementById("addGroupMemberBtn").onclick=async()=>{const userId=document.getElementById("newGroupMemberId").value.trim();if(!userId)return toast("ユーザーIDを入力してください");try{const {error}=await supabaseClient.rpc("sub_admin_add_group_member",{target_group_id:groupId,target_user_id:userId});if(error)throw error;toast("メンバーを追加しました");await openManagedGroup(groupId);await loadManagedGroups()}catch(e){toast(e.message||"追加に失敗しました")}};
+  box.querySelectorAll("[data-member-remove]").forEach(b=>b.onclick=async()=>{if(!confirm(`${b.dataset.memberRemove} をグループから削除しますか？`))return;try{const {error}=await supabaseClient.rpc("sub_admin_remove_group_member",{target_group_id:groupId,target_user_id:b.dataset.memberRemove});if(error)throw error;toast("メンバーを削除しました");await openManagedGroup(groupId);await loadManagedGroups()}catch(e){toast(e.message||"削除に失敗しました")}});
+  box.querySelectorAll("[data-message-delete]").forEach(b=>b.onclick=async()=>{if(!confirm("このメッセージを削除済みにしますか？"))return;try{const {error}=await supabaseClient.rpc("sub_admin_delete_group_message",{target_group_id:groupId,target_message_id:Number(b.dataset.messageDelete)});if(error)throw error;toast("メッセージを削除しました");await openManagedGroup(groupId);await loadManagedGroups()}catch(e){toast(e.message||"削除に失敗しました")}});
+  document.getElementById("deleteGroupBtn").onclick=async()=>{if(!confirm(`「${g.name}」を完全に削除します。この操作は取り消せません。続けますか？`))return;try{const {error}=await supabaseClient.rpc("sub_admin_delete_group",{target_group_id:groupId});if(error)throw error;toast("グループを削除しました");box.innerHTML="";await loadManagedGroups()}catch(e){toast(e.message||"グループ削除に失敗しました")}};
+ }catch(e){box.innerHTML='<div class="empty">グループ情報の取得に失敗しました：'+esc(e.message||e)+'</div>'}
+}
+
 async function init(){
   try{
     currentProfile=await getMyProfile();
@@ -507,6 +546,7 @@ async function init(){
     }
 
     await loadAssignedUsers();
+    await loadManagedGroups();
 
   }catch(e){
     console.error("副管理者パネル読み込みエラー:",e);
