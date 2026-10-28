@@ -47,15 +47,19 @@ select{width:100%;border:1px solid #d8dde6;border-radius:9px;padding:10px;font-s
   </div>
 
   <section class="card">
-    <h2>👥 管理できるユーザー</h2>
-    <div id="assignedUsers"><div class="empty">読み込み中...</div></div>
+    <details>
+      <summary>👥 管理できるユーザー</summary>
+      <div id="assignedUsers" style="margin-top:12px"><div class="empty">読み込み中...</div></div>
+    </details>
   </section>
 
   <section class="card">
-    <h2>🏘️ 担当グループ管理</h2>
-    <p class="small">管理者がこの副管理者に割り当てたグループだけ操作できます。</p>
-    <div id="managedGroups"><div class="empty">グループを読み込み中...</div></div>
-    <div id="groupDetails" style="margin-top:12px"></div>
+    <details>
+      <summary>🏘️ 担当グループ管理</summary>
+      <p class="small" style="margin-top:12px">管理者がこの副管理者に割り当てたグループだけ操作できます。</p>
+      <div id="managedGroups"><div class="empty">グループを読み込み中...</div></div>
+      <div id="groupDetails" style="margin-top:12px"></div>
+    </details>
   </section>
 
   <!-- 管理者のみ -->
