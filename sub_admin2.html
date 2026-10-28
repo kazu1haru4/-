@@ -476,7 +476,7 @@ async function dismissSubAdmin(){
 let managedGroups=[];
 async function loadManagedGroups(){
  const box=document.getElementById("managedGroups"),details=document.getElementById("groupDetails");
- const {data,error}=await supabaseClient.rpc("sub_admin_list_managed_groups");
+ const {data,error}=await supabaseClient.rpc("sub_admin_list_managed_groups",{p_slot:SLOT});
  if(error)throw error;managedGroups=data||[];details.innerHTML="";
  if(!managedGroups.length){box.innerHTML='<div class="empty">担当グループはありません。管理者に割り当てを依頼してください。</div>';return;}
  box.innerHTML=managedGroups.map(g=>`<div class="user"><div class="user-name">🏘️ ${esc(g.name||"名前なし")}</div><div class="user-id">グループID: ${g.id} / メンバー: ${g.member_count}人 / メッセージ: ${g.message_count}件</div><div class="setting-row"><button class="primary" data-group-open="${g.id}">管理する</button></div></div>`).join("");
