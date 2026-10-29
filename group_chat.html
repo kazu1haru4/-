@@ -187,9 +187,12 @@ body{display:flex;flex-direction:column}
 .frame-neon{background:linear-gradient(135deg,#00ff9d,#00d9ff,#8b5cff,#ff38c7,#00ff9d);background-size:250% 250%;animation:neonFrame 3s linear infinite;box-shadow:0 0 0 2px rgba(255,255,255,.85),0 0 16px rgba(0,255,220,.55)}
 @keyframes neonFrame{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 .admin-frame{background:linear-gradient(135deg,#ffd700,#fff2a0,#e5a900,#fff0a3,#ffd700);box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 16px rgba(255,200,0,.55)}
-.chat-frame-sakura{border:2px solid #ff8fbd!important;box-shadow:0 0 10px rgba(255,105,170,.35)!important}.chat-frame-star{border:2px solid #f4bf3f!important;box-shadow:0 0 10px rgba(244,191,63,.4)!important}.chat-frame-diamond{border:2px solid #4db9ee!important;box-shadow:0 0 12px rgba(77,185,238,.45)!important}.chat-frame-heart{border:2px solid #ff4f91!important;box-shadow:0 0 11px rgba(255,80,145,.4)!important}.chat-frame-rainbow{border:3px solid transparent!important;border-radius:15px!important;background:linear-gradient(#fff,#fff) padding-box,linear-gradient(135deg,#ff3b30,#ff9500,#ffd60a,#34c759,#00c7be,#007aff,#5856d6,#af52de,#ff2d55,#ff3b30) border-box!important;background-clip:padding-box,border-box!important;box-shadow:0 0 10px rgba(255,59,48,.35),0 0 18px rgba(0,122,255,.35),0 0 26px rgba(175,82,222,.3)!important}.chat-frame-flame{border:2px solid #ff6b35!important;box-shadow:0 0 12px rgba(255,90,20,.45)!important}.chat-frame-sea{border:2px solid #29a9e8!important;box-shadow:0 0 12px rgba(40,190,255,.45)!important}.chat-frame-space{border:2px solid #7c5cff!important;box-shadow:0 0 13px rgba(93,78,210,.45)!important}.chat-frame-neon{border:2px solid #39ff14!important;box-shadow:0 0 14px rgba(0,255,220,.5)!important}.chat-frame-admin{border:2px solid #ffd700!important;box-shadow:0 0 14px rgba(255,200,0,.55)!important}
+.chat-frame-sakura{border:2px solid #ff8fbd!important;box-shadow:0 0 10px rgba(255,105,170,.35)!important}.chat-frame-star{border:2px solid #f4bf3f!important;box-shadow:0 0 10px rgba(244,191,63,.4)!important}.chat-frame-diamond{border:2px solid #4db9ee!important;box-shadow:0 0 12px rgba(77,185,238,.45)!important}.chat-frame-heart{border:2px solid #ff4f91!important;box-shadow:0 0 11px rgba(255,80,145,.4)!important}.chat-frame-rainbow{border:3px solid transparent!important;border-radius:15px!important;background:#fff!important;background-image:none!important;box-shadow:0 0 10px rgba(255,59,48,.35),0 0 18px rgba(0,122,255,.35),0 0 26px rgba(175,82,222,.3)!important}.chat-frame-rainbow::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:3px;background:linear-gradient(135deg,#ff3b30,#ff9500,#ffd60a,#34c759,#00c7be,#007aff,#5856d6,#af52de,#ff2d55,#ff3b30);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}.chat-frame-flame{border:2px solid #ff6b35!important;box-shadow:0 0 12px rgba(255,90,20,.45)!important}.chat-frame-sea{border:2px solid #29a9e8!important;box-shadow:0 0 12px rgba(40,190,255,.45)!important}.chat-frame-space{border:2px solid #7c5cff!important;box-shadow:0 0 13px rgba(93,78,210,.45)!important}.chat-frame-neon{border:2px solid #39ff14!important;box-shadow:0 0 14px rgba(0,255,220,.5)!important}.chat-frame-admin{border:2px solid #ffd700!important;box-shadow:0 0 14px rgba(255,200,0,.55)!important}
 .message-avatar-badge{display:none;position:absolute;right:-3px;top:-3px;width:20px;height:20px;border-radius:50%;background:white;align-items:center;justify-content:center;font-size:12px;box-shadow:0 2px 5px rgba(0,0,0,.15);z-index:3}.message-avatar-badge.show{display:flex}
 .message{position:relative;background:white;border-radius:15px;padding:10px 13px;box-shadow:0 2px 8px rgba(0,0,0,.06);cursor:pointer;min-width:0;flex:1}
+/* チャットフレームはメッセージ背景ではなく外枠として表示 */
+.message[class*="chat-frame-"]{position:relative;background-color:#fff!important;background-image:none!important;isolation:isolate}
+.message[class*="chat-frame-"]::after{z-index:2}
 .sender{font-size:12px;color:#777;margin-bottom:4px;font-weight:bold}.sender-row{display:flex;align-items:center;gap:7px;min-width:0}.message-time{font-size:10px;color:#999;font-weight:normal;white-space:nowrap;margin-left:auto}.content{font-size:16px;color:#333;word-break:break-word;white-space:pre-wrap}.edited-label{color:#999;font-size:10px;margin-left:5px;font-weight:normal}.mention{color:var(--theme-text);background:var(--theme-light);border-radius:5px;padding:1px 3px;font-weight:bold}.chat-image{display:block;max-width:250px;max-height:320px;border-radius:14px;margin-top:5px;object-fit:contain}
 .media-box{display:inline-block;max-width:280px;margin-top:5px}.chat-video{display:block;max-width:280px;max-height:320px;border-radius:14px;object-fit:contain}.chat-audio{display:block;max-width:280px}.media-duration{font-size:11px;color:#777;text-align:right;margin-top:2px}.deleted-message{color:#999;font-style:italic;font-size:14px;padding:4px 0}.read-status{margin-top:5px;color:var(--theme-text);font-size:11px;font-weight:bold;text-align:right}
 .reply-preview{background:var(--theme-light);border-left:4px solid var(--theme);border-radius:8px;padding:7px 9px;margin-top:8px;font-size:12px;color:#666}.reply-preview strong{color:var(--theme-text)}.reactions{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}.reaction-item{background:#f2f5fa;border-radius:20px;padding:4px 8px;font-size:14px}
@@ -210,12 +213,15 @@ body{display:flex;flex-direction:column}
 
 /* ===== グループメニュー ===== */
 .group-menu-button{position:absolute!important;top:max(12px,env(safe-area-inset-top))!important;right:12px!important;width:42px!important;height:42px!important;padding:0!important;border:0!important;border-radius:12px!important;background:#8f7cff!important;color:#fff!important;font-size:28px!important;font-weight:800!important;line-height:42px!important;z-index:20!important}
-.group-menu{position:absolute;top:48px;right:0;width:190px;background:white;border:1px solid #eee;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:6px;z-index:100}
-.group-menu button{display:block;width:100%;border:none;background:white;color:#444;text-align:left;padding:11px 12px;border-radius:10px;font-size:13px;font-weight:bold;cursor:pointer}
+.group-menu{position:absolute;top:48px;right:0;width:min(240px,calc(100vw - 24px));max-height:calc(100dvh - 90px);overflow-y:auto;background:white;border:1px solid #eee;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:6px;z-index:100}
+.group-menu button{display:block!important;width:100%!important;min-height:40px!important;height:auto!important;box-sizing:border-box!important;border:none!important;background:white!important;color:#444!important;text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important;padding:10px 12px!important;border-radius:10px!important;font-size:14px!important;line-height:1.35!important;font-weight:bold!important;cursor:pointer}
 .group-menu button:hover{background:var(--theme-light)}
 .group-menu .group-menu-delete{color:#d9534f}
 #groupIconPreview{box-shadow:0 2px 8px rgba(0,0,0,.12)}
 @media(max-width:520px){.group-menu{top:60px;right:12px;width:190px}.group-menu button{font-size:15px;padding:13px 12px}}
+/* アイコン変更の項目だけ、メニュー幅からはみ出さないようにする */
+#groupMenuIconButton{display:none;box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important;padding:10px 8px!important;font-size:13px!important;line-height:1.35!important;white-space:normal!important;overflow-wrap:anywhere!important;word-break:normal!important;text-align:left!important;}
+#groupMenuIconButton::first-letter{font-size:14px;}
 
 /* GROUP_CHAT_SEARCH_CSS */
 #groupSearchModal{
@@ -272,7 +278,7 @@ body{display:flex;flex-direction:column}
   <button id="groupMenuButton" class="group-menu-button" type="button" aria-label="グループメニュー">⋯</button>
   <div id="groupMenu" class="group-menu" style="display:none">
     <button id="groupMenuMemberButton" type="button">👥 メンバー</button>
-     <button id="groupMenuIconButton" type="button" style="display:none">🖼️ グループアイコンを変更</button>
+     <button id="groupMenuIconButton" type="button" style="display:none">🖼️ グループアイコン変更</button>
      <input id="groupIconInput" type="file" accept="image/*" style="display:none">
     <button id="groupCallMenuButton" type="button">📞 グループ通話</button>
     <button id="groupMenuSearchButton">🔍 チャット検索</button>
@@ -549,7 +555,7 @@ async function changeGroupIcon(file){
     renderGroupIcon(iconUrl);
     alert("✅ グループアイコンを変更しました");
   }catch(error){console.error("グループアイコン変更エラー:",error);alert("グループアイコンを変更できませんでした\n\n"+(error?.message||error));}
-  finally{groupMenuIconButton.disabled=false;groupMenuIconButton.textContent="🖼️ グループアイコンを変更";groupIconInput.value="";}
+  finally{groupMenuIconButton.disabled=false;groupMenuIconButton.textContent="🖼️ グループアイコン変更";groupIconInput.value="";}
 }
 async function renameGroup(){
   const isGlobalAdmin=ADMIN_USERNAMES.has(currentUsername);
@@ -1177,6 +1183,8 @@ if(document.readyState==="loading"){
       for(const [prop,value] of Object.entries(style)){
         if(value==null||value==="")continue;
         const cssProp=String(prop).replace(/[A-Z]/g,m=>"-"+m.toLowerCase());
+        // チャットフレームの設定は外枠に限定し、本文の背景色を上書きさせない
+        if(type==="chat_frame" && !["border","border-color","border-width","border-style","border-radius","box-shadow","outline","outline-color","outline-width","outline-style","animation","animation-duration","animation-timing-function"].includes(cssProp))continue;
         declarations.push(`${cssProp}:${String(value)} !important`);
       }
       if(!declarations.length && item.frame_color){
