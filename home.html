@@ -324,6 +324,45 @@ body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
   #fc-bottom-nav a { font-size: 11px; }
 }
 
+
+/* ===== ホームダッシュボード v7 ===== */
+.dashboard-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px}
+.dashboard-heading{font-size:17px;font-weight:800;color:#5e50c9}
+.dashboard-edit{border:0;border-radius:12px;padding:10px 13px;background:#eee8ff;color:#5e50c9;font-weight:800;font-size:13px}
+.dashboard-editing-note{display:none;margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#fff8df;color:#7a5a00;font-size:12px}
+.dashboard-cards{display:flex;flex-direction:column;gap:14px;margin-bottom:18px}
+.dashboard-card{position:relative;background:#fff;border:1px solid rgba(130,110,200,.12);border-radius:22px;padding:16px;box-shadow:0 8px 20px rgba(0,0,0,.055);min-width:0}
+.dashboard-card[hidden]{display:none!important}
+.dashboard-card.dragging{opacity:.55;outline:2px dashed #8f7cff}
+.dashboard-card.drop-target{outline:2px solid #8f7cff}
+.dashboard-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.dashboard-card-title{margin:0;font-size:16px;color:#5e50c9;font-weight:800}
+.dashboard-card-tools{display:none;align-items:center;gap:5px;flex-shrink:0}
+.dashboard-editing .dashboard-card-tools{display:flex}
+.dashboard-editing-note.visible{display:block}
+.dashboard-card-tools button{border:0;border-radius:9px;background:#f0edff;color:#5e50c9;padding:7px 9px;font-weight:700}
+.dashboard-card-tools button[draggable="true"]{cursor:grab}
+.dashboard-card-tools label{display:flex;align-items:center;gap:4px;font-size:11px;color:#665b86;white-space:nowrap}
+.dashboard-card-tools input{accent-color:#7b66df}
+.dashboard-profile{display:flex;align-items:center;gap:13px}
+.dashboard-avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;background:#f0edff;display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0;border:3px solid #dcd3ff}
+.dashboard-profile-name{font-size:18px;font-weight:800;color:#333;overflow-wrap:anywhere}
+.dashboard-profile-id{font-size:12px;color:#888;margin-top:4px}
+.dashboard-profile-link{display:inline-block;margin-top:7px;color:#6d58c7;text-decoration:none;font-size:12px;font-weight:700}
+.dashboard-list{display:flex;flex-direction:column;gap:9px}
+.dashboard-row{display:flex;align-items:center;gap:10px;min-width:0;padding:10px;border-radius:14px;background:#faf9ff;color:#333;text-decoration:none}
+.dashboard-row:active{transform:scale(.99)}
+.dashboard-row-avatar{width:42px;height:42px;border-radius:50%;object-fit:cover;background:#eee8ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:21px}
+.dashboard-row-info{min-width:0;flex:1}
+.dashboard-row-name{font-size:14px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dashboard-row-preview{font-size:12px;color:#777;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dashboard-row-time{font-size:10px;color:#999;white-space:nowrap;flex-shrink:0}
+.dashboard-empty{padding:16px 10px;text-align:center;font-size:13px;color:#999;background:#faf9ff;border-radius:14px}
+.dashboard-actions{display:flex;gap:8px;margin-top:10px}
+.dashboard-actions a,.dashboard-actions button{flex:1;min-width:0;text-align:center;border:0;border-radius:12px;padding:10px 8px;background:#f0edff;color:#6250bd;text-decoration:none;font-size:12px;font-weight:800}
+.dashboard-schedule-date{font-size:12px;color:#999;margin-top:3px}
+@media(max-width:380px){.dashboard-card{padding:13px}.dashboard-profile-name{font-size:16px}.dashboard-row{gap:8px;padding:9px}.dashboard-row-time{font-size:9px}}
+
 </style>
 </head>
 
@@ -377,6 +416,39 @@ body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
 
     </section>
 
+
+
+    <div class="dashboard-toolbar">
+      <div class="dashboard-heading">🏡 マイホーム</div>
+      <button type="button" id="dashboardEditButton" class="dashboard-edit">✏️ カード編集</button>
+    </div>
+    <p id="dashboardEditingNote" class="dashboard-editing-note">表示設定を切り替えたり、カードをドラッグまたは↑↓ボタンで並べ替えたりできます。変更はこの端末に保存されます。</p>
+    <div id="dashboardCards" class="dashboard-cards">
+      <section class="dashboard-card" data-card-key="profile" draggable="false">
+        <div class="dashboard-card-head"><h2 class="dashboard-card-title">👤 プロフィール</h2><div class="dashboard-card-tools"><button type="button" data-move="up" aria-label="上へ">↑</button><button type="button" data-move="down" aria-label="下へ">↓</button><label><input type="checkbox" data-card-visible checked>表示</label></div></div>
+        <div id="dashboardProfile" class="dashboard-profile"><div class="dashboard-avatar">😊</div><div><div class="dashboard-profile-name">プロフィールを読み込み中...</div></div></div>
+      </section>
+      <section class="dashboard-card" data-card-key="recent-chats" draggable="false">
+        <div class="dashboard-card-head"><h2 class="dashboard-card-title">💬 最近のチャット</h2><div class="dashboard-card-tools"><button type="button" data-move="up" aria-label="上へ">↑</button><button type="button" data-move="down" aria-label="下へ">↓</button><label><input type="checkbox" data-card-visible checked>表示</label></div></div>
+        <div id="dashboardRecentChats" class="dashboard-list"><div class="dashboard-empty">チャットを読み込み中...</div></div>
+        <div class="dashboard-actions"><a href="chats.html">個別チャット</a><a href="groups.html">グループ</a></div>
+      </section>
+      <section class="dashboard-card" data-card-key="online-friends" draggable="false" hidden>
+        <div class="dashboard-card-head"><h2 class="dashboard-card-title">🟢 オンラインの友達 <span id="dashboardOnlineCount"></span></h2><div class="dashboard-card-tools"><button type="button" data-move="up" aria-label="上へ">↑</button><button type="button" data-move="down" aria-label="下へ">↓</button><label><input type="checkbox" data-card-visible checked>表示</label></div></div>
+        <div id="dashboardOnlineFriends" class="dashboard-list"></div>
+        <div class="dashboard-actions"><a href="friends.html">フレンド一覧</a></div>
+      </section>
+
+      <section class="dashboard-card" data-card-key="today-schedule" draggable="false">
+        <div class="dashboard-card-head"><h2 class="dashboard-card-title">📅 今日の予定</h2><div class="dashboard-card-tools"><button type="button" data-move="up" aria-label="上へ">↑</button><button type="button" data-move="down" aria-label="下へ">↓</button><label><input type="checkbox" data-card-visible checked>表示</label></div></div>
+        <div id="dashboardTodaySchedule" class="dashboard-list"><div class="dashboard-empty">予定を読み込み中...</div></div>
+        <div class="dashboard-actions"><a href="schedule.html">予定を確認</a></div>
+      </section>
+      <section class="dashboard-card" data-card-key="announcements" draggable="false">
+        <div class="dashboard-card-head"><h2 class="dashboard-card-title">📢 お知らせ</h2><div class="dashboard-card-tools"><button type="button" data-move="up" aria-label="上へ">↑</button><button type="button" data-move="down" aria-label="下へ">↓</button><label><input type="checkbox" data-card-visible checked>表示</label></div></div>
+        <a class="dashboard-row" href="announcements.html"><div class="dashboard-row-avatar">📢</div><div class="dashboard-row-info"><div class="dashboard-row-name">Friend Chatからのお知らせ</div><div class="dashboard-row-preview">最新のお知らせを確認する</div></div><span>›</span></a>
+      </section>
+    </div>
 
     <!-- 今日の通知数（既存機能には変更を加えず、表示だけ追加） -->
     <section class="today-notifications" aria-label="今日の通知数">
@@ -669,6 +741,167 @@ body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
     let notificationChannel = null;
 
 
+
+    // =========================
+    // ホームダッシュボード v7
+    // =========================
+    const HOME_LAYOUT_KEY = "friendChatHomeLayoutV1";
+
+    function homeEscape(value) {
+      return String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+    }
+    function homeTodayJst() {
+      const parts = new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Tokyo",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());
+      const values = Object.fromEntries(parts.map(p => [p.type,p.value]));
+      return `${values.year}-${values.month}-${values.day}`;
+    }
+    function homeTimeLabel(value) {
+      if (!value) return "";
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return "";
+      return d.toLocaleTimeString("ja-JP", {hour:"2-digit",minute:"2-digit",timeZone:"Asia/Tokyo"});
+    }
+    function homeMessagePreview(message) {
+      if (message?.is_deleted) return "メッセージは削除されました";
+      const content = String(message?.content || "").trim();
+      if (content) return content;
+      if (message?.image_url) return "📷 画像";
+      return "メッセージ";
+    }
+    function homeAvatar(url, fallback="😊") {
+      if (url) return `<img class="dashboard-row-avatar" src="${homeEscape(url)}" alt="" loading="lazy">`;
+      return `<div class="dashboard-row-avatar">${fallback}</div>`;
+    }
+    async function loadDashboardProfile(username) {
+      const root = document.getElementById("dashboardProfile");
+      const {data:profile,error} = await supabaseClient.from("profiles").select("user_id,name,avatar_url,equipped_item_key").eq("user_id",username).maybeSingle();
+      if (error) console.warn("ホームプロフィール取得エラー:", error);
+      const name = profile?.name || username;
+      root.innerHTML = `<div class="dashboard-avatar">${profile?.avatar_url ? `<img src="${homeEscape(profile.avatar_url)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : "😊"}</div><div style="min-width:0"><div class="dashboard-profile-name">${homeEscape(name)}</div><div class="dashboard-profile-id">@${homeEscape(username)}</div><a class="dashboard-profile-link" href="profile.html">プロフィールを確認 ›</a></div>`;
+    }
+    async function loadDashboardOnlineFriends(username) {
+      const card = document.querySelector('[data-card-key="online-friends"]');
+      const root = document.getElementById("dashboardOnlineFriends");
+      const {data:friendRows,error:friendsError} = await supabaseClient.from("friends").select("friend_id").eq("user_id",username);
+      if (friendsError) { console.warn("オンラインフレンド取得エラー:",friendsError); card.hidden=true; return; }
+      const ids = (friendRows || []).map(r=>r.friend_id).filter(Boolean);
+      if (!ids.length) { card.hidden=true; return; }
+      const {data:presenceRows,error:presenceError} = await supabaseClient.from("user_presence").select("user_id,last_seen").in("user_id",ids);
+      if (presenceError) console.warn("オンライン状態取得エラー:",presenceError);
+      const now = Date.now();
+      const onlineIds = (presenceRows || []).filter(p => p.last_seen && now - new Date(p.last_seen).getTime() < 90000).map(p=>p.user_id);
+      if (!onlineIds.length) { card.hidden=true; return; }
+      const {data:profiles,error:profileError} = await supabaseClient.from("profiles").select("user_id,name,avatar_url").in("user_id",onlineIds);
+      if (profileError) console.warn("オンラインプロフィール取得エラー:",profileError);
+      const map = new Map((profiles || []).map(p=>[p.user_id,p]));
+      document.getElementById("dashboardOnlineCount").textContent = `(${onlineIds.length}人)`;
+      root.innerHTML = "";
+      for (const id of onlineIds) {
+        const p = map.get(id) || {user_id:id,name:id};
+        const a=document.createElement("a");a.className="dashboard-row";a.href="friend_profile.html?user="+encodeURIComponent(id);
+        a.innerHTML=`${homeAvatar(p.avatar_url,"🟢")}<div class="dashboard-row-info"><div class="dashboard-row-name">${homeEscape(p.name||id)}</div><div class="dashboard-row-preview">🟢 オンライン</div></div>`;
+        root.appendChild(a);
+      }
+      card.dataset.onlineReady="true";
+      const savedHidden = (()=>{try{return new Set(JSON.parse(localStorage.getItem(HOME_LAYOUT_KEY)||"{}").hidden||[])}catch(_){return new Set()}})();
+      card.hidden=savedHidden.has("online-friends");
+    }
+    async function loadDashboardRecentChats(username) {
+      const root=document.getElementById("dashboardRecentChats");
+      const [sent,received,members] = await Promise.all([
+        supabaseClient.from("messages").select("id,sender_id,receiver_id,content,image_url,is_deleted,created_at").eq("sender_id",username).order("created_at",{ascending:false}).limit(100),
+        supabaseClient.from("messages").select("id,sender_id,receiver_id,content,image_url,is_deleted,created_at").eq("receiver_id",username).order("created_at",{ascending:false}).limit(100),
+        supabaseClient.from("group_members").select("group_id").eq("user_id",username)
+      ]);
+      if (sent.error || received.error) {
+        console.warn("最近の個別チャット取得エラー:",sent.error||received.error);
+      }
+      const latest = new Map();
+      for (const m of [...(sent.data||[]),...(received.data||[])]) {
+        const other = m.sender_id===username ? m.receiver_id : m.sender_id;
+        if (!other) continue;
+        const key="user:"+other,old=latest.get(key);
+        if (!old || new Date(m.created_at)>new Date(old.created_at)) latest.set(key,{...m,key,kind:"user",target:other,title:other,preview:homeMessagePreview(m)});
+      }
+      const groupIds = (members.data||[]).map(x=>x.group_id).filter(x=>x!==null&&x!==undefined);
+      if (members.error) console.warn("グループメンバー取得エラー:",members.error);
+      if (groupIds.length) {
+        const [groupMessages,groups] = await Promise.all([
+          supabaseClient.from("group_messages").select("id,group_id,sender_id,content,image_url,is_deleted,created_at").in("group_id",groupIds).order("created_at",{ascending:false}).limit(200),
+          supabaseClient.from("groups").select("id,name").in("id",groupIds)
+        ]);
+        if (groupMessages.error) console.warn("最近のグループメッセージ取得エラー:",groupMessages.error);
+        const groupNames = new Map((groups.data||[]).map(g=>[String(g.id),g.name||"グループ"]));
+        for (const m of groupMessages.data||[]) {
+          const key="group:"+m.group_id,old=latest.get(key);
+          if (!old || new Date(m.created_at)>new Date(old.created_at)) latest.set(key,{...m,key,kind:"group",target:m.group_id,title:groupNames.get(String(m.group_id))||"グループ",preview:homeMessagePreview(m)});
+        }
+      }
+      const items=[...latest.values()].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,5);
+      if (!items.length) {root.innerHTML='<div class="dashboard-empty">まだチャットはありません</div>';return;}
+      const otherIds=[...new Set(items.filter(x=>x.kind==="user").map(x=>x.target))];
+      let profiles=[];
+      if(otherIds.length){const r=await supabaseClient.from("profiles").select("user_id,name,avatar_url").in("user_id",otherIds);if(!r.error)profiles=r.data||[];else console.warn("最近のチャットプロフィール取得エラー:",r.error)}
+      const profileMap=new Map(profiles.map(p=>[p.user_id,p]));
+      root.innerHTML="";
+      for(const item of items){
+        const p=item.kind==="user"?profileMap.get(item.target):null;
+        const title=p?.name||item.title;
+        const href=item.kind==="user"?"chat.html?user="+encodeURIComponent(item.target):"group_chat.html?id="+encodeURIComponent(item.target);
+        const a=document.createElement("a");a.className="dashboard-row";a.href=href;
+        a.innerHTML=`${homeAvatar(p?.avatar_url,item.kind==="group"?"👥":"😊")}<div class="dashboard-row-info"><div class="dashboard-row-name">${homeEscape(title)}</div><div class="dashboard-row-preview">${homeEscape(item.preview)}</div></div>`;
+        root.appendChild(a);
+      }
+    }
+    async function loadDashboardTodaySchedule() {
+      const root=document.getElementById("dashboardTodaySchedule");
+      const {data,error}=await supabaseClient.from("schedules").select("id,title,date,time,place,visibility").eq("date",homeTodayJst()).order("time",{ascending:true});
+      if(error){console.warn("今日の予定取得エラー:",error);root.innerHTML='<div class="dashboard-empty">予定を読み込めませんでした</div>';return;}
+      if(!data?.length){root.innerHTML='<div class="dashboard-empty">今日は予定がありません</div>';return;}
+      root.innerHTML="";
+      for(const s of data){const row=document.createElement("a");row.className="dashboard-row";row.href="schedule.html";const time=s.time?String(s.time).slice(0,5):"時間未設定";row.innerHTML=`<div class="dashboard-row-avatar">📅</div><div class="dashboard-row-info"><div class="dashboard-row-name">${homeEscape(s.title||"予定")}</div><div class="dashboard-row-preview">${homeEscape(time)}${s.place?" · "+homeEscape(s.place):""}</div></div>`;root.appendChild(row);}
+    }
+    function applyDashboardLayout() {
+      const root=document.getElementById("dashboardCards"); if(!root)return;
+      let settings={order:[],hidden:[]};
+      try{settings=JSON.parse(localStorage.getItem(HOME_LAYOUT_KEY)||"{}")}catch(_){settings={order:[],hidden:[]}}
+      const cards=[...root.querySelectorAll(".dashboard-card")];
+      const order=Array.isArray(settings.order)?settings.order:[];
+      cards.sort((a,b)=>{const ai=order.indexOf(a.dataset.cardKey),bi=order.indexOf(b.dataset.cardKey);return (ai<0?999:ai)-(bi<0?999:bi)}).forEach(card=>root.appendChild(card));
+      const hidden=new Set(Array.isArray(settings.hidden)?settings.hidden:[]);
+      cards.forEach(card=>{const hide=hidden.has(card.dataset.cardKey);const check=card.querySelector("[data-card-visible]");if(check)check.checked=!hide;if(card.dataset.cardKey!=="online-friends"||!card.hidden)card.hidden=hide;});
+      // Online card remains hidden until the live presence check finds at least one online friend.
+      const onlineCard=root.querySelector('[data-card-key="online-friends"]');
+      if(onlineCard&&!hidden.has("online-friends")&&onlineCard.dataset.onlineReady==="true")onlineCard.hidden=false;
+    }
+    function saveDashboardLayout() {
+      const root=document.getElementById("dashboardCards");
+      const order=[...root.querySelectorAll(".dashboard-card")].map(c=>c.dataset.cardKey);
+      const hidden=[...root.querySelectorAll(".dashboard-card")].filter(c=>!c.querySelector("[data-card-visible]")?.checked).map(c=>c.dataset.cardKey);
+      localStorage.setItem(HOME_LAYOUT_KEY,JSON.stringify({order,hidden}));
+    }
+    function setupDashboardEditor() {
+      const root=document.getElementById("dashboardCards"),button=document.getElementById("dashboardEditButton"),note=document.getElementById("dashboardEditingNote");
+      button.addEventListener("click",()=>{const editing=root.classList.toggle("dashboard-editing");note.classList.toggle("visible",editing);button.textContent=editing?"✓ 編集を終了":"✏️ カード編集";root.querySelectorAll(".dashboard-card").forEach(card=>card.draggable=editing);});
+      root.addEventListener("change",e=>{if(e.target.matches("[data-card-visible]")){const card=e.target.closest(".dashboard-card");if(card.dataset.cardKey==="online-friends"&&card.dataset.onlineReady!=="true")card.hidden=true;else card.hidden=!e.target.checked;saveDashboardLayout();}});
+      root.addEventListener("click",e=>{const btn=e.target.closest("[data-move]");if(!btn)return;const card=btn.closest(".dashboard-card");if(btn.dataset.move==="up"&&card.previousElementSibling)root.insertBefore(card,card.previousElementSibling);if(btn.dataset.move==="down"&&card.nextElementSibling)root.insertBefore(card.nextElementSibling,card);saveDashboardLayout();});
+      let dragging=null;
+      root.addEventListener("dragstart",e=>{const card=e.target.closest(".dashboard-card");if(!card||!root.classList.contains("dashboard-editing")){e.preventDefault();return;}dragging=card;card.classList.add("dragging");e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",card.dataset.cardKey);});
+      root.addEventListener("dragover",e=>{if(!dragging)return;e.preventDefault();const target=e.target.closest(".dashboard-card");root.querySelectorAll(".drop-target").forEach(c=>c.classList.remove("drop-target"));if(target&&target!==dragging)target.classList.add("drop-target");});
+      root.addEventListener("drop",e=>{if(!dragging)return;e.preventDefault();const target=e.target.closest(".dashboard-card");if(target&&target!==dragging){const rect=target.getBoundingClientRect();if(e.clientY<rect.top+rect.height/2)root.insertBefore(dragging,target);else root.insertBefore(dragging,target.nextElementSibling);}root.querySelectorAll(".drop-target").forEach(c=>c.classList.remove("drop-target"));dragging.classList.remove("dragging");dragging=null;saveDashboardLayout();});
+      root.addEventListener("dragend",()=>{if(dragging)dragging.classList.remove("dragging");dragging=null;root.querySelectorAll(".drop-target").forEach(c=>c.classList.remove("drop-target"));saveDashboardLayout();});
+      applyDashboardLayout();
+    }
+    async function loadHomeDashboard(username) {
+      setupDashboardEditor();
+      await Promise.allSettled([
+        loadDashboardProfile(username),
+        loadDashboardOnlineFriends(username),
+        loadDashboardRecentChats(username),
+        loadDashboardTodaySchedule()
+      ]);
+    }
+
     // =========================
     // ホーム開始
     // =========================
@@ -790,6 +1023,9 @@ body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
       setupNotificationRealtime(
         currentUsername
       );
+
+      // 新ホームダッシュボード（既存機能を維持して追加）
+      await loadHomeDashboard(currentUsername);
     }
 
 
