@@ -190,10 +190,6 @@ body{display:flex;flex-direction:column}
 .chat-frame-sakura{border:2px solid #ff8fbd!important;box-shadow:0 0 10px rgba(255,105,170,.35)!important}.chat-frame-star{border:2px solid #f4bf3f!important;box-shadow:0 0 10px rgba(244,191,63,.4)!important}.chat-frame-diamond{border:2px solid #4db9ee!important;box-shadow:0 0 12px rgba(77,185,238,.45)!important}.chat-frame-heart{border:2px solid #ff4f91!important;box-shadow:0 0 11px rgba(255,80,145,.4)!important}.chat-frame-rainbow{border:3px solid transparent!important;border-radius:15px!important;background:#fff!important;background-image:none!important;box-shadow:0 0 10px rgba(255,59,48,.35),0 0 18px rgba(0,122,255,.35),0 0 26px rgba(175,82,222,.3)!important}.chat-frame-rainbow::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:3px;background:linear-gradient(135deg,#ff3b30,#ff9500,#ffd60a,#34c759,#00c7be,#007aff,#5856d6,#af52de,#ff2d55,#ff3b30);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}.chat-frame-flame{border:2px solid #ff6b35!important;box-shadow:0 0 12px rgba(255,90,20,.45)!important}.chat-frame-sea{border:2px solid #29a9e8!important;box-shadow:0 0 12px rgba(40,190,255,.45)!important}.chat-frame-space{border:2px solid #7c5cff!important;box-shadow:0 0 13px rgba(93,78,210,.45)!important}.chat-frame-neon{border:2px solid #39ff14!important;box-shadow:0 0 14px rgba(0,255,220,.5)!important}.chat-frame-admin{border:2px solid #ffd700!important;box-shadow:0 0 14px rgba(255,200,0,.55)!important}
 .message-avatar-badge{display:none;position:absolute;right:-3px;top:-3px;width:20px;height:20px;border-radius:50%;background:white;align-items:center;justify-content:center;font-size:12px;box-shadow:0 2px 5px rgba(0,0,0,.15);z-index:3}.message-avatar-badge.show{display:flex}
 .message{position:relative;background:white;border-radius:15px;padding:10px 13px;box-shadow:0 2px 8px rgba(0,0,0,.06);cursor:pointer;min-width:0;flex:1}
-/* チャットフレームはメッセージ背景ではなく外枠として表示 */
-.message[class*="chat-frame-"]{position:relative;background-color:#fff!important;background-image:none!important;isolation:isolate}
-.message[class*="chat-frame-"]::after{z-index:2;pointer-events:none}
-.message[class*="chat-frame-"] > *{position:relative;z-index:1}
 .sender{font-size:12px;color:#777;margin-bottom:4px;font-weight:bold}.sender-row{display:flex;align-items:center;gap:7px;min-width:0}.message-time{font-size:10px;color:#999;font-weight:normal;white-space:nowrap;margin-left:auto}.content{font-size:16px;color:#333;word-break:break-word;white-space:pre-wrap}.edited-label{color:#999;font-size:10px;margin-left:5px;font-weight:normal}.mention{color:var(--theme-text);background:var(--theme-light);border-radius:5px;padding:1px 3px;font-weight:bold}.chat-image{display:block;max-width:250px;max-height:320px;border-radius:14px;margin-top:5px;object-fit:contain}
 .media-box{display:inline-block;max-width:280px;margin-top:5px}.chat-video{display:block;max-width:280px;max-height:320px;border-radius:14px;object-fit:contain}.chat-audio{display:block;max-width:280px}.media-duration{font-size:11px;color:#777;text-align:right;margin-top:2px}.deleted-message{color:#999;font-style:italic;font-size:14px;padding:4px 0}.read-status{margin-top:5px;color:var(--theme-text);font-size:11px;font-weight:bold;text-align:right}
 .reply-preview{background:var(--theme-light);border-left:4px solid var(--theme);border-radius:8px;padding:7px 9px;margin-top:8px;font-size:12px;color:#666}.reply-preview strong{color:var(--theme-text)}.reactions{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}.reaction-item{background:#f2f5fa;border-radius:20px;padding:4px 8px;font-size:14px}
@@ -1163,51 +1159,24 @@ if(document.readyState==="loading"){
 
 
 <script>
-/* Friend Chat: Supabaseの装飾スタイルを既存のフレームクラスに合わせて反映 */
+/* Friend Chat: 装飾スタイルをSupabaseのcoin_itemsから読み込む */
 (async()=>{
   try{
-    const client=(typeof supabaseClient!=="undefined")?supabaseClient:null;
+    const client=supabaseClient;
     if(!client)return;
     const {data,error}=await client.from("coin_items").select("item_key,item_type,frame_color,style_data");
     if(error){console.warn("coin_items style load:",error);return;}
     const safeKey=k=>String(k||"").replace(/[^a-zA-Z0-9_-]/g,"");
-    const frameAliases={
-      chat_sakura:"chat-frame-sakura",chat_star:"chat-frame-star",
-      chat_diamond:"chat-frame-diamond",chat_heart:"chat-frame-heart",
-      chat_rainbow:"chat-frame-rainbow",chat_flame:"chat-frame-flame",
-      chat_sea:"chat-frame-sea",chat_space:"chat-frame-space",
-      chat_neon:"chat-frame-neon",admin_chat:"chat-frame-admin"
-    };
-    const styleMap={
-      frame:k=>k==="admin"?"admin-frame":"frame-"+k,
-      name_decoration:k=>k==="admin_name"?"name-decoration-admin":"name-decoration-"+k,
-      background:k=>k==="admin_bg"?"background-admin":"background-"+k,
-      chat_frame:k=>frameAliases[k]||("chat-frame-"+k)
-    };
+    const styleMap={frame:k=>k==="admin"?"admin-frame":"frame-"+k,name_decoration:k=>k==="admin_name"?"name-decoration-admin":"name-decoration-"+k,background:k=>k==="admin_bg"?"background-admin":"background-"+k,chat_frame:k=>k==="admin_chat"?"chat-frame-admin":"chat-frame-"+k};
     const rules=[];
     for(const item of (data||[])){
-      const key=safeKey(item.item_key), type=String(item.item_type||"");
+      const key=safeKey(item.item_key);
+      const type=String(item.item_type||"");
       const fn=styleMap[type];
       if(!key||!fn)continue;
       const cls=safeKey(fn(key));
       const style=(item.style_data&&typeof item.style_data==="object")?item.style_data:{};
       const declarations=[];
-      if(type==="chat_frame"){
-        const border=style.border || (item.frame_color ? "3px solid "+item.frame_color : "");
-        const shadow=style.boxShadow || style["box-shadow"] || "";
-        const radius=style.borderRadius || style["border-radius"] || "16px";
-        const bg=typeof style.background==="string" ? style.background : "";
-        if(border)declarations.push("border:"+border+" !important");
-        if(shadow)declarations.push("box-shadow:"+shadow+" !important");
-        if(radius)declarations.push("border-radius:"+radius+" !important");
-        declarations.push("background-color:#fff !important","background-image:none !important","position:relative");
-        rules.push("."+cls+"{"+declarations.join(";")+"}");
-        if(/gradient\(/i.test(bg)){
-          rules.push("."+cls+"::after{content:'';position:absolute;inset:0;padding:3px;border-radius:inherit;pointer-events:none;z-index:2;background:"+bg+";-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude}");
-          rules.push("."+cls+" > *{position:relative;z-index:1}");
-        }
-        continue;
-      }
       for(const [prop,value] of Object.entries(style)){
         if(value==null||value==="")continue;
         const cssProp=String(prop).replace(/[A-Z]/g,m=>"-"+m.toLowerCase());
@@ -1217,12 +1186,16 @@ if(document.readyState==="loading"){
         if(type==="frame")declarations.push(`background:${item.frame_color} !important`);
         else if(type==="name_decoration")declarations.push(`color:${item.frame_color} !important`);
         else if(type==="background")declarations.push(`background:${item.frame_color} !important`);
+        else if(type==="chat_frame")declarations.push(`border-color:${item.frame_color} !important`);
       }
       if(declarations.length)rules.push(`.${cls}{${declarations.join(";")}}`);
     }
-    let styleTag=document.getElementById("fc-supabase-item-styles");
-    if(!styleTag){styleTag=document.createElement("style");styleTag.id="fc-supabase-item-styles";document.head.appendChild(styleTag);}
-    styleTag.textContent=rules.join("\\n");
+    if(rules.length){
+      const style=document.createElement("style");
+      style.id="fc-supabase-item-styles";
+      style.textContent=rules.join("\n");
+      document.head.appendChild(style);
+    }
   }catch(e){console.warn("Supabase item style init:",e)}
 })();
 </script>
