@@ -424,206 +424,45 @@ body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
     </div>
     <p id="dashboardEditingNote" class="dashboard-editing-note">表示設定を切り替えたり、カードをドラッグまたは↑↓ボタンで並べ替えたりできます。変更はこの端末に保存されます。</p>
     <div id="dashboardCards" class="dashboard-cards">
-      <section class="dashboard-card" data-card-key="profile" draggable="false">
-        <div class="dashboard-card-head"><h2 class="dashboard-card-title">👤 プロフィール</h2><div class="dashboard-card-tools"><button type="button" data-move="up" aria-label="上へ">↑</button><button type="button" data-move="down" aria-label="下へ">↓</button><label><input type="checkbox" data-card-visible checked>表示</label></div></div>
-        <div id="dashboardProfile" class="dashboard-profile"><div class="dashboard-avatar">😊</div><div><div class="dashboard-profile-name">プロフィールを読み込み中...</div></div></div>
-      </section>
-      <section class="dashboard-card" data-card-key="recent-chats" draggable="false">
-        <div class="dashboard-card-head"><h2 class="dashboard-card-title">💬 最近のチャット</h2><div class="dashboard-card-tools"><button type="button" data-move="up" aria-label="上へ">↑</button><button type="button" data-move="down" aria-label="下へ">↓</button><label><input type="checkbox" data-card-visible checked>表示</label></div></div>
+      <!-- 友達の活動 -->
+      <section class="dashboard-card" data-card-key="friends-activity" draggable="false">
+        <div class="dashboard-card-head"><h2 class="dashboard-card-title">👥 友達の活動</h2><div class="dashboard-card-tools"><button type="button" data-move="up" aria-label="上へ">↑</button><button type="button" data-move="down" aria-label="下へ">↓</button><label><input type="checkbox" data-card-visible checked>表示</label></div></div>
+        <div class="dashboard-card-title" style="font-size:13px;margin:0 0 9px">🟢 オンラインの友達 <span id="dashboardOnlineCount"></span></div>
+        <div id="dashboardOnlineFriends" class="dashboard-list"><div class="dashboard-empty">友達の状況を確認中...</div></div>
+        <div id="dashboardOnlineEmpty" class="dashboard-empty" hidden>今オンラインの友達はいません</div>
+        <div class="dashboard-card-title" style="font-size:13px;margin:16px 0 9px">💬 最近のチャット</div>
         <div id="dashboardRecentChats" class="dashboard-list"><div class="dashboard-empty">チャットを読み込み中...</div></div>
-        <div class="dashboard-actions"><a href="chats.html">個別チャット</a><a href="groups.html">グループ</a></div>
-      </section>
-      <section class="dashboard-card" data-card-key="online-friends" draggable="false" hidden>
-        <div class="dashboard-card-head"><h2 class="dashboard-card-title">🟢 オンラインの友達 <span id="dashboardOnlineCount"></span></h2><div class="dashboard-card-tools"><button type="button" data-move="up" aria-label="上へ">↑</button><button type="button" data-move="down" aria-label="下へ">↓</button><label><input type="checkbox" data-card-visible checked>表示</label></div></div>
-        <div id="dashboardOnlineFriends" class="dashboard-list"></div>
-        <div class="dashboard-actions"><a href="friends.html">フレンド一覧</a></div>
+        <div class="dashboard-actions"><a href="chats.html">チャットを開く</a><a href="friends.html">友達を見る</a></div>
       </section>
 
-      <section class="dashboard-card" data-card-key="today-schedule" draggable="false">
-        <div class="dashboard-card-head"><h2 class="dashboard-card-title">📅 今日の予定</h2><div class="dashboard-card-tools"><button type="button" data-move="up" aria-label="上へ">↑</button><button type="button" data-move="down" aria-label="下へ">↓</button><label><input type="checkbox" data-card-visible checked>表示</label></div></div>
-        <div id="dashboardTodaySchedule" class="dashboard-list"><div class="dashboard-empty">予定を読み込み中...</div></div>
-        <div class="dashboard-actions"><a href="schedule.html">予定を確認</a></div>
+      <!-- クイックアクセス -->
+      <section class="dashboard-card" data-card-key="quick-access" draggable="false">
+        <div class="dashboard-card-head"><h2 class="dashboard-card-title">⚡ クイックアクセス</h2><div class="dashboard-card-tools"><button type="button" data-move="up" aria-label="上へ">↑</button><button type="button" data-move="down" aria-label="下へ">↓</button><label><input type="checkbox" data-card-visible checked>表示</label></div></div>
+        <div class="menu" style="gap:9px">
+          <a href="chats.html" class="menu-button direct-chat" style="min-height:100px;border-radius:17px;box-shadow:none"><div class="icon" style="font-size:25px;margin-bottom:7px">💬</div><div class="title" style="font-size:13px">個別チャット</div><div class="description">友達と話そう</div></a>
+          <a href="groups.html" class="menu-button groups" style="min-height:100px;border-radius:17px;box-shadow:none"><div class="icon" style="font-size:25px;margin-bottom:7px">👥</div><div class="title" style="font-size:13px">グループ</div><div class="description">みんなで話そう</div></a>
+          <a href="friends.html" class="menu-button friends" style="min-height:100px;border-radius:17px;box-shadow:none"><div class="icon" style="font-size:25px;margin-bottom:7px">🤝</div><div class="title" style="font-size:13px">フレンド</div><div class="description">友達を探す</div></a>
+          <a href="board-number.html" class="menu-button board" style="min-height:100px;border-radius:17px;box-shadow:none"><div class="icon" style="font-size:25px;margin-bottom:7px">📢</div><div class="title" style="font-size:13px">掲示板</div><div class="description">投稿をチェック</div></a>
+          <a href="minigame.html" class="menu-button games" style="min-height:100px;border-radius:17px;box-shadow:none"><div class="icon" style="font-size:25px;margin-bottom:7px">🎮</div><div class="title" style="font-size:13px">ミニゲーム</div><div class="description">友達と遊ぼう</div></a>
+          <a href="coin.html" class="menu-button coin" style="min-height:100px;border-radius:17px;box-shadow:none"><div class="icon" style="font-size:25px;margin-bottom:7px">🪙</div><div class="title" style="font-size:13px">フレンドコイン</div><div class="description">コインを集めよう</div></a>
+        </div>
       </section>
-      <section class="dashboard-card" data-card-key="announcements" draggable="false">
-        <div class="dashboard-card-head"><h2 class="dashboard-card-title">📢 お知らせ</h2><div class="dashboard-card-tools"><button type="button" data-move="up" aria-label="上へ">↑</button><button type="button" data-move="down" aria-label="下へ">↓</button><label><input type="checkbox" data-card-visible checked>表示</label></div></div>
-        <a class="dashboard-row" href="announcements.html"><div class="dashboard-row-avatar">📢</div><div class="dashboard-row-info"><div class="dashboard-row-name">Friend Chatからのお知らせ</div><div class="dashboard-row-preview">最新のお知らせを確認する</div></div><span>›</span></a>
+
+      <!-- イベント・最新情報 -->
+      <section class="dashboard-card" data-card-key="events-news" draggable="false">
+        <div class="dashboard-card-head"><h2 class="dashboard-card-title">✨ イベント・最新情報</h2><div class="dashboard-card-tools"><button type="button" data-move="up" aria-label="上へ">↑</button><button type="button" data-move="down" aria-label="下へ">↓</button><label><input type="checkbox" data-card-visible checked>表示</label></div></div>
+        <a class="dashboard-row" href="announcements.html"><div class="dashboard-row-avatar">📢</div><div class="dashboard-row-info"><div class="dashboard-row-name">フレンドチャットからのお知らせ</div><div class="dashboard-row-preview">最新のお知らせや更新情報を確認</div></div><span>›</span></a>
+        <a class="dashboard-row" href="schedule.html"><div class="dashboard-row-avatar">📅</div><div class="dashboard-row-info"><div class="dashboard-row-name">今日の予定</div><div class="dashboard-row-preview">予定やイベントをチェック</div></div><span>›</span></a>
+        <div id="dashboardTodaySchedule" class="dashboard-list" style="margin-top:9px"><div class="dashboard-empty">今日の予定を読み込み中...</div></div>
+      </section>
+
+      <!-- 自分専用カード -->
+      <section class="dashboard-card" data-card-key="my-card" draggable="false">
+        <div class="dashboard-card-head"><h2 class="dashboard-card-title">🌟 自分専用のカード</h2><div class="dashboard-card-tools"><button type="button" data-move="up" aria-label="上へ">↑</button><button type="button" data-move="down" aria-label="下へ">↓</button><label><input type="checkbox" data-card-visible checked>表示</label></div></div>
+        <div id="dashboardProfile" class="dashboard-profile"><div class="dashboard-avatar">😊</div><div><div class="dashboard-profile-name">プロフィールを読み込み中...</div></div></div>
+        <div class="dashboard-actions"><a href="profile.html">プロフィール</a><a href="settings.html">設定を開く</a></div>
       </section>
     </div>
-
-    <!-- 今日の通知数（既存機能には変更を加えず、表示だけ追加） -->
-    <section class="today-notifications" aria-label="今日の通知数">
-      <div class="today-notifications-title">🌟 今日の通知数</div>
-      <div class="today-notifications-grid">
-        <a href="notifications.html" class="today-notification-item">
-          <span class="today-notification-icon">🔔</span>
-          <span class="today-notification-label">通知</span>
-          <strong id="todayNotificationCount">0</strong>
-        </a>
-        <a href="chats.html" class="today-notification-item">
-          <span class="today-notification-icon">💬</span>
-          <span class="today-notification-label">チャット</span>
-          <strong id="todayChatCount">0</strong>
-        </a>
-        <a href="groups.html" class="today-notification-item">
-          <span class="today-notification-icon">👥</span>
-          <span class="today-notification-label">グループ</span>
-          <strong id="todayGroupCount">0</strong>
-        </a>
-        <a href="board-number.html" class="today-notification-item">
-          <span class="today-notification-icon">📢</span>
-          <span class="today-notification-label">掲示板</span>
-          <strong id="todayBoardCount">0</strong>
-        </a>
-      </div>
-    </section>
-
-    <section class="menu">
-
-      <a
-        href="announcements.html"
-        class="menu-button announcement-button"
-      >
-        <div class="icon">📢</div>
-
-        <div class="title">
-          お知らせ
-        </div>
-
-        <div class="description">
-          Friend Chatからのお知らせ
-        </div>
-      </a>
-
-
-      <a
-        href="chats.html"
-        class="menu-button direct-chat"
-      >
-        <div class="icon">💬</div>
-
-        <div class="title">
-          個別チャット
-        </div>
-
-        <div class="description">
-          友達とのチャット
-        </div>
-      </a>
-
-
-      <a
-        href="groups.html"
-        class="menu-button groups"
-      >
-        <div class="icon">👥</div>
-
-        <div class="title">
-          グループ
-        </div>
-
-        <div class="description">
-          グループチャット
-        </div>
-      </a>
-
-
-      <a
-        href="profile.html"
-        class="menu-button profile"
-      >
-        <div class="icon">👤</div>
-
-        <div class="title">
-          プロフィール
-        </div>
-
-        <div class="description">
-          自分のプロフィール
-        </div>
-      </a>
-
-
-      <a
-        href="friends.html"
-        class="menu-button friends"
-      >
-        <div class="icon">👥</div>
-
-        <div class="title">
-          フレンド
-        </div>
-
-        <div class="description">
-          友達を探す
-        </div>
-      </a>
-
-
-      <a
-        href="board-number.html"
-        class="menu-button board"
-      >
-        <div class="icon">📢</div>
-
-        <div class="title">
-          掲示板
-        </div>
-
-        <div class="description">
-          みんなの投稿を見る
-        </div>
-      </a>
-
-
-      <a
-        href="schedule.html"
-        class="menu-button schedule"
-      >
-        <div class="icon">📅</div>
-
-        <div class="title">
-          予定
-        </div>
-
-        <div class="description">
-          予定を管理する
-        </div>
-      </a>
-
-
-      <a
-        href="minigame.html"
-        class="menu-button games"
-      >
-        <div class="icon">🎮</div>
-
-        <div class="title">
-          ミニゲーム
-        </div>
-
-        <div class="description">
-          友達と遊ぼう！
-        </div>
-      </a>
-
-
-      <a
-        href="coin.html"
-        class="menu-button coin"
-      >
-        <div class="icon">🪙</div>
-
-        <div class="title">
-          フレンドコイン
-        </div>
-
-        <div class="description">
-          コインを集めよう！
-        </div>
-      </a>
-
-    </section>
-
 
     <div class="footer">
       Friend Chat
@@ -780,17 +619,18 @@ body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
       root.innerHTML = `<div class="dashboard-avatar">${profile?.avatar_url ? `<img src="${homeEscape(profile.avatar_url)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : "😊"}</div><div style="min-width:0"><div class="dashboard-profile-name">${homeEscape(name)}</div><div class="dashboard-profile-id">@${homeEscape(username)}</div><a class="dashboard-profile-link" href="profile.html">プロフィールを確認 ›</a></div>`;
     }
     async function loadDashboardOnlineFriends(username) {
-      const card = document.querySelector('[data-card-key="online-friends"]');
       const root = document.getElementById("dashboardOnlineFriends");
+      const empty = document.getElementById("dashboardOnlineEmpty");
       const {data:friendRows,error:friendsError} = await supabaseClient.from("friends").select("friend_id").eq("user_id",username);
-      if (friendsError) { console.warn("オンラインフレンド取得エラー:",friendsError); card.hidden=true; return; }
+      if (friendsError) { console.warn("オンラインフレンド取得エラー:",friendsError); root.innerHTML='<div class="dashboard-empty">オンライン状況を読み込めませんでした</div>'; return; }
       const ids = (friendRows || []).map(r=>r.friend_id).filter(Boolean);
-      if (!ids.length) { card.hidden=true; return; }
+      if (!ids.length) { root.innerHTML=''; empty.hidden=false; return; }
       const {data:presenceRows,error:presenceError} = await supabaseClient.from("user_presence").select("user_id,last_seen").in("user_id",ids);
       if (presenceError) console.warn("オンライン状態取得エラー:",presenceError);
       const now = Date.now();
       const onlineIds = (presenceRows || []).filter(p => p.last_seen && now - new Date(p.last_seen).getTime() < 90000).map(p=>p.user_id);
-      if (!onlineIds.length) { card.hidden=true; return; }
+      if (!onlineIds.length) { root.innerHTML=''; empty.hidden=false; return; }
+      empty.hidden=true;
       const {data:profiles,error:profileError} = await supabaseClient.from("profiles").select("user_id,name,avatar_url").in("user_id",onlineIds);
       if (profileError) console.warn("オンラインプロフィール取得エラー:",profileError);
       const map = new Map((profiles || []).map(p=>[p.user_id,p]));
@@ -802,9 +642,7 @@ body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
         a.innerHTML=`${homeAvatar(p.avatar_url,"🟢")}<div class="dashboard-row-info"><div class="dashboard-row-name">${homeEscape(p.name||id)}</div><div class="dashboard-row-preview">🟢 オンライン</div></div>`;
         root.appendChild(a);
       }
-      card.dataset.onlineReady="true";
-      const savedHidden = (()=>{try{return new Set(JSON.parse(localStorage.getItem(HOME_LAYOUT_KEY)||"{}").hidden||[])}catch(_){return new Set()}})();
-      card.hidden=savedHidden.has("online-friends");
+      root.dataset.onlineReady="true";
     }
     async function loadDashboardRecentChats(username) {
       const root=document.getElementById("dashboardRecentChats");
@@ -870,9 +708,7 @@ body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
       cards.sort((a,b)=>{const ai=order.indexOf(a.dataset.cardKey),bi=order.indexOf(b.dataset.cardKey);return (ai<0?999:ai)-(bi<0?999:bi)}).forEach(card=>root.appendChild(card));
       const hidden=new Set(Array.isArray(settings.hidden)?settings.hidden:[]);
       cards.forEach(card=>{const hide=hidden.has(card.dataset.cardKey);const check=card.querySelector("[data-card-visible]");if(check)check.checked=!hide;if(card.dataset.cardKey!=="online-friends"||!card.hidden)card.hidden=hide;});
-      // Online card remains hidden until the live presence check finds at least one online friend.
-      const onlineCard=root.querySelector('[data-card-key="online-friends"]');
-      if(onlineCard&&!hidden.has("online-friends")&&onlineCard.dataset.onlineReady==="true")onlineCard.hidden=false;
+      // Online friends are shown inside the Friends Activity card; the empty state is handled separately.
     }
     function saveDashboardLayout() {
       const root=document.getElementById("dashboardCards");
