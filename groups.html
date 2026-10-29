@@ -341,36 +341,56 @@ async function loadGroups(){
       );
 
 
-    const name =
-      document.createElement("div");
+    const row = document.createElement("div");
+    row.style.display = "flex";
+    row.style.alignItems = "center";
+    row.style.gap = "12px";
 
+    const icon = document.createElement("div");
+    icon.style.width = "54px";
+    icon.style.height = "54px";
+    icon.style.flex = "0 0 54px";
+    icon.style.borderRadius = "15px";
+    icon.style.overflow = "hidden";
+    icon.style.display = "flex";
+    icon.style.alignItems = "center";
+    icon.style.justifyContent = "center";
+    icon.style.background = "#f0eaff";
+    icon.style.fontSize = "28px";
 
-    name.className =
-      "group-name";
+    if (group.icon_url) {
+      const image = document.createElement("img");
+      image.src = group.icon_url;
+      image.alt = "";
+      image.style.width = "100%";
+      image.style.height = "100%";
+      image.style.objectFit = "cover";
+      image.onerror = () => {
+        image.remove();
+        icon.textContent = "👥";
+      };
+      icon.appendChild(image);
+    } else {
+      icon.textContent = "👥";
+    }
 
+    const textWrap = document.createElement("div");
+    textWrap.style.minWidth = "0";
+    textWrap.style.flex = "1";
 
-    name.textContent =
-      "👥 " +
-      group.name;
+    const name = document.createElement("div");
+    name.className = "group-name";
+    name.textContent = group.name || "名前のないグループ";
 
+    const info = document.createElement("div");
+    info.className = "group-info";
+    info.textContent = "グループチャット";
 
-    const info =
-      document.createElement("div");
-
-
-    info.className =
-      "group-info";
-
-
-    info.textContent =
-      "グループチャット";
-
-
+    textWrap.appendChild(name);
     textWrap.appendChild(info);
     row.appendChild(icon);
     row.appendChild(textWrap);
     div.appendChild(row);
-
     groupList.appendChild(div);
   }
 
