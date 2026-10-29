@@ -192,7 +192,8 @@ body{display:flex;flex-direction:column}
 .message{position:relative;background:white;border-radius:15px;padding:10px 13px;box-shadow:0 2px 8px rgba(0,0,0,.06);cursor:pointer;min-width:0;flex:1}
 /* チャットフレームはメッセージ背景ではなく外枠として表示 */
 .message[class*="chat-frame-"]{position:relative;background-color:#fff!important;background-image:none!important;isolation:isolate}
-.message[class*="chat-frame-"]::after{z-index:2}
+.message[class*="chat-frame-"]::after{z-index:0}
+.message[class*="chat-frame-"] > *{position:relative;z-index:1}
 .sender{font-size:12px;color:#777;margin-bottom:4px;font-weight:bold}.sender-row{display:flex;align-items:center;gap:7px;min-width:0}.message-time{font-size:10px;color:#999;font-weight:normal;white-space:nowrap;margin-left:auto}.content{font-size:16px;color:#333;word-break:break-word;white-space:pre-wrap}.edited-label{color:#999;font-size:10px;margin-left:5px;font-weight:normal}.mention{color:var(--theme-text);background:var(--theme-light);border-radius:5px;padding:1px 3px;font-weight:bold}.chat-image{display:block;max-width:250px;max-height:320px;border-radius:14px;margin-top:5px;object-fit:contain}
 .media-box{display:inline-block;max-width:280px;margin-top:5px}.chat-video{display:block;max-width:280px;max-height:320px;border-radius:14px;object-fit:contain}.chat-audio{display:block;max-width:280px}.media-duration{font-size:11px;color:#777;text-align:right;margin-top:2px}.deleted-message{color:#999;font-style:italic;font-size:14px;padding:4px 0}.read-status{margin-top:5px;color:var(--theme-text);font-size:11px;font-weight:bold;text-align:right}
 .reply-preview{background:var(--theme-light);border-left:4px solid var(--theme);border-radius:8px;padding:7px 9px;margin-top:8px;font-size:12px;color:#666}.reply-preview strong{color:var(--theme-text)}.reactions{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}.reaction-item{background:#f2f5fa;border-radius:20px;padding:4px 8px;font-size:14px}
@@ -1180,18 +1181,29 @@ if(document.readyState==="loading"){
       const cls=safeKey(fn(key));
       const style=(item.style_data&&typeof item.style_data==="object")?item.style_data:{};
       const declarations=[];
+      let chatFrameBorderColor = "";
       for(const [prop,value] of Object.entries(style)){
         if(value==null||value==="")continue;
         const cssProp=String(prop).replace(/[A-Z]/g,m=>"-"+m.toLowerCase());
-        // チャットフレームの設定は外枠に限定し、本文の背景色を上書きさせない
-        if(type==="chat_frame" && !["border","border-color","border-width","border-style","border-radius","box-shadow","outline","outline-color","outline-width","outline-style","animation","animation-duration","animation-timing-function"].includes(cssProp))continue;
+        if(type==="chat_frame"){
+          // フレームの背景指定はメッセージ背景に適用せず、枠線の色として利用する
+          if(["background","background-color","background-image","color"].includes(cssProp)){
+            if(typeof value === "string" && value.trim()) chatFrameBorderColor = value;
+            continue;
+          }
+          if(!["border","border-color","border-width","border-style","border-radius","box-shadow","outline","outline-color","outline-width","outline-style","animation","animation-duration","animation-timing-function"].includes(cssProp))continue;
+        }
         declarations.push(`${cssProp}:${String(value)} !important`);
+      }
+      if(type==="chat_frame" && !declarations.some(d=>d.startsWith("border:")||d.startsWith("border-color:"))){
+        const color = item.frame_color || chatFrameBorderColor;
+        if(color) declarations.push(`border:3px solid ${color} !important`);
       }
       if(!declarations.length && item.frame_color){
         if(type==="frame")declarations.push(`background:${item.frame_color} !important`);
         else if(type==="name_decoration")declarations.push(`color:${item.frame_color} !important`);
         else if(type==="background")declarations.push(`background:${item.frame_color} !important`);
-        else if(type==="chat_frame")declarations.push(`border-color:${item.frame_color} !important`);
+        else if(type==="chat_frame")declarations.push(`border:3px solid ${item.frame_color} !important`);
       }
       if(declarations.length)rules.push(`.${cls}{${declarations.join(";")}}`);
     }
