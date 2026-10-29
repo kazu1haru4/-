@@ -660,8 +660,9 @@ async function refreshPersonalSnapState(){
  if(!panel||!status||!button||!state?.user_id)return;
  try{
   const {data,error}=await db.rpc('brainrot_personal_snap_state');if(error)throw error;personalSnapState=data||{};
-  panel.hidden=!personalSnapState.has_grant;
-  if(!personalSnapState.has_grant){status.textContent='専用Snapは付与されていません。';button.disabled=true;return;}
+  // 専用Snapが未付与、または使用済みならユーザー画面からパネル自体を隠す
+  panel.hidden=!personalSnapState.has_grant || !!personalSnapState.used;
+  if(!personalSnapState.has_grant || personalSnapState.used){button.disabled=true;return;}
   if(personalSnapState.active){status.textContent=`💥 発動中！残り ${formatTimeLeft(personalSnapState.seconds_remaining)} ／ 変異：${personalSnapState.snap_mutation}・属性：${String(personalSnapState.snap_trait||'').replaceAll(',','・')}`;button.textContent='💥 専用Snap発動中…';button.disabled=true;}
   else if(personalSnapState.used){status.textContent='この専用Snapは使用済みです。再使用はできません。';button.textContent='使用済み';button.disabled=true;}
   else{status.textContent=`発動可能：変異 ${personalSnapState.snap_mutation} ／ 属性 ${String(personalSnapState.snap_trait||'').replaceAll(',','・')} ／ 発動すると5分間有効`;button.textContent='💥 専用Snapを発動（5分間）';button.disabled=false;}
