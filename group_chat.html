@@ -214,6 +214,7 @@ body{display:flex;flex-direction:column}
 .group-menu button{display:block;width:100%;border:none;background:white;color:#444;text-align:left;padding:11px 12px;border-radius:10px;font-size:13px;font-weight:bold;cursor:pointer}
 .group-menu button:hover{background:var(--theme-light)}
 .group-menu .group-menu-delete{color:#d9534f}
+#groupIconPreview{box-shadow:0 2px 8px rgba(0,0,0,.12)}
 @media(max-width:520px){.group-menu{top:60px;right:12px;width:190px}.group-menu button{font-size:15px;padding:13px 12px}}
 
 /* GROUP_CHAT_SEARCH_CSS */
@@ -266,11 +267,14 @@ body{display:flex;flex-direction:column}
 <div>
 <div class="title">👥 グループチャット</div>
 <div id="groupName" class="group-name">読み込み中...</div>
+ <img id="groupIconPreview" alt="グループアイコン" style="display:none;width:42px;height:42px;object-fit:cover;border-radius:50%;margin:6px auto 0;border:2px solid var(--theme-light)">
 </div>
 <div class="group-actions">
   <button id="groupMenuButton" class="group-menu-button" type="button" aria-label="グループメニュー">⋯</button>
   <div id="groupMenu" class="group-menu" style="display:none">
     <button id="groupMenuMemberButton" type="button">👥 メンバー</button>
+     <button id="groupMenuIconButton" type="button" style="display:none">🖼️ グループアイコンを変更</button>
+     <input id="groupIconInput" type="file" accept="image/*" style="display:none">
     <button id="groupCallMenuButton" type="button">📞 グループ通話</button>
     <button id="groupMenuSearchButton">🔍 チャット検索</button>
 <button id="groupMenuEditButton" type="button" style="display:none">✏️ 名前変更</button>
@@ -490,7 +494,7 @@ async function toggleGroupVoiceRecording(){
     mediaMenu.style.display="block";
   }catch(error){console.error(error);voiceStream?.getTracks().forEach(t=>t.stop());voiceStream=null;alert("マイクを使用できませんでした\n\n"+(error?.message||error))}
 }
-const params=new URLSearchParams(window.location.search),groupId=params.get("id"),groupName=document.getElementById("groupName"),messages=document.getElementById("messages"),latestButton=document.getElementById("latestButton"),messageInput=document.getElementById("messageInput"),sendButton=document.getElementById("sendButton"),imageButton=document.getElementById("imageButton"),imageInput=document.getElementById("imageInput"),memberButton=document.getElementById("groupMenuMemberButton"),memberModal=document.getElementById("memberModal"),memberList=document.getElementById("memberList"),memberInput=document.getElementById("memberInput"),addMemberButton=document.getElementById("addMemberButton"),closeModalButton=document.getElementById("closeModalButton"),replyArea=document.getElementById("replyArea"),replyText=document.getElementById("replyText"),cancelReplyButton=document.getElementById("cancelReplyButton"),mentionList=document.getElementById("mentionList"),adminNote=document.getElementById("adminNote"),muteBanner=document.getElementById("muteBanner"),groupMenuButton=document.getElementById("groupMenuButton"),groupMenu=document.getElementById("groupMenu"),groupCallMenuButton=document.getElementById("groupCallMenuButton"),groupMenuEditButton=document.getElementById("groupMenuEditButton"),groupMenuDeleteButton=document.getElementById("groupMenuDeleteButton"),groupMenuLeaveButton=document.getElementById("groupMenuLeaveButton");
+const params=new URLSearchParams(window.location.search),groupId=params.get("id"),groupName=document.getElementById("groupName"),messages=document.getElementById("messages"),latestButton=document.getElementById("latestButton"),messageInput=document.getElementById("messageInput"),sendButton=document.getElementById("sendButton"),imageButton=document.getElementById("imageButton"),imageInput=document.getElementById("imageInput"),memberButton=document.getElementById("groupMenuMemberButton"),memberModal=document.getElementById("memberModal"),memberList=document.getElementById("memberList"),memberInput=document.getElementById("memberInput"),addMemberButton=document.getElementById("addMemberButton"),closeModalButton=document.getElementById("closeModalButton"),replyArea=document.getElementById("replyArea"),replyText=document.getElementById("replyText"),cancelReplyButton=document.getElementById("cancelReplyButton"),mentionList=document.getElementById("mentionList"),adminNote=document.getElementById("adminNote"),muteBanner=document.getElementById("muteBanner"),groupMenuButton=document.getElementById("groupMenuButton"),groupMenu=document.getElementById("groupMenu"),groupCallMenuButton=document.getElementById("groupCallMenuButton"),groupMenuEditButton=document.getElementById("groupMenuEditButton"),groupMenuDeleteButton=document.getElementById("groupMenuDeleteButton"),groupMenuLeaveButton=document.getElementById("groupMenuLeaveButton"),groupMenuIconButton=document.getElementById("groupMenuIconButton"),groupIconInput=document.getElementById("groupIconInput"),groupIconPreview=document.getElementById("groupIconPreview");
 const editGroupButton=groupMenuEditButton;
 const deleteGroupButton=groupMenuDeleteButton;
 
@@ -507,6 +511,7 @@ function updateGroupAdminState(){
   if(adminNote)adminNote.style.display=isGroupAdmin?"block":"none";
   if(groupMenuEditButton)groupMenuEditButton.style.display=isGroupAdmin?"block":"none";
   if(groupMenuDeleteButton)groupMenuDeleteButton.style.display=isGroupAdmin?"block":"none";
+  if(groupMenuIconButton)groupMenuIconButton.style.display=isGroupAdmin?"block":"none";
   if(groupMenuLeaveButton)groupMenuLeaveButton.style.display=(currentUsername&&currentUsername!==groupOwnerId)?"block":"none";
 }
 function getFrameClass(itemKey,username){if(itemKey==="admin"&&ADMIN_USERNAMES.has(username))return "admin-frame";return {sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",space:"frame-space",neon:"frame-neon",rainbow:"frame-rainbow",flame:"frame-flame",sea:"frame-sea",heart:"frame-heart"}[itemKey]||((itemKey&&/^[A-Za-z0-9_-]+$/.test(itemKey))?"frame-"+itemKey:"")}
@@ -519,7 +524,34 @@ async function getProfile(username){if(!username)return null;if(Object.prototype
 async function getItems(itemKeys){const unique=[...new Set((itemKeys||[]).filter(Boolean))];if(!unique.length)return;const missing=unique.filter(key=>!Object.prototype.hasOwnProperty.call(itemCache,key));if(!missing.length)return;const {data,error}=await supabaseClient.from("coin_items").select("item_key,icon,frame_color,item_type").in("item_key",missing);if(error){console.error("装備アイテム一括取得エラー:",error);return}(data||[]).forEach(item=>{itemCache[item.item_key]=item});missing.forEach(key=>{if(!Object.prototype.hasOwnProperty.call(itemCache,key))itemCache[key]=null})}
 async function getEquippedItem(itemKey){if(!itemKey)return null;if(Object.prototype.hasOwnProperty.call(itemCache,itemKey))return itemCache[itemKey];await getItems([itemKey]);return itemCache[itemKey]||null}
 function createAvatarSync(profile){const username=profile?.user_id||"",item=profile?.equipped_item_key?itemCache[profile.equipped_item_key]:null,frame=document.createElement("div");frame.className="message-avatar-frame";const frameClass=getFrameClass(profile?.equipped_item_key,username);if(frameClass)frame.classList.add(frameClass);else frame.style.background=item?.frame_color||"#eee8ff";const avatar=document.createElement("div");avatar.className="message-avatar";if(profile?.avatar_url){const img=document.createElement("img");img.src=profile.avatar_url;img.alt="プロフィール画像";avatar.appendChild(img)}else avatar.textContent="👤";frame.appendChild(avatar);if(item?.icon){const badge=document.createElement("div");badge.className="message-avatar-badge show";badge.textContent=item.icon;badge.style.border="2px solid "+(item.frame_color||"#eee8ff");frame.appendChild(badge)}return frame}
-async function loadGroup(){if(!groupId){groupName.textContent="グループIDがありません";return}const {data,error}=await supabaseClient.from("groups").select("id,name,owner_id").eq("id",groupId).maybeSingle();if(error){console.error("グループ取得エラー:",error);groupName.textContent="グループを読み込めませんでした";return}if(!data){groupName.textContent="グループが見つかりません";return}groupName.textContent=data.name||"グループ";groupOwnerId=data.owner_id||"";updateGroupAdminState()}
+async function loadGroup(){if(!groupId){groupName.textContent="グループIDがありません";return}const {data,error}=await supabaseClient.from("groups").select("id,name,owner_id,icon_url").eq("id",groupId).maybeSingle();if(error){console.error("グループ取得エラー:",error);groupName.textContent="グループを読み込めませんでした";return}if(!data){groupName.textContent="グループが見つかりません";return}groupName.textContent=data.name||"グループ";groupOwnerId=data.owner_id||"";renderGroupIcon(data.icon_url||"");updateGroupAdminState()}
+function renderGroupIcon(url){
+  if(!groupIconPreview)return;
+  if(url){groupIconPreview.src=url;groupIconPreview.style.display="block";groupIconPreview.onerror=()=>{groupIconPreview.style.display="none"};}
+  else{groupIconPreview.removeAttribute("src");groupIconPreview.style.display="none";}
+}
+async function changeGroupIcon(file){
+  if(!file)return;
+  const canManage=currentUsername===groupOwnerId||currentGroupRole==="admin"||ADMIN_USERNAMES.has(currentUsername);
+  if(!canManage){alert("グループアイコンを変更できるのはオーナー・副管理者だけです");return;}
+  if(!file.type.startsWith("image/")){alert("画像ファイルを選択してください");return;}
+  if(file.size>5*1024*1024){alert("画像は5MB以下にしてください");return;}
+  groupMenuIconButton.disabled=true;groupMenuIconButton.textContent="⏳ アップロード中…";
+  try{
+    const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";
+    const path=String(groupId)+"/icon-"+Date.now()+"."+ext;
+    const {error:uploadError}=await supabaseClient.storage.from("group-icons").upload(path,file,{upsert:true,contentType:file.type});
+    if(uploadError)throw uploadError;
+    const {data:publicData}=supabaseClient.storage.from("group-icons").getPublicUrl(path);
+    const iconUrl=publicData?.publicUrl;
+    if(!iconUrl)throw new Error("画像URLを取得できませんでした");
+    const {error:updateError}=await supabaseClient.rpc("set_group_icon_url",{target_group_id:Number(groupId),new_icon_url:iconUrl});
+    if(updateError)throw updateError;
+    renderGroupIcon(iconUrl);
+    alert("✅ グループアイコンを変更しました");
+  }catch(error){console.error("グループアイコン変更エラー:",error);alert("グループアイコンを変更できませんでした\n\n"+(error?.message||error));}
+  finally{groupMenuIconButton.disabled=false;groupMenuIconButton.textContent="🖼️ グループアイコンを変更";groupIconInput.value="";}
+}
 async function renameGroup(){
   const isGlobalAdmin=ADMIN_USERNAMES.has(currentUsername);
   const canManage=currentUsername===groupOwnerId||isGlobalAdmin;
@@ -889,6 +921,8 @@ async function addMember(){const username=memberInput.value.trim();if(!username)
 groupMenuButton.addEventListener("click",(event)=>{event.stopPropagation();groupMenu.style.display=groupMenu.style.display==="none"?"block":"none"});
 document.addEventListener("click",(event)=>{if(!groupMenu.contains(event.target)&&event.target!==groupMenuButton)groupMenu.style.display="none"});
 groupMenuMemberButton.addEventListener("click",async()=>{groupMenu.style.display="none";memberModal.style.display="flex";await loadMembers()});
+groupMenuIconButton.addEventListener("click",()=>{groupMenu.style.display="none";if(isGroupAdmin)groupIconInput.click();else alert("グループアイコンを変更できるのはオーナー・副管理者だけです")});
+groupIconInput.addEventListener("change",async()=>{const file=groupIconInput.files?.[0];await changeGroupIcon(file)});
 groupCallMenuButton.addEventListener("click",()=>{if(groupId)location.href="group_call.html?id="+encodeURIComponent(groupId)});
 groupMenuEditButton.addEventListener("click",()=>{groupMenu.style.display="none";renameGroup()});
 groupMenuDeleteButton.addEventListener("click",()=>{groupMenu.style.display="none";deleteGroup()});

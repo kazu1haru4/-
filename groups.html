@@ -301,7 +301,7 @@ async function loadGroups(){
       await supabaseClient
         .from("groups")
         .select(
-          "id,name,owner_id"
+          "id,name,owner_id,icon_url"
         )
         .eq(
           "id",
@@ -366,9 +366,10 @@ async function loadGroups(){
       "グループチャット";
 
 
-    div.appendChild(name);
-
-    div.appendChild(info);
+    textWrap.appendChild(info);
+    row.appendChild(icon);
+    row.appendChild(textWrap);
+    div.appendChild(row);
 
     groupList.appendChild(div);
   }
