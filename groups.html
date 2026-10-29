@@ -21,7 +21,52 @@
     .group-info{margin-top:5px;font-size:13px;color:#999}
     .empty{text-align:center;color:#999;margin-top:50px}
     .home-button{position:fixed;left:12px;bottom:12px;padding:10px 14px;background:white;color:#555;text-decoration:none;border-radius:12px;font-size:14px;font-weight:bold;box-shadow:0 3px 10px rgba(0,0,0,.08);z-index:10}
-  </style>
+  
+/* Friend Chat 共通下部ナビゲーション */
+#fc-bottom-nav {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 99999;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 2px;
+  padding: 7px 5px calc(7px + env(safe-area-inset-bottom));
+  background: rgba(255,255,255,.96);
+  border-top: 1px solid rgba(133, 111, 198, .22);
+  box-shadow: 0 -5px 20px rgba(55, 35, 105, .09);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  font-family: inherit;
+}
+#fc-bottom-nav a {
+  min-width: 0;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: 12px;
+  color: #77718a;
+  text-decoration: none;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.15;
+  -webkit-tap-highlight-color: transparent;
+}
+#fc-bottom-nav a .fc-nav-icon { font-size: 20px; line-height: 1; }
+#fc-bottom-nav a.fc-active {
+  color: #6b4fc7;
+  background: linear-gradient(135deg, #f0eaff, #e8e1ff);
+}
+#fc-bottom-nav a:focus-visible { outline: 2px solid #8b73df; outline-offset: 1px; }
+body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
+@media (min-width: 700px) {
+  #fc-bottom-nav { left: 50%; right: auto; width: min(100%, 620px); transform: translateX(-50%); border-left: 1px solid rgba(133,111,198,.15); border-right: 1px solid rgba(133,111,198,.15); border-radius: 16px 16px 0 0; }
+  #fc-bottom-nav a { font-size: 11px; }
+}
+
+</style>
 </head>
 <body>
 
@@ -375,5 +420,13 @@ addButton.addEventListener(
 start();
 </script>
 
+<nav id="fc-bottom-nav" aria-label="メインナビゲーション">
+<a href="https://kazu1haru4.github.io/-/home.html" data-fc-page="home"><span class="fc-nav-icon" aria-hidden="true">⌂</span><span>ホーム</span></a>
+<a href="chats.html" data-fc-page="chats"><span class="fc-nav-icon" aria-hidden="true">💬</span><span>チャット</span></a>
+<a href="groups.html" data-fc-page="groups" class="fc-active" aria-current="page"><span class="fc-nav-icon" aria-hidden="true">👥</span><span>グループ</span></a>
+<a href="friends.html" data-fc-page="friends"><span class="fc-nav-icon" aria-hidden="true">♡</span><span>フレンド</span></a>
+<a href="notifications.html" data-fc-page="notifications"><span class="fc-nav-icon" aria-hidden="true">🔔</span><span>通知</span></a>
+<a href="other.html" data-fc-page="other"><span class="fc-nav-icon" aria-hidden="true">☷</span><span>その他</span></a>
+</nav>
 </body>
 </html>

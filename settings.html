@@ -46,6 +46,51 @@
     .account-modal.show{display:flex}.account-modal-box{width:100%;max-width:420px;background:white;border-radius:22px;padding:20px;box-shadow:0 12px 40px rgba(0,0,0,.2)}
     .account-modal-title{font-size:18px;font-weight:bold;margin-bottom:12px}.account-list{display:grid;gap:9px}.account-item{width:100%;border:1px solid #eee;border-radius:15px;background:#fafafa;padding:13px;text-align:left;cursor:pointer;font-size:14px}.account-item.current{border:2px solid var(--theme);background:var(--theme-light);color:var(--theme-text);font-weight:bold}.account-item:active{transform:scale(.98)}
     .account-item small{display:block;color:#999;font-size:11px;margin-top:4px}.account-modal-actions{display:grid;gap:8px;margin-top:12px}.account-add{width:100%;border:none;border-radius:14px;padding:12px;background:var(--theme-light);color:var(--theme-text);font-weight:bold;cursor:pointer}.account-close{width:100%;border:none;border-radius:14px;padding:12px;background:#eee;color:#555;font-weight:bold;cursor:pointer}.account-note{font-size:12px;color:#888;line-height:1.6;margin:8px 0 0}
+
+/* Friend Chat 共通下部ナビゲーション */
+#fc-bottom-nav {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 99999;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 2px;
+  padding: 7px 5px calc(7px + env(safe-area-inset-bottom));
+  background: rgba(255,255,255,.96);
+  border-top: 1px solid rgba(133, 111, 198, .22);
+  box-shadow: 0 -5px 20px rgba(55, 35, 105, .09);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  font-family: inherit;
+}
+#fc-bottom-nav a {
+  min-width: 0;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: 12px;
+  color: #77718a;
+  text-decoration: none;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.15;
+  -webkit-tap-highlight-color: transparent;
+}
+#fc-bottom-nav a .fc-nav-icon { font-size: 20px; line-height: 1; }
+#fc-bottom-nav a.fc-active {
+  color: #6b4fc7;
+  background: linear-gradient(135deg, #f0eaff, #e8e1ff);
+}
+#fc-bottom-nav a:focus-visible { outline: 2px solid #8b73df; outline-offset: 1px; }
+body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
+@media (min-width: 700px) {
+  #fc-bottom-nav { left: 50%; right: auto; width: min(100%, 620px); transform: translateX(-50%); border-left: 1px solid rgba(133,111,198,.15); border-right: 1px solid rgba(133,111,198,.15); border-radius: 16px 16px 0 0; }
+  #fc-bottom-nav a { font-size: 11px; }
+}
+
 </style>
 </head>
 <body>
@@ -423,5 +468,13 @@ async function init(){
 }
 init();
 </script>
+<nav id="fc-bottom-nav" aria-label="メインナビゲーション">
+<a href="https://kazu1haru4.github.io/-/home.html" data-fc-page="home"><span class="fc-nav-icon" aria-hidden="true">⌂</span><span>ホーム</span></a>
+<a href="chats.html" data-fc-page="chats"><span class="fc-nav-icon" aria-hidden="true">💬</span><span>チャット</span></a>
+<a href="groups.html" data-fc-page="groups"><span class="fc-nav-icon" aria-hidden="true">👥</span><span>グループ</span></a>
+<a href="friends.html" data-fc-page="friends"><span class="fc-nav-icon" aria-hidden="true">♡</span><span>フレンド</span></a>
+<a href="notifications.html" data-fc-page="notifications"><span class="fc-nav-icon" aria-hidden="true">🔔</span><span>通知</span></a>
+<a href="other.html" data-fc-page="other"><span class="fc-nav-icon" aria-hidden="true">☷</span><span>その他</span></a>
+</nav>
 </body>
 </html>
