@@ -265,9 +265,8 @@ body{display:flex;flex-direction:column}
 <a href="home.html" class="home-button">🏠 ホーム</a>
 <button id="leaveGroupButton" class="group-action-button leave-group-button" type="button" style="display:none">🚪 グループを抜ける</button>
 <div>
-<div class="title">👥 グループチャット</div>
+<div class="title" style="display:flex;align-items:center;justify-content:center;gap:8px"><img id="groupIconPreview" alt="グループアイコン" style="display:none;width:30px;height:30px;flex:0 0 30px;object-fit:cover;border-radius:50%;border:2px solid var(--theme-light)"><span>グループチャット</span></div>
 <div id="groupName" class="group-name">読み込み中...</div>
- <img id="groupIconPreview" alt="グループアイコン" style="display:none;width:42px;height:42px;object-fit:cover;border-radius:50%;margin:6px auto 0;border:2px solid var(--theme-light)">
 </div>
 <div class="group-actions">
   <button id="groupMenuButton" class="group-menu-button" type="button" aria-label="グループメニュー">⋯</button>
@@ -527,7 +526,7 @@ function createAvatarSync(profile){const username=profile?.user_id||"",item=prof
 async function loadGroup(){if(!groupId){groupName.textContent="グループIDがありません";return}const {data,error}=await supabaseClient.from("groups").select("id,name,owner_id,icon_url").eq("id",groupId).maybeSingle();if(error){console.error("グループ取得エラー:",error);groupName.textContent="グループを読み込めませんでした";return}if(!data){groupName.textContent="グループが見つかりません";return}groupName.textContent=data.name||"グループ";groupOwnerId=data.owner_id||"";renderGroupIcon(data.icon_url||"");updateGroupAdminState()}
 function renderGroupIcon(url){
   if(!groupIconPreview)return;
-  if(url){groupIconPreview.src=url;groupIconPreview.style.display="block";groupIconPreview.onerror=()=>{groupIconPreview.style.display="none"};}
+  if(url){groupIconPreview.src=url;groupIconPreview.style.display="inline-block";groupIconPreview.onerror=()=>{groupIconPreview.style.display="none"};}
   else{groupIconPreview.removeAttribute("src");groupIconPreview.style.display="none";}
 }
 async function changeGroupIcon(file){
