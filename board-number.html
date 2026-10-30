@@ -503,11 +503,7 @@ async function initialize(){
   }
 
   /* 管理者だけ管理ボタンを表示 */
-  if(
-   ADMIN_USERNAMES.has(
-    currentUsername
-   )
-  ){
+  if(await isFriendChatAdmin()){
 
    const manageButton=
     document.getElementById(
