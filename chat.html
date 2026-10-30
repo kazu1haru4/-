@@ -215,6 +215,62 @@ let incomingCallChannel=null;
 let incomingCallId="";
 
 const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
+
+/* ===== Friend Chat BOT / 禁止ワード ===== */
+let fcBotConfig={enabled:true,blocked_words:[],commands:[],welcome_message:""};
+let fcBotScopeType="",fcBotTargetId="";
+function fcBotFilterText(input){
+  let text=String(input??"");
+  if(!fcBotConfig.enabled)return text;
+  for(const raw of (fcBotConfig.blocked_words||[])){
+    const word=String(raw||"").trim();if(!word)continue;
+    const escaped=word.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+    try{text=text.replace(new RegExp(escaped,"giu"),"＊＊＊")}catch(e){}
+  }
+  return text;
+}
+function fcBotHandleCommand(input){
+  const value=String(input||"").trim();if(!value.startsWith("/"))return false;
+  if(value.toLowerCase()==="/help"){
+    const list=(fcBotConfig.commands||[]).map(c=>c.command+" : "+c.response).join("\n");
+    alert("🤖 Friend Chat BOT\n/help : コマンド一覧"+(list?"\n"+list:"\n登録コマンドはありません"));return true;
+  }
+  const found=(fcBotConfig.commands||[]).find(c=>String(c.command||"").toLowerCase()===value.split(/\s/)[0].toLowerCase());
+  if(found){alert("🤖 Friend Chat BOT\n"+String(found.response||""));return true}
+  return false;
+}
+async function fcBotLoad(){
+  const client=typeof db!=="undefined"?db:supabaseClient;
+  const {data,error}=await client.from("chat_bot_settings").select("enabled,blocked_words,commands,welcome_message").eq("scope_type",fcBotScopeType).eq("target_id",String(fcBotTargetId)).maybeSingle();
+  if(error){console.warn("BOT設定読み込み:",error);return}
+  if(data)fcBotConfig={enabled:data.enabled!==false,blocked_words:Array.isArray(data.blocked_words)?data.blocked_words:[],commands:Array.isArray(data.commands)?data.commands:[],welcome_message:data.welcome_message||""};
+  if(fcBotConfig.welcome_message){
+    const key="fcBotWelcome:"+fcBotScopeType+":"+fcBotTargetId;
+    try{if(!sessionStorage.getItem(key)){sessionStorage.setItem(key,"1");setTimeout(()=>alert("🤖 Friend Chat BOT\n"+fcBotConfig.welcome_message),500)}}catch(e){}
+  }
+}
+function fcBotOpenSettings(){
+  const words=prompt("禁止ワードを1行に1つずつ入力してください（登録済みを含めて編集）",fcBotConfig.blocked_words.join("\n"));if(words===null)return;
+  const current=(fcBotConfig.commands||[]).map(c=>c.command+"|"+c.response).join("\n");
+  const commands=prompt("カスタムコマンドを1行ずつ入力してください。\n形式：/hello|こんにちは！",current);if(commands===null)return;
+  const welcome=prompt("BOTのウェルカムメッセージ（空欄で無効）",fcBotConfig.welcome_message||"");if(welcome===null)return;
+  const parsed=[];
+  for(const line of commands.split(/\r?\n/)){const ix=line.indexOf("|");if(ix<1)continue;const command=line.slice(0,ix).trim(),response=line.slice(ix+1).trim();if(/^\/[a-z0-9_-]{1,24}$/i.test(command)&&response)parsed.push({command,response:response.slice(0,300)})}
+  fcBotConfig={enabled:true,blocked_words:words.split(/\r?\n/).map(x=>x.trim()).filter(Boolean).slice(0,100),commands:parsed.slice(0,50),welcome_message:welcome.slice(0,500)};
+  void fcBotSave();
+}
+async function fcBotSave(){
+  const client=typeof db!=="undefined"?db:supabaseClient;
+  const {error}=await client.rpc("fc_save_chat_bot_settings",{p_scope_type:fcBotScopeType,p_target_id:String(fcBotTargetId),p_enabled:fcBotConfig.enabled,p_blocked_words:fcBotConfig.blocked_words,p_commands:fcBotConfig.commands,p_welcome_message:fcBotConfig.welcome_message});
+  if(error){console.error("BOT設定保存:",error);alert("BOT設定を保存できませんでした。\n"+(error.message||error));return}
+  alert("🤖 BOT設定を保存しました！");
+}
+function fcBotAddMenuButton(menuId,canManage){
+  const menu=document.getElementById(menuId);if(!menu||document.getElementById("fcBotMenuButton"))return;
+  const button=document.createElement("button");button.id="fcBotMenuButton";button.type="button";button.textContent="🤖 BOT設定";button.style.display=canManage?"block":"none";
+  button.addEventListener("click",()=>{menu.style.display="none";fcBotOpenSettings()});menu.appendChild(button);
+}
+
 const frameMap={sakura:"frame-sakura",star:"frame-star",diamond:"frame-diamond",heart:"frame-heart",rainbow:"frame-rainbow",flame:"frame-flame",sea:"frame-sea",space:"frame-space",neon:"frame-neon",admin:"admin-frame"};
 const chatFrameMap={chat_sakura:"chat-frame-sakura",chat_star:"chat-frame-star",chat_diamond:"chat-frame-diamond",chat_heart:"chat-frame-heart",chat_rainbow:"chat-frame-rainbow",chat_flame:"chat-frame-flame",chat_sea:"chat-frame-sea",chat_space:"chat-frame-space",chat_neon:"chat-frame-neon",chat_aurora:"chat-frame-aurora",chat_magma:"chat-frame-magma",chat_ice:"chat-frame-ice",chat_nature:"chat-frame-nature",chat_thunder:"chat-frame-thunder",chat_darkmoon:"chat-frame-darkmoon",chat_oct_halloween:"chat-frame-oct_halloween",admin_chat:"chat-frame-admin",sakura:"chat-frame-sakura",star:"chat-frame-star",diamond:"chat-frame-diamond",heart:"chat-frame-heart",rainbow:"chat-frame-rainbow",flame:"chat-frame-flame",sea:"chat-frame-sea",space:"chat-frame-space",neon:"chat-frame-neon",aurora:"chat-frame-aurora",magma:"chat-frame-magma",ice:"chat-frame-ice",nature:"chat-frame-nature",thunder:"chat-frame-thunder",darkmoon:"chat-frame-darkmoon"};
 function chatFrameClass(key){return chatFrameMap[String(key||"")]||""}
@@ -969,7 +1025,7 @@ messageForm.onsubmit=async e=>{
  e.preventDefault();
  clearTimeout(typingTimer);
  sendTypingState(false);
- const text=messageInput.value.trim();if(!text||!currentUsername||!friendId)return;
+ let text=messageInput.value.trim();if(!text||!currentUsername||!friendId)return;if(fcBotHandleCommand(text)){messageInput.value="";return}text=fcBotFilterText(text);
  if(replyTarget){sendButton.disabled=true;const ok=await sendReply(text);sendButton.disabled=false;if(ok)messageInput.value="";return}
  sendButton.disabled=true;
  const {data,error}=await db.from("messages").insert({sender_id:currentUsername,receiver_id:friendId,content:text,image_url:"",is_deleted:false,is_edited:false}).select().single();
@@ -1007,6 +1063,7 @@ async function start(){
  const {data,error}=await db.auth.getSession();if(error||!data.session){alert("ログインしてください。");location.href="index.html";return}
  currentUsername=data.session.user.user_metadata?.username||"";if(!currentUsername){alert("ログイン中のユーザーIDを取得できませんでした。");return}
  fcSetupNotificationSettings();
+  fcBotScopeType="direct";fcBotTargetId="global";fcBotAddMenuButton("fcHeaderMenu",ADMIN_USERNAMES.has(currentUsername));await fcBotLoad();
  const [{data:fp,error:fe},{data:mp,error:me}]=await Promise.all([
   db.from("profiles").select("user_id,name,avatar_url,equipped_item_key,equipped_name_decoration_key,equipped_chat_frame_key").eq("user_id",friendId).maybeSingle(),
   db.from("profiles").select("user_id,name,avatar_url,equipped_item_key,equipped_name_decoration_key,equipped_chat_frame_key").eq("user_id",currentUsername).maybeSingle()

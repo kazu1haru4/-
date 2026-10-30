@@ -524,6 +524,62 @@ const deleteGroupButton=groupMenuDeleteButton;
 let currentUsername="",replyingToMessage=null,editingMessage=null,groupMembersCache=[],presenceTimer=null,groupOwnerId="",currentGroupRole="member",isGroupAdmin=false,groupMutesCache=[],currentMute=null,muteTimer=null;const profileCache={},itemCache={},groupReadCounts={};let loadingMessages=false,realtimeQueue=Promise.resolve(),readUpdateTimer=null;
 const pendingLocalMessageIds=new Set();
 const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
+
+/* ===== Friend Chat BOT / 禁止ワード ===== */
+let fcBotConfig={enabled:true,blocked_words:[],commands:[],welcome_message:""};
+let fcBotScopeType="",fcBotTargetId="";
+function fcBotFilterText(input){
+  let text=String(input??"");
+  if(!fcBotConfig.enabled)return text;
+  for(const raw of (fcBotConfig.blocked_words||[])){
+    const word=String(raw||"").trim();if(!word)continue;
+    const escaped=word.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+    try{text=text.replace(new RegExp(escaped,"giu"),"＊＊＊")}catch(e){}
+  }
+  return text;
+}
+function fcBotHandleCommand(input){
+  const value=String(input||"").trim();if(!value.startsWith("/"))return false;
+  if(value.toLowerCase()==="/help"){
+    const list=(fcBotConfig.commands||[]).map(c=>c.command+" : "+c.response).join("\n");
+    alert("🤖 Friend Chat BOT\n/help : コマンド一覧"+(list?"\n"+list:"\n登録コマンドはありません"));return true;
+  }
+  const found=(fcBotConfig.commands||[]).find(c=>String(c.command||"").toLowerCase()===value.split(/\s/)[0].toLowerCase());
+  if(found){alert("🤖 Friend Chat BOT\n"+String(found.response||""));return true}
+  return false;
+}
+async function fcBotLoad(){
+  const client=typeof db!=="undefined"?db:supabaseClient;
+  const {data,error}=await client.from("chat_bot_settings").select("enabled,blocked_words,commands,welcome_message").eq("scope_type",fcBotScopeType).eq("target_id",String(fcBotTargetId)).maybeSingle();
+  if(error){console.warn("BOT設定読み込み:",error);return}
+  if(data)fcBotConfig={enabled:data.enabled!==false,blocked_words:Array.isArray(data.blocked_words)?data.blocked_words:[],commands:Array.isArray(data.commands)?data.commands:[],welcome_message:data.welcome_message||""};
+  if(fcBotConfig.welcome_message){
+    const key="fcBotWelcome:"+fcBotScopeType+":"+fcBotTargetId;
+    try{if(!sessionStorage.getItem(key)){sessionStorage.setItem(key,"1");setTimeout(()=>alert("🤖 Friend Chat BOT\n"+fcBotConfig.welcome_message),500)}}catch(e){}
+  }
+}
+function fcBotOpenSettings(){
+  const words=prompt("禁止ワードを1行に1つずつ入力してください（登録済みを含めて編集）",fcBotConfig.blocked_words.join("\n"));if(words===null)return;
+  const current=(fcBotConfig.commands||[]).map(c=>c.command+"|"+c.response).join("\n");
+  const commands=prompt("カスタムコマンドを1行ずつ入力してください。\n形式：/hello|こんにちは！",current);if(commands===null)return;
+  const welcome=prompt("BOTのウェルカムメッセージ（空欄で無効）",fcBotConfig.welcome_message||"");if(welcome===null)return;
+  const parsed=[];
+  for(const line of commands.split(/\r?\n/)){const ix=line.indexOf("|");if(ix<1)continue;const command=line.slice(0,ix).trim(),response=line.slice(ix+1).trim();if(/^\/[a-z0-9_-]{1,24}$/i.test(command)&&response)parsed.push({command,response:response.slice(0,300)})}
+  fcBotConfig={enabled:true,blocked_words:words.split(/\r?\n/).map(x=>x.trim()).filter(Boolean).slice(0,100),commands:parsed.slice(0,50),welcome_message:welcome.slice(0,500)};
+  void fcBotSave();
+}
+async function fcBotSave(){
+  const client=typeof db!=="undefined"?db:supabaseClient;
+  const {error}=await client.rpc("fc_save_chat_bot_settings",{p_scope_type:fcBotScopeType,p_target_id:String(fcBotTargetId),p_enabled:fcBotConfig.enabled,p_blocked_words:fcBotConfig.blocked_words,p_commands:fcBotConfig.commands,p_welcome_message:fcBotConfig.welcome_message});
+  if(error){console.error("BOT設定保存:",error);alert("BOT設定を保存できませんでした。\n"+(error.message||error));return}
+  alert("🤖 BOT設定を保存しました！");
+}
+function fcBotAddMenuButton(menuId,canManage){
+  const menu=document.getElementById(menuId);if(!menu||document.getElementById("fcBotMenuButton"))return;
+  const button=document.createElement("button");button.id="fcBotMenuButton";button.type="button";button.textContent="🤖 BOT設定";button.style.display=canManage?"block":"none";
+  button.addEventListener("click",()=>{menu.style.display="none";fcBotOpenSettings()});menu.appendChild(button);
+}
+
 const CHAT_FRAME_MAP={chat_sakura:"chat-frame-sakura",chat_star:"chat-frame-star",chat_diamond:"chat-frame-diamond",chat_heart:"chat-frame-heart",chat_rainbow:"chat-frame-rainbow",chat_flame:"chat-frame-flame",chat_sea:"chat-frame-sea",chat_space:"chat-frame-space",chat_neon:"chat-frame-neon",admin_chat:"chat-frame-admin"};
 function getChatFrameClass(itemKey){return CHAT_FRAME_MAP[itemKey]||((itemKey&&/^[A-Za-z0-9_-]+$/.test(itemKey))?"chat-frame-"+itemKey:"")}
 const NAME_DECORATION_MAP={nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",nd_neon:"name-decoration-neon",name_sakura:"name-decoration-sakura",admin_name:"name-decoration-admin"};
@@ -812,8 +868,8 @@ async function sendMessage(){
 const wasBanned=await checkFriendChatBan();
 if(wasBanned)return;
 if(currentMute){alert("現在、発言禁止中です");return}
-const value=messageInput.value.trim();
-if(!value)return;
+let value=messageInput.value.trim();
+if(!value)return;if(fcBotHandleCommand(value)){messageInput.value="";return}value=fcBotFilterText(value);
 sendButton.disabled=true;
 try{
 const replyTarget=replyingToMessage;
@@ -1044,7 +1100,9 @@ function setupRealtime(){
     if(status!=="SUBSCRIBED")console.warn("グループRealtime接続状態:",status);
   });
 }
-async function start(){const wasBanned=await checkFriendChatBan();if(wasBanned)return;if(!groupId){groupName.textContent="グループIDがありません";return}const {data:{session}}=await supabaseClient.auth.getSession();if(!session){location.href="index.html";return}currentUsername=session.user.user_metadata?.username||"";if(!currentUsername){alert("ログイン情報が取得できませんでした");location.href="index.html";return}fcSetupNotificationSettings();await Promise.all([updateMyPresence(),loadGroup()]);await loadGroupMembers();await loadGroupMutes();await loadMessages();setupRealtime();if(new URLSearchParams(window.location.search).get("dailyMission")==="message_search_1")setTimeout(openGroupSearch,100);if(presenceTimer)clearInterval(presenceTimer);presenceTimer=setInterval(updateMyPresence,30000)}
+async function start(){const wasBanned=await checkFriendChatBan();if(wasBanned)return;if(!groupId){groupName.textContent="グループIDがありません";return}const {data:{session}}=await supabaseClient.auth.getSession();if(!session){location.href="index.html";return}currentUsername=session.user.user_metadata?.username||"";if(!currentUsername){alert("ログイン情報が取得できませんでした");location.href="index.html";return}fcSetupNotificationSettings();await Promise.all([updateMyPresence(),loadGroup()]);await loadGroupMembers();
+fcBotScopeType="group";fcBotTargetId=String(groupId);let fcBotCanManageGroup=isGroupAdmin||ADMIN_USERNAMES.has(currentUsername);if(!fcBotCanManageGroup){try{const {data:sa}=await supabaseClient.from("sub_admins").select("slot").eq("user_id",currentUsername);const slots=(sa||[]).map(x=>x.slot);if(slots.length){const {data:ga}=await supabaseClient.from("sub_admin_group_assignments").select("slot").eq("group_id",Number(groupId)).in("slot",slots);fcBotCanManageGroup=!!(ga&&ga.length)}}catch(e){console.warn("BOT権限確認:",e)}}fcBotAddMenuButton("groupMenu",fcBotCanManageGroup);await fcBotLoad();
+await loadGroupMutes();await loadMessages();setupRealtime();if(new URLSearchParams(window.location.search).get("dailyMission")==="message_search_1")setTimeout(openGroupSearch,100);if(presenceTimer)clearInterval(presenceTimer);presenceTimer=setInterval(updateMyPresence,30000)}
 window.addEventListener("pagehide",()=>{try{if(voiceRecorder&&voiceRecorder.state==="recording")voiceRecorder.stop()}catch(e){}voiceStream?.getTracks().forEach(t=>t.stop())});
 start().catch(error=>{console.error("グループチャット起動エラー:",error);if(groupName)groupName.textContent="読み込みに失敗しました";if(messages)messages.innerHTML="<div class=\"error\">読み込みに失敗しました。ページを再読み込みしてください。<br><small>"+String(error?.message||error)+"</small></div>"});
 
