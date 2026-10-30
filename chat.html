@@ -90,6 +90,17 @@ button:disabled{opacity:.5}#imageInput{display:none}
 .fc-header-menu{position:absolute!important;top:60px!important;right:12px!important;width:190px!important;padding:6px!important;background:#fff!important;border:1px solid #ddd!important;border-radius:14px!important;box-shadow:0 8px 25px rgba(0,0,0,.2)!important;z-index:9999!important;display:none}
 .fc-header-menu.show{display:block!important}
 .fc-header-menu button{display:block!important;width:100%!important;padding:13px 12px!important;border:0!important;border-radius:10px!important;background:#fff!important;color:#222!important;text-align:left!important;font-size:15px!important}
+
+/* 通知設定 */
+.fc-notify-overlay{display:none;position:fixed;inset:0;z-index:100000;background:#0007;align-items:center;justify-content:center;padding:18px}
+.fc-notify-overlay.show{display:flex}
+.fc-notify-box{width:100%;max-width:380px;background:#fff;border-radius:18px;padding:20px;box-shadow:0 10px 35px #0003;color:#333}
+.fc-notify-title{font-size:18px;font-weight:800;margin-bottom:8px}
+.fc-notify-desc{font-size:13px;color:#777;line-height:1.6;margin-bottom:16px}
+.fc-notify-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-top:1px solid #eee;font-size:14px;font-weight:700}
+.fc-notify-row input{width:22px;height:22px;accent-color:#8f7cff}
+.fc-notify-close{width:100%;margin-top:12px;padding:11px;border:0;border-radius:11px;background:#eee;color:#333;font-weight:700}
+
 .fc-search-overlay{position:fixed;inset:0;display:none;align-items:flex-start;justify-content:center;padding:70px 12px 20px;background:rgba(0,0,0,.45);z-index:10000}
 .fc-search-overlay.show{display:flex}
 .fc-search-modal{width:min(100%,460px);max-height:80vh;overflow:hidden;background:#fff;border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
@@ -125,6 +136,7 @@ button:disabled{opacity:.5}#imageInput{display:none}
 <div id="fcHeaderMenu" class="fc-header-menu">
 <button id="fcMenuCall" type="button">📞 通話</button>
 <button id="fcMenuSearch" type="button">🔍 チャット検索</button>
+<button id="fcMenuNotify" type="button">🔔 この相手の通知設定</button>
 </div>
 <div class="profile-header">
 <div id="headerAvatarFrame" class="header-avatar-frame"><div id="headerAvatar" class="header-avatar">👤</div><div id="headerAvatarBadge" class="avatar-badge"></div></div>
@@ -184,6 +196,8 @@ button:disabled{opacity:.5}#imageInput{display:none}
   </div>
 </div>
 </main>
+<div id="fcNotifyOverlay" class="fc-notify-overlay" aria-hidden="true"><div class="fc-notify-box" role="dialog" aria-modal="true" aria-labelledby="fcNotifyTitle"><div id="fcNotifyTitle" class="fc-notify-title">🔔 このチャットの通知設定</div><div class="fc-notify-desc" id="fcNotifyDesc">通知をOFFにすると、この相手からの通知が届かなくなります。</div><label class="fc-notify-row"><span>チャット通知</span><input id="fcNotifyToggle" type="checkbox" checked></label><button id="fcNotifyClose" class="fc-notify-close" type="button">閉じる</button></div></div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
@@ -286,6 +300,7 @@ async function claimMessagesMission(){
 }
 async function createNotification(messageText="新しいメッセージがあります。"){
  if(!currentUsername||!friendId)return;
+ if(!(await fcIsNotificationEnabled(friendId,"direct",currentUsername)))return;
  const message=String(messageText||"新しいメッセージがあります。").trim()||"新しいメッセージがあります。";
  const {error}=await db.from("notifications").insert({
   user_id:friendId,
@@ -299,6 +314,7 @@ async function createNotification(messageText="新しいメッセージがあり
 }
 async function sendPushToUser(userId,title,message,url){
  if(!userId||userId===currentUsername)return;
+ if(!(await fcIsNotificationEnabled(userId,"direct",currentUsername)))return;
  try{
   await db.functions.invoke("send-push",{body:{username:userId,title:title,message:message,url:url||"./notifications.html"}});
  }catch(error){console.warn("プッシュ通知送信エラー:",error)}
@@ -446,6 +462,27 @@ function clearReplyTarget(){
  $("replyBarText").textContent="";
  messageInput.placeholder="メッセージを入力...";
 }
+
+// notification_preferences: scopeごと・相手/グループ/掲示板ごとに保存
+async function fcIsNotificationEnabled(targetUserId,scopeType,targetId){
+ try{const {data,error}=await db.rpc("is_notification_enabled",{target_user_id:targetUserId,target_scope_type:scopeType,target_id:String(targetId)});if(error)throw error;return data!==false;}catch(error){console.warn("通知設定の確認に失敗したため通知を許可します:",error);return true;}
+}
+let fcNotifyEnabled=true;
+async function fcLoadOwnNotificationPreference(){
+ try{const {data,error}=await db.from("notification_preferences").select("enabled").eq("user_id",currentUsername).eq("scope_type","direct").eq("target_id",String(friendId)).maybeSingle();if(error)throw error;fcNotifyEnabled=data?.enabled!==false;}catch(error){console.warn("通知設定の読み込みに失敗:",error);fcNotifyEnabled=true;}
+ const toggle=document.getElementById("fcNotifyToggle");if(toggle)toggle.checked=fcNotifyEnabled;
+}
+async function fcSaveOwnNotificationPreference(enabled){
+ fcNotifyEnabled=!!enabled;const toggle=document.getElementById("fcNotifyToggle");if(toggle)toggle.disabled=true;
+ try{const {error}=await db.from("notification_preferences").upsert({user_id:currentUsername,scope_type:"direct",target_id:String(friendId),enabled:fcNotifyEnabled,updated_at:new Date().toISOString()},{onConflict:"user_id,scope_type,target_id"});if(error)throw error;}catch(error){console.error("通知設定の保存に失敗:",error);alert("通知設定を保存できませんでした。\n"+(error.message||error));await fcLoadOwnNotificationPreference();}finally{if(toggle)toggle.disabled=false;}
+}
+function fcSetupNotificationSettings(){
+ const overlay=document.getElementById("fcNotifyOverlay"),toggle=document.getElementById("fcNotifyToggle"),close=document.getElementById("fcNotifyClose");if(!overlay||!toggle||!close)return;
+ const open=async()=>{document.getElementById("fcHeaderMenu")?.classList.remove("show");await fcLoadOwnNotificationPreference();overlay.classList.add("show");overlay.setAttribute("aria-hidden","false")};
+ document.getElementById("fcMenuNotify")?.addEventListener("click",open);toggle.addEventListener("change",()=>fcSaveOwnNotificationPreference(toggle.checked));
+ const shut=()=>{overlay.classList.remove("show");overlay.setAttribute("aria-hidden","true")};close.addEventListener("click",shut);overlay.addEventListener("click",e=>{if(e.target===overlay)shut()});
+}
+
 async function sendReply(content){
  if(!replyTarget||!content||!currentUsername)return false;
  const {error}=await db.from("chat_replies").insert({message_id:replyTarget.id,sender_id:currentUsername,content});
@@ -969,6 +1006,7 @@ async function start(){
  if(!friendId){chatTitle.textContent="💬 相手が選ばれていません";messageForm.style.display="none";callButton.style.display="none";messagesElement.innerHTML='<div class="empty">フレンドから相手を選んでね</div>';return}
  const {data,error}=await db.auth.getSession();if(error||!data.session){alert("ログインしてください。");location.href="index.html";return}
  currentUsername=data.session.user.user_metadata?.username||"";if(!currentUsername){alert("ログイン中のユーザーIDを取得できませんでした。");return}
+ fcSetupNotificationSettings();
  const [{data:fp,error:fe},{data:mp,error:me}]=await Promise.all([
   db.from("profiles").select("user_id,name,avatar_url,equipped_item_key,equipped_name_decoration_key,equipped_chat_frame_key").eq("user_id",friendId).maybeSingle(),
   db.from("profiles").select("user_id,name,avatar_url,equipped_item_key,equipped_name_decoration_key,equipped_chat_frame_key").eq("user_id",currentUsername).maybeSingle()

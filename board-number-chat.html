@@ -86,6 +86,16 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
 .chat-frame-space{border:2px solid #7c5cff!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 14px rgba(124,92,255,.3)!important;background:#fff!important}
 .chat-frame-neon{border:2px solid #39d14a!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 14px rgba(57,255,20,.3)!important;background:#fff!important}
 .chat-frame-admin{border:2px solid #ffd700!important;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 16px rgba(255,215,0,.55)!important;background:#fff!important}
+
+/* 通知設定 */
+.fc-notify-overlay{display:none;position:fixed;inset:0;z-index:100000;background:#0007;align-items:center;justify-content:center;padding:18px}
+.fc-notify-overlay.show{display:flex}
+.fc-notify-box{width:100%;max-width:380px;background:#fff;border-radius:18px;padding:20px;box-shadow:0 10px 35px #0003;color:#333}
+.fc-notify-title{font-size:18px;font-weight:800;margin-bottom:8px}
+.fc-notify-desc{font-size:13px;color:#777;line-height:1.6;margin-bottom:16px}
+.fc-notify-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-top:1px solid #eee;font-size:14px;font-weight:700}
+.fc-notify-row input{width:22px;height:22px;accent-color:#8f7cff}
+.fc-notify-close{width:100%;margin-top:12px;padding:11px;border:0;border-radius:11px;background:#eee;color:#333;font-weight:700}
 </style>
 </head>
 <body>
@@ -99,6 +109,7 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
 <div id="boardHeaderMenu" class="board-header-menu">
   <button id="boardMenuMembers" type="button">👥 メンバー一覧</button>
   <button id="boardMenuSearch" type="button">🔍 チャット検索</button>
+  <button id="boardMenuNotify" type="button">🔔 メンション通知設定</button>
   <button id="boardMenuRename" type="button">✏️ 掲示板名を変更</button>
   <button id="boardMenuDelete" type="button" style="color:#d9534f">🗑️ 掲示板を削除</button>
   <button id="boardMenuLeave" type="button" style="color:#c87522">🚪 掲示板から抜ける</button>
@@ -127,6 +138,9 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:sans-s
 <div id="memberModal" class="modal"><div class="box"><h2>👥 メンバー</h2><div id="memberList"></div><button class="close" onclick="closeMemberModal()">閉じる</button></div></div>
 <div id="boardSearchModal" class="modal"><div class="box"><h2>🔍 チャット検索</h2><input id="boardSearchInput" class="control" type="search" placeholder="メッセージを検索…" autocomplete="off"><div id="boardSearchResults" style="margin-top:8px"></div><button class="close" onclick="closeBoardSearchModal()">閉じる</button></div></div>
 <div id="giftModal" class="modal"><div class="box"><h2>🎁 コインを送る</h2><div id="giftTarget" class="gift-target"></div><div class="presets"><button data-amount="10">10コイン</button><button data-amount="50">50コイン</button><button data-amount="100">100コイン</button></div><input id="giftAmount" class="gift-input" type="number" min="1" placeholder="送るコイン数"><button id="giftSend" class="gift-send">🎁 送る</button><button class="close" onclick="closeGiftModal()">キャンセル</button></div></div>
+
+<div id="fcNotifyOverlay" class="fc-notify-overlay" aria-hidden="true"><div class="fc-notify-box" role="dialog" aria-modal="true" aria-labelledby="fcNotifyTitle"><div id="fcNotifyTitle" class="fc-notify-title">🔔 このチャットの通知設定</div><div class="fc-notify-desc" id="fcNotifyDesc">通知をOFFにすると、この相手からの通知が届かなくなります。</div><label class="fc-notify-row"><span>チャット通知</span><input id="fcNotifyToggle" type="checkbox" checked></label><button id="fcNotifyClose" class="fc-notify-close" type="button">閉じる</button></div></div>
+
 <script>
 const SUPABASE_URL="https://yxonmqdyekwenyzekjwj.supabase.co";
 const SUPABASE_KEY="sb_publishable_IuQ6r_4vbGC9PP7cWJ9YRQ_Ai7tAfTJ";
@@ -432,9 +446,17 @@ async function sendMessage(){
   input.value="";input.placeholder="メッセージを入力...";await sendMentionNotifications(text);await loadMessages()
  }catch(error){console.error("メッセージ送信エラー:",error);alert("❌ メッセージ送信に失敗しました\n\n"+(error?.message||"原因不明のエラー"))}finally{$("sendButton").disabled=isMuted}
 }
+
+async function fcLoadBoardMentionPreference(){try{const {data,error}=await supabaseClient.from("notification_preferences").select("enabled").eq("user_id",username).eq("scope_type","board").eq("target_id",String(boardId)).maybeSingle();if(error)throw error;fcBoardMentionEnabled=data?.enabled!==false}catch(error){console.warn("掲示板通知設定の読み込みエラー:",error);fcBoardMentionEnabled=true}const t=$("fcNotifyToggle");if(t)t.checked=fcBoardMentionEnabled}
+let fcBoardMentionEnabled=true;
+async function fcSaveBoardMentionPreference(enabled){fcBoardMentionEnabled=!!enabled;const t=$("fcNotifyToggle");if(t)t.disabled=true;try{const {error}=await supabaseClient.from("notification_preferences").upsert({user_id:username,scope_type:"board",target_id:String(boardId),enabled:fcBoardMentionEnabled,updated_at:new Date().toISOString()},{onConflict:"user_id,scope_type,target_id"});if(error)throw error}catch(error){console.error("掲示板通知設定の保存エラー:",error);alert("通知設定を保存できませんでした\n"+(error.message||error));await fcLoadBoardMentionPreference()}finally{if(t)t.disabled=false}}
+function fcSetupBoardNotificationSettings(){const overlay=$("fcNotifyOverlay"),toggle=$("fcNotifyToggle"),close=$("fcNotifyClose");if(!overlay||!toggle||!close)return;$("fcNotifyTitle").textContent="🔔 掲示板の通知設定";$("fcNotifyDesc").textContent="OFFにすると、この掲示板で自分宛てにメンションされたときの通知を停止します。通常の投稿表示や通話には影響しません。";$("boardMenuNotify").onclick=async()=>{closeBoardHeaderMenu();await fcLoadBoardMentionPreference();overlay.classList.add("show")};toggle.onchange=()=>fcSaveBoardMentionPreference(toggle.checked);const shut=()=>overlay.classList.remove("show");close.onclick=shut;overlay.onclick=e=>{if(e.target===overlay)shut()}}
+async function fcBoardRecipientAllowsMention(targetUserId){try{const {data,error}=await supabaseClient.rpc("is_notification_enabled",{target_user_id:targetUserId,target_scope_type:"board",target_id:String(boardId)});if(error)throw error;return data!==false}catch(error){console.warn("掲示板メンション設定確認エラー（通知は許可）:",error);return true}}
+
 async function sendMentionNotifications(text){
  const names=[...text.matchAll(/@([A-Za-z0-9_-]+)/g)].map(x=>x[1]).filter((x,i,a)=>x!==username&&a.indexOf(x)===i&&members.some(m=>m.user_id===x));if(!names.length)return;
- await supabaseClient.from("notifications").insert(names.map(user=>({user_id:user,type:"mention",title:"掲示板でメンションされました",message:username+"さんがあなたをメンションしました",link:"board-number-chat.html?board="+encodeURIComponent(boardId),is_read:false})))
+ const allowed=[];for(const user of names){if(await fcBoardRecipientAllowsMention(user))allowed.push(user)}if(!allowed.length)return;
+ await supabaseClient.from("notifications").insert(allowed.map(user=>({user_id:user,type:"mention",title:"掲示板でメンションされました",message:username+"さんがあなたをメンションしました",link:"board-number-chat.html?board="+encodeURIComponent(boardId),is_read:false})))
 }
 async function sendImage(file){
  if(isMuted){alert("現在、発言禁止中です");return}if(!file.type.startsWith("image/")){alert("画像ファイルを選択してください");return}
@@ -522,7 +544,7 @@ async function updatePresence(){await supabaseClient.from("user_presence").upser
 async function start(){
  if(!boardId){alert("掲示板IDがありません");return}
  const {data:{session}}=await supabaseClient.auth.getSession();if(!session){location.href="index.html";return}
- username=session.user.user_metadata?.username||"";if(!username){location.href="index.html";return}
+ username=session.user.user_metadata?.username||"";if(!username){location.href="index.html";return}fcSetupBoardNotificationSettings();
  if(typeof checkFriendChatBan==="function"){if(await checkFriendChatBan())return}
  if(!(await loadRoom()))return;await loadMembers();
  const isGlobalAdmin=ADMIN_USERNAMES.has(username);

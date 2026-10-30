@@ -261,6 +261,16 @@ body{display:flex;flex-direction:column}
 .group-search-result-text{font-size:14px;white-space:pre-wrap;word-break:break-word;}
 .group-search-result-time{font-size:11px;color:#777;margin-top:5px;}
 
+
+/* 通知設定 */
+.fc-notify-overlay{display:none;position:fixed;inset:0;z-index:100000;background:#0007;align-items:center;justify-content:center;padding:18px}
+.fc-notify-overlay.show{display:flex}
+.fc-notify-box{width:100%;max-width:380px;background:#fff;border-radius:18px;padding:20px;box-shadow:0 10px 35px #0003;color:#333}
+.fc-notify-title{font-size:18px;font-weight:800;margin-bottom:8px}
+.fc-notify-desc{font-size:13px;color:#777;line-height:1.6;margin-bottom:16px}
+.fc-notify-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-top:1px solid #eee;font-size:14px;font-weight:700}
+.fc-notify-row input{width:22px;height:22px;accent-color:#8f7cff}
+.fc-notify-close{width:100%;margin-top:12px;padding:11px;border:0;border-radius:11px;background:#eee;color:#333;font-weight:700}
 </style>
 </head>
 <body>
@@ -279,6 +289,7 @@ body{display:flex;flex-direction:column}
      <input id="groupIconInput" type="file" accept="image/*" style="display:none">
     <button id="groupCallMenuButton" type="button">📞 グループ通話</button>
     <button id="groupMenuSearchButton">🔍 チャット検索</button>
+<button id="groupMenuNotifyButton" type="button">🔔 通知設定</button>
 <button id="groupMenuEditButton" type="button" style="display:none">✏️ 名前変更</button>
     <button id="groupMenuDeleteButton" type="button" style="display:none">🗑️ グループ削除</button>
     <button id="groupMenuLeaveButton" type="button" style="display:none">🚪 グループを抜ける</button>
@@ -312,6 +323,13 @@ const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
    ========================================================= */
 const PUSH_FUNCTION_NAME="send-push";
 
+
+async function fcIsNotificationEnabled(targetUserId,scopeType,targetId){try{const {data,error}=await supabaseClient.rpc("is_notification_enabled",{target_user_id:targetUserId,target_scope_type:scopeType,target_id:String(targetId)});if(error)throw error;return data!==false}catch(error){console.warn("通知設定確認エラー（通知は許可）:",error);return true}}
+let fcNotifyEnabled=true;
+async function fcLoadOwnNotificationPreference(){try{const {data,error}=await supabaseClient.from("notification_preferences").select("enabled").eq("user_id",currentUsername).eq("scope_type","group").eq("target_id",String(groupId)).maybeSingle();if(error)throw error;fcNotifyEnabled=data?.enabled!==false}catch(error){console.warn("通知設定読み込みエラー:",error);fcNotifyEnabled=true}const t=document.getElementById("fcNotifyToggle");if(t)t.checked=fcNotifyEnabled}
+async function fcSaveOwnNotificationPreference(enabled){fcNotifyEnabled=!!enabled;const t=document.getElementById("fcNotifyToggle");if(t)t.disabled=true;try{const {error}=await supabaseClient.from("notification_preferences").upsert({user_id:currentUsername,scope_type:"group",target_id:String(groupId),enabled:fcNotifyEnabled,updated_at:new Date().toISOString()},{onConflict:"user_id,scope_type,target_id"});if(error)throw error}catch(error){console.error("通知設定保存エラー:",error);alert("通知設定を保存できませんでした\n"+(error.message||error));await fcLoadOwnNotificationPreference()}finally{if(t)t.disabled=false}}
+function fcSetupNotificationSettings(){const overlay=document.getElementById("fcNotifyOverlay"),toggle=document.getElementById("fcNotifyToggle"),close=document.getElementById("fcNotifyClose");if(!overlay||!toggle||!close)return;document.getElementById("groupMenuNotifyButton")?.addEventListener("click",async()=>{groupMenu.style.display="none";await fcLoadOwnNotificationPreference();overlay.classList.add("show")});toggle.addEventListener("change",()=>fcSaveOwnNotificationPreference(toggle.checked));const shut=()=>overlay.classList.remove("show");close.addEventListener("click",shut);overlay.addEventListener("click",e=>{if(e.target===overlay)shut()})}
+
 async function sendGroupPushNotification(userId,title,message){
   if(!userId||userId===currentUsername)return;
   try{
@@ -337,8 +355,11 @@ async function createGroupMessageNotifications(messageText,messageId){
       .filter(username=>username&&username!==currentUsername);
 
     if(!recipients.length)return;
+    const allowedRecipients=[];
+    for(const username of recipients){if(await fcIsNotificationEnabled(username,"group",groupId))allowedRecipients.push(username)}
+    if(!allowedRecipients.length)return;
 
-    const rows=recipients.map(username=>({
+    const rows=allowedRecipients.map(username=>({
       user_id:username,
       type:"group_chat",
       title:"👥 グループに新しいメッセージ",
@@ -357,7 +378,7 @@ async function createGroupMessageNotifications(messageText,messageId){
 
     /* Pushは各メンバーへ送信 */
     await Promise.all(
-      recipients.map(username=>
+      allowedRecipients.map(username=>
         sendGroupPushNotification(
           username,
           "👥 グループに新しいメッセージ",
@@ -861,7 +882,9 @@ const username=match[1];
 if(username!==currentUsername&&groupMembersCache.some(member=>member.user_id===username)&&!mentioned.includes(username))mentioned.push(username)
 }
 if(!mentioned.length)return;
-const rows=mentioned.map(username=>({user_id:username,type:"mention",title:"グループでメンションされました",message:currentUsername+"さんがあなたをメンションしました",link:"group_chat.html?id="+encodeURIComponent(groupId),is_read:false}));
+const allowedMentioned=[];for(const username of mentioned){if(await fcIsNotificationEnabled(username,"group",groupId))allowedMentioned.push(username)}
+if(!allowedMentioned.length)return;
+const rows=allowedMentioned.map(username=>({user_id:username,type:"mention",title:"グループでメンションされました",message:currentUsername+"さんがあなたをメンションしました",link:"group_chat.html?id="+encodeURIComponent(groupId),is_read:false}));
 const {error}=await supabaseClient.from("notifications").insert(rows);
 if(error)console.error("メンション通知エラー:",error)
 }
@@ -1021,7 +1044,7 @@ function setupRealtime(){
     if(status!=="SUBSCRIBED")console.warn("グループRealtime接続状態:",status);
   });
 }
-async function start(){const wasBanned=await checkFriendChatBan();if(wasBanned)return;if(!groupId){groupName.textContent="グループIDがありません";return}const {data:{session}}=await supabaseClient.auth.getSession();if(!session){location.href="index.html";return}currentUsername=session.user.user_metadata?.username||"";if(!currentUsername){alert("ログイン情報が取得できませんでした");location.href="index.html";return}await Promise.all([updateMyPresence(),loadGroup()]);await loadGroupMembers();await loadGroupMutes();await loadMessages();setupRealtime();if(new URLSearchParams(window.location.search).get("dailyMission")==="message_search_1")setTimeout(openGroupSearch,100);if(presenceTimer)clearInterval(presenceTimer);presenceTimer=setInterval(updateMyPresence,30000)}
+async function start(){const wasBanned=await checkFriendChatBan();if(wasBanned)return;if(!groupId){groupName.textContent="グループIDがありません";return}const {data:{session}}=await supabaseClient.auth.getSession();if(!session){location.href="index.html";return}currentUsername=session.user.user_metadata?.username||"";if(!currentUsername){alert("ログイン情報が取得できませんでした");location.href="index.html";return}fcSetupNotificationSettings();await Promise.all([updateMyPresence(),loadGroup()]);await loadGroupMembers();await loadGroupMutes();await loadMessages();setupRealtime();if(new URLSearchParams(window.location.search).get("dailyMission")==="message_search_1")setTimeout(openGroupSearch,100);if(presenceTimer)clearInterval(presenceTimer);presenceTimer=setInterval(updateMyPresence,30000)}
 window.addEventListener("pagehide",()=>{try{if(voiceRecorder&&voiceRecorder.state==="recording")voiceRecorder.stop()}catch(e){}voiceStream?.getTracks().forEach(t=>t.stop())});
 start().catch(error=>{console.error("グループチャット起動エラー:",error);if(groupName)groupName.textContent="読み込みに失敗しました";if(messages)messages.innerHTML="<div class=\"error\">読み込みに失敗しました。ページを再読み込みしてください。<br><small>"+String(error?.message||error)+"</small></div>"});
 
@@ -1200,5 +1223,7 @@ if(document.readyState==="loading"){
 })();
 </script>
 
+
+<div id="fcNotifyOverlay" class="fc-notify-overlay" aria-hidden="true"><div class="fc-notify-box" role="dialog" aria-modal="true" aria-labelledby="fcNotifyTitle"><div id="fcNotifyTitle" class="fc-notify-title">🔔 このチャットの通知設定</div><div class="fc-notify-desc" id="fcNotifyDesc">通知をOFFにすると、この相手からの通知が届かなくなります。</div><label class="fc-notify-row"><span>チャット通知</span><input id="fcNotifyToggle" type="checkbox" checked></label><button id="fcNotifyClose" class="fc-notify-close" type="button">閉じる</button></div></div>
 </body>
 </html>
