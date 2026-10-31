@@ -1078,13 +1078,13 @@ messageForm.onsubmit=async e=>{
  e.preventDefault();
  clearTimeout(typingTimer);
  sendTypingState(false);
- let text=messageInput.value.trim();if(!text||!currentUsername||!friendId)return;if(await fcBotHandleCommand(text)){messageInput.value="";return}text=fcBotFilterText(text);
+ let text=messageInput.value.trim();if(!text||!currentUsername||!friendId)return;const fcCommandText=text;text=fcBotFilterText(text);
  if(replyTarget){sendButton.disabled=true;const ok=await sendReply(text);sendButton.disabled=false;if(ok)messageInput.value="";return}
  sendButton.disabled=true;
  const {data,error}=await db.from("messages").insert({sender_id:currentUsername,receiver_id:friendId,content:text,image_url:"",is_deleted:false,is_edited:false}).select().single();
  sendButton.disabled=false;
  if(error){alert("メッセージを送信できませんでした。\n\n"+error.message);return}
- messageInput.value="";messagesElement.appendChild(createMessageElement(data,""));scrollToBottom();updateLatestButton();void claimMessagesMission();await createNotification(text);await sendPushToUser(friendId,"💬 "+currentUsername+"さんからメッセージ",currentUsername+"さん: "+text,"./chat.html?user="+encodeURIComponent(currentUsername));
+ messageInput.value="";messagesElement.appendChild(createMessageElement(data,""));scrollToBottom();updateLatestButton();void claimMessagesMission();await createNotification(text);await sendPushToUser(friendId,"💬 "+currentUsername+"さんからメッセージ",currentUsername+"さん: "+text,"./chat.html?user="+encodeURIComponent(currentUsername));await fcBotHandleCommand(fcCommandText);
 };
 plusButton.onclick=e=>{e.preventDefault();e.stopPropagation();mediaMenu.classList.toggle("show")};
 menuImageButton.onclick=()=>imageInput.click();

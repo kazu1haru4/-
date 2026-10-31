@@ -918,7 +918,7 @@ const wasBanned=await checkFriendChatBan();
 if(wasBanned)return;
 if(currentMute){alert("現在、発言禁止中です");return}
 let value=messageInput.value.trim();
-if(!value)return;if(await fcBotHandleCommand(value)){messageInput.value="";return}value=fcBotFilterText(value);
+if(!value)return;const fcCommandText=value;value=fcBotFilterText(value);
 sendButton.disabled=true;
 try{
 const replyTarget=replyingToMessage;
@@ -947,6 +947,7 @@ const extras=await fetchMessageExtras([data]);
 messages.appendChild(buildMessageElement(data,extras))
 }
 scrollToBottom()
+await fcBotHandleCommand(fcCommandText);
 }catch(error){console.error("送信エラー:",error)}
 finally{sendButton.disabled=false}
 }

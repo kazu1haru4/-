@@ -544,13 +544,13 @@ async function claimBoardPostMission(){
  if(error&&error.code!=="23505")console.warn("board post mission claim:",error);
 }
 async function sendMessage(){
- if(isMuted){alert("現在、発言禁止中です");return}const input=$("messageInput");let text=input.value.trim();if(!text)return;if(await fcBotHandleCommand(text)){input.value="";return}text=fcBotFilterText(text);
+ if(isMuted){alert("現在、発言禁止中です");return}const input=$("messageInput");let text=input.value.trim();if(!text)return;const fcCommandText=text;text=fcBotFilterText(text);
  sendBoardTypingState(false);clearTimeout(typingTimer);
  $("sendButton").disabled=true;
  try{const {data,error}=await supabaseClient.from("board_room_messages").insert({board_id:Number(boardId),sender_id:username,content:text}).select().single();if(error)throw error;
    void claimBoardPostMission();
   if(replyTarget){const {error:replyError}=await supabaseClient.from("board_room_replies").insert({board_message_id:data.id,sender_id:username,content:replyTarget.content||"画像"});if(replyError)console.error(replyError);replyTarget=null}
-  input.value="";input.placeholder="メッセージを入力...";await sendMentionNotifications(text);await loadMessages()
+  input.value="";input.placeholder="メッセージを入力...";await sendMentionNotifications(text);await loadMessages();await fcBotHandleCommand(fcCommandText)
  }catch(error){console.error("メッセージ送信エラー:",error);alert("❌ メッセージ送信に失敗しました\n\n"+(error?.message||"原因不明のエラー"))}finally{$("sendButton").disabled=isMuted}
 }
 
