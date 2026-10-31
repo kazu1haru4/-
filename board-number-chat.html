@@ -269,6 +269,7 @@ async function fcBotLoad(scope=fcBotScopeType,target=fcBotTargetId){
  if(scope===fcBotScopeType&&String(target)===String(fcBotTargetId)&&fcBotConfig.enabled&&fcBotConfig.welcome_message){const key="fcBotWelcome:"+scope+":"+target;try{if(!sessionStorage.getItem(key)){sessionStorage.setItem(key,"1");setTimeout(()=>{void fcBotPostMessage(fcBotConfig.welcome_message)},500)}}catch(e){}}
 }
 async function fcBotSave(){
+ if(!fcBotCanManage){alert("このチャットのBOT設定を変更する権限がありません。");return false;}
  const {error}=await fcBotClient().rpc("fc_save_chat_bot_settings",{p_scope_type:fcBotScopeType,p_target_id:String(fcBotTargetId),p_enabled:fcBotConfig.enabled,p_blocked_words:fcBotConfig.blocked_words,p_commands:fcBotConfig.commands,p_welcome_message:fcBotConfig.welcome_message});
  if(error){console.error("BOT設定保存:",error);alert("BOT設定を保存できませんでした。\\n"+(error.message||error));return false;}alert("🤖 BOT設定を保存しました！");return true;
 }
@@ -321,6 +322,7 @@ function fcBotRenderEditor(target){
  el.querySelector("#fcBotSave").onclick=async()=>{const commands=[];let invalid=false;rows.querySelectorAll(".fcBotCommandRow").forEach(row=>{const command=row.querySelector(".fcBotCommandName").value.trim(),response=row.querySelector(".fcBotCommandResponse").value.trim();if(!command&&!response)return;if(!/^\/[a-z0-9_-]{1,24}$/i.test(command)||!response){invalid=true;return;}commands.push({command,response:response.slice(0,300)});});if(invalid){alert("コマンドは /hello の形式、返答は必須です。");return;}fcBotConfig={enabled:el.querySelector("#fcBotEnabled").checked,blocked_words:el.querySelector("#fcBotWords").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean).slice(0,100),commands:commands.slice(0,50),welcome_message:el.querySelector("#fcBotWelcome").value.slice(0,500)};await fcBotSave();};
 }
 async function fcBotOpenSettings(){
+ if(!fcBotCanManage){alert("BOT設定を変更できるのは、このチャットの管理者です。");return;}
  fcBotEnsureUI();
  fcBotScopeType="board";fcBotTargetId=String(boardId);
  document.getElementById("fcBotOverlayTitle").textContent="🤖 "+(room?.name||"この掲示板")+" のBOT設定";
@@ -329,7 +331,7 @@ async function fcBotOpenSettings(){
  await fcBotLoad("board",String(boardId));
  fcBotRenderEditor({label:room?.name||"この掲示板"});
 }
-function fcBotAddMenuButton(menuId,canManage){fcBotCanManage=!!canManage;fcBotHomeScope=fcBotScopeType;fcBotHomeTarget=String(fcBotTargetId);fcBotHomeCanManage=!!canManage;const menu=document.getElementById(menuId);if(!menu||document.getElementById("fcBotMenuButton"))return;const button=document.createElement("button");button.id="fcBotMenuButton";button.type="button";button.textContent="🤖 BOT管理";button.style.display=canManage?"block":"none";button.addEventListener("click",()=>{menu.style.display="none";fcBotOpenSettings()});menu.appendChild(button);}
+function fcBotAddMenuButton(menuId,canManage){fcBotCanManage=!!canManage;fcBotHomeScope=fcBotScopeType;fcBotHomeTarget=String(fcBotTargetId);fcBotHomeCanManage=!!canManage;if(!fcBotCanManage)return;const menu=document.getElementById(menuId);if(!menu||document.getElementById("fcBotMenuButton"))return;const button=document.createElement("button");button.id="fcBotMenuButton";button.type="button";button.textContent="🤖 BOT管理";button.addEventListener("click",()=>{if(!fcBotCanManage)return;menu.style.display="none";fcBotOpenSettings()});menu.appendChild(button);}
 
 
 const NAME_DECORATION_MAP={nd_sakura:"name-decoration-sakura",nd_star:"name-decoration-star",nd_diamond:"name-decoration-diamond",nd_heart:"name-decoration-heart",nd_rainbow:"name-decoration-rainbow",nd_flame:"name-decoration-flame",nd_sea:"name-decoration-sea",nd_space:"name-decoration-space",nd_neon:"name-decoration-neon",name_sakura:"name-decoration-sakura",admin_name:"name-decoration-admin"};
