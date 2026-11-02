@@ -23,6 +23,34 @@ h1{text-align:center;margin:0 0 22px;color:#7158cf;font-size:27px}
 .add-row button{border:0;border-radius:12px;padding:0 16px;background:#7158cf;color:#fff;font-weight:bold;font-size:14px}
 .add-row button:disabled{opacity:.6}
 .add-help{font-size:12px;color:#888;margin-top:8px}
+
+.requests-open-button{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;margin:0 0 18px;padding:14px;border:1px solid #e5dcff;border-radius:15px;background:#fff;color:#7158cf;font-size:15px;font-weight:800;box-shadow:0 4px 12px rgba(100,80,150,.08)}
+.request-badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#f04464;color:white;font-size:12px;font-weight:900}
+.request-badge[hidden]{display:none}
+.requests-modal{position:fixed;inset:0;z-index:100000;display:flex;align-items:flex-end;justify-content:center}
+.requests-modal[hidden]{display:none}
+.requests-backdrop{position:absolute;inset:0;background:rgba(25,18,48,.48);backdrop-filter:blur(3px)}
+.requests-panel{position:relative;width:min(100%,560px);max-height:min(82vh,720px);overflow:auto;background:#fff;border-radius:24px 24px 0 0;padding:18px 18px calc(22px + env(safe-area-inset-bottom));box-shadow:0 -12px 40px rgba(30,20,70,.2);animation:requestSlideUp .2s ease-out}
+@keyframes requestSlideUp{from{transform:translateY(25px);opacity:.7}to{transform:translateY(0);opacity:1}}
+.requests-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.requests-panel-head h2{margin:0;color:#7158cf;font-size:20px}
+.requests-close{width:36px;height:36px;border:0;border-radius:50%;background:#f2effa;color:#66558e;font-size:25px;line-height:1}
+.requests-tabs{display:flex;gap:8px;margin:16px 0 12px;padding:4px;border-radius:13px;background:#f5f2fb}
+.requests-tab{flex:1;border:0;border-radius:10px;padding:11px 8px;background:transparent;color:#807894;font-size:13px;font-weight:800}
+.requests-tab.active{background:#fff;color:#7158cf;box-shadow:0 2px 8px rgba(60,40,100,.1)}
+.requests-tab span{display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:19px;padding:0 5px;margin-left:3px;border-radius:99px;background:#f04464;color:#fff;font-size:11px}
+.request-list{display:flex;flex-direction:column;gap:9px;min-height:65px}
+.request-list[hidden]{display:none}
+.request-card{display:flex;align-items:center;gap:10px;padding:11px;border:1px solid #eeeaf6;border-radius:14px;background:#fff}
+.request-user{flex:1;min-width:0;font-size:14px;font-weight:800;overflow-wrap:anywhere}
+.request-id{display:block;margin-top:3px;color:#999;font-size:11px;font-weight:500}
+.request-actions{display:flex;gap:6px;flex-shrink:0}
+.request-actions button{border:0;border-radius:9px;padding:9px 10px;font-size:12px;font-weight:800}
+.request-accept{background:#7158cf;color:#fff}.request-reject,.request-cancel{background:#f0eef5;color:#665f78}
+.request-empty{padding:22px 8px;text-align:center;color:#999;font-size:13px}
+.requests-refresh{width:100%;margin-top:14px;padding:12px;border:0;border-radius:12px;background:#f0eaff;color:#7158cf;font-weight:800}
+@media(min-width:600px){.requests-modal{align-items:center;padding:20px}.requests-panel{border-radius:24px;max-height:80vh}}
+
 .status{text-align:center;color:#888;font-size:14px;margin-bottom:15px}
 .friends{display:flex;flex-direction:column;gap:12px}
 .friend-card{display:flex;align-items:center;gap:13px;padding:12px;background:#fff;border:2px solid #eee;border-radius:20px;cursor:pointer;box-shadow:0 4px 12px rgba(100,80,150,.06);transition:transform .1s}
@@ -121,7 +149,23 @@ body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
     <input id="friendIdInput" type="text" maxlength="20" placeholder="フレンドのIDを入力" autocomplete="off">
     <button id="addFriendButton" type="button">追加</button>
   </div>
-  <div class="add-help">相手のユーザーIDを入力してフレンド追加できます。</div>
+  <div class="add-help">相手のユーザーIDにフレンド申請を送ります。承認されるとフレンドになります。</div>
+</div>
+<button id="openRequestsButton" class="requests-open-button" type="button" aria-haspopup="dialog" aria-controls="requestsModal">
+  <span>📨 フレンド申請一覧</span><span id="requestBadge" class="request-badge" hidden>0</span>
+</button>
+<div id="requestsModal" class="requests-modal" role="dialog" aria-modal="true" aria-labelledby="requestsTitle" hidden>
+  <div class="requests-backdrop" data-close-requests></div>
+  <section class="requests-panel">
+    <div class="requests-panel-head"><h2 id="requestsTitle">📨 フレンド申請</h2><button id="closeRequestsButton" class="requests-close" type="button" aria-label="閉じる">×</button></div>
+    <div class="requests-tabs" role="tablist" aria-label="申請の種類">
+      <button class="requests-tab active" id="incomingTab" type="button" role="tab" aria-selected="true">届いた申請 <span id="incomingCount">0</span></button>
+      <button class="requests-tab" id="outgoingTab" type="button" role="tab" aria-selected="false">送った申請</button>
+    </div>
+    <div id="incomingRequests" class="request-list" role="tabpanel"><div class="request-empty">読み込み中...</div></div>
+    <div id="outgoingRequests" class="request-list" role="tabpanel" hidden><div class="request-empty">読み込み中...</div></div>
+    <button id="refreshRequestsButton" class="requests-refresh" type="button">🔄 申請一覧を更新</button>
+  </section>
 </div>
 <div id="status" class="status">読み込み中...</div>
 <div id="friends" class="friends"></div>
@@ -204,65 +248,117 @@ async function loadFriends(){
 async function addFriend(){
   const input=document.getElementById("friendIdInput");
   const button=document.getElementById("addFriendButton");
-  const target=input.value.trim();
-
+  const target=input.value.trim().toLowerCase();
   if(!target){alert("フレンドのIDを入力してください。");input.focus();return}
-  if(target===currentUsername){alert("自分自身はフレンドに追加できません。");return}
-  if(!/^[A-Za-z0-9_]{3,20}$/.test(target)){
-    alert("ユーザーIDは3〜20文字の英数字と「_」で入力してください。");
-    return;
-  }
-
-  button.disabled=true;
-  button.textContent="追加中...";
-
+  if(target===currentUsername.toLowerCase()){alert("自分自身には申請できません。");return}
+  if(!/^[A-Za-z0-9_]{3,20}$/.test(target)){alert("ユーザーIDは3〜20文字の英数字と「_」で入力してください。");return}
+  button.disabled=true;button.textContent="申請中...";
   try{
     if(await checkFriendChatBan())return;
-
-    /* プロフィールを先にSELECTせず、存在確認も含めてRPCに任せる */
     const {data:sessionData,error:sessionError}=await supabaseClient.auth.getSession();
     if(sessionError)throw sessionError;
-
-    if(!sessionData?.session){
-      alert("ログイン状態を確認できませんでした。もう一度ログインしてください。");
-      return;
-    }
-
-    const {error}=await supabaseClient.rpc(
-      "add_friend_by_id",
-      {target_username:target}
-    );
-
+    if(!sessionData?.session)throw new Error("ログイン状態を確認できませんでした。もう一度ログインしてください。");
+    const {error}=await supabaseClient.rpc("request_friend_by_id",{target_username:target});
     if(error)throw error;
-
     input.value="";
-    alert("🎉 @"+target+" さんをフレンドに追加しました！");
-    await loadFriends();
-
+    alert("📨 @"+target+" さんにフレンド申請を送りました！");
+    await loadRequests();
   }catch(error){
-    console.error("フレンド追加エラー:",error);
-
+    console.error("フレンド申請エラー:",error);
     const msg=String(error?.message||error);
-
-    if(msg.includes("already")||msg.includes("duplicate")||msg.includes("既に")||msg.includes("すでに")){
-      alert("そのユーザーはすでにフレンドです。");
-    }else if(msg.includes("ユーザーIDを入力してください")||msg.includes("そのIDのユーザーは見つかりません")){
-      alert(msg);
-    }else if(msg.includes("ログインが必要です")||msg.includes("JWT")||msg.includes("401")||msg.includes("Unauthorized")){
-      alert("ログイン状態を確認できませんでした。もう一度ログインしてください。");
-    }else{
-      alert("フレンド追加に失敗しました。\n\n"+msg);
-    }
-
-  }finally{
-    button.disabled=false;
-    button.textContent="追加";
+    alert(msg.includes("既に申請")?"そのユーザーには既に申請しています。":msg.includes("既にフレンド")?"そのユーザーとは既にフレンドです。":msg.includes("相手からフレンド申請")?"相手から申請が届いています。申請一覧を確認してください。":msg.includes("そのIDのユーザー")?"そのIDのユーザーは見つかりません。":"フレンド申請に失敗しました。\n\n"+msg);
+  }finally{button.disabled=false;button.textContent="申請"}
+}
+let incomingRequestRows=[],outgoingRequestRows=[];
+function openRequests(){
+  document.getElementById("requestsModal").hidden=false;
+  document.body.style.overflow="hidden";
+  loadRequests();
+}
+function closeRequests(){
+  document.getElementById("requestsModal").hidden=true;
+  document.body.style.overflow="";
+}
+function setRequestsTab(which){
+  const incoming=which==="incoming";
+  document.getElementById("incomingRequests").hidden=!incoming;
+  document.getElementById("outgoingRequests").hidden=incoming;
+  document.getElementById("incomingTab").classList.toggle("active",incoming);
+  document.getElementById("outgoingTab").classList.toggle("active",!incoming);
+  document.getElementById("incomingTab").setAttribute("aria-selected",String(incoming));
+  document.getElementById("outgoingTab").setAttribute("aria-selected",String(!incoming));
+}
+async function loadRequests(){
+  const incomingEl=document.getElementById("incomingRequests"),outgoingEl=document.getElementById("outgoingRequests");
+  if(!incomingEl||!outgoingEl||!currentUsername)return;
+  const [incomingResult,outgoingResult]=await Promise.all([
+    supabaseClient.from("friend_requests").select("id,requester_id,target_id,created_at").eq("target_id",currentUsername).eq("status","pending").order("created_at",{ascending:false}),
+    supabaseClient.from("friend_requests").select("id,requester_id,target_id,created_at").eq("requester_id",currentUsername).eq("status","pending").order("created_at",{ascending:false})
+  ]);
+  if(incomingResult.error||outgoingResult.error){
+    console.error("申請一覧エラー:",incomingResult.error||outgoingResult.error);
+    incomingEl.innerHTML='<div class="request-empty">申請一覧を読み込めませんでした。再読み込みしてください。</div>';
+    outgoingEl.innerHTML='<div class="request-empty">申請一覧を読み込めませんでした。再読み込みしてください。</div>';
+    return;
   }
+  incomingRequestRows=incomingResult.data||[];outgoingRequestRows=outgoingResult.data||[];
+  const count=incomingRequestRows.length;
+  const badge=document.getElementById("requestBadge");badge.textContent=count>99?"99+":String(count);badge.hidden=count===0;
+  document.getElementById("incomingCount").textContent=String(count);
+  const ids=[...new Set([...incomingRequestRows.map(x=>x.requester_id),...outgoingRequestRows.map(x=>x.target_id)])];
+  let profileMap=new Map();
+  if(ids.length){
+    const {data,error}=await supabaseClient.from("profiles").select("user_id,name,avatar_url").in("user_id",ids);
+    if(error)console.warn("申請者プロフィール取得:",error);
+    profileMap=new Map((data||[]).map(p=>[p.user_id,p]));
+  }
+  const render=(container,rows,type)=>{
+    container.innerHTML="";
+    if(!rows.length){container.innerHTML='<div class="request-empty">'+(type==="incoming"?"📭 届いたフレンド申請はありません。":"送ったフレンド申請はありません。")+'</div>';return}
+    rows.forEach(row=>{
+      const username=type==="incoming"?row.requester_id:row.target_id,profile=profileMap.get(username);
+      const card=document.createElement("div");card.className="request-card";
+      if(type==="incoming"&&profile?.avatar_url){const img=document.createElement("img");img.src=profile.avatar_url;img.alt="";img.style.cssText="width:42px;height:42px;border-radius:50%;object-fit:cover;flex-shrink:0";card.appendChild(img)}
+      const user=document.createElement("div");user.className="request-user";user.textContent=profile?.name||username;
+      const id=document.createElement("span");id.className="request-id";id.textContent="@"+username;user.appendChild(id);
+      const actions=document.createElement("div");actions.className="request-actions";
+      if(type==="incoming"){
+        const accept=document.createElement("button");accept.className="request-accept";accept.textContent="承認";accept.onclick=()=>respondRequest(row.id,true);
+        const reject=document.createElement("button");reject.className="request-reject";reject.textContent="拒否";reject.onclick=()=>respondRequest(row.id,false);
+        actions.append(accept,reject);
+      }else{
+        const cancel=document.createElement("button");cancel.className="request-cancel";cancel.textContent="取り消す";cancel.onclick=()=>cancelRequest(row.id);actions.appendChild(cancel);
+      }
+      card.append(user,actions);container.appendChild(card);
+    });
+  };
+  render(incomingEl,incomingRequestRows,"incoming");render(outgoingEl,outgoingRequestRows,"outgoing");
+}
+async function respondRequest(id,accept){
+  const action=accept?"承認":"拒否";
+  if(!confirm("このフレンド申請を"+action+"しますか？"))return;
+  const {error}=await supabaseClient.rpc("respond_friend_request",{request_id:id,accept_request:accept});
+  if(error){alert(action+"に失敗しました。\n"+error.message);return}
+  alert(accept?"🎉 フレンドになりました！":"申請を拒否しました。");
+  await Promise.all([loadRequests(),loadFriends()]);
+}
+async function cancelRequest(id){
+  if(!confirm("送ったフレンド申請を取り消しますか？"))return;
+  const {error}=await supabaseClient.rpc("cancel_friend_request",{request_id:id});
+  if(error){alert("申請の取り消しに失敗しました。\n"+error.message);return}
+  await loadRequests();
 }
 document.getElementById("addFriendButton").onclick=addFriend;
 document.getElementById("friendIdInput").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();addFriend()}};
-document.getElementById("reloadButton").onclick=loadFriends;
-async function init(){const user=await getCurrentUser();if(!user)return;await updateMyPresence();await loadFriends();presenceTimer=setInterval(updateMyPresence,30000)}
+document.getElementById("reloadButton").onclick=()=>Promise.all([loadFriends(),loadRequests()]);
+document.getElementById("openRequestsButton").onclick=openRequests;
+document.getElementById("closeRequestsButton").onclick=closeRequests;
+document.querySelector("[data-close-requests]").onclick=closeRequests;
+document.getElementById("incomingTab").onclick=()=>setRequestsTab("incoming");
+document.getElementById("outgoingTab").onclick=()=>setRequestsTab("outgoing");
+document.getElementById("refreshRequestsButton").onclick=loadRequests;
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!document.getElementById("requestsModal").hidden)closeRequests()});
+async function init(){const user=await getCurrentUser();if(!user)return;await updateMyPresence();await Promise.all([loadFriends(),loadRequests()]);presenceTimer=setInterval(()=>{updateMyPresence();loadRequests()},30000)}
 init();
 </script>
 
