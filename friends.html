@@ -610,7 +610,9 @@ async function radarLoadFriends(){
   try{
   const {data:rows,error}=await supabaseClient.rpc("get_mutual_friend_locations");
   if(error){console.warn("レーダー取得エラー:",error);list.innerHTML='<div class="radar-empty">位置情報を読み込めませんでした。</div>';return}
-  const sharedFriends=(rows||[]).filter(r=>r.updated_at);
+  const sharedFriends=(rows||[])
+    .filter(r=>r.updated_at)
+    .sort((a,b)=>new Date(b.updated_at).getTime()-new Date(a.updated_at).getTime());
   document.getElementById("radarCount").textContent=sharedFriends.length+"人";
   if(!sharedFriends.length){list.innerHTML='<div class="radar-empty">現在、相互に位置共有中のフレンドはいません。<br>自分と友達の両方が共有を開始すると表示されます。</div>';return}
   const ids=sharedFriends.map(r=>r.user_id).filter(Boolean);
