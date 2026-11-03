@@ -207,7 +207,7 @@ body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
     </div>
     <section class="radar-box" aria-labelledby="radarTitle">
       <div class="radar-title"><span id="radarTitle">位置共有・フレンド情報</span><span id="radarCount" style="font-size:12px;color:#6b8d7b">0人</span></div>
-      <p class="radar-description">位置共有を許可したフレンドとの距離と方角を表示します。お互いが共有を開始した場合のみ表示されます。</p>
+      <p class="radar-description">位置共有を許可したフレンドとの距離・方角・相手が向いている方向を表示します。お互いが共有を開始した場合のみ表示されます。コンパスの許可も必要な端末があります。</p>
       <div class="radar-controls">
         <select id="radarDuration" aria-label="位置共有の時間"><option value="15">15分間</option><option value="30" selected>30分間</option><option value="60">1時間</option></select>
         <button id="radarToggle" class="radar-toggle" type="button">位置共有を開始</button>
@@ -402,7 +402,7 @@ async function cancelRequest(id){
 }
 
 // フレンドレーダー：相互に位置共有を許可したフレンドのみ距離・方角を表示
-let radarWatchId=null,radarPollTimer=null,radarExpiryTimer=null,radarShareExpiry=null,radarMyPosition=null,radarBusy=false;
+let radarWatchId=null,radarPollTimer=null,radarExpiryTimer=null,radarShareExpiry=null,radarMyPosition=null,radarBusy=false,radarMyHeading=null,radarCompassActive=false,radarLastHeadingSend=0;
 const radarProfiles=new Map();
 function radarDistance(a,b){
   const rad=x=>x*Math.PI/180,R=6371000;
@@ -427,8 +427,55 @@ function radarStopWatch(){if(radarWatchId!==null&&navigator.geolocation){navigat
 async function radarSendPosition(position){
   const coords=position.coords;
   radarMyPosition={latitude:coords.latitude,longitude:coords.longitude};
-  const {error}=await supabaseClient.rpc("update_my_friend_location",{p_latitude:coords.latitude,p_longitude:coords.longitude});
+  const {error}=await supabaseClient.rpc("update_my_friend_location",{p_latitude:coords.latitude,p_longitude:coords.longitude,p_heading:radarMyHeading});
   if(error){console.warn("位置情報の送信エラー:",error);radarSetStatus("位置情報を送信できませんでした："+error.message)}
+}
+function radarHeadingLabel(degrees){
+  if(degrees===null||degrees===undefined||!Number.isFinite(Number(degrees)))return "方位センサー未対応／許可待ち";
+  const dirs=["北","北東","東","南東","南","南西","西","北西"];
+  const i=Math.round((Number(degrees)%360)/45)%8;
+  return dirs[i]+"向き";
+}
+function radarHandleOrientation(event){
+  let heading=null;
+  if(Number.isFinite(event.webkitCompassHeading))heading=event.webkitCompassHeading;
+  else if(event.absolute===true&&Number.isFinite(event.alpha))heading=(360-event.alpha+360)%360;
+  if(heading===null)return;
+  radarMyHeading=(heading+360)%360;
+  if(radarMyPosition&&Date.now()-radarLastHeadingSend>1800){
+    radarLastHeadingSend=Date.now();
+    supabaseClient.rpc("update_my_friend_location",{
+      p_latitude:radarMyPosition.latitude,
+      p_longitude:radarMyPosition.longitude,
+      p_heading:radarMyHeading
+    }).then(({error})=>{if(error)console.warn("方位情報の送信エラー:",error)});
+  }
+}
+async function radarRequestCompassPermission(){
+  const Orientation=window.DeviceOrientationEvent;
+  if(!Orientation){radarSetStatus("この端末はコンパス方位の取得に対応していません。");return false}
+  try{
+    if(typeof Orientation.requestPermission==="function"){
+      const permission=await Orientation.requestPermission();
+      if(permission!=="granted"){radarSetStatus("方位センサーが許可されていません。位置共有は続けますが、友達の向きは表示できません。");return false}
+    }
+    window.addEventListener("deviceorientation",radarHandleOrientation,true);
+    window.addEventListener("deviceorientationabsolute",radarHandleOrientation,true);
+    radarCompassActive=true;
+    radarSetStatus("位置とコンパスの共有中です。端末の向きを取得しています。");
+    return true;
+  }catch(error){
+    console.warn("コンパス許可エラー:",error);
+    radarSetStatus("コンパスを利用できません。位置共有は続けます。");
+    return false;
+  }
+}
+function radarStopCompass(){
+  if(!radarCompassActive)return;
+  window.removeEventListener("deviceorientation",radarHandleOrientation,true);
+  window.removeEventListener("deviceorientationabsolute",radarHandleOrientation,true);
+  radarCompassActive=false;
+  radarMyHeading=null;
 }
 function radarPositionError(error){
   console.warn("GPS error:",error);
@@ -460,8 +507,9 @@ async function radarLoadFriends(){
     const icon=document.createElement("div");icon.textContent="👤";icon.style.fontSize="24px";
     const info=document.createElement("div");info.className="radar-person-info";
     const name=document.createElement("div");name.className="radar-person-name";name.textContent=names.get(friend.user_id)||friend.user_id;
-    const direction=document.createElement("div");direction.className="radar-person-direction";direction.textContent=radarDirection(bearing);
-    info.append(name,direction);
+    const direction=document.createElement("div");direction.className="radar-person-direction";direction.textContent="あなたから見た方角："+radarDirection(bearing);
+    const facing=document.createElement("div");facing.className="radar-person-direction";facing.textContent="🧭 向いている方向："+radarHeadingLabel(friend.heading_degrees);
+    info.append(name,direction,facing);
     const dist=document.createElement("div");dist.className="radar-distance";dist.textContent=radarFormatDistance(distance);
     card.append(icon,info,dist);list.appendChild(card);
   });
@@ -490,18 +538,21 @@ function radarStartExpiryTimer(){
   clearInterval(radarExpiryTimer);
   radarExpiryTimer=setInterval(async()=>{
     if(radarShareExpiry&&Date.now()>=radarShareExpiry.getTime()){
-      radarStopWatch();clearInterval(radarExpiryTimer);radarShareExpiry=null;
+      radarStopWatch();radarStopCompass();clearInterval(radarExpiryTimer);radarShareExpiry=null;
       await supabaseClient.rpc("set_friend_location_sharing",{p_enabled:false,p_duration_minutes:30});
       await radarRefreshOwnShare();await radarLoadFriends();
     }
   },5000);
 }
 async function radarToggleSharing(){
-  if(radarBusy)return;radarBusy=true;
+  if(radarBusy)return;
+  const isCurrentlySharing=!!(radarShareExpiry&&radarShareExpiry.getTime()>Date.now());
+  const compassPermissionPromise=isCurrentlySharing?Promise.resolve(false):radarRequestCompassPermission();
+  radarBusy=true;
   const button=document.getElementById("radarToggle");button.disabled=true;
   try{
     if(radarShareExpiry&&radarShareExpiry.getTime()>Date.now()){
-      radarStopWatch();clearInterval(radarExpiryTimer);
+      radarStopWatch();radarStopCompass();clearInterval(radarExpiryTimer);
       const {error}=await supabaseClient.rpc("set_friend_location_sharing",{p_enabled:false,p_duration_minutes:30});
       if(error)throw error;
       radarShareExpiry=null;radarMyPosition=null;
@@ -511,6 +562,7 @@ async function radarToggleSharing(){
       if(!navigator.geolocation)throw new Error("このブラウザは位置情報に対応していません。");
       if(!window.isSecureContext)throw new Error("位置情報を使うにはHTTPS接続が必要です。");
       const minutes=Number(document.getElementById("radarDuration").value||30);
+      await compassPermissionPromise;
       const {data,error}=await supabaseClient.rpc("set_friend_location_sharing",{p_enabled:true,p_duration_minutes:minutes});
       if(error)throw error;
       radarShareExpiry=data?new Date(data):new Date(Date.now()+minutes*60000);
