@@ -148,6 +148,17 @@ body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
 .radar-person{display:flex;align-items:center;gap:10px;padding:11px;background:white;border:1px solid #e6eee9;border-radius:13px}
 .radar-person-info{flex:1;min-width:0}.radar-person-name{font-weight:800;font-size:14px;overflow-wrap:anywhere}.radar-person-direction{font-size:12px;color:#718078;margin-top:3px}
 .radar-distance{font-size:16px;font-weight:900;color:#287b59;white-space:nowrap;font-variant-numeric:tabular-nums}
+
+.radar-visual{position:relative;flex:0 0 66px;width:66px;height:66px;border:1px solid #cfe5d8;border-radius:50%;background:radial-gradient(circle,#fff 0 27%,#edf8f1 28% 100%);box-shadow:inset 0 0 0 5px rgba(255,255,255,.75)}
+.radar-visual:before,.radar-visual:after{content:"";position:absolute;background:#d6e8dc}
+.radar-visual:before{width:1px;height:48px;left:32px;top:8px}
+.radar-visual:after{height:1px;width:48px;left:8px;top:32px}
+.radar-visual-center{position:absolute;left:27px;top:27px;width:12px;height:12px;border-radius:50%;background:#9bb7a5;border:2px solid white;z-index:1}
+.radar-visual-friend{position:absolute;left:21px;top:3px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#dff5e8;border:2px solid #49a879;color:#216b49;font-size:13px;z-index:2;transform-origin:12px 30px}
+.radar-visual-arrow{position:absolute;left:6px;top:-8px;font-size:15px;line-height:1;color:#168452;transform-origin:6px 20px}
+.radar-visual-caption{font-size:10px;color:#819087;text-align:center;margin-top:3px;white-space:nowrap}
+.radar-visual-wrap{flex:0 0 66px;text-align:center}
+.radar-person-info{flex:1;min-width:0}
 .radar-empty{padding:14px 8px;text-align:center;color:#8b968f;font-size:12px;line-height:1.6;background:rgba(255,255,255,.7);border-radius:12px}
 
 .radar-open-button{display:flex;width:100%;align-items:center;justify-content:space-between;margin:0 0 18px;padding:16px;border:1px solid #dceee7;border-radius:18px;background:linear-gradient(145deg,#f4fff9,#f5f8ff);color:#287b59;font-size:16px;font-weight:900;text-align:left;box-shadow:0 4px 12px rgba(40,123,89,.08)}
@@ -207,7 +218,7 @@ body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
     </div>
     <section class="radar-box" aria-labelledby="radarTitle">
       <div class="radar-title"><span id="radarTitle">位置共有・フレンド情報</span><span id="radarCount" style="font-size:12px;color:#6b8d7b">0人</span></div>
-      <p class="radar-description">位置共有を許可したフレンドとの距離・方角・相手が向いている方向を表示します。お互いが共有を開始した場合のみ表示されます。コンパスの許可も必要な端末があります。</p>
+      <p class="radar-description">丸いレーダーで友達のいる方向と、友達アイコンの矢印で相手が向いている方向を直感的に表示します。距離も確認できます。お互いが共有を開始した場合のみ表示されます。コンパスの許可も必要な端末があります。</p>
       <div class="radar-controls">
         <select id="radarDuration" aria-label="位置共有の時間"><option value="15">15分間</option><option value="30" selected>30分間</option><option value="60">1時間</option></select>
         <button id="radarToggle" class="radar-toggle" type="button">位置共有を開始</button>
@@ -436,6 +447,13 @@ function radarHeadingLabel(degrees){
   const i=Math.round((Number(degrees)%360)/45)%8;
   return dirs[i]+"向き";
 }
+function radarRelativeDirection(friendBearing,friendHeading){
+  if(friendHeading===null||friendHeading===undefined||!Number.isFinite(Number(friendHeading)))return "取得できません";
+  const diff=((Number(friendBearing)-Number(friendHeading)+540)%360)-180;
+  if(Math.abs(diff)<22.5)return "あなたの方を向いている";
+  if(Math.abs(diff)>157.5)return "あなたに背を向けている";
+  return diff>0?"あなたから見て左方向":"あなたから見て右方向";
+}
 function radarHandleOrientation(event){
   let heading=null;
   if(Number.isFinite(event.webkitCompassHeading))heading=event.webkitCompassHeading;
@@ -504,14 +522,28 @@ async function radarLoadFriends(){
     const distance=radarDistance(radarMyPosition,{latitude:Number(friend.latitude),longitude:Number(friend.longitude)});
     const bearing=radarBearing(radarMyPosition,{latitude:Number(friend.latitude),longitude:Number(friend.longitude)});
     const card=document.createElement("div");card.className="radar-person";
-    const icon=document.createElement("div");icon.textContent="👤";icon.style.fontSize="24px";
+    const visualWrap=document.createElement("div");visualWrap.className="radar-visual-wrap";
+    const visual=document.createElement("div");visual.className="radar-visual";
+    const center=document.createElement("div");center.className="radar-visual-center";
+    const friendMarker=document.createElement("div");friendMarker.className="radar-visual-friend";friendMarker.textContent="👤";
+    const arrow=document.createElement("span");arrow.className="radar-visual-arrow";arrow.textContent="▲";
+    const viewerHeading=Number.isFinite(Number(radarMyHeading))?Number(radarMyHeading):0;
+    const relativeBearing=((bearing-viewerHeading+360)%360);
+    const friendHeading=Number(friend.heading_degrees);
+    const relativeFacing=Number.isFinite(friendHeading)?((friendHeading-viewerHeading+360)%360):null;
+    friendMarker.style.transform="rotate("+relativeBearing+"deg)";
+    if(relativeFacing!==null)arrow.style.transform="rotate("+relativeFacing+"deg)";
+    else arrow.textContent="?";
+    friendMarker.appendChild(arrow);
+    visual.append(center,friendMarker);visualWrap.append(visual);
+    const visualCaption=document.createElement("div");visualCaption.className="radar-visual-caption";visualCaption.textContent="友達の位置・向き";visualWrap.append(visualCaption);
     const info=document.createElement("div");info.className="radar-person-info";
     const name=document.createElement("div");name.className="radar-person-name";name.textContent=names.get(friend.user_id)||friend.user_id;
-    const direction=document.createElement("div");direction.className="radar-person-direction";direction.textContent="あなたから見た方角："+radarDirection(bearing);
-    const facing=document.createElement("div");facing.className="radar-person-direction";facing.textContent="🧭 向いている方向："+radarHeadingLabel(friend.heading_degrees);
+    const direction=document.createElement("div");direction.className="radar-person-direction";direction.textContent="📍 あなたから："+radarDirection(bearing);
+    const facing=document.createElement("div");facing.className="radar-person-direction";facing.textContent="🧭 "+radarRelativeDirection(bearing,friend.heading_degrees);
     info.append(name,direction,facing);
     const dist=document.createElement("div");dist.className="radar-distance";dist.textContent=radarFormatDistance(distance);
-    card.append(icon,info,dist);list.appendChild(card);
+    card.append(visualWrap,info,dist);list.appendChild(card);
   });
 }
 async function radarRefreshOwnShare(){
