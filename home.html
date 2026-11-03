@@ -13,6 +13,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Friend Chat">
   <link rel="apple-touch-icon" href="./icon-192.png">
+  <script src="./theme.js"></script>
 
   <style>
     * {
@@ -67,7 +68,7 @@
 
     .notification-button {
       right: 15px;
-      background: #f3f0ff;
+      background: var(--theme-light);
     }
 
     .settings-button {
@@ -236,27 +237,27 @@
     }
 
     .profile {
-      background: #fff0f7;
+      background: var(--theme-light);
     }
 
     .groups {
-      background: #f0f7ff;
+      background: var(--theme-light);
     }
 
     .friends {
-      background: #eef9f3;
+      background: var(--theme-light);
     }
 
     .board {
-      background: #fff7e8;
+      background: var(--theme-light);
     }
 
     .schedule {
-      background: #eefcff;
+      background: var(--theme-light);
     }
 
     .games {
-      background: #fff0f2;
+      background: var(--theme-light);
     }
 
     .coin {
@@ -314,10 +315,10 @@
 }
 #fc-bottom-nav a .fc-nav-icon { font-size: 20px; line-height: 1; }
 #fc-bottom-nav a.fc-active {
-  color: #6b4fc7;
-  background: linear-gradient(135deg, #f0eaff, #e8e1ff);
+  color: var(--theme-text);
+  background: var(--theme-light);
 }
-#fc-bottom-nav a:focus-visible { outline: 2px solid #8b73df; outline-offset: 1px; }
+#fc-bottom-nav a:focus-visible { outline: 2px solid var(--theme); outline-offset: 1px; }
 body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
 @media (min-width: 700px) {
   #fc-bottom-nav { left: 50%; right: auto; width: min(100%, 620px); transform: translateX(-50%); border-left: 1px solid rgba(133,111,198,.15); border-right: 1px solid rgba(133,111,198,.15); border-radius: 16px 16px 0 0; }
@@ -327,28 +328,28 @@ body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
 
 /* ===== ホームダッシュボード v7 ===== */
 .dashboard-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px}
-.dashboard-heading{font-size:17px;font-weight:800;color:#5e50c9}
-.dashboard-edit{border:0;border-radius:12px;padding:10px 13px;background:#eee8ff;color:#5e50c9;font-weight:800;font-size:13px}
+.dashboard-heading{font-size:17px;font-weight:800;color:var(--theme-text)}
+.dashboard-edit{border:0;border-radius:12px;padding:10px 13px;background:#eee8ff;color:var(--theme-text);font-weight:800;font-size:13px}
 .dashboard-editing-note{display:none;margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#fff8df;color:#7a5a00;font-size:12px}
 .dashboard-cards{display:flex;flex-direction:column;gap:14px;margin-bottom:18px}
 .dashboard-card{position:relative;background:#fff;border:1px solid rgba(130,110,200,.12);border-radius:22px;padding:16px;box-shadow:0 8px 20px rgba(0,0,0,.055);min-width:0}
 .dashboard-card[hidden]{display:none!important}
-.dashboard-card.dragging{opacity:.55;outline:2px dashed #8f7cff}
-.dashboard-card.drop-target{outline:2px solid #8f7cff}
+.dashboard-card.dragging{opacity:.55;outline:2px dashed var(--theme)}
+.dashboard-card.drop-target{outline:2px solid var(--theme)}
 .dashboard-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
-.dashboard-card-title{margin:0;font-size:16px;color:#5e50c9;font-weight:800}
+.dashboard-card-title{margin:0;font-size:16px;color:var(--theme-text);font-weight:800}
 .dashboard-card-tools{display:none;align-items:center;gap:5px;flex-shrink:0}
 .dashboard-editing .dashboard-card-tools{display:flex}
 .dashboard-editing-note.visible{display:block}
-.dashboard-card-tools button{border:0;border-radius:9px;background:#f0edff;color:#5e50c9;padding:7px 9px;font-weight:700}
+.dashboard-card-tools button{border:0;border-radius:9px;background:var(--theme-light);color:var(--theme-text);padding:7px 9px;font-weight:700}
 .dashboard-card-tools button[draggable="true"]{cursor:grab}
 .dashboard-card-tools label{display:flex;align-items:center;gap:4px;font-size:11px;color:#665b86;white-space:nowrap}
-.dashboard-card-tools input{accent-color:#7b66df}
+.dashboard-card-tools input{accent-color:var(--theme)}
 .dashboard-profile{display:flex;align-items:center;gap:13px}
-.dashboard-avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;background:#f0edff;display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0;border:3px solid #dcd3ff}
+.dashboard-avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;background:var(--theme-light);display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0;border:3px solid var(--theme)}
 .dashboard-profile-name{font-size:18px;font-weight:800;color:#333;overflow-wrap:anywhere}
 .dashboard-profile-id{font-size:12px;color:#888;margin-top:4px}
-.dashboard-profile-link{display:inline-block;margin-top:7px;color:#6d58c7;text-decoration:none;font-size:12px;font-weight:700}
+.dashboard-profile-link{display:inline-block;margin-top:7px;color:var(--theme-text);text-decoration:none;font-size:12px;font-weight:700}
 .dashboard-list{display:flex;flex-direction:column;gap:9px}
 .dashboard-row{display:flex;align-items:center;gap:10px;min-width:0;padding:10px;border-radius:14px;background:#faf9ff;color:#333;text-decoration:none}
 .dashboard-row:active{transform:scale(.99)}
@@ -359,9 +360,44 @@ body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
 .dashboard-row-time{font-size:10px;color:#999;white-space:nowrap;flex-shrink:0}
 .dashboard-empty{padding:16px 10px;text-align:center;font-size:13px;color:#999;background:#faf9ff;border-radius:14px}
 .dashboard-actions{display:flex;gap:8px;margin-top:10px}
-.dashboard-actions a,.dashboard-actions button{flex:1;min-width:0;text-align:center;border:0;border-radius:12px;padding:10px 8px;background:#f0edff;color:#6250bd;text-decoration:none;font-size:12px;font-weight:800}
+.dashboard-actions a,.dashboard-actions button{flex:1;min-width:0;text-align:center;border:0;border-radius:12px;padding:10px 8px;background:var(--theme-light);color:var(--theme-text);text-decoration:none;font-size:12px;font-weight:800}
 .dashboard-schedule-date{font-size:12px;color:#999;margin-top:3px}
 @media(max-width:380px){.dashboard-card{padding:13px}.dashboard-profile-name{font-size:16px}.dashboard-row{gap:8px;padding:9px}.dashboard-row-time{font-size:9px}}
+
+
+    /* 選択したテーマカラーをホームの操作・見出し・ナビに反映 */
+    .notification-button,
+    .announcement-button,
+    .direct-chat,
+    .profile,
+    .groups,
+    .friends,
+    .board,
+    .schedule,
+    .games,
+    .coin { background: var(--theme-light); }
+
+    .dashboard-heading,
+    .dashboard-card-title,
+    .dashboard-profile-link,
+    .dashboard-actions a,
+    .dashboard-actions button { color: var(--theme-text); }
+
+    .dashboard-edit,
+    .dashboard-card-tools button,
+    .dashboard-actions a,
+    .dashboard-actions button {
+      background: var(--theme-light);
+    }
+
+    .dashboard-avatar { border-color: var(--theme); }
+    .dashboard-card.dragging,
+    .dashboard-card.drop-target { outline-color: var(--theme); }
+    .dashboard-card-tools input { accent-color: var(--theme); }
+    #fc-bottom-nav a.fc-active {
+      color: var(--theme-text);
+      background: var(--theme-light);
+    }
 
 </style>
 </head>
