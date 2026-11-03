@@ -225,6 +225,7 @@ body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
       </div>
       <div id="radarShareStatus" class="radar-share-status" role="status">位置共有は停止中です。</div>
       <div id="radarCompassReadout" class="radar-share-status" aria-live="polite">🧭 自分の向き：取得待ち</div>
+      <button id="radarCompassRetry" type="button" class="radar-toggle" style="margin-top:8px;background:#397b9b;width:100%">🧭 コンパスを再接続</button>
       <div id="radarList" class="radar-list"><div class="radar-empty">共有中のフレンドはここに表示されます。</div></div>
       <p class="radar-description" style="margin:10px 0 0">※ブラウザを閉じたりバックグラウンドにするとGPS更新が止まる場合があります。画面に戻ると更新を再開します。位置共有は期限内でもいつでも停止できます。</p>
     </section>
@@ -415,6 +416,7 @@ async function cancelRequest(id){
 
 // フレンドレーダー：相互に位置共有を許可したフレンドのみ距離・方角を表示
 let radarWatchId=null,radarPollTimer=null,radarExpiryTimer=null,radarShareExpiry=null,radarMyPosition=null,radarBusy=false,radarMyHeading=null,radarCompassActive=false,radarLastHeadingSend=0,radarLoadingFriends=false;
+let radarCompassEventSeen=false,radarCompassCheckTimer=null;
 const radarProfiles=new Map();
 function radarDistance(a,b){
   const rad=x=>x*Math.PI/180,R=6371000;
@@ -462,9 +464,17 @@ function radarCompassDirection(degrees){
 }
 function radarUpdateCompassVisuals(){
   const readout=document.getElementById("radarCompassReadout");
-  if(readout)readout.textContent=Number.isFinite(radarMyHeading)
-    ?"🧭 自分の向き："+radarCompassDirection(radarMyHeading)+"（"+Math.round(radarMyHeading)+"°）"
-    :"🧭 自分の向き：センサーの情報を待っています";
+  if(readout){
+    if(Number.isFinite(radarMyHeading)){
+      readout.textContent="🧭 自分の向き："+radarCompassDirection(radarMyHeading)+"（"+Math.round(radarMyHeading)+"°）";
+    }else if(radarCompassEventSeen){
+      readout.textContent="🧭 センサー反応あり・絶対方位を取得できていません";
+    }else if(radarCompassActive){
+      readout.textContent="🧭 コンパス接続中：端末をゆっくり動かしてください";
+    }else{
+      readout.textContent="🧭 自分の向き：再接続が必要です";
+    }
+  }
   document.querySelectorAll(".radar-person").forEach(card=>{
     const marker=card.querySelector(".radar-visual-friend");
     const label=card.querySelector(".radar-person-direction.radar-relative-label");
@@ -489,15 +499,25 @@ function radarUpdateCompassVisuals(){
   });
 }
 function radarHandleOrientation(event){
+  radarCompassEventSeen=true;
   let heading=null;
-  if(Number.isFinite(event.webkitCompassHeading)){
+
+  // iPhone Safari独自のコンパス値を最優先する。
+  if(typeof event.webkitCompassHeading==="number"&&Number.isFinite(event.webkitCompassHeading)){
     heading=event.webkitCompassHeading;
-  }else if(event.absolute===true&&Number.isFinite(event.alpha)){
+  }else if(event.absolute===true&&typeof event.alpha==="number"&&Number.isFinite(event.alpha)){
+    // absolute=true の alpha のみを北基準の方位として扱う。
     heading=(360-event.alpha+360)%360;
   }
-  if(heading===null)return;
+
+  if(heading===null){
+    radarUpdateCompassVisuals();
+    return;
+  }
+
   radarMyHeading=(heading+360)%360;
   radarUpdateCompassVisuals();
+
   if(radarMyPosition&&Date.now()-radarLastHeadingSend>1000){
     radarLastHeadingSend=Date.now();
     supabaseClient.rpc("update_my_friend_location",{
@@ -509,29 +529,60 @@ function radarHandleOrientation(event){
 }
 async function radarRequestCompassPermission(){
   const Orientation=window.DeviceOrientationEvent;
-  if(!Orientation){radarSetStatus("この端末はコンパス方位の取得に対応していません。");return false}
+  if(!Orientation){
+    const readout=document.getElementById("radarCompassReadout");
+    if(readout)readout.textContent="🧭 このブラウザは方位センサーに対応していません";
+    return false;
+  }
   try{
+    // 再接続時は古いリスナーを一度外してから登録し直す。
+    window.removeEventListener("deviceorientation",radarHandleOrientation,true);
+    window.removeEventListener("deviceorientationabsolute",radarHandleOrientation,true);
+    radarMyHeading=null;
+    radarCompassEventSeen=false;
+
+    // iOS Safariでは requestPermission() をボタン操作の直後に呼ぶ必要がある。
     if(typeof Orientation.requestPermission==="function"){
       const permission=await Orientation.requestPermission();
-      if(permission!=="granted"){radarSetStatus("方位センサーが許可されていません。位置共有は続けますが、友達の向きは表示できません。");return false}
+      if(permission!=="granted"){
+        const readout=document.getElementById("radarCompassReadout");
+        if(readout)readout.textContent="🧭 方位センサーが許可されていません。設定を確認して再接続してください";
+        radarCompassActive=false;
+        return false;
+      }
     }
+
     window.addEventListener("deviceorientation",radarHandleOrientation,true);
     window.addEventListener("deviceorientationabsolute",radarHandleOrientation,true);
     radarCompassActive=true;
     radarUpdateCompassVisuals();
-    radarSetStatus("位置とコンパスの共有中です。端末の向きを取得しています。");
+
+    clearTimeout(radarCompassCheckTimer);
+    radarCompassCheckTimer=setTimeout(()=>{
+      if(!Number.isFinite(radarMyHeading)){
+        const readout=document.getElementById("radarCompassReadout");
+        if(readout){
+          readout.textContent=radarCompassEventSeen
+            ?"🧭 センサー反応あり・北基準の方位が未取得です"
+            :"🧭 センサー情報が届いていません。もう一度「コンパスを再接続」を押してください";
+        }
+      }
+    },5000);
     return true;
   }catch(error){
     console.warn("コンパス許可エラー:",error);
-    radarSetStatus("コンパスを利用できません。位置共有は続けます。");
+    const readout=document.getElementById("radarCompassReadout");
+    if(readout)readout.textContent="🧭 コンパスを接続できませんでした。再接続を試してください";
+    radarCompassActive=false;
     return false;
   }
 }
 function radarStopCompass(){
-  if(!radarCompassActive)return;
+  clearTimeout(radarCompassCheckTimer);
   window.removeEventListener("deviceorientation",radarHandleOrientation,true);
   window.removeEventListener("deviceorientationabsolute",radarHandleOrientation,true);
   radarCompassActive=false;
+  radarCompassEventSeen=false;
   radarMyHeading=null;
   radarUpdateCompassVisuals();
 }
@@ -653,6 +704,7 @@ async function radarToggleSharing(){
   finally{button.disabled=false;radarBusy=false;}
 }
 document.getElementById("radarToggle").addEventListener("click",radarToggleSharing);
+document.getElementById("radarCompassRetry").addEventListener("click",()=>{radarRequestCompassPermission()});
 
 function openRadarModal(){
   const modal=document.getElementById("radarModal");
