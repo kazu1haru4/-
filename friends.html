@@ -659,6 +659,15 @@ function openRadarModal(){
   modal.hidden=false;
   document.body.style.overflow="hidden";
   clearInterval(radarPollTimer);
+
+  // ページ再読み込み後、共有が有効ならGPS監視を再開する。
+  // iPhone Safariの方位センサーはユーザー操作が必要なため、
+  // レーダーを開くタップをきっかけにコンパスも再接続する。
+  if(radarShareExpiry && radarShareExpiry.getTime()>Date.now()){
+    radarStartWatch();
+    if(!radarCompassActive) radarRequestCompassPermission();
+  }
+
   radarLoadFriends();
   radarPollTimer=setInterval(radarLoadFriends,2000);
 }
