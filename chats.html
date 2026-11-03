@@ -4,8 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>個別チャット - フレンドチャット</title>
+  <script src="./theme.js"></script>
 
   <style>
+    :root {
+      --theme: #8f7cff;
+      --theme-light: #f0edff;
+      --theme-text: #5e50c9;
+    }
+
     * { box-sizing: border-box; }
 
     body {
@@ -13,7 +20,7 @@
       min-height: 100vh;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
         "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
-      background: linear-gradient(135deg, #fff3fb, #eef5ff);
+      background: linear-gradient(135deg, var(--theme-light), #ffffff);
       color: #333;
       padding: 20px;
     }
@@ -37,7 +44,7 @@
       width: 45px;
       height: 45px;
       border-radius: 15px;
-      background: #f3f0ff;
+      background: var(--theme-light);
       text-decoration: none;
       display: flex;
       align-items: center;
@@ -72,8 +79,8 @@
       border: none;
       border-radius: 18px;
       padding: 15px;
-      background: #eeeaff;
-      color: #5e50c9;
+      background: var(--theme-light);
+      color: var(--theme-text);
       font-size: 15px;
       font-weight: bold;
       text-decoration: none;
@@ -181,7 +188,7 @@
       border-radius: 50%;
       object-fit: cover;
       display: block;
-      background: #eeeaff;
+      background: var(--theme-light);
       border: 2px solid white;
     }
 
@@ -189,7 +196,7 @@
       width: 100%;
       height: 100%;
       border-radius: 50%;
-      background: #eeeaff;
+      background: var(--theme-light);
       border: 2px solid white;
       display: flex;
       align-items: center;
@@ -339,7 +346,7 @@
   color: #6b4fc7;
   background: linear-gradient(135deg, #f0eaff, #e8e1ff);
 }
-#fc-bottom-nav a:focus-visible { outline: 2px solid #8b73df; outline-offset: 1px; }
+#fc-bottom-nav a:focus-visible { outline: 2px solid var(--theme); outline-offset: 1px; }
 body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
 @media (min-width: 700px) {
   #fc-bottom-nav { left: 50%; right: auto; width: min(100%, 620px); transform: translateX(-50%); border-left: 1px solid rgba(133,111,198,.15); border-right: 1px solid rgba(133,111,198,.15); border-radius: 16px 16px 0 0; }
