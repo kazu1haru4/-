@@ -148,6 +148,10 @@ body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
 .radar-person{display:flex;align-items:center;gap:10px;padding:11px;background:white;border:1px solid #e6eee9;border-radius:13px}
 .radar-person-info{flex:1;min-width:0}.radar-person-name{font-weight:800;font-size:14px;overflow-wrap:anywhere}.radar-person-direction{font-size:12px;color:#718078;margin-top:3px}
 .radar-distance{font-size:16px;font-weight:900;color:#287b59;white-space:nowrap;font-variant-numeric:tabular-nums}
+.radar-person.is-stale{border-color:#ead9b5;background:#fffdf8}
+.radar-person-update{font-size:11px;color:#27835d;margin-top:4px;line-height:1.45}
+.radar-person.is-stale .radar-person-update{color:#9a6b24;font-weight:800}
+.radar-person.is-stale .radar-visual-friend{opacity:.65}
 
 .radar-visual{position:relative;flex:0 0 66px;width:66px;height:66px;border:1px solid #cfe5d8;border-radius:50%;background:radial-gradient(circle,#fff 0 27%,#edf8f1 28% 100%);box-shadow:inset 0 0 0 5px rgba(255,255,255,.75)}
 .radar-visual:before,.radar-visual:after{content:"";position:absolute;background:#d6e8dc}
@@ -220,7 +224,7 @@ body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
       <div class="radar-title"><span id="radarTitle">位置共有・フレンド情報</span><span id="radarCount" style="font-size:12px;color:#6b8d7b">0人</span></div>
       <p class="radar-description">丸いレーダーで友達のいる方向と、友達アイコンの矢印で相手が向いている方向を直感的に表示します。自分が向いている方向を基準に、友達が正面・後ろ・右・左のどこにいるかを表示します。自分のコンパスに合わせて判定もすぐ更新されます。お互いが共有を開始した場合のみ表示されます。コンパスの許可も必要な端末があります。</p>
       <div class="radar-controls">
-        <select id="radarDuration" aria-label="位置共有の時間"><option value="15">15分間</option><option value="30" selected>30分間</option><option value="60">1時間</option></select>
+        <select id="radarDuration" aria-label="位置共有の時間"><option value="0">常に（停止するまで）</option><option value="15">15分間</option><option value="30" selected>30分間</option><option value="60">1時間</option></select>
         <button id="radarToggle" class="radar-toggle" type="button">位置共有を開始</button>
       </div>
       <div id="radarShareStatus" class="radar-share-status" role="status">位置共有は停止中です。</div>
@@ -416,6 +420,8 @@ async function cancelRequest(id){
 
 // フレンドレーダー：相互に位置共有を許可したフレンドのみ距離・方角を表示
 let radarWatchId=null,radarPollTimer=null,radarExpiryTimer=null,radarShareExpiry=null,radarMyPosition=null,radarBusy=false,radarMyHeading=null,radarCompassActive=false,radarLastHeadingSend=0,radarLoadingFriends=false;
+let radarSharePermanent=false;
+function radarIsSharing(){return radarSharePermanent||(!!radarShareExpiry&&radarShareExpiry.getTime()>Date.now())}
 let radarCompassEventSeen=false,radarCompassCheckTimer=null;
 const radarProfiles=new Map();
 function radarDistance(a,b){
@@ -604,19 +610,22 @@ async function radarLoadFriends(){
   try{
   const {data:rows,error}=await supabaseClient.rpc("get_mutual_friend_locations");
   if(error){console.warn("レーダー取得エラー:",error);list.innerHTML='<div class="radar-empty">位置情報を読み込めませんでした。</div>';return}
-  const fresh=(rows||[]).filter(r=>Date.now()-new Date(r.updated_at).getTime()<120000);
-  document.getElementById("radarCount").textContent=fresh.length+"人";
-  if(!fresh.length){list.innerHTML='<div class="radar-empty">現在、相互に位置共有中のフレンドはいません。<br>自分と友達の両方が共有を開始すると表示されます。</div>';return}
-  const ids=fresh.map(r=>r.user_id).filter(Boolean);
+  const sharedFriends=(rows||[]).filter(r=>r.updated_at);
+  document.getElementById("radarCount").textContent=sharedFriends.length+"人";
+  if(!sharedFriends.length){list.innerHTML='<div class="radar-empty">現在、相互に位置共有中のフレンドはいません。<br>自分と友達の両方が共有を開始すると表示されます。</div>';return}
+  const ids=sharedFriends.map(r=>r.user_id).filter(Boolean);
   const {data:profiles,error:profileError}=await supabaseClient.from("profiles").select("user_id,name").in("user_id",ids);
   if(profileError)console.warn("レーダープロフィール取得:",profileError);
   const names=new Map((profiles||[]).map(p=>[p.user_id,p.name||p.user_id]));
   list.innerHTML="";
   if(!radarMyPosition){list.innerHTML='<div class="radar-empty">自分の現在地を取得中です…</div>';return}
-  fresh.forEach(friend=>{
+  sharedFriends.forEach(friend=>{
+    const lastUpdated=new Date(friend.updated_at);
+    const ageMs=Math.max(0,Date.now()-lastUpdated.getTime());
+    const isStale=ageMs>=120000;
     const distance=radarDistance(radarMyPosition,{latitude:Number(friend.latitude),longitude:Number(friend.longitude)});
     const bearing=radarBearing(radarMyPosition,{latitude:Number(friend.latitude),longitude:Number(friend.longitude)});
-    const card=document.createElement("div");card.className="radar-person";
+    const card=document.createElement("div");card.className="radar-person"+(isStale?" is-stale":"");
     const visualWrap=document.createElement("div");visualWrap.className="radar-visual-wrap";
     const visual=document.createElement("div");visual.className="radar-visual";
     const center=document.createElement("div");center.className="radar-visual-center";
@@ -624,7 +633,7 @@ async function radarLoadFriends(){
     const arrow=document.createElement("span");arrow.className="radar-visual-arrow";arrow.textContent="▲";
     const viewerHeading=Number.isFinite(radarMyHeading)?radarMyHeading:0;
     const relativeBearing=((bearing-viewerHeading+360)%360);
-    const friendHeading=friend.heading_degrees===null||friend.heading_degrees===undefined?NaN:Number(friend.heading_degrees);
+    const friendHeading=isStale||friend.heading_degrees===null||friend.heading_degrees===undefined?NaN:Number(friend.heading_degrees);
     const relativeFacing=Number.isFinite(friendHeading)?((friendHeading-viewerHeading-relativeBearing+720)%360):null;
     friendMarker.dataset.bearing=String(bearing);
     friendMarker.dataset.friendHeading=Number.isFinite(friendHeading)?String(friendHeading):"";
@@ -638,7 +647,17 @@ async function radarLoadFriends(){
     const name=document.createElement("div");name.className="radar-person-name";name.textContent=names.get(friend.user_id)||friend.user_id;
     const direction=document.createElement("div");direction.className="radar-person-direction";direction.textContent="📍 あなたから："+radarDirection(bearing);
     const facing=document.createElement("div");facing.className="radar-person-direction radar-relative-label";facing.textContent="🧭 友達は："+radarRelativeDirection(bearing,radarMyHeading);
-    info.append(name,direction,facing);
+    const update=document.createElement("div");update.className="radar-person-update";
+    const timeText=lastUpdated.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+    if(isStale){
+      const minutes=Math.floor(ageMs/60000);
+      update.textContent="⚠️ 最終更新："+timeText+"（"+minutes+"分前）";
+      direction.textContent="📍 最後に確認した方向："+radarDirection(bearing);
+      facing.textContent="🧭 向き情報も古い可能性があります";
+    }else{
+      update.textContent="● 更新中・最終更新："+timeText;
+    }
+    info.append(name,direction,facing,update);
     const dist=document.createElement("div");dist.className="radar-distance";dist.textContent=radarFormatDistance(distance);
     card.append(visualWrap,info,dist);list.appendChild(card);
   });
@@ -648,16 +667,20 @@ async function radarRefreshOwnShare(){
   const {data,error}=await supabaseClient.rpc("get_my_friend_location_share");
   if(error){console.warn("共有状態取得:",error);return}
   const share=(data||[])[0];
-  if(share?.expires_at&&new Date(share.expires_at).getTime()>Date.now()){
-    radarShareExpiry=new Date(share.expires_at);
+  if(share?.enabled&&(share.expires_at===null||new Date(share.expires_at).getTime()>Date.now())){
+    radarSharePermanent=share.expires_at===null;
+    radarShareExpiry=radarSharePermanent?null:new Date(share.expires_at);
     document.getElementById("radarToggle").textContent="共有を停止";
     document.getElementById("radarToggle").classList.add("stop");
     document.getElementById("radarDuration").disabled=true;
-    radarSetStatus("位置共有中・終了予定："+radarShareExpiry.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"}));
+    radarSetStatus(radarSharePermanent
+      ?"位置共有中・終了予定：常に（停止するまで）"
+      :"位置共有中・終了予定："+radarShareExpiry.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"}));
     radarStartWatch();
-    radarStartExpiryTimer();
+    if(!radarSharePermanent)radarStartExpiryTimer();
+    else clearInterval(radarExpiryTimer);
   }else{
-    radarShareExpiry=null;radarStopWatch();
+    radarSharePermanent=false;radarShareExpiry=null;radarStopWatch();
     document.getElementById("radarToggle").textContent="位置共有を開始";
     document.getElementById("radarToggle").classList.remove("stop");
     document.getElementById("radarDuration").disabled=false;
@@ -667,8 +690,8 @@ async function radarRefreshOwnShare(){
 function radarStartExpiryTimer(){
   clearInterval(radarExpiryTimer);
   radarExpiryTimer=setInterval(async()=>{
-    if(radarShareExpiry&&Date.now()>=radarShareExpiry.getTime()){
-      radarStopWatch();radarStopCompass();clearInterval(radarExpiryTimer);radarShareExpiry=null;
+    if(!radarSharePermanent&&radarShareExpiry&&Date.now()>=radarShareExpiry.getTime()){
+      radarStopWatch();radarStopCompass();clearInterval(radarExpiryTimer);radarShareExpiry=null;radarSharePermanent=false;
       await supabaseClient.rpc("set_friend_location_sharing",{p_enabled:false,p_duration_minutes:30});
       await radarRefreshOwnShare();await radarLoadFriends();
     }
@@ -676,16 +699,16 @@ function radarStartExpiryTimer(){
 }
 async function radarToggleSharing(){
   if(radarBusy)return;
-  const isCurrentlySharing=!!(radarShareExpiry&&radarShareExpiry.getTime()>Date.now());
+  const isCurrentlySharing=radarIsSharing();
   const compassPermissionPromise=isCurrentlySharing?Promise.resolve(false):radarRequestCompassPermission();
   radarBusy=true;
   const button=document.getElementById("radarToggle");button.disabled=true;
   try{
-    if(radarShareExpiry&&radarShareExpiry.getTime()>Date.now()){
+    if(radarIsSharing()){
       radarStopWatch();radarStopCompass();clearInterval(radarExpiryTimer);
       const {error}=await supabaseClient.rpc("set_friend_location_sharing",{p_enabled:false,p_duration_minutes:30});
       if(error)throw error;
-      radarShareExpiry=null;radarMyPosition=null;
+      radarShareExpiry=null;radarSharePermanent=false;radarMyPosition=null;
       radarSetStatus("位置共有を停止しました。");
       await radarRefreshOwnShare();await radarLoadFriends();
     }else{
@@ -695,9 +718,12 @@ async function radarToggleSharing(){
       await compassPermissionPromise;
       const {data,error}=await supabaseClient.rpc("set_friend_location_sharing",{p_enabled:true,p_duration_minutes:minutes});
       if(error)throw error;
-      radarShareExpiry=data?new Date(data):new Date(Date.now()+minutes*60000);
+      radarSharePermanent=minutes===0;
+      radarShareExpiry=radarSharePermanent?null:(data?new Date(data):new Date(Date.now()+minutes*60000));
       await radarRefreshOwnShare();
-      radarSetStatus("位置共有中です。GPSの取得を開始しました。");
+      radarSetStatus(radarSharePermanent
+        ?"位置共有中・終了予定：常に（停止するまで）"
+        :"位置共有中です。GPSの取得を開始しました。");
       radarStartWatch();
     }
   }catch(e){console.error("位置共有切替エラー:",e);radarSetStatus("設定できませんでした："+(e.message||String(e)));}
@@ -715,7 +741,7 @@ function openRadarModal(){
   // ページ再読み込み後、共有が有効ならGPS監視を再開する。
   // iPhone Safariの方位センサーはユーザー操作が必要なため、
   // レーダーを開くタップをきっかけにコンパスも再接続する。
-  if(radarShareExpiry && radarShareExpiry.getTime()>Date.now()){
+  if(radarIsSharing()){
     radarStartWatch();
     if(!radarCompassActive) radarRequestCompassPermission();
   }
@@ -734,7 +760,7 @@ document.getElementById("closeRadarButton").addEventListener("click",closeRadarM
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!document.getElementById("radarModal").hidden)closeRadarModal()});
 document.addEventListener("visibilitychange",()=>{
   if(document.visibilityState==="visible"){
-    if(radarShareExpiry&&radarShareExpiry.getTime()>Date.now()){
+    if(radarIsSharing()){
       radarStartWatch();
       navigator.geolocation?.getCurrentPosition(radarSendPosition,radarPositionError,{enableHighAccuracy:true,maximumAge:0,timeout:20000});
     }
