@@ -218,12 +218,13 @@ body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
     </div>
     <section class="radar-box" aria-labelledby="radarTitle">
       <div class="radar-title"><span id="radarTitle">位置共有・フレンド情報</span><span id="radarCount" style="font-size:12px;color:#6b8d7b">0人</span></div>
-      <p class="radar-description">丸いレーダーで友達のいる方向と、友達アイコンの矢印で相手が向いている方向を直感的に表示します。距離も確認できます。お互いが共有を開始した場合のみ表示されます。コンパスの許可も必要な端末があります。</p>
+      <p class="radar-description">丸いレーダーで友達のいる方向と、友達アイコンの矢印で相手が向いている方向を直感的に表示します。自分が向いている方向を基準に、友達が正面・後ろ・右・左のどこにいるかを表示します。自分のコンパスに合わせて判定もすぐ更新されます。お互いが共有を開始した場合のみ表示されます。コンパスの許可も必要な端末があります。</p>
       <div class="radar-controls">
         <select id="radarDuration" aria-label="位置共有の時間"><option value="15">15分間</option><option value="30" selected>30分間</option><option value="60">1時間</option></select>
         <button id="radarToggle" class="radar-toggle" type="button">位置共有を開始</button>
       </div>
       <div id="radarShareStatus" class="radar-share-status" role="status">位置共有は停止中です。</div>
+      <div id="radarCompassReadout" class="radar-share-status" aria-live="polite">🧭 自分の向き：取得待ち</div>
       <div id="radarList" class="radar-list"><div class="radar-empty">共有中のフレンドはここに表示されます。</div></div>
       <p class="radar-description" style="margin:10px 0 0">※ブラウザを閉じたりバックグラウンドにするとGPS更新が止まる場合があります。画面に戻ると更新を再開します。位置共有は期限内でもいつでも停止できます。</p>
     </section>
@@ -413,7 +414,7 @@ async function cancelRequest(id){
 }
 
 // フレンドレーダー：相互に位置共有を許可したフレンドのみ距離・方角を表示
-let radarWatchId=null,radarPollTimer=null,radarExpiryTimer=null,radarShareExpiry=null,radarMyPosition=null,radarBusy=false,radarMyHeading=null,radarCompassActive=false,radarLastHeadingSend=0;
+let radarWatchId=null,radarPollTimer=null,radarExpiryTimer=null,radarShareExpiry=null,radarMyPosition=null,radarBusy=false,radarMyHeading=null,radarCompassActive=false,radarLastHeadingSend=0,radarLoadingFriends=false;
 const radarProfiles=new Map();
 function radarDistance(a,b){
   const rad=x=>x*Math.PI/180,R=6371000;
@@ -447,20 +448,57 @@ function radarHeadingLabel(degrees){
   const i=Math.round((Number(degrees)%360)/45)%8;
   return dirs[i]+"向き";
 }
-function radarRelativeDirection(friendBearing,friendHeading){
-  if(friendHeading===null||friendHeading===undefined||!Number.isFinite(Number(friendHeading)))return "取得できません";
-  const diff=((Number(friendBearing)-Number(friendHeading)+540)%360)-180;
-  if(Math.abs(diff)<22.5)return "あなたの方を向いている";
-  if(Math.abs(diff)>157.5)return "あなたに背を向けている";
-  return diff>0?"あなたから見て左方向":"あなたから見て右方向";
+function radarRelativeDirection(friendBearing,viewerHeading){
+  if(!Number.isFinite(viewerHeading))return "自分のコンパス取得待ち";
+  const diff=((Number(friendBearing)-Number(viewerHeading)+540)%360)-180;
+  const abs=Math.abs(diff);
+  if(abs<45)return "正面";
+  if(abs>135)return "後ろ";
+  return diff>0?"右":"左";
+}
+function radarCompassDirection(degrees){
+  const dirs=["北","北東","東","南東","南","南西","西","北西"];
+  return dirs[Math.round(((degrees%360)+360)%360/45)%8];
+}
+function radarUpdateCompassVisuals(){
+  const readout=document.getElementById("radarCompassReadout");
+  if(readout)readout.textContent=Number.isFinite(radarMyHeading)
+    ?"🧭 自分の向き："+radarCompassDirection(radarMyHeading)+"（"+Math.round(radarMyHeading)+"°）"
+    :"🧭 自分の向き：センサーの情報を待っています";
+  document.querySelectorAll(".radar-person").forEach(card=>{
+    const marker=card.querySelector(".radar-visual-friend");
+    const label=card.querySelector(".radar-person-direction.radar-relative-label");
+    if(marker&&label)label.textContent="🧭 友達は："+radarRelativeDirection(Number(marker.dataset.bearing),radarMyHeading);
+  });
+  document.querySelectorAll(".radar-visual-friend").forEach(marker=>{
+    const bearing=Number(marker.dataset.bearing);
+    const friendHeading=marker.dataset.friendHeading===""?NaN:Number(marker.dataset.friendHeading);
+    const viewerHeading=Number.isFinite(radarMyHeading)?radarMyHeading:0;
+    const relativeBearing=((bearing-viewerHeading+360)%360);
+    marker.style.transform="rotate("+relativeBearing+"deg)";
+    const arrow=marker.querySelector(".radar-visual-arrow");
+    if(!arrow)return;
+    if(Number.isFinite(friendHeading)){
+      const relativeFacing=((friendHeading-viewerHeading-relativeBearing+720)%360);
+      arrow.textContent="▲";
+      arrow.style.transform="rotate("+relativeFacing+"deg)";
+    }else{
+      arrow.textContent="?";
+      arrow.style.transform="none";
+    }
+  });
 }
 function radarHandleOrientation(event){
   let heading=null;
-  if(Number.isFinite(event.webkitCompassHeading))heading=event.webkitCompassHeading;
-  else if(event.absolute===true&&Number.isFinite(event.alpha))heading=(360-event.alpha+360)%360;
+  if(Number.isFinite(event.webkitCompassHeading)){
+    heading=event.webkitCompassHeading;
+  }else if(event.absolute===true&&Number.isFinite(event.alpha)){
+    heading=(360-event.alpha+360)%360;
+  }
   if(heading===null)return;
   radarMyHeading=(heading+360)%360;
-  if(radarMyPosition&&Date.now()-radarLastHeadingSend>1800){
+  radarUpdateCompassVisuals();
+  if(radarMyPosition&&Date.now()-radarLastHeadingSend>1000){
     radarLastHeadingSend=Date.now();
     supabaseClient.rpc("update_my_friend_location",{
       p_latitude:radarMyPosition.latitude,
@@ -480,6 +518,7 @@ async function radarRequestCompassPermission(){
     window.addEventListener("deviceorientation",radarHandleOrientation,true);
     window.addEventListener("deviceorientationabsolute",radarHandleOrientation,true);
     radarCompassActive=true;
+    radarUpdateCompassVisuals();
     radarSetStatus("位置とコンパスの共有中です。端末の向きを取得しています。");
     return true;
   }catch(error){
@@ -494,6 +533,7 @@ function radarStopCompass(){
   window.removeEventListener("deviceorientationabsolute",radarHandleOrientation,true);
   radarCompassActive=false;
   radarMyHeading=null;
+  radarUpdateCompassVisuals();
 }
 function radarPositionError(error){
   console.warn("GPS error:",error);
@@ -506,7 +546,11 @@ function radarStartWatch(){
   radarWatchId=navigator.geolocation.watchPosition(radarSendPosition,radarPositionError,{enableHighAccuracy:true,maximumAge:10000,timeout:20000});
 }
 async function radarLoadFriends(){
-  const list=document.getElementById("radarList");if(!list||!currentUsername)return;
+  const modal=document.getElementById("radarModal");
+  if(modal?.hidden||radarLoadingFriends||!currentUsername)return;
+  const list=document.getElementById("radarList");if(!list)return;
+  radarLoadingFriends=true;
+  try{
   const {data:rows,error}=await supabaseClient.rpc("get_mutual_friend_locations");
   if(error){console.warn("レーダー取得エラー:",error);list.innerHTML='<div class="radar-empty">位置情報を読み込めませんでした。</div>';return}
   const fresh=(rows||[]).filter(r=>Date.now()-new Date(r.updated_at).getTime()<120000);
@@ -527,10 +571,12 @@ async function radarLoadFriends(){
     const center=document.createElement("div");center.className="radar-visual-center";
     const friendMarker=document.createElement("div");friendMarker.className="radar-visual-friend";friendMarker.textContent="👤";
     const arrow=document.createElement("span");arrow.className="radar-visual-arrow";arrow.textContent="▲";
-    const viewerHeading=Number.isFinite(Number(radarMyHeading))?Number(radarMyHeading):0;
+    const viewerHeading=Number.isFinite(radarMyHeading)?radarMyHeading:0;
     const relativeBearing=((bearing-viewerHeading+360)%360);
-    const friendHeading=Number(friend.heading_degrees);
-    const relativeFacing=Number.isFinite(friendHeading)?((friendHeading-viewerHeading+360)%360):null;
+    const friendHeading=friend.heading_degrees===null||friend.heading_degrees===undefined?NaN:Number(friend.heading_degrees);
+    const relativeFacing=Number.isFinite(friendHeading)?((friendHeading-viewerHeading-relativeBearing+720)%360):null;
+    friendMarker.dataset.bearing=String(bearing);
+    friendMarker.dataset.friendHeading=Number.isFinite(friendHeading)?String(friendHeading):"";
     friendMarker.style.transform="rotate("+relativeBearing+"deg)";
     if(relativeFacing!==null)arrow.style.transform="rotate("+relativeFacing+"deg)";
     else arrow.textContent="?";
@@ -540,11 +586,12 @@ async function radarLoadFriends(){
     const info=document.createElement("div");info.className="radar-person-info";
     const name=document.createElement("div");name.className="radar-person-name";name.textContent=names.get(friend.user_id)||friend.user_id;
     const direction=document.createElement("div");direction.className="radar-person-direction";direction.textContent="📍 あなたから："+radarDirection(bearing);
-    const facing=document.createElement("div");facing.className="radar-person-direction";facing.textContent="🧭 "+radarRelativeDirection(bearing,friend.heading_degrees);
+    const facing=document.createElement("div");facing.className="radar-person-direction radar-relative-label";facing.textContent="🧭 友達は："+radarRelativeDirection(bearing,radarMyHeading);
     info.append(name,direction,facing);
     const dist=document.createElement("div");dist.className="radar-distance";dist.textContent=radarFormatDistance(distance);
     card.append(visualWrap,info,dist);list.appendChild(card);
   });
+  }finally{radarLoadingFriends=false}
 }
 async function radarRefreshOwnShare(){
   const {data,error}=await supabaseClient.rpc("get_my_friend_location_share");
@@ -611,11 +658,15 @@ function openRadarModal(){
   const modal=document.getElementById("radarModal");
   modal.hidden=false;
   document.body.style.overflow="hidden";
+  clearInterval(radarPollTimer);
   radarLoadFriends();
+  radarPollTimer=setInterval(radarLoadFriends,2000);
 }
 function closeRadarModal(){
   document.getElementById("radarModal").hidden=true;
   document.body.style.overflow="";
+  clearInterval(radarPollTimer);
+  radarPollTimer=null;
 }
 document.getElementById("openRadarButton").addEventListener("click",openRadarModal);
 document.getElementById("closeRadarButton").addEventListener("click",closeRadarModal);
