@@ -371,6 +371,13 @@ body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
   color: var(--theme);
 }
 
+/* ホーム・フレンド・その他のアイコンは元の色に戻す */
+#fc-bottom-nav a[data-fc-page="home"] .fc-nav-icon,
+#fc-bottom-nav a[data-fc-page="friends"] .fc-nav-icon,
+#fc-bottom-nav a[data-fc-page="other"] .fc-nav-icon {
+  color: #77718a;
+}
+
 #fc-bottom-nav a.fc-active {
   color: #77718a;
   background: var(--theme-light);
