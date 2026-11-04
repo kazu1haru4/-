@@ -362,29 +362,25 @@ body { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
   color: var(--theme-text);
 }
 
-/* 下部ナビ：ホーム・チャット・グループ等のアイコンと文字 */
+/* 下部ナビ：現在のページ名（チャット）の文字だけテーマカラーにする */
 #fc-bottom-nav a {
   color: #77718a;
 }
 
+/* アイコンはすべて元のグレーを維持 */
 #fc-bottom-nav a .fc-nav-icon {
-  color: var(--theme);
-}
-
-/* ホーム・フレンド・その他のアイコンは元の色に戻す */
-#fc-bottom-nav a[data-fc-page="home"] .fc-nav-icon,
-#fc-bottom-nav a[data-fc-page="friends"] .fc-nav-icon,
-#fc-bottom-nav a[data-fc-page="other"] .fc-nav-icon {
   color: #77718a;
 }
 
+/* 現在開いているページの文字だけテーマカラー */
 #fc-bottom-nav a.fc-active {
-  color: #77718a;
+  color: var(--theme-text);
   background: var(--theme-light);
 }
 
+/* アクティブ項目のアイコンもグレーのまま */
 #fc-bottom-nav a.fc-active .fc-nav-icon {
-  color: var(--theme-text);
+  color: #77718a;
 }
 
 #fc-bottom-nav {
