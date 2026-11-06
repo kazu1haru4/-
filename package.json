@@ -1,0 +1,20 @@
+{
+  "name": "friend-chat-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Friend Chat Capacitor app wrapper",
+  "scripts": {
+    "prepare:web": "node scripts/prepare-web.mjs",
+    "cap:sync": "npm run prepare:web && cap sync",
+    "cap:android": "npm run prepare:web && cap add android && cap sync android",
+    "cap:ios": "npm run prepare:web && cap add ios && cap sync ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.4.3",
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/ios": "^7.4.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.3"
+  }
+}
