@@ -1,0 +1,58 @@
+name: Build iOS Simulator
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "package.json"
+      - "capacitor.config.ts"
+      - "scripts/**"
+      - ".github/workflows/ios-simulator.yml"
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Prepare web files
+        run: node scripts/prepare-web.mjs
+
+      - name: Add and sync iOS
+        run: |
+          npx cap add ios
+          npx cap sync ios
+
+      - name: Build iOS Simulator app
+        run: |
+          xcodebuild \
+            -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Package simulator app
+        run: |
+          cd build/Build/Products/Debug-iphonesimulator
+          zip -r "$GITHUB_WORKSPACE/Friend-Chat-iOS-Simulator.zip" App.app
+
+      - name: Upload iOS Simulator build
+        uses: actions/upload-artifact@v4
+        with:
+          name: friend-chat-ios-simulator
+          path: Friend-Chat-iOS-Simulator.zip
+          if-no-files-found: error
