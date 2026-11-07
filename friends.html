@@ -253,6 +253,29 @@ const ADMIN_ITEM_KEY="admin";
 // 管理者用の装飾表示で参照するユーザーID一覧
 const ADMIN_USERNAMES=new Set(["kazu1haru100","kazu1haru4sub"]);
 let currentUsername="",presenceTimer=null;
+const RADAR_DEVICE_STORAGE_KEY="friendchat_radar_device_id_v1";
+let radarDeviceId="";
+try{
+  radarDeviceId=localStorage.getItem(RADAR_DEVICE_STORAGE_KEY)||"";
+  if(!radarDeviceId){
+    radarDeviceId=(globalThis.crypto?.randomUUID?.()||("fc-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2)));
+    localStorage.setItem(RADAR_DEVICE_STORAGE_KEY,radarDeviceId);
+  }
+}catch(e){
+  radarDeviceId="fc-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
+}
+function radarGetDeviceLabel(){
+  const ua=navigator.userAgent||"";
+  if(/iPad/i.test(ua)||(/Macintosh/i.test(ua)&&navigator.maxTouchPoints>1))return "iPad";
+  if(/iPhone|iPod/i.test(ua))return "iPhone";
+  if(/Android/i.test(ua))return "Android端末";
+  return "PC・ブラウザ";
+}
+async function radarRegisterDevice(){
+  if(!radarDeviceId)throw new Error("端末IDを作成できませんでした");
+  const {error}=await supabaseClient.rpc("register_device_session",{p_device_id:radarDeviceId,p_device_label:radarGetDeviceLabel()});
+  if(error)throw error;
+}
 
 async function getCurrentUser(){
   if(await checkFriendChatBan())return null;
@@ -260,6 +283,7 @@ async function getCurrentUser(){
   if(error||!data.user){location.href="index.html";return null}
   currentUsername=data.user.user_metadata?.username||"";
   if(!currentUsername){location.href="index.html";return null}
+  try{await radarRegisterDevice()}catch(e){console.warn("端末登録エラー:",e)}
   const adminLink=document.getElementById("adminLink");
   if(await isFriendChatAdmin())adminLink.style.display="inline-block";
   return data.user;
@@ -420,8 +444,8 @@ async function cancelRequest(id){
 
 // フレンドレーダー：相互に位置共有を許可したフレンドのみ距離・方角を表示
 let radarWatchId=null,radarPollTimer=null,radarExpiryTimer=null,radarShareExpiry=null,radarMyPosition=null,radarBusy=false,radarMyHeading=null,radarCompassActive=false,radarLastHeadingSend=0,radarLoadingFriends=false;
-let radarSharePermanent=false;
-function radarIsSharing(){return radarSharePermanent||(!!radarShareExpiry&&radarShareExpiry.getTime()>Date.now())}
+let radarSharePermanent=false,radarShareOwnedByThisDevice=false;
+function radarIsSharing(){return radarShareOwnedByThisDevice&&(radarSharePermanent||(!!radarShareExpiry&&radarShareExpiry.getTime()>Date.now()))}
 let radarCompassEventSeen=false,radarCompassCheckTimer=null;
 const radarProfiles=new Map();
 function radarDistance(a,b){
@@ -447,8 +471,8 @@ function radarStopWatch(){if(radarWatchId!==null&&navigator.geolocation){navigat
 async function radarSendPosition(position){
   const coords=position.coords;
   radarMyPosition={latitude:coords.latitude,longitude:coords.longitude};
-  const {error}=await supabaseClient.rpc("update_my_friend_location",{p_latitude:coords.latitude,p_longitude:coords.longitude,p_heading:radarMyHeading});
-  if(error){console.warn("位置情報の送信エラー:",error);radarSetStatus("位置情報を送信できませんでした："+error.message)}
+  const {error}=await supabaseClient.rpc("update_my_friend_location",{p_latitude:coords.latitude,p_longitude:coords.longitude,p_heading:radarMyHeading,p_device_id:radarDeviceId});
+  if(error){console.warn("位置情報の送信エラー:",error);if(/共有元ではありません|この端末は位置共有を操作できません/.test(error.message||"")){radarShareOwnedByThisDevice=false;radarStopWatch();radarSetStatus("別の端末に位置共有が切り替わりました。")}else{radarSetStatus("位置情報を送信できませんでした："+error.message)}}
 }
 function radarHeadingLabel(degrees){
   if(degrees===null||degrees===undefined||!Number.isFinite(Number(degrees)))return "方位センサー未対応／許可待ち";
@@ -529,7 +553,8 @@ function radarHandleOrientation(event){
     supabaseClient.rpc("update_my_friend_location",{
       p_latitude:radarMyPosition.latitude,
       p_longitude:radarMyPosition.longitude,
-      p_heading:radarMyHeading
+      p_heading:radarMyHeading,
+      p_device_id:radarDeviceId
     }).then(({error})=>{if(error)console.warn("方位情報の送信エラー:",error)});
   }
 }
@@ -666,9 +691,26 @@ async function radarLoadFriends(){
   }finally{radarLoadingFriends=false}
 }
 async function radarRefreshOwnShare(){
+  try{
+    await radarRegisterDevice();
+    const {error:claimError}=await supabaseClient.rpc("claim_friend_location_device",{p_device_id:radarDeviceId,p_device_label:radarGetDeviceLabel(),p_confirm_switch:false});
+    if(claimError)throw claimError;
+  }catch(e){console.warn("端末確認エラー:",e);radarShareOwnedByThisDevice=false;radarStopWatch();return}
+  const {data:deviceStatus,error:deviceStatusError}=await supabaseClient.rpc("get_friend_location_device_status",{p_device_id:radarDeviceId});
+  if(deviceStatusError){console.warn("端末状態取得:",deviceStatusError);radarShareOwnedByThisDevice=false;radarStopWatch();return}
+  const deviceRow=(deviceStatus||[])[0];
+  radarShareOwnedByThisDevice=deviceRow?.is_active_device===true;
   const {data,error}=await supabaseClient.rpc("get_my_friend_location_share");
   if(error){console.warn("共有状態取得:",error);return}
   const share=(data||[])[0];
+  if(!radarShareOwnedByThisDevice){
+    radarSharePermanent=false;radarShareExpiry=null;radarStopWatch();radarStopCompass();clearInterval(radarExpiryTimer);
+    document.getElementById("radarToggle").textContent="この端末に切り替える";
+    document.getElementById("radarToggle").classList.remove("stop");
+    document.getElementById("radarDuration").disabled=false;
+    radarSetStatus(share?.enabled?"別の端末（"+(deviceRow?.active_device_label||"登録済み端末")+"）で位置共有中です。切り替える場合はボタンを押してください。":"位置共有を開始できます。共有元端末を確認します。");
+    return;
+  }
   if(share?.enabled&&(share.expires_at===null||new Date(share.expires_at).getTime()>Date.now())){
     radarSharePermanent=share.expires_at===null;
     radarShareExpiry=radarSharePermanent?null:new Date(share.expires_at);
@@ -694,7 +736,7 @@ function radarStartExpiryTimer(){
   radarExpiryTimer=setInterval(async()=>{
     if(!radarSharePermanent&&radarShareExpiry&&Date.now()>=radarShareExpiry.getTime()){
       radarStopWatch();radarStopCompass();clearInterval(radarExpiryTimer);radarShareExpiry=null;radarSharePermanent=false;
-      await supabaseClient.rpc("set_friend_location_sharing",{p_enabled:false,p_duration_minutes:30});
+      await supabaseClient.rpc("set_friend_location_sharing",{p_enabled:false,p_duration_minutes:30,p_device_id:radarDeviceId});
       await radarRefreshOwnShare();await radarLoadFriends();
     }
   },5000);
@@ -702,13 +744,13 @@ function radarStartExpiryTimer(){
 async function radarToggleSharing(){
   if(radarBusy)return;
   const isCurrentlySharing=radarIsSharing();
-  const compassPermissionPromise=isCurrentlySharing?Promise.resolve(false):radarRequestCompassPermission();
+  let compassPermissionPromise=Promise.resolve(false);
   radarBusy=true;
   const button=document.getElementById("radarToggle");button.disabled=true;
   try{
     if(radarIsSharing()){
       radarStopWatch();radarStopCompass();clearInterval(radarExpiryTimer);
-      const {error}=await supabaseClient.rpc("set_friend_location_sharing",{p_enabled:false,p_duration_minutes:30});
+      const {error}=await supabaseClient.rpc("set_friend_location_sharing",{p_enabled:false,p_duration_minutes:30,p_device_id:radarDeviceId});
       if(error)throw error;
       radarShareExpiry=null;radarSharePermanent=false;radarMyPosition=null;
       radarSetStatus("位置共有を停止しました。");
@@ -716,9 +758,23 @@ async function radarToggleSharing(){
     }else{
       if(!navigator.geolocation)throw new Error("このブラウザは位置情報に対応していません。");
       if(!window.isSecureContext)throw new Error("位置情報を使うにはHTTPS接続が必要です。");
+      await radarRegisterDevice();
+      const {data:claimData,error:claimError}=await supabaseClient.rpc("claim_friend_location_device",{p_device_id:radarDeviceId,p_device_label:radarGetDeviceLabel(),p_confirm_switch:false});
+      if(claimError)throw claimError;
+      let claim=(claimData||[])[0];
+      if(!claim?.activated){
+        const approved=window.confirm("現在は「"+(claim?.current_device_label||"別の端末")+"」が位置共有元です。\nこの端末に切り替えますか？\n\nキャンセルすると、現在の端末の共有はそのまま維持されます。");
+        if(!approved){radarSetStatus("端末の切り替えをキャンセルしました。現在の共有は維持されています。");await radarRefreshOwnShare();return}
+        const {data:approvedData,error:approvedError}=await supabaseClient.rpc("claim_friend_location_device",{p_device_id:radarDeviceId,p_device_label:radarGetDeviceLabel(),p_confirm_switch:true});
+        if(approvedError)throw approvedError;
+        claim=(approvedData||[])[0];
+        if(!claim?.activated)throw new Error("端末を切り替えられませんでした。");
+      }
+      radarShareOwnedByThisDevice=true;
       const minutes=Number(document.getElementById("radarDuration").value||30);
+      compassPermissionPromise=radarRequestCompassPermission();
       await compassPermissionPromise;
-      const {data,error}=await supabaseClient.rpc("set_friend_location_sharing",{p_enabled:true,p_duration_minutes:minutes});
+      const {data,error}=await supabaseClient.rpc("set_friend_location_sharing",{p_enabled:true,p_duration_minutes:minutes,p_device_id:radarDeviceId});
       if(error)throw error;
       radarSharePermanent=minutes===0;
       radarShareExpiry=radarSharePermanent?null:(data?new Date(data):new Date(Date.now()+minutes*60000));
