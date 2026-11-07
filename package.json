@@ -6,16 +6,20 @@
   "scripts": {
     "prepare:web": "node scripts/prepare-web.mjs",
     "cap:sync": "npm run prepare:web && cap sync",
-    "cap:android": "npm run prepare:web && cap add android && cap sync android",
+    "cap:android": "npm run prepare:web && cap add android && node scripts/configure-android.mjs && cap sync android",
     "cap:ios": "npm run prepare:web && cap add ios && cap sync ios"
   },
   "dependencies": {
     "@capacitor/core": "^7.4.3",
     "@capacitor/android": "^7.4.3",
-    "@capacitor/ios": "^7.4.3"
+    "@capacitor/ios": "^7.4.3",
+    "@capacitor/app": "^7.0.1",
+    "@capacitor/camera": "^7.0.1",
+    "@capacitor/geolocation": "^7.1.5"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.4.3",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "esbuild": "^0.25.0"
   }
 }
