@@ -1,3 +1,4 @@
+
 name: Build Android APK
 
 on:
@@ -7,6 +8,9 @@ on:
       - "package.json"
       - "capacitor.config.ts"
       - "scripts/**"
+      - "chat.html"
+      - "profile.html"
+      - "friends.html"
       - ".github/workflows/android-debug.yml"
 
 jobs:
@@ -32,12 +36,19 @@ jobs:
         run: npm install
 
       - name: Prepare web files
-        run: node scripts/prepare-web.mjs
+        run: npm run prepare:web
+
+      - name: Create Android project
+        run: npx cap add android
+
+      - name: Configure Android permissions
+        run: node scripts/configure-android.mjs
+
+      - name: Sync Capacitor plugins
+        run: npx cap sync android
 
       - name: Build Android
         run: |
-          npx cap add android
-          npx cap sync android
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
