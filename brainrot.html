@@ -486,7 +486,7 @@ async function loadLuckyBlock(){
  }
 }
 async function openAutumnLuckyBlock(card){
- const b=card?.querySelector('[data-open-quantity-block="autumn"]'),status=card?.querySelector('[data-block-status]');
+ const b=card?.querySelector('[data-open-quantity-block="autumn"], [data-open-inventory-block]'),status=card?.querySelector('[data-block-status]');
  if(!b||b.disabled)return;
  if(!confirm('秋ラッキーブロックを開封するよ。キャラクターを1体獲得する？'))return;
  b.disabled=true;b.textContent='✨ 開封中…';if(status)status.textContent='秋ブロックを開封中…';
