@@ -427,7 +427,8 @@ async function openInventoryLuckyBlock(inventoryId,button){
   if(error)throw error;
   if(!data?.ok)throw new Error(data?.message||'開封できなかったよ');
   const c=data.character||{};
-  notify(`🎉 ${c.emoji||'🧠'} ${c.name||'キャラクター'} を獲得！`);
+  const extras=[c.mutation?`🧬 変異：${c.mutation}`:'',c.trait?`✨ 属性：${String(c.trait).replaceAll(',', '・')}`:''].filter(Boolean).join(' ／ ');
+  notify(`🎉 ${c.emoji||'🧠'} ${c.name||'キャラクター'} を獲得！${extras?' '+extras:''}`);
   await load();
  }catch(e){notify('開封エラー：'+(e.message||String(e)),true);}
  finally{await loadLuckyBlock();}
