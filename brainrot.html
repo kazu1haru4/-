@@ -409,9 +409,9 @@ async function claimFuse(id,button){if(button)button.disabled=true;try{const {da
 $('fuseStartButton').addEventListener('click',startFuse);
 function renderShopLuckBanner(){const banner=$('shopLuckBanner');if(!banner)return;const active=shopLuckActive&&shopLuckSeconds>0;if(!active){banner.classList.remove('show');banner.style.display='none';return;}const wasShown=banner.classList.contains('show');$('shopLuckBannerTitle').textContent=`🍀 ラック${shopLuckMultiplier}倍発動！`;$('shopLuckBannerTime').textContent=`ショップ限定・残り ${formatTimeLeft(shopLuckSeconds)}`;banner.style.display='block';if(!wasShown){void banner.offsetWidth;banner.classList.add('show');}}
 async function loadShop(){if(shopLoading)return;shopLoading=true;try{const {data:refreshData,error:refreshError}=await db.rpc('brainrot_shop_refresh_boost_state');if(refreshError)throw refreshError;shopRefreshBoostActive=!!refreshData?.active;shopRefreshInterval=Number(refreshData?.refresh_interval_seconds||30);shopRefreshBoostSeconds=Number(refreshData?.seconds_remaining||0);renderShopRefreshBoostState(refreshData);const {data:eventData,error:eventError}=await db.rpc('brainrot_three_lane_shop_event_state');if(eventError)throw eventError;threeLaneActive=!!eventData?.active;threeLaneSeconds=Number(eventData?.seconds_remaining||0);const slots=threeLaneActive?[1,2,3]:[1];const results=await Promise.all(slots.map(slot=>db.rpc(threeLaneActive?'brainrot_shop_state_lane':'brainrot_shop_state',threeLaneActive?{input_slot:slot}:{})));for(const r of results)if(r.error)throw r.error;const states=results.map(r=>r.data);if(states.some(d=>!d||!d.ok))throw new Error('ショップを読み込めなかったよ');shopCharacters=states.map((d,i)=>({slot:slots[i],character:d.character,price:String(d.price||0),already_bought:!!d.already_bought}));shopCharacter=shopCharacters[0]?.character||null;shopPrice=shopCharacters[0]?.price||'0';shopSeconds=Math.min(...states.map(d=>Number(d.seconds_remaining||0)));shopLuckActive=!!states[0].luck_active;shopLuckMultiplier=Number(states[0].luck_multiplier||1);shopLuckSeconds=Number(states[0].luck_seconds_remaining||0);checkShopRaritySpawnSounds();renderShop();if(eventData?.is_admin&&$('threeLaneAdminState'))$('threeLaneAdminState').textContent=threeLaneActive?`開催中・残り ${formatTimeLeft(threeLaneSeconds)}`:'停止中';}catch(e){$('shopStock').innerHTML='<div class="shopArt">⚠️</div><div class="shopInfo"><h3>ショップ読み込みエラー</h3><div class="hint">'+esc(e.message||String(e))+'</div></div>';}finally{shopLoading=false;}}
-function shopCardHtml(item){const c=item.character;if(!c)return '';const isLuckyBlock=c.id==='secret_lucky_block';const full=!isLuckyBlock&&(state?.inventory||[]).length>=Number(state?.capacity||20);const mutationText=c.mutation?`🧬 変異：${esc(c.mutation)}`:'🧬 変異なし';const traitText=c.trait?`✨ 属性：${esc(c.trait)}`:'✨ 属性なし';const catTrait=isCatTheme(c);const inner=`<div class="shopArt">${characterArt(c)}</div><div class="shopInfo"><h3>${esc(c.name)}</h3><span class="rarity ${esc(c.rarity)}">${esc(c.rarity)}</span><div class="income">${isLuckyBlock?'🎁 購入後はベースで開封できるよ。':`💵 ${fmtBig(c.income_per_minute||0)} CASH / 分`}</div><div class="mutationTrait">${mutationText}<br>${traitText}</div><div class="shopPrice">価格：${fmtBig(item.price)} CASH</div><button class="shopBuy" data-shop-buy="${item.slot}" ${full||item.already_bought?'disabled':''}>${item.already_bought?'購入済み':full?'所持上限！':isLuckyBlock?'🎁 購入':'💵 購入'}</button></div>`;const mutationClass=mutationCardClass(c);return threeLaneActive?`<div class="shopLane ${catTrait?'catTraitCard':''} ${mutationClass}">${inner}</div>`:`<div class="shopCard ${catTrait?'catTraitCard':''} ${mutationClass}">${inner}</div>`;}
+function shopCardHtml(item){const c=item.character;if(!c)return '';const isLuckyBlock=c.id==='secret_lucky_block';const isAutumnBlock=c.id==='autumn_lucky_block';const isAnyBlock=isLuckyBlock||isAutumnBlock||c.id==='og_lucky_block';const full=!isAnyBlock&&(state?.inventory||[]).length>=Number(state?.capacity||20);const mutationText=c.mutation?`🧬 変異：${esc(c.mutation)}`:'🧬 変異なし';const traitText=c.trait?`✨ 属性：${esc(c.trait)}`:'✨ 属性なし';const catTrait=isCatTheme(c);const inner=`<div class="shopArt">${characterArt(c)}</div><div class="shopInfo"><h3>${esc(c.name)}</h3><span class="rarity ${esc(c.rarity)}">${esc(c.rarity)}</span><div class="income">${isAnyBlock?'🎁 購入後はベースで開封できるよ。':`💵 ${fmtBig(c.income_per_minute||0)} CASH / 分`}</div><div class="mutationTrait">${mutationText}<br>${traitText}</div><div class="shopPrice">価格：${fmtBig(item.price)} CASH</div><button class="shopBuy" data-shop-buy="${item.slot}" ${full||item.already_bought?'disabled':''}>${item.already_bought?'購入済み':full?'所持上限！':isLuckyBlock?'🎁 購入':'💵 購入'}</button></div>`;const mutationClass=mutationCardClass(c);return threeLaneActive?`<div class="shopLane ${catTrait?'catTraitCard':''} ${mutationClass}">${inner}</div>`:`<div class="shopCard ${catTrait?'catTraitCard':''} ${mutationClass}">${inner}</div>`;}
 function renderShop(){if(!shopCharacters.length)return;const host=$('shopStock');host.classList.toggle('threeLane',threeLaneActive);const renderKey=JSON.stringify([threeLaneActive,shopCharacters.map(x=>[x.slot,x.character?.id,x.character?.name,x.character?.rarity,x.character?.emoji,x.character?.income_per_minute,x.character?.mutation,x.character?.trait,x.price,x.already_bought]),(state?.inventory||[]).length,state?.capacity]);if(renderKey!==lastRenderedShopKey){host.innerHTML=shopCharacters.map(shopCardHtml).join('');host.querySelectorAll('[data-shop-buy]').forEach(b=>b.addEventListener('click',()=>buyShopCharacter(Number(b.dataset.shopBuy))));lastRenderedShopKey=renderKey;} $('shopCountdown').textContent=`次の入れ替わりまで ${shopSeconds} 秒`+(shopRefreshBoostActive?` ／ ⚡ ${shopRefreshInterval}秒更新`:'');if(threeLaneActive)$('shopCountdown').textContent+=` ／ 3レーンイベント残り ${formatTimeLeft(threeLaneSeconds)}`;$('shopLuckStatus').textContent=shopLuckActive?`🍀 ラック上昇中！ショップのレア度抽選 ×${shopLuckMultiplier} ／ 残り ${formatTimeLeft(shopLuckSeconds)}`:'🍀 ラック上昇：通常確率';$('shopLuckStatus').className=shopLuckActive?'hint eventActive':'hint';renderShopLuckBanner();}
-async function buyShopCharacter(slot=1){const item=shopCharacters.find(x=>x.slot===slot);if(!item||!item.character||shopBusy)return;const b=document.querySelector(`[data-shop-buy="${slot}"]`);shopBusy=true;if(b)b.disabled=true;try{const {data,error}=await db.rpc(threeLaneActive?'brainrot_shop_buy_lane':'brainrot_shop_buy',threeLaneActive?{input_character_id:item.character.id,input_slot:slot}:{input_character_id:item.character.id});if(error)throw error;if(!data.ok){notify(data.message||'購入できなかったよ',true);if(data.reason==='expired'||data.reason==='changed')await loadShop();else if(data.reason==='coins'||data.reason==='capacity')await load();return;}if(data.lucky_block){notify(`🎉 シークレット・ラッキーブロックを ${fmtBig(data.price)} CASHで購入！ベースで開けられるよ。`);await load();await loadLuckyBlock();return;}if(data.og_lucky_block){notify(`🌈 OGラッキーブロックを ${fmtBig(data.price)} CASHで購入！ベースで開けられるよ。`);await load();await loadLuckyBlock();await loadShop();return;}const extras=[data.character.mutation?`🧬 変異：${data.character.mutation}`:'',data.character.trait?`✨ 属性：${data.character.trait}`:''].filter(Boolean).join(' ／ ');notify(`🎉 ${data.character.emoji} ${data.character.name} を ${fmtBig(data.price)} CASHで購入！${extras?' '+extras:''}`);await load();await loadShop();}catch(e){notify('購入エラー：'+(e.message||String(e)),true);}finally{shopBusy=false;document.querySelectorAll('[data-shop-buy]').forEach(x=>x.disabled=false);}}
+async function buyShopCharacter(slot=1){const item=shopCharacters.find(x=>x.slot===slot);if(!item||!item.character||shopBusy)return;const b=document.querySelector(`[data-shop-buy="${slot}"]`);shopBusy=true;if(b)b.disabled=true;try{const {data,error}=await db.rpc(threeLaneActive?'brainrot_shop_buy_lane':'brainrot_shop_buy',threeLaneActive?{input_character_id:item.character.id,input_slot:slot}:{input_character_id:item.character.id});if(error)throw error;if(!data.ok){notify(data.message||'購入できなかったよ',true);if(data.reason==='expired'||data.reason==='changed')await loadShop();else if(data.reason==='coins'||data.reason==='capacity')await load();return;}if(data.lucky_block){notify(`🎉 シークレット・ラッキーブロックを ${fmtBig(data.price)} CASHで購入！ベースで開けられるよ。`);await load();await loadLuckyBlock();return;}if(data.og_lucky_block){notify(`🌈 OGラッキーブロックを ${fmtBig(data.price)} CASHで購入！ベースで開けられるよ。`);await load();await loadLuckyBlock();await loadShop();return;}if(data.autumn_lucky_block){notify(`🍁 秋ラッキーブロックを ${fmtBig(data.price)} CASHで購入！ベースで開けられるよ。`);await load();await loadLuckyBlock();await loadShop();return;}const extras=[data.character.mutation?`🧬 変異：${data.character.mutation}`:'',data.character.trait?`✨ 属性：${data.character.trait}`:''].filter(Boolean).join(' ／ ');notify(`🎉 ${data.character.emoji} ${data.character.name} を ${fmtBig(data.price)} CASHで購入！${extras?' '+extras:''}`);await load();await loadShop();}catch(e){notify('購入エラー：'+(e.message||String(e)),true);}finally{shopBusy=false;document.querySelectorAll('[data-shop-buy]').forEach(x=>x.disabled=false);}}
 $('threeLaneStartButton').addEventListener('click',async()=>{const duration=Number($('threeLaneDuration').value),b=$('threeLaneStartButton'),status=$('threeLaneAdminStatus');if(!Number.isInteger(duration)||duration<1||duration>10080){status.textContent='開催時間は1〜10080分で入力してね。';return;}if(!confirm(`3レーンショップイベントを${duration}分間開始するよ。ショップに3体出現するよ！開始する？`))return;b.disabled=true;status.textContent='イベント開始中…';try{const {data,error}=await db.rpc('brainrot_admin_three_lane_event',{input_action:'start',input_duration_minutes:duration});if(error)throw error;if(!data?.ok)throw new Error(data?.message||'開始できなかったよ');status.textContent=`🚀 3レーンイベント開始！${duration}分間`;await loadShop();}catch(e){status.textContent='開始エラー：'+(e.message||String(e));}finally{b.disabled=false;}});
 $('threeLaneStopButton').addEventListener('click',async()=>{const b=$('threeLaneStopButton'),status=$('threeLaneAdminStatus');if(!confirm('3レーンイベントを終了して、通常の1体表示に戻すよ。いい？'))return;b.disabled=true;status.textContent='イベント終了中…';try{const {data,error}=await db.rpc('brainrot_admin_three_lane_event',{input_action:'stop',input_duration_minutes:1});if(error)throw error;if(!data?.ok)throw new Error(data?.message||'終了できなかったよ');status.textContent='⏹ イベント終了！通常ショップに戻ったよ。';await loadShop();}catch(e){status.textContent='終了エラー：'+(e.message||String(e));}finally{b.disabled=false;}});
 if(shopTick)clearInterval(shopTick);shopTick=setInterval(async()=>{if(document.hidden||!$('game')||$('game').hidden)return;if(shopSeconds>0){shopSeconds--;if($('shopCountdown'))$('shopCountdown').textContent=`次の入れ替わりまで ${shopSeconds} 秒`+(shopRefreshBoostActive?` ／ ⚡ ${shopRefreshInterval}秒更新`:'');}if(shopLuckSeconds>0)shopLuckSeconds--;if(shopRefreshBoostSeconds>0){shopRefreshBoostSeconds--;if(shopRefreshBoostSeconds===0){shopRefreshBoostActive=false;shopRefreshInterval=30;}}if(threeLaneSeconds>0)threeLaneSeconds--;if($('shopLuckStatus')){$('shopLuckStatus').textContent=shopLuckActive&&shopLuckSeconds>0?`🍀 ラック上昇中！ショップのレア度抽選 ×${shopLuckMultiplier} ／ 残り ${formatTimeLeft(shopLuckSeconds)}`:'🍀 ラック上昇：通常確率';}renderShopLuckBanner();if(shopSeconds<=0&&!shopBusy&&!shopLoading){shopSeconds=shopRefreshInterval;await loadShop();}},1000);
@@ -435,46 +435,63 @@ async function openInventoryLuckyBlock(inventoryId,button){
 async function loadLuckyBlock(){
  const grid=$('inventory');
  if(!grid)return;
- try{
-  const [{data:secret,error:secretError},{data:og,error:ogError}]=await Promise.all([
-   db.rpc('brainrot_lucky_block_inventory_state'),
-   db.rpc('brainrot_og_lucky_block_inventory_state')
-  ]);
-  if(secretError)throw secretError;
-  if(ogError)throw ogError;
-  // 再読み込みのたびに前回のブロックカードを消して、重複表示を防ぐ。
-  grid.querySelectorAll('[data-lucky-block-card],[id^="baseLuckyBlock-"],[id^="baseLuckyBlockQty-"]').forEach(card=>card.remove());
-  // RLSで直接テーブルを読まず、ログイン中ユーザー自身のブロックだけを返すSECURITY DEFINER RPCを使う。
-  const {data:blockList,error:blockListError}=await db.rpc('brainrot_lucky_block_inventory_list');
-  if(blockListError)throw blockListError;
-  const inventoryRows=Array.isArray(blockList?.items)?blockList.items:[];
-  const secretItems=inventoryRows.filter(c=>String(c.character_id||'').toLowerCase()==='secret_lucky_block');
-  const ogItems=inventoryRows.filter(c=>String(c.character_id||'').toLowerCase()==='og_lucky_block');
-  const secretExtra=Math.max(0,Number(secret?.quantity||0)-secretItems.length);
-  const ogExtra=Math.max(0,Number(og?.quantity||0)-ogItems.length);
-  const makeCard=(type,index,item=null)=>{
-   const isOg=type==='og';
-   const name=isOg?'OGラッキーブロック':'シークレット・ラッキーブロック';
-   const rarity=isOg?'OG':'シークレット';
-   const emoji=isOg?'🌈':'🎁';
-   const card=document.createElement('article');card.className='char';card.dataset.luckyBlockCard=type;
-   card.id=item?`baseLuckyBlock-${type}-${index}`:`baseLuckyBlockQty-${type}-${index}`;
-   card.innerHTML=`<div class="art">${characterArt({id:isOg?'og_lucky_block':'secret_lucky_block',name,emoji,image_url:isOg?'https://res.cloudinary.com/pb1afeoh/image/upload/v1791738967/C21F75FB-532F-45C6-97C2-DF4B4D53A613.png':undefined})}</div><h3>${name}</h3><span class="rarity ${rarity}">${rarity}</span><div class="income">🎁 ラッキーブロック 1個</div><div class="mutationTrait compactTraits"><div class="traitLine">🧬 <b>変異</b>：なし</div><div class="traitLine">✨ <b>属性</b>：なし</div></div><div class="pending">${isOg?'ミャオル40%・ストロベリーエレファント30%・首なし騎士20%・聖なるたわし10%':'開封するとランダムなキャラを獲得'}</div><button class="sellButton" ${item?`data-open-inventory-block="${esc(item.id)}"`:`data-open-quantity-block="${type}"`}>${emoji} 開封する</button><div class="hint" data-block-status role="status" style="margin-top:8px"></div>`;
-   grid.appendChild(card);
-   const button=card.querySelector('button');
-   if(item)button.addEventListener('click',()=>openInventoryLuckyBlock(item.id,button));
-   else button.addEventListener('click',()=>isOg?openOgLuckyBlock(card):openSecretLuckyBlock(card));
-  };
-  secretItems.forEach((item,i)=>makeCard('secret',i,item));
-  ogItems.forEach((item,i)=>makeCard('og',i,item));
-  for(let i=0;i<secretExtra;i++)makeCard('secret',secretItems.length+i);
-  for(let i=0;i<ogExtra;i++)makeCard('og',ogItems.length+i);
- }catch(e){
-  console.error('ラッキーブロックの読み込みに失敗:',e);
-  grid.querySelectorAll('[data-lucky-block-card],[id^="baseLuckyBlock-"],[id^="baseLuckyBlockQty-"]').forEach(card=>card.remove());
+ // ブロックの種類ごとに取得を独立させ、1種類のRPCエラーで全カードが消えないようにする。
+ const [secretResult,ogResult,autumnResult,blockListResult]=await Promise.all([
+  db.rpc('brainrot_lucky_block_inventory_state'),
+  db.rpc('brainrot_og_lucky_block_inventory_state'),
+  db.rpc('brainrot_autumn_lucky_block_inventory_state'),
+  db.rpc('brainrot_lucky_block_inventory_list')
+ ]);
+ const readQuantity=(result,label)=>{
+  if(result?.error){console.error(label+'の所持数取得エラー:',result.error);return 0;}
+  return Math.max(0,Number(result?.data?.quantity||0));
+ };
+ const secretQuantity=readQuantity(secretResult,'シークレットブロック');
+ const ogQuantity=readQuantity(ogResult,'OGブロック');
+ const autumnQuantity=readQuantity(autumnResult,'秋ブロック');
+ if(blockListResult?.error)console.error('ブロック一覧取得エラー:',blockListResult.error);
+ const inventoryRows=Array.isArray(blockListResult?.data?.items)?blockListResult.data.items:[];
+ const secretItems=inventoryRows.filter(c=>String(c.character_id||'').toLowerCase()==='secret_lucky_block');
+ const ogItems=inventoryRows.filter(c=>String(c.character_id||'').toLowerCase()==='og_lucky_block');
+ const secretExtra=Math.max(0,secretQuantity-secretItems.length);
+ const ogExtra=Math.max(0,ogQuantity-ogItems.length);
+ const autumnExtra=autumnQuantity;
+ // 前回のカードだけを消す。通常キャラクターのカードには触れない。
+ grid.querySelectorAll('[data-lucky-block-card],[id^="baseLuckyBlock-"],[id^="baseLuckyBlockQty-"]').forEach(card=>card.remove());
+ const makeCard=(type,index,item=null)=>{
+  const isOg=type==='og';
+  const isAutumn=type==='autumn';
+  const name=isAutumn?'秋ラッキーブロック':isOg?'OGラッキーブロック':'シークレット・ラッキーブロック';
+  const rarity=isOg?'OG':'シークレット';
+  const emoji=isAutumn?'🍁':isOg?'🌈':'🎁';
+  const card=document.createElement('article');card.className='char';card.dataset.luckyBlockCard=type;
+  card.id=item?`baseLuckyBlock-${type}-${index}`:`baseLuckyBlockQty-${type}-${index}`;
+  card.innerHTML=`<div class="art">${characterArt({id:isAutumn?'autumn_lucky_block':isOg?'og_lucky_block':'secret_lucky_block',name,emoji,image_url:isOg?'https://res.cloudinary.com/pb1afeoh/image/upload/v1791738967/C21F75FB-532F-45C6-97C2-DF4B4D53A613.png':undefined})}</div><h3>${name}</h3><span class="rarity ${rarity}">${rarity}</span><div class="income">🎁 ラッキーブロック 1個</div><div class="mutationTrait compactTraits"><div class="traitLine">🧬 <b>変異</b>：なし</div><div class="traitLine">✨ <b>属性</b>：なし</div></div><div class="pending">開封するとランダムなキャラクターを獲得</div><button class="sellButton" ${item?`data-open-inventory-block="${esc(item.id)}"`:`data-open-quantity-block="${type}"`}>${emoji} 開封する</button><div class="hint" data-block-status role="status" style="margin-top:8px"></div>`;
+  grid.appendChild(card);
+  const button=card.querySelector('button');
+  if(item)button.addEventListener('click',()=>openInventoryLuckyBlock(item.id,button));
+  else button.addEventListener('click',()=>isAutumn?openAutumnLuckyBlock(card):isOg?openOgLuckyBlock(card):openSecretLuckyBlock(card));
+ };
+ secretItems.forEach((item,i)=>makeCard('secret',i,item));
+ ogItems.forEach((item,i)=>makeCard('og',i,item));
+ for(let i=0;i<secretExtra;i++)makeCard('secret',secretItems.length+i);
+ for(let i=0;i<ogExtra;i++)makeCard('og',ogItems.length+i);
+ for(let i=0;i<autumnExtra;i++)makeCard('autumn',i);
+ // 取得エラーがあっても、正常に取得できた種類のブロック表示は維持する。
+ if(!secretResult?.data&&!ogResult?.data&&!autumnResult?.data&&blockListResult?.error){
   const card=document.createElement('article');card.className='char';card.dataset.luckyBlockCard='error';
-  card.innerHTML=`<h3>🎁 ラッキーブロック</h3><div class="pending">所持数を読み込めなかったよ。再読み込みしてね。</div><div class="hint">${esc(e.message||String(e))}</div>`;grid.appendChild(card);
+  card.innerHTML=`<h3>🎁 ラッキーブロック</h3><div class="pending">所持数を読み込めなかったよ。再読み込みしてね。</div><div class="hint">${esc(secretResult?.error?.message||ogResult?.error?.message||autumnResult?.error?.message||blockListResult.error.message||'取得エラー')}</div>`;
+  grid.appendChild(card);
  }
+}
+async function openAutumnLuckyBlock(card){
+ const b=card?.querySelector('[data-open-quantity-block="autumn"]'),status=card?.querySelector('[data-block-status]');
+ if(!b||b.disabled)return;
+ if(!confirm('秋ラッキーブロックを開封するよ。キャラクターを1体獲得する？'))return;
+ b.disabled=true;b.textContent='✨ 開封中…';if(status)status.textContent='秋ブロックを開封中…';
+ try{const {data,error}=await db.rpc('brainrot_open_autumn_lucky_block');if(error)throw error;if(!data?.ok)throw new Error(data?.message||'開封できなかったよ');const c=data.character||{};const extras=[c.mutation?`🧬 変異：${c.mutation}`:'',c.trait?`✨ 属性：${String(c.trait).replaceAll(',', '・')}`:''].filter(Boolean).join(' ／ ');notify(`🍁 秋ラッキーブロックから ${c.emoji||'🧠'} ${c.name||'キャラクター'} を獲得！${extras?' '+extras:''}`);await load();}
+ catch(e){if(status)status.textContent='開封エラー：'+(e.message||String(e));notify('開封エラー：'+(e.message||String(e)),true);}
+ finally{await loadLuckyBlock();}
 }
 async function openOgLuckyBlock(card){
  const b=card?.querySelector('[data-open-og-block], [data-open-quantity-block="og"]'),status=card?.querySelector('[data-block-status]');
