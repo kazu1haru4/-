@@ -455,18 +455,18 @@ async function loadLuckyBlock(){
  const ogItems=inventoryRows.filter(c=>String(c.character_id||'').toLowerCase()==='og_lucky_block');
  const secretExtra=Math.max(0,secretQuantity-secretItems.length);
  const ogExtra=Math.max(0,ogQuantity-ogItems.length);
- const autumnExtra=autumnQuantity;
+ const autumnTotal=autumnQuantity;
  // 前回のカードだけを消す。通常キャラクターのカードには触れない。
  grid.querySelectorAll('[data-lucky-block-card],[id^="baseLuckyBlock-"],[id^="baseLuckyBlockQty-"]').forEach(card=>card.remove());
  const makeCard=(type,index,item=null)=>{
   const isOg=type==='og';
   const isAutumn=type==='autumn';
   const name=isAutumn?'秋ラッキーブロック':isOg?'OGラッキーブロック':'シークレット・ラッキーブロック';
-  const rarity=isOg?'OG':'シークレット';
+  const rarity=isAutumn?'？？？':isOg?'OG':'シークレット';
   const emoji=isAutumn?'🍁':isOg?'🌈':'🎁';
   const card=document.createElement('article');card.className='char';card.dataset.luckyBlockCard=type;
   card.id=item?`baseLuckyBlock-${type}-${index}`:`baseLuckyBlockQty-${type}-${index}`;
-  card.innerHTML=`<div class="art">${characterArt({id:isAutumn?'autumn_lucky_block':isOg?'og_lucky_block':'secret_lucky_block',name,emoji,image_url:isOg?'https://res.cloudinary.com/pb1afeoh/image/upload/v1791738967/C21F75FB-532F-45C6-97C2-DF4B4D53A613.png':undefined})}</div><h3>${name}</h3><span class="rarity ${rarity}">${rarity}</span><div class="income">🎁 ラッキーブロック 1個</div><div class="mutationTrait compactTraits"><div class="traitLine">🧬 <b>変異</b>：なし</div><div class="traitLine">✨ <b>属性</b>：なし</div></div><div class="pending">開封するとランダムなキャラクターを獲得</div><button class="sellButton" ${item?`data-open-inventory-block="${esc(item.id)}"`:`data-open-quantity-block="${type}"`}>${emoji} 開封する</button><div class="hint" data-block-status role="status" style="margin-top:8px"></div>`;
+  card.innerHTML=`<div class="art">${characterArt({id:isAutumn?'autumn_lucky_block':isOg?'og_lucky_block':'secret_lucky_block',name,emoji,image_url:isOg?'https://res.cloudinary.com/pb1afeoh/image/upload/v1791738967/C21F75FB-532F-45C6-97C2-DF4B4D53A613.png':undefined})}</div><h3>${name}</h3><span class="rarity ${rarity}">${rarity}</span><div class="income">🎁 ラッキーブロック ${isAutumn?autumnTotal:1}個</div><div class="mutationTrait compactTraits"><div class="traitLine">🧬 <b>変異</b>：なし</div><div class="traitLine">✨ <b>属性</b>：なし</div></div><button class="sellButton" ${isAutumn&&autumnTotal<=0?'disabled':''} ${item?`data-open-inventory-block="${esc(item.id)}"`:`data-open-quantity-block="${type}"`}>${emoji} 開封する</button><div class="hint" data-block-status role="status" style="margin-top:8px"></div>`;
   grid.appendChild(card);
   const button=card.querySelector('button');
   if(item)button.addEventListener('click',()=>openInventoryLuckyBlock(item.id,button));
@@ -476,7 +476,7 @@ async function loadLuckyBlock(){
  ogItems.forEach((item,i)=>makeCard('og',i,item));
  for(let i=0;i<secretExtra;i++)makeCard('secret',secretItems.length+i);
  for(let i=0;i<ogExtra;i++)makeCard('og',ogItems.length+i);
- for(let i=0;i<autumnExtra;i++)makeCard('autumn',i);
+ if(autumnTotal>0)makeCard('autumn',0);
  // 取得エラーがあっても、正常に取得できた種類のブロック表示は維持する。
  if(!secretResult?.data&&!ogResult?.data&&!autumnResult?.data&&blockListResult?.error){
   const card=document.createElement('article');card.className='char';card.dataset.luckyBlockCard='error';
