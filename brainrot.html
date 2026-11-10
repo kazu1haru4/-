@@ -453,6 +453,7 @@ async function loadLuckyBlock(){
  const inventoryRows=Array.isArray(blockListResult?.data?.items)?blockListResult.data.items:[];
  const secretItems=inventoryRows.filter(c=>String(c.character_id||'').toLowerCase()==='secret_lucky_block');
  const ogItems=inventoryRows.filter(c=>String(c.character_id||'').toLowerCase()==='og_lucky_block');
+ const autumnItems=inventoryRows.filter(c=>String(c.character_id||'').toLowerCase()==='autumn_lucky_block');
  const secretExtra=Math.max(0,secretQuantity-secretItems.length);
  const ogExtra=Math.max(0,ogQuantity-ogItems.length);
  const autumnTotal=autumnQuantity;
@@ -469,14 +470,14 @@ async function loadLuckyBlock(){
   card.innerHTML=`<div class="art">${characterArt({id:isAutumn?'autumn_lucky_block':isOg?'og_lucky_block':'secret_lucky_block',name,emoji,image_url:isOg?'https://res.cloudinary.com/pb1afeoh/image/upload/v1791738967/C21F75FB-532F-45C6-97C2-DF4B4D53A613.png':undefined})}</div><h3>${name}</h3><span class="rarity ${rarity}">${rarity}</span><div class="income">🎁 ラッキーブロック 1個</div><div class="mutationTrait compactTraits"><div class="traitLine">🧬 <b>変異</b>：なし</div><div class="traitLine">✨ <b>属性</b>：なし</div></div><button class="sellButton" ${item?`data-open-inventory-block="${esc(item.id)}"`:`data-open-quantity-block="${type}"`}>${emoji} 開封する</button><div class="hint" data-block-status role="status" style="margin-top:8px"></div>`;
   grid.appendChild(card);
   const button=card.querySelector('button');
-  if(item)button.addEventListener('click',()=>openInventoryLuckyBlock(item.id,button));
+  if(item)button.addEventListener('click',()=>isAutumn?openAutumnLuckyBlock(card):openInventoryLuckyBlock(item.id,button));
   else button.addEventListener('click',()=>isAutumn?openAutumnLuckyBlock(card):isOg?openOgLuckyBlock(card):openSecretLuckyBlock(card));
  };
  secretItems.forEach((item,i)=>makeCard('secret',i,item));
  ogItems.forEach((item,i)=>makeCard('og',i,item));
  for(let i=0;i<secretExtra;i++)makeCard('secret',secretItems.length+i);
  for(let i=0;i<ogExtra;i++)makeCard('og',ogItems.length+i);
- for(let i=0;i<autumnTotal;i++)makeCard('autumn',i);
+ autumnItems.forEach((item,i)=>makeCard('autumn',i,item));
  // 取得エラーがあっても、正常に取得できた種類のブロック表示は維持する。
  if(!secretResult?.data&&!ogResult?.data&&!autumnResult?.data&&blockListResult?.error){
   const card=document.createElement('article');card.className='char';card.dataset.luckyBlockCard='error';
