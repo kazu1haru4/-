@@ -450,7 +450,12 @@ async function loadLuckyBlock(){
  const ogQuantity=readQuantity(ogResult,'OGブロック');
  const autumnQuantity=readQuantity(autumnResult,'秋ブロック');
  if(blockListResult?.error)console.error('ブロック一覧取得エラー:',blockListResult.error);
- const inventoryRows=Array.isArray(blockListResult?.data?.items)?blockListResult.data.items:[];
+ // 専用一覧RPCはIDとキャラクターIDだけ返すため、brainrot_stateの所持データとIDで結合して変異・属性を補完する。
+ const stateInventoryById=new Map((state?.inventory||[]).map(c=>[String(c.id),c]));
+ const inventoryRows=(Array.isArray(blockListResult?.data?.items)?blockListResult.data.items:[]).map(item=>{
+  const owned=stateInventoryById.get(String(item.id));
+  return {...(owned||{}),...item,mutation:owned?.mutation??item.mutation??null,trait:owned?.trait??item.trait??null};
+ });
  const secretItems=inventoryRows.filter(c=>String(c.character_id||'').toLowerCase()==='secret_lucky_block');
  const ogItems=inventoryRows.filter(c=>String(c.character_id||'').toLowerCase()==='og_lucky_block');
  const autumnItems=inventoryRows.filter(c=>String(c.character_id||'').toLowerCase()==='autumn_lucky_block');
@@ -467,7 +472,9 @@ async function loadLuckyBlock(){
   const emoji=isAutumn?'🍁':isOg?'🌈':'🎁';
   const card=document.createElement('article');card.className='char';card.dataset.luckyBlockCard=type;
   card.id=item?`baseLuckyBlock-${type}-${index}`:`baseLuckyBlockQty-${type}-${index}`;
-  card.innerHTML=`<div class="art">${characterArt({id:isAutumn?'autumn_lucky_block':isOg?'og_lucky_block':'secret_lucky_block',name,emoji,image_url:isOg?'https://res.cloudinary.com/pb1afeoh/image/upload/v1791738967/C21F75FB-532F-45C6-97C2-DF4B4D53A613.png':undefined})}</div><h3>${name}</h3><span class="rarity ${rarity}">${rarity}</span><div class="income">🎁 ラッキーブロック 1個</div><div class="mutationTrait compactTraits"><div class="traitLine">🧬 <b>変異</b>：なし</div><div class="traitLine">✨ <b>属性</b>：なし</div></div><button class="sellButton" ${item?`data-open-inventory-block="${esc(item.id)}"`:`data-open-quantity-block="${type}"`}>${emoji} 開封する</button><div class="hint" data-block-status role="status" style="margin-top:8px"></div>`;
+  const mutationText=item?.mutation?esc(item.mutation):'なし';
+  const traitHtml=item?.trait?`<details class="traitDetails"><summary>✨ 属性（${String(item.trait).split(',').length}個）</summary><div class="traitFull">${esc(String(item.trait).replaceAll(',', '・'))}</div></details>`:'<div class="traitLine">✨ <b>属性</b>：なし</div>';
+  card.innerHTML=`<div class="art">${characterArt({id:isAutumn?'autumn_lucky_block':isOg?'og_lucky_block':'secret_lucky_block',name,emoji,image_url:isOg?'https://res.cloudinary.com/pb1afeoh/image/upload/v1791738967/C21F75FB-532F-45C6-97C2-DF4B4D53A613.png':undefined})}</div><h3>${name}</h3><span class="rarity ${rarity}">${rarity}</span><div class="income">🎁 ラッキーブロック 1個</div><div class="mutationTrait compactTraits"><div class="traitLine">🧬 <b>変異</b>：${mutationText}</div>${traitHtml}</div><button class="sellButton" ${item?`data-open-inventory-block="${esc(item.id)}"`:`data-open-quantity-block="${type}"`}>${emoji} 開封する</button><div class="hint" data-block-status role="status" style="margin-top:8px"></div>`;
   grid.appendChild(card);
   const button=card.querySelector('button');
   if(item)button.addEventListener('click',()=>isAutumn?openAutumnLuckyBlock(card):openInventoryLuckyBlock(item.id,button));
